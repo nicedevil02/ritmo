@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -9,6 +10,9 @@ import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
+/// Redesigned Month View in Apple HIG & Neumorphic Design Language:
+/// Features tactile day tiles with soft dual-shadows, Apple glow hero selected day,
+/// glowing jewel domain beads, and refined typography.
 class JourneyMonthView extends StatefulWidget {
   const JourneyMonthView({
     super.key,
@@ -56,6 +60,7 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final now = DateTime.now();
 
     final jalaliSelected = Jalali.fromDateTime(widget.selectedDate);
@@ -79,52 +84,77 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
     );
     _ensureOccasionsCache(gridDays, jalaliSelected);
 
-    // RTL Weekday headers order
+    // RTL Weekday headers order: شنبه تا جمعه
     const weekHeadersRtl = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: RitmoSpacing.lg,
-          vertical: RitmoSpacing.sm,
+          horizontal: RitmoSpacing.md,
+          vertical: RitmoSpacing.xs,
         ),
         child: Column(
           children: [
-            // Weekday Header Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(7, (idx) {
-                final isFridayHeader = idx == 6;
-                return Expanded(
-                  child: Text(
-                    weekHeadersRtl[idx],
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12.0,
-                      fontWeight: FontWeight.w600,
-                      color: isFridayHeader
-                          ? colors.error
-                          : colors.textSecondary,
-                    ),
+            // ─── Apple HIG / Neumorphic Weekday Header Pill ───
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF141822).withValues(alpha: 0.7)
+                    : const Color(0xFFE5EAF1).withValues(alpha: 0.75),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.04)
+                      : Colors.white.withValues(alpha: 0.85),
+                  width: 0.8,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.3)
+                        : const Color(0xFFCAD2DC).withValues(alpha: 0.4),
+                    offset: const Offset(0, 1.5),
+                    blurRadius: 2.5,
                   ),
-                );
-              }),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(7, (idx) {
+                  final isFridayHeader = idx == 6;
+                  return Expanded(
+                    child: Center(
+                      child: Text(
+                        weekHeadersRtl[idx],
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          fontWeight: isFridayHeader ? FontWeight.w800 : FontWeight.w700,
+                          color: isFridayHeader
+                              ? const Color(0xFFFF3B30)
+                              : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
             ),
-            const SizedBox(height: 8),
 
-            // Month Days Grid
+            // ─── Month Days Grid (Apple Tactile Cells) ───
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   const columns = 7;
-                  const spacing = 5.0;
+                  const spacing = 6.0;
                   final rows = (gridDays.length / 7).ceil();
                   final availableHeight =
                       constraints.maxHeight - (rows - 1) * spacing;
                   final cellHeight = rows > 0
-                      ? (availableHeight / rows).clamp(38.0, 75.0)
-                      : 48.0;
+                      ? (availableHeight / rows).clamp(42.0, 80.0)
+                      : 50.0;
 
                   return GridView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -159,22 +189,10 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
                       final occasions = _occasionsCache[key] ?? [];
                       final isHoliday = occasions.any((o) => o.isHoliday);
 
-                      // Density tinting
-                      final tintAlpha = isCurrentMonth
-                          ? (items.length >= 7
-                                ? 0.20
-                                : (items.length >= 4
-                                      ? 0.10
-                                      : (items.isNotEmpty ? 0.04 : 0.0)))
-                          : 0.0;
-
-                      final cellBgColor = isSelected
-                          ? colors.primary
-                          : (tintAlpha > 0
-                                ? colors.primary.withValues(alpha: tintAlpha)
-                                : (isCurrentMonth
-                                      ? colors.surfaceElevated
-                                      : colors.surfaceSubtle));
+                      // Density tinting for heavy workload days
+                      final densityLevel = items.length >= 7
+                          ? 3
+                          : (items.length >= 4 ? 2 : (items.isNotEmpty ? 1 : 0));
 
                       final dayNumStr = toPersianDigits(jDay.day.toString());
 
@@ -189,170 +207,196 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
                         },
                         builder: (ctx, candidateData, rejectedData) {
                           final isHovered = candidateData.isNotEmpty;
-                          final effectiveBg = isHovered
-                              ? colors.primary.withValues(alpha: 0.35)
-                              : cellBgColor;
 
                           return Semantics(
                             label: semanticsLabel,
                             button: true,
                             selected: isSelected,
                             child: InkWell(
-                              onTap: () => widget.onSelectDate(day),
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                widget.onSelectDate(day);
+                              },
                               onLongPress: () =>
                                   widget.onLongPressDayCell?.call(day),
-                              borderRadius: BorderRadius.circular(
-                                RitmoRadius.badge,
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: effectiveBg,
-                                  borderRadius: BorderRadius.circular(
-                                    RitmoRadius.badge,
-                                  ),
-                                  border: isHovered
-                                      ? Border.all(
-                                          color: colors.primary,
-                                          width: 2.0,
-                                        )
-                                      : (isToday && !isSelected
-                                            ? Border.all(
-                                                color: colors.primary,
-                                                width: 1.5,
-                                              )
-                                            : Border.all(
-                                                color: isSelected
-                                                    ? colors.primary
-                                                    : colors.borderSubtle,
-                                                width: 1.0,
-                                              )),
+                              borderRadius: BorderRadius.circular(14),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 220),
+                                curve: Curves.easeOutCubic,
+                                decoration: _buildCellDecoration(
+                                  colors: colors,
+                                  isDark: isDark,
+                                  isSelected: isSelected,
+                                  isToday: isToday,
+                                  isCurrentMonth: isCurrentMonth,
+                                  isHovered: isHovered,
+                                  densityLevel: densityLevel,
                                 ),
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 2.0,
-                                  vertical: 2.0,
+                                  horizontal: 3.5,
+                                  vertical: 3.5,
                                 ),
                                 child: Column(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    // Day Number + Holiday Dot Row
+                                    // Top Row: Day Number + Holiday / Friday Ruby Jewel Dot
                                     Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         if (isFriday || isHoliday)
                                           Container(
-                                            width: 4,
-                                            height: 4,
+                                            width: 4.5,
+                                            height: 4.5,
                                             margin: const EdgeInsets.only(
                                               right: 2,
-                                              top: 2,
+                                              top: 3,
                                             ),
                                             decoration: BoxDecoration(
                                               color: isSelected
-                                                  ? colors.onPrimary
-                                                  : colors.error,
+                                                  ? Colors.white
+                                                  : const Color(0xFFFF3B30),
                                               shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: (isSelected
+                                                          ? Colors.white
+                                                          : const Color(0xFFFF3B30))
+                                                      .withValues(alpha: 0.55),
+                                                  blurRadius: 2.5,
+                                                ),
+                                              ],
                                             ),
                                           )
                                         else
-                                          const SizedBox(width: 4),
+                                          const SizedBox(width: 4.5),
                                         Padding(
                                           padding: const EdgeInsets.only(
                                             left: 2,
-                                            top: 1,
+                                            top: 0.5,
                                           ),
                                           child: Text(
                                             dayNumStr,
                                             style: TextStyle(
-                                              fontSize: 11.5,
-                                              fontWeight:
-                                                  isToday ||
-                                                      isSelected ||
-                                                      isFriday ||
-                                                      isHoliday
-                                                  ? FontWeight.bold
-                                                  : FontWeight.w500,
-                                              color: isSelected
-                                                  ? colors.onPrimary
+                                              fontSize: isSelected ? 12.5 : 12.0,
+                                              fontWeight: isSelected || isToday
+                                                  ? FontWeight.w900
                                                   : (isCurrentMonth
-                                                        ? (isFriday || isHoliday
-                                                              ? colors.error
-                                                              : colors
-                                                                    .textPrimary)
-                                                        : colors.disabled),
+                                                      ? FontWeight.w700
+                                                      : FontWeight.w500),
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : (isCurrentMonth
+                                                      ? (isFriday || isHoliday
+                                                          ? const Color(0xFFFF3B30)
+                                                          : colors.textPrimary)
+                                                      : colors.textTertiary.withValues(alpha: 0.45)),
                                             ),
                                           ),
                                         ),
                                       ],
                                     ),
 
-                                    // Today Indicator dot (when not selected)
+                                    // Center / Middle Indicator: Today Beacon Dot (when not selected)
                                     if (isToday && !isSelected)
                                       Container(
-                                        width: 4,
-                                        height: 4,
+                                        width: 4.5,
+                                        height: 4.5,
                                         decoration: BoxDecoration(
                                           color: colors.primary,
                                           shape: BoxShape.circle,
-                                        ),
-                                      ),
-
-                                    // Domain Dots (up to 3) + Extra indicator
-                                    if (displayDomains.isNotEmpty)
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          ...displayDomains.map((d) {
-                                            return Container(
-                                              width: 4,
-                                              height: 4,
-                                              margin:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 0.8,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: isSelected
-                                                    ? colors.onPrimary
-                                                    : domainColor(context, d),
-                                                shape: BoxShape.circle,
-                                              ),
-                                            );
-                                          }),
-                                          if (extraDomainsCount > 0)
-                                            Text(
-                                              '+',
-                                              style: TextStyle(
-                                                fontSize: 8,
-                                                fontWeight: FontWeight.bold,
-                                                color: isSelected
-                                                    ? colors.onPrimary
-                                                    : colors.textTertiary,
-                                                height: 0.8,
-                                              ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: colors.primary.withValues(alpha: 0.6),
+                                              blurRadius: 3,
                                             ),
-                                        ],
-                                      ),
+                                          ],
+                                        ),
+                                      )
+                                    else if (densityLevel > 0 && !isSelected)
+                                      const SizedBox(height: 1)
+                                    else
+                                      const SizedBox.shrink(),
 
-                                    // Conflict Underline
+                                    // Bottom Row: Glowing Jewel Domain Beads + Extra indicator
+                                    if (displayDomains.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(bottom: 1),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            ...displayDomains.map((d) {
+                                              final dColor = domainColor(context, d);
+                                              return Container(
+                                                width: 4.5,
+                                                height: 4.5,
+                                                margin:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 1.0,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: isSelected
+                                                      ? Colors.white
+                                                      : dColor,
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: (isSelected
+                                                              ? Colors.white
+                                                              : dColor)
+                                                          .withValues(alpha: 0.55),
+                                                      blurRadius: 2.0,
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            }),
+                                            if (extraDomainsCount > 0)
+                                              Text(
+                                                '+',
+                                                style: TextStyle(
+                                                  fontSize: 8.5,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: isSelected
+                                                      ? Colors.white
+                                                      : colors.textTertiary,
+                                                  height: 0.8,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      )
+                                    else
+                                      const SizedBox(height: 4),
+
+                                    // Bottom Glow Bar: Conflict Underline (Apple Amber)
                                     if (hasConflicts)
                                       Container(
-                                        height: 2,
+                                        height: 2.5,
                                         margin: const EdgeInsets.symmetric(
                                           horizontal: 4,
                                         ),
                                         decoration: BoxDecoration(
                                           color: isSelected
-                                              ? colors.onPrimary
-                                              : colors.warning,
-                                          borderRadius: BorderRadius.circular(
-                                            1,
-                                          ),
+                                              ? Colors.white
+                                              : const Color(0xFFFF9500),
+                                          borderRadius: BorderRadius.circular(2),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: (isSelected
+                                                      ? Colors.white
+                                                      : const Color(0xFFFF9500))
+                                                  .withValues(alpha: 0.5),
+                                              blurRadius: 3,
+                                            ),
+                                          ],
                                         ),
                                       )
                                     else
-                                      const SizedBox(height: 2),
+                                      const SizedBox(height: 1),
                                   ],
                                 ),
                               ),
@@ -366,28 +410,44 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
               ),
             ),
 
-            // Workload Legend Row
-            Padding(
-              padding: const EdgeInsets.only(top: RitmoSpacing.xs),
+            // ─── Neumorphic Workload Legend Row ───
+            Container(
+              margin: const EdgeInsets.only(top: RitmoSpacing.xs),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF131720).withValues(alpha: 0.6)
+                    : const Color(0xFFE5EAF1).withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.04)
+                      : Colors.white.withValues(alpha: 0.8),
+                  width: 0.8,
+                ),
+              ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   _legendDot(
-                    colors.primary.withValues(alpha: 0.04),
+                    colors.primary.withValues(alpha: 0.08),
                     'کم',
                     colors,
+                    isDark,
                   ),
-                  const SizedBox(width: RitmoSpacing.md),
+                  const SizedBox(width: RitmoSpacing.lg),
                   _legendDot(
-                    colors.primary.withValues(alpha: 0.10),
+                    colors.primary.withValues(alpha: 0.16),
                     'متوسط',
                     colors,
+                    isDark,
                   ),
-                  const SizedBox(width: RitmoSpacing.md),
+                  const SizedBox(width: RitmoSpacing.lg),
                   _legendDot(
-                    colors.primary.withValues(alpha: 0.20),
+                    colors.primary.withValues(alpha: 0.28),
                     'فشرده',
                     colors,
+                    isDark,
                   ),
                 ],
               ),
@@ -398,23 +458,181 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
     );
   }
 
-  Widget _legendDot(Color color, String label, dynamic colors) {
+  /// Neumorphic & Apple HIG Cell Decoration Algorithm
+  BoxDecoration _buildCellDecoration({
+    required dynamic colors,
+    required bool isDark,
+    required bool isSelected,
+    required bool isToday,
+    required bool isCurrentMonth,
+    required bool isHovered,
+    required int densityLevel,
+  }) {
+    final borderRadius = BorderRadius.circular(14);
+
+    // 1. Drag Hover State
+    if (isHovered) {
+      return BoxDecoration(
+        color: colors.primary.withValues(alpha: 0.35),
+        borderRadius: borderRadius,
+        border: Border.all(color: colors.primary, width: 2.0),
+        boxShadow: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: 0.4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      );
+    }
+
+    // 2. Apple Glow Selected Day State
+    if (isSelected) {
+      return BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.primary as Color,
+            (colors.primary as Color).withValues(alpha: 0.88),
+          ],
+        ),
+        borderRadius: borderRadius,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.45),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (colors.primary as Color).withValues(alpha: 0.45),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+            spreadRadius: 0.5,
+          ),
+          const BoxShadow(
+            color: Colors.white24,
+            offset: Offset(-1, -1),
+            blurRadius: 2,
+          ),
+        ],
+      );
+    }
+
+    // 3. Apple Today Indicator State (when not selected)
+    if (isToday && isCurrentMonth) {
+      return BoxDecoration(
+        color: (colors.primary as Color).withValues(alpha: isDark ? 0.16 : 0.10),
+        borderRadius: borderRadius,
+        border: Border.all(
+          color: (colors.primary as Color).withValues(alpha: 0.85),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (colors.primary as Color).withValues(alpha: 0.25),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+          if (!isDark)
+            const BoxShadow(
+              color: Colors.white,
+              offset: Offset(-1, -1),
+              blurRadius: 2,
+            ),
+        ],
+      );
+    }
+
+    // 4. Regular Day in Current Month (Tactile Neumorphic Tile)
+    if (isCurrentMonth) {
+      final baseColor = isDark ? const Color(0xFF1B202B) : const Color(0xFFF7F9FC);
+      final tintAlpha = densityLevel == 3
+          ? 0.22
+          : (densityLevel == 2 ? 0.12 : (densityLevel == 1 ? 0.05 : 0.0));
+
+      return BoxDecoration(
+        color: tintAlpha > 0
+            ? Color.alphaBlend(
+                (colors.primary as Color).withValues(alpha: tintAlpha),
+                baseColor,
+              )
+            : baseColor,
+        borderRadius: borderRadius,
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.white.withValues(alpha: 0.9),
+          width: 0.8,
+        ),
+        boxShadow: [
+          if (isDark) ...[
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.035),
+              offset: const Offset(-1, -1),
+              blurRadius: 2,
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.45),
+              offset: const Offset(1.5, 2.5),
+              blurRadius: 4,
+            ),
+          ] else ...[
+            const BoxShadow(
+              color: Colors.white,
+              offset: Offset(-1.5, -1.5),
+              blurRadius: 2.5,
+            ),
+            BoxShadow(
+              color: const Color(0xFFD2DAE4).withValues(alpha: 0.7),
+              offset: const Offset(1.5, 2.5),
+              blurRadius: 4,
+            ),
+          ],
+        ],
+      );
+    }
+
+    // 5. Overflow Day (Previous or Next Month: Recessed Ghost)
+    return BoxDecoration(
+      color: isDark
+          ? Colors.white.withValues(alpha: 0.015)
+          : const Color(0xFFEDF1F6).withValues(alpha: 0.5),
+      borderRadius: borderRadius,
+      border: Border.all(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.02)
+            : const Color(0xFFE2E7ED).withValues(alpha: 0.5),
+        width: 0.5,
+      ),
+    );
+  }
+
+  Widget _legendDot(Color color, String label, dynamic colors, bool isDark) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 8,
-          height: 8,
+          width: 9,
+          height: 9,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(2),
-            border: Border.all(color: colors.borderSubtle, width: 0.5),
+            borderRadius: BorderRadius.circular(3),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : const Color(0xFFCAD2DC),
+              width: 0.6,
+            ),
           ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 4.5),
         Text(
           label,
-          style: TextStyle(fontSize: 10, color: colors.textSecondary),
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+            color: colors.textSecondary,
+          ),
         ),
       ],
     );

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/calendar/presentation/journey_controller.dart';
 
-/// K18 — Redesigned scale switcher: 3 primary tabs (برنامه · روز · ماه)
-/// + overflow ⋯ button for week and year.
+/// Redesigned Apple HIG & Neumorphic Scale Switcher:
+/// 3 primary tabs (برنامه · روز · ماه) with tactile convex sliding pill + overflow ⋯ button for week/year.
 class JourneyScaleSwitcher extends StatelessWidget {
   const JourneyScaleSwitcher({
     super.key,
@@ -14,14 +15,12 @@ class JourneyScaleSwitcher extends StatelessWidget {
   final JourneyScale activeScale;
   final ValueChanged<JourneyScale> onScaleChanged;
 
-  // The three primary scales shown inline
   static const List<JourneyScale> _primaryScales = [
     JourneyScale.agenda,
     JourneyScale.day,
     JourneyScale.month,
   ];
 
-  // Overflow scales (week, year)
   static const List<JourneyScale> _overflowScales = [
     JourneyScale.week,
     JourneyScale.year,
@@ -38,28 +37,34 @@ class JourneyScaleSwitcher extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: Row(
         children: [
-          // ─── 3-Tab Strip ───
+          // ─── 3-Tab Neumorphic Strip ───
           Expanded(
             child: Container(
-              height: 36.0 * context.metrics.densityFactor,
-              padding: const EdgeInsets.all(3.0),
+              height: 38.0 * context.metrics.densityFactor,
+              padding: const EdgeInsets.all(3.5),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF151922) : const Color(0xFFE4E9EF),
+                color: isDark ? const Color(0xFF131720) : const Color(0xFFE2E7EE),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.04)
-                      : const Color(0xFFCBD3DC).withValues(alpha: 0.8),
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : const Color(0xFFCAD2DC).withValues(alpha: 0.9),
                   width: 0.8,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: isDark
-                        ? Colors.black.withValues(alpha: 0.35)
-                        : const Color(0xFFC7CFDA).withValues(alpha: 0.55),
+                        ? Colors.black.withValues(alpha: 0.45)
+                        : const Color(0xFFB8C2CF).withValues(alpha: 0.55),
                     offset: const Offset(0, 1.5),
                     blurRadius: 3,
                   ),
+                  if (!isDark)
+                    const BoxShadow(
+                      color: Colors.white,
+                      offset: Offset(0, -1),
+                      blurRadius: 1.5,
+                    ),
                 ],
               ),
               child: Row(
@@ -72,32 +77,48 @@ class JourneyScaleSwitcher extends StatelessWidget {
                       label: 'نمای $label',
                       button: true,
                       child: GestureDetector(
-                        onTap: () => onScaleChanged(scale),
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          onScaleChanged(scale);
+                        },
                         behavior: HitTestBehavior.opaque,
                         child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 240),
+                          duration: const Duration(milliseconds: 220),
                           curve: Curves.easeOutCubic,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: isSelected
-                                ? (isDark ? const Color(0xFF262C38) : Colors.white)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(13),
+                            gradient: isSelected
+                                ? LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: isDark
+                                        ? [
+                                            const Color(0xFF2E3544),
+                                            const Color(0xFF232936),
+                                          ]
+                                        : [
+                                            Colors.white,
+                                            const Color(0xFFF7F9FC),
+                                          ],
+                                  )
+                                : null,
+                            color: isSelected ? null : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12.5),
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
                                       color: isDark
-                                          ? Colors.white.withValues(alpha: 0.035)
+                                          ? Colors.white.withValues(alpha: 0.05)
                                           : Colors.white,
-                                      offset: const Offset(-1.5, -1.5),
-                                      blurRadius: 4,
+                                      offset: const Offset(-1, -1),
+                                      blurRadius: 3,
                                     ),
                                     BoxShadow(
                                       color: isDark
-                                          ? Colors.black.withValues(alpha: 0.45)
-                                          : const Color(0xFFBAC3CF).withValues(alpha: 0.65),
+                                          ? Colors.black.withValues(alpha: 0.5)
+                                          : const Color(0xFFAEB8C6).withValues(alpha: 0.65),
                                       offset: const Offset(1.5, 2.5),
-                                      blurRadius: 5,
+                                      blurRadius: 4.5,
                                     ),
                                   ]
                                 : null,
@@ -109,7 +130,7 @@ class JourneyScaleSwitcher extends StatelessWidget {
                               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                               color: isSelected
                                   ? colors.primary
-                                  : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                                  : (isDark ? const Color(0xFF8E9BAE) : const Color(0xFF64748B)),
                             ),
                           ),
                         ),
@@ -181,6 +202,7 @@ class _OverflowScaleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Semantics(
       button: true,
@@ -192,11 +214,11 @@ class _OverflowScaleButton extends StatelessWidget {
         padding: EdgeInsets.zero,
         position: PopupMenuPosition.under,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
+          borderRadius: BorderRadius.circular(16),
         ),
         color: colors.surfaceElevated,
-        elevation: 4,
-        offset: const Offset(0, 4),
+        elevation: 6,
+        offset: const Offset(0, 6),
         itemBuilder: (ctx) => overflowScales
             .map(
               (scale) => PopupMenuItem<JourneyScale>(
@@ -207,42 +229,49 @@ class _OverflowScaleButton extends StatelessWidget {
                     scale == activeScale ? colors.primary : colors.textPrimary,
                   ).copyWith(
                     fontWeight: scale == activeScale
-                        ? FontWeight.w700
+                        ? FontWeight.w800
                         : FontWeight.w500,
                   ),
                 ),
               ),
             )
             .toList(),
-        onSelected: onScaleChanged,
+        onSelected: (scale) {
+          HapticFeedback.selectionClick();
+          onScaleChanged(scale);
+        },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 240),
+          duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          height: 36 * context.metrics.densityFactor,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          height: 38 * context.metrics.densityFactor,
+          padding: const EdgeInsets.symmetric(horizontal: 11),
           decoration: BoxDecoration(
             color: isActive
-                ? colors.primary.withValues(alpha: 0.14)
-                : (Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF232A37)
-                    : const Color(0xFFE4E9EF)),
-            borderRadius: BorderRadius.circular(14),
+                ? colors.primary.withValues(alpha: 0.15)
+                : (isDark ? const Color(0xFF1E2430) : const Color(0xFFE2E7EE)),
+            borderRadius: BorderRadius.circular(15),
             border: Border.all(
               color: isActive
-                  ? colors.primary.withValues(alpha: 0.45)
-                  : (Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : const Color(0xFFCBD3DC)),
+                  ? colors.primary.withValues(alpha: 0.55)
+                  : (isDark
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : const Color(0xFFCAD2DC)),
               width: 0.8,
             ),
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.black.withValues(alpha: 0.3)
-                    : const Color(0xFFC7CFDA).withValues(alpha: 0.6),
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.35)
+                    : const Color(0xFFB8C2CF).withValues(alpha: 0.65),
                 offset: const Offset(1, 2),
-                blurRadius: 3,
+                blurRadius: 3.5,
               ),
+              if (!isDark && !isActive)
+                const BoxShadow(
+                  color: Colors.white,
+                  offset: Offset(-1, -1),
+                  blurRadius: 2,
+                ),
             ],
           ),
           child: isActive
@@ -259,9 +288,9 @@ class _OverflowScaleButton extends StatelessWidget {
               : Center(
                   child: Icon(
                     Icons.more_horiz_rounded,
-                    size: 18,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF94A3B8)
+                    size: 19,
+                    color: isDark
+                        ? const Color(0xFF8E9BAE)
                         : const Color(0xFF64748B),
                   ),
                 ),

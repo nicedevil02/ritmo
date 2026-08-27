@@ -287,12 +287,13 @@ class CycleProgressRingPainter extends CustomPainter {
 
     canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, paintActive);
 
-    // Soft start cap at 12 o'clock
+    // Soft origin glow at 12 o'clock
     final startCapCenter = Offset(center.dx, center.dy - radius);
-    final startCapPaint = Paint()
-      ..color = activeColor.withValues(alpha: 0.18)
+    final startGlowPaint = Paint()
+      ..color = activeColor.withValues(alpha: isDark ? 0.35 : 0.22)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6)
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(startCapCenter, strokeWidth / 2, startCapPaint);
+    canvas.drawCircle(startCapCenter, 5.0, startGlowPaint);
 
     // Bold end cap at thumb
     final thumbAngle = -math.pi / 2 + sweepAngle;
@@ -305,25 +306,21 @@ class CycleProgressRingPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawCircle(thumbCenter, strokeWidth / 2, endCapPaint);
 
-    // Multi-layer Apple Glow indicator at the thumb
-    // 1. Outer diffuse glow
-    final outerGlowPaint = Paint()
-      ..color = activeColor.withValues(alpha: isDark ? 0.70 : 0.50)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(thumbCenter, 10, outerGlowPaint);
-
-    // 2. Mid vibrant rim
+    // Apple Glow indicator at the thumb (contained)
     final midRimPaint = Paint()
       ..color = activeColor
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(thumbCenter, 5.5, midRimPaint);
+    canvas.drawCircle(thumbCenter, 6.0, midRimPaint);
 
-    // 3. Crisp white center core
     final corePaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(thumbCenter, 3.8, corePaint);
+    canvas.drawCircle(thumbCenter, 4.8, corePaint);
+
+    final innerDotPaint = Paint()
+      ..color = activeColor
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(thumbCenter, 2.2, innerDotPaint);
   }
 
   @override

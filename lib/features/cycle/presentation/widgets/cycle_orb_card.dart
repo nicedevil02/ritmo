@@ -1016,12 +1016,13 @@ class _NeumorphicGlowRingPainter extends CustomPainter {
 
     canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, jellyArcPaint);
 
-    // 2. Start Cap at 12 o'clock: Soft, light circle cap matching the initial gradient alpha (no dark seam)
+    // 2. Soft origin glow at 12 o'clock (no hollow circle artifact)
     final startCapCenter = Offset(center.dx, center.dy - radius);
-    final startCapPaint = Paint()
-      ..color = activeColor.withValues(alpha: 0.18)
+    final startGlowPaint = Paint()
+      ..color = activeColor.withValues(alpha: isDark ? 0.35 : 0.22)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6)
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(startCapCenter, strokeWidth / 2, startCapPaint);
+    canvas.drawCircle(startCapCenter, 5.0, startGlowPaint);
 
     // 3. End Cap at thumb: 100% solid bold color matching the end of gradient
     final thumbAngle = -math.pi / 2 + sweepAngle;
@@ -1034,20 +1035,19 @@ class _NeumorphicGlowRingPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawCircle(thumbCenter, strokeWidth / 2, endCapPaint);
 
-    // 4. Apple Neumorphic thumb indicator on the bold end
-    final outerGlowPaint = Paint()
-      ..color = activeColor.withValues(alpha: 0.85)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
+    // 4. Apple Neumorphic thumb indicator on the bold end (contained without spill)
+    final thumbRimPaint = Paint()
+      ..color = activeColor
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(thumbCenter, 9, outerGlowPaint);
+    canvas.drawCircle(thumbCenter, 6.0, thumbRimPaint);
 
     final whiteCorePaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(thumbCenter, 5.0, whiteCorePaint);
+    canvas.drawCircle(thumbCenter, 4.8, whiteCorePaint);
 
     final innerDotPaint = Paint()
-      ..color = activeColor.withValues(alpha: 0.85)
+      ..color = activeColor
       ..style = PaintingStyle.fill;
     canvas.drawCircle(thumbCenter, 2.2, innerDotPaint);
   }

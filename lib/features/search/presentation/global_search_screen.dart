@@ -530,15 +530,17 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   String _formatDueDate(String iso) {
     try {
       final today = DateTime.now();
-      final d = DateTime.parse(iso);
+      final d = DateTime.tryParse(iso);
+      if (d == null) return toPersianDigits(iso);
       final diff = d.difference(DateTime(today.year, today.month, today.day)).inDays;
       if (diff == 0) return 'امروز';
       if (diff == 1) return 'فردا';
       if (diff == -1) return 'دیروز';
       if (diff < 0) return toPersianDigits('${-diff} روز پیش');
       return toPersianDigits('$diff روز دیگر');
-    } catch (_) {
-      return iso;
+    } catch (e, st) {
+      RitmoLog.warning('GlobalSearchScreen', '_formatDueDate failed on "$iso"', e, st);
+      return toPersianDigits(iso);
     }
   }
 }

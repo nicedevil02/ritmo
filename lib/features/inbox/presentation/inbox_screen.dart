@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/models/inbox_item.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/services/central_inbox_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
@@ -45,8 +46,15 @@ class _InboxScreenState extends State<InboxScreen> {
       };
       isMaskEnabled = CycleSettings.isInboxMaskEnabled(settingsMap);
       isLockActive = await CycleLockService.instance.isLockEnabled(db);
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.warning(
+        'InboxScreen: Failed to query cycle lock/mask settings: $e',
+        error: e,
+        stack: st,
+      );
+    }
 
+    if (!mounted) return;
     setState(() {
       _items = items;
       _isCycleAuthenticated = !isLockActive;

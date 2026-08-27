@@ -9,6 +9,7 @@ import 'package:ritmo/core/domain/agenda/action_router.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/features/registry/domain/registry_entry.dart';
 import 'package:ritmo/features/registry/domain/registry_health_issue.dart';
 import 'package:ritmo/features/registry/domain/registry_query.dart';
@@ -79,14 +80,12 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
 
   int _getRemainingMinutes(RegistryEntry entry) {
     final timeStr = entry.agendaProxy.timeOfDay?.trim();
-    if (timeStr == null || timeStr.isEmpty) return 99999;
-    final match = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(timeStr);
-    if (match == null) return 99999;
-    final h = int.parse(match.group(1)!);
-    final m = int.parse(match.group(2)!);
+    final targetMins = TimeOfDayMinutes.tryParse(timeStr);
+    if (targetMins == null) return 99999;
+
     final now = DateTime.now();
-    final target = DateTime(now.year, now.month, now.day, h, m);
-    final diff = target.difference(now).inMinutes;
+    final nowMins = now.hour * 60 + now.minute;
+    final diff = targetMins - nowMins;
     return diff < -45 ? 99990 : diff;
   }
 
@@ -916,7 +915,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
           children: [
             const Icon(
               Icons.verified_rounded,
-              color: const Color(0xFF10B981),
+              color: Color(0xFF10B981),
               size: 48,
             ),
             const SizedBox(height: 12),
@@ -925,7 +924,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF10B981),
+                color: Color(0xFF10B981),
               ),
             ),
             const SizedBox(height: 4),

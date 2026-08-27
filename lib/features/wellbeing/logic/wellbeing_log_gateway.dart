@@ -1,10 +1,10 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 import 'package:ritmo/features/energy/models/energy_mood_models.dart';
-import 'package:sqflite/sqflite.dart';
 
 class WellbeingLogGateway {
   WellbeingLogGateway._();
@@ -25,33 +25,39 @@ class WellbeingLogGateway {
 
       final row = <String, Object?>{
         'id': id,
-        'level': level.index,
         'energyLevel': level.name,
         'source': source,
         'loggedAt': nowMs,
-        'createdAt': nowMs,
       };
 
-      await db.insert(
+      await UpsertHelper.upsert(
+        db,
         'energy_logs',
         row,
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        conflictColumns: const ['id'],
       );
 
       // Dual-write to wellbeing_entry (B15)
       // TODO(DB_TECH_DEBT): Dual-write until legacy tables are deprecated. Reference: docs/DB_TECH_DEBT.md
       try {
-        await db.insert('wellbeing_entry', {
-          'id': id,
-          'dateIso': dateStr,
-          'dimension': 'ENERGY',
-          'value': level == EnergyLevel.high
-              ? 3.0
-              : (level == EnergyLevel.low ? 1.0 : 2.0),
-          'note': null,
-          'loggedAt': nowMs,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
-      } catch (_) {}
+        await UpsertHelper.upsert(
+          db,
+          'wellbeing_entry',
+          {
+            'id': id,
+            'dateIso': dateStr,
+            'dimension': 'ENERGY',
+            'value': level == EnergyLevel.high
+                ? 3.0
+                : (level == EnergyLevel.low ? 1.0 : 2.0),
+            'note': null,
+            'loggedAt': nowMs,
+          },
+          conflictColumns: const ['id'],
+        );
+      } catch (e, st) {
+        RitmoLog.warning('WellbeingLogGateway', 'Dual-write logEnergy failed', e, st);
+      }
 
       RitmoEventBus().publish(
         RitmoEvent(
@@ -96,24 +102,32 @@ class WellbeingLogGateway {
         'createdAt': nowMs,
       };
 
-      await db.insert(
+      await UpsertHelper.upsert(
+        db,
         'bedtime_diagnostics',
         row,
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        conflictColumns: const ['date'],
       );
 
       // Dual-write to wellbeing_entry (B15)
       // TODO(DB_TECH_DEBT): Dual-write until legacy tables are deprecated. Reference: docs/DB_TECH_DEBT.md
       try {
-        await db.insert('wellbeing_entry', {
-          'id': id,
-          'dateIso': date,
-          'dimension': 'SLEEP',
-          'value': quality.toDouble(),
-          'note': note,
-          'loggedAt': nowMs,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
-      } catch (_) {}
+        await UpsertHelper.upsert(
+          db,
+          'wellbeing_entry',
+          {
+            'id': id,
+            'dateIso': date,
+            'dimension': 'SLEEP',
+            'value': quality.toDouble(),
+            'note': note,
+            'loggedAt': nowMs,
+          },
+          conflictColumns: const ['id'],
+        );
+      } catch (e, st) {
+        RitmoLog.warning('WellbeingLogGateway', 'Dual-write logSleep failed', e, st);
+      }
 
       RitmoEventBus().publish(
         RitmoEvent(
@@ -180,25 +194,33 @@ class WellbeingLogGateway {
           'note': note,
           'loggedAt': nowMs,
         };
-        await db.insert(
+        await UpsertHelper.upsert(
+          db,
           'mood_logs',
           row,
-          conflictAlgorithm: ConflictAlgorithm.replace,
+          conflictColumns: const ['id'],
         );
       }
 
       // Dual-write to wellbeing_entry (B15)
       // TODO(DB_TECH_DEBT): Dual-write until legacy tables are deprecated. Reference: docs/DB_TECH_DEBT.md
       try {
-        await db.insert('wellbeing_entry', {
-          'id': id,
-          'dateIso': dateStr,
-          'dimension': 'MOOD',
-          'value': score.toDouble(),
-          'note': note,
-          'loggedAt': nowMs,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
-      } catch (_) {}
+        await UpsertHelper.upsert(
+          db,
+          'wellbeing_entry',
+          {
+            'id': id,
+            'dateIso': dateStr,
+            'dimension': 'MOOD',
+            'value': score.toDouble(),
+            'note': note,
+            'loggedAt': nowMs,
+          },
+          conflictColumns: const ['id'],
+        );
+      } catch (e, st) {
+        RitmoLog.warning('WellbeingLogGateway', 'Dual-write logMood failed', e, st);
+      }
 
       RitmoEventBus().publish(
         RitmoEvent(
@@ -221,7 +243,9 @@ class WellbeingLogGateway {
       await db.delete('mood_logs', where: 'id = ?', whereArgs: [id]);
       try {
         await db.delete('wellbeing_entry', where: 'id = ?', whereArgs: [id]);
-      } catch (_) {}
+      } catch (e, st) {
+        RitmoLog.warning('WellbeingLogGateway', 'Dual-delete deleteMood failed', e, st);
+      }
       RitmoEventBus().publish(
         RitmoEvent(
           type: RitmoEventType.moodLogged.code,
@@ -276,7 +300,7 @@ class WellbeingLogGateway {
             'wins': finalText,
             'mood_score': ?moodScore,
             'reflection_text': ?note,
-            'updatedAt': nowMs,
+            'timestamp': nowMs,
           },
           where: 'date = ?',
           whereArgs: [dateStr],
@@ -290,23 +314,30 @@ class WellbeingLogGateway {
           'wins': finalText,
           'mood_score': ?moodScore,
           'reflection_text': ?note,
+          'timestamp': nowMs,
           'createdAt': nowMs,
-          'updatedAt': nowMs,
         });
       }
 
       // Dual-write to wellbeing_entry (B15)
       // TODO(DB_TECH_DEBT): Dual-write until legacy tables are deprecated. Reference: docs/DB_TECH_DEBT.md
       try {
-        await db.insert('wellbeing_entry', {
-          'id': id,
-          'dateIso': dateStr,
-          'dimension': 'REFLECTION',
-          'value': (moodScore ?? 3).toDouble(),
-          'note': finalText,
-          'loggedAt': nowMs,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
-      } catch (_) {}
+        await UpsertHelper.upsert(
+          db,
+          'wellbeing_entry',
+          {
+            'id': id,
+            'dateIso': dateStr,
+            'dimension': 'REFLECTION',
+            'value': (moodScore ?? 3).toDouble(),
+            'note': finalText,
+            'loggedAt': nowMs,
+          },
+          conflictColumns: const ['id'],
+        );
+      } catch (e, st) {
+        RitmoLog.warning('WellbeingLogGateway', 'Dual-write saveReflection failed', e, st);
+      }
 
       RitmoEventBus().publish(
         RitmoEvent(
@@ -346,7 +377,9 @@ class WellbeingLogGateway {
           where: 'id = ? OR dateIso = ?',
           whereArgs: [dateOrId, dateOrId],
         );
-      } catch (_) {}
+      } catch (e, st) {
+        RitmoLog.warning('WellbeingLogGateway', 'Dual-delete deleteReflection failed', e, st);
+      }
 
       RitmoEventBus().publish(
         RitmoEvent(
@@ -366,21 +399,29 @@ class WellbeingLogGateway {
   Future<bool> restoreReflection(Map<String, dynamic> row) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.insert(
+      await UpsertHelper.upsert(
+        db,
         'daily_reflections',
         row,
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        conflictColumns: const ['id'],
       );
       try {
-        await db.insert('wellbeing_entry', {
-          'id': row['id'],
-          'dateIso': row['date'],
-          'dimension': 'REFLECTION',
-          'value': (row['mood_score'] ?? 3).toDouble(),
-          'note': row['goodThing'] ?? row['wins'] ?? row['reflection_text'],
-          'loggedAt': row['createdAt'] ?? DateTime.now().millisecondsSinceEpoch,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
-      } catch (_) {}
+        await UpsertHelper.upsert(
+          db,
+          'wellbeing_entry',
+          {
+            'id': row['id'],
+            'dateIso': row['date'],
+            'dimension': 'REFLECTION',
+            'value': (row['mood_score'] ?? 3).toDouble(),
+            'note': row['goodThing'] ?? row['wins'] ?? row['reflection_text'],
+            'loggedAt': row['createdAt'] ?? DateTime.now().millisecondsSinceEpoch,
+          },
+          conflictColumns: const ['id'],
+        );
+      } catch (e, st) {
+        RitmoLog.warning('WellbeingLogGateway', 'Dual-write restoreReflection failed', e, st);
+      }
 
       RitmoEventBus().publish(
         RitmoEvent(

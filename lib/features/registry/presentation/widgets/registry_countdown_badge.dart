@@ -1,9 +1,8 @@
-// lib/features/registry/presentation/widgets/registry_countdown_badge.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 
 /// Minimal, neutral countdown badge that shows remaining time until
 /// a routine's scheduled execution. Colors shift only for the text,
@@ -24,12 +23,23 @@ class RegistryCountdownBadge extends StatefulWidget {
 
 class _RegistryCountdownBadgeState extends State<RegistryCountdownBadge> {
   Timer? _tickerTimer;
+  int? _cachedDiffMinutes;
 
   @override
   void initState() {
     super.initState();
-    _tickerTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (mounted) setState(() {});
+    _cachedDiffMinutes = _computeDiff();
+    _tickerTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      final newDiff = _computeDiff();
+      if (newDiff != _cachedDiffMinutes) {
+        setState(() {
+          _cachedDiffMinutes = newDiff;
+        });
+      }
     });
   }
 
@@ -42,15 +52,12 @@ class _RegistryCountdownBadgeState extends State<RegistryCountdownBadge> {
   /// Returns the remaining minutes to the scheduled time, or null if floating.
   int? _computeDiff() {
     final timeStr = widget.agendaItem.timeOfDay?.trim();
-    if (timeStr == null || timeStr.isEmpty) return null;
-    final match = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(timeStr);
-    if (match == null) return null;
+    final targetMins = TimeOfDayMinutes.tryParse(timeStr);
+    if (targetMins == null) return null;
 
-    final hour = int.parse(match.group(1)!);
-    final minute = int.parse(match.group(2)!);
     final now = DateTime.now();
-    final target = DateTime(now.year, now.month, now.day, hour, minute);
-    return target.difference(now).inMinutes;
+    final nowMins = now.hour * 60 + now.minute;
+    return targetMins - nowMins;
   }
 
   @override

@@ -50,20 +50,20 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
                   color: const Color(0xFF10B981).withValues(alpha: 0.3),
                 ),
               ),
-              child: Row(
+              child: const Row(
                 children: [
                   Icon(
                     Icons.check_circle_rounded,
-                    color: const Color(0xFF10B981),
+                    color: Color(0xFF10B981),
                     size: 20,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     'مشکل با موفقیت برطرف شد 🎉',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF10B981),
+                      color: Color(0xFF10B981),
                     ),
                   ),
                 ],

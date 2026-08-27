@@ -3,9 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/action_router.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/features/registry/domain/registry_entry.dart';
 import 'package:ritmo/features/registry/presentation/widgets/registry_countdown_badge.dart';
 import 'package:ritmo/features/registry/presentation/widgets/registry_status_badge.dart';
@@ -286,14 +287,12 @@ class _RegistryRowState extends State<RegistryRow> {
 
   bool _checkUrgency() {
     final timeStr = entry.agendaProxy.timeOfDay?.trim();
-    if (timeStr == null || timeStr.isEmpty) return false;
-    final match = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(timeStr);
-    if (match == null) return false;
-    final h = int.parse(match.group(1)!);
-    final m = int.parse(match.group(2)!);
+    final targetMins = TimeOfDayMinutes.tryParse(timeStr);
+    if (targetMins == null) return false;
+
     final now = DateTime.now();
-    final target = DateTime(now.year, now.month, now.day, h, m);
-    final diff = target.difference(now).inMinutes;
+    final nowMins = now.hour * 60 + now.minute;
+    final diff = targetMins - nowMins;
     return diff >= 0 && diff <= 15;
   }
 

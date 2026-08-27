@@ -1059,7 +1059,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             settings: _settings,
                             child: Padding(
                               padding: EdgeInsets.only(
-                                top: topPadding + 64.0,
+                                top: topPadding + 80.0,
                               ),
                               child: CyclePregnancyModeView(
                                 pregnancyStartDate: _settings['preg_start_date']!,
@@ -1152,7 +1152,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       child: ListView(
                         padding: EdgeInsets.fromLTRB(
                           10,
-                          topPadding + 118.0,
+                          topPadding + 134.0,
                           10,
                           80,
                         ),

@@ -1,11 +1,15 @@
-import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
-import 'package:ritmo/core/domain/personas/persona_registry.dart';
+import 'dart:ui';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/analytics/assistant_engine.dart';
 import 'package:ritmo/core/analytics/konkur_engine.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/models/energy_context.dart';
+import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
@@ -13,6 +17,7 @@ import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
 import 'package:ritmo/core/ux/ritmo_empty_state.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
+import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/konkur/logic/konkur_planner.dart';
 import 'package:ritmo/features/konkur/logic/konkur_repository.dart';
 import 'package:ritmo/features/konkur/models/konkur_models.dart';
@@ -37,6 +42,7 @@ class KonkurScreen extends StatefulWidget {
 
 class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _isTabsVisible = true;
 
   // DB Data
   bool _isLoading = true;
@@ -504,144 +510,537 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
       );
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final contentTopPadding = topPadding + 142.0;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: colors.bg,
-        appBar: AppBar(
-          title: const Text('کنکور', style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            icon: RitmoIcons.back(context, color: colors.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.menu_book_outlined),
-              tooltip: 'تغییر به حالت مطالعه عادی',
-              onPressed: _switchToStudyMode,
+        body: Stack(
+          children: [
+            // Layer 1: Body Content (NotificationListener for Instant Quick-Return Header)
+            Positioned.fill(
+              child: RefreshIndicator(
+                onRefresh: _loadAllData,
+                color: const Color(0xFF8B5CF6),
+                child: _isLoading
+                    ? Padding(
+                        padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 80),
+                        child: const Column(
+                          children: [
+                            RitmoSkeletonCard(height: 180),
+                            SizedBox(height: 24),
+                            RitmoSkeletonList(itemCount: 3, itemHeight: 70),
+                          ],
+                        ),
+                      )
+                    : _subjects.isEmpty
+                        ? Padding(
+                            padding: EdgeInsets.only(top: contentTopPadding),
+                            child: _buildEmptyCurriculumState(context, colors),
+                          )
+                        : _engineOutput == null
+                            ? Center(
+                                child: Padding(
+                                  padding: EdgeInsets.only(top: contentTopPadding),
+                                  child: const Text('خطا در بارگذاری خروجی موتور کنکور'),
+                                ),
+                              )
+                            : NotificationListener<ScrollNotification>(
+                                onNotification: (notification) {
+                                  if (notification.metrics.axis == Axis.vertical) {
+                                    if (notification.metrics.pixels <= 15) {
+                                      if (!_isTabsVisible) {
+                                        setState(() => _isTabsVisible = true);
+                                      }
+                                    } else if (notification is UserScrollNotification) {
+                                      if (notification.direction == ScrollDirection.reverse) {
+                                        if (_isTabsVisible) {
+                                          setState(() => _isTabsVisible = false);
+                                        }
+                                      } else if (notification.direction == ScrollDirection.forward) {
+                                        if (!_isTabsVisible) {
+                                          setState(() => _isTabsVisible = true);
+                                        }
+                                      }
+                                    }
+                                  }
+                                  return false;
+                                },
+                                child: TabBarView(
+                                  controller: _tabController,
+                                  physics: const BouncingScrollPhysics(),
+                                  children: [
+                                    // 1. TODAY / PLAN SECTION
+                                    SingleChildScrollView(
+                                      physics: const AlwaysScrollableScrollPhysics(),
+                                      padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                                      child: Column(
+                                        children: [
+                                          _buildEnergyBanner(colors),
+                                          KonkurHero(
+                                            data: _engineOutput!,
+                                            onSetDateTap: _showSettingsSheet,
+                                          ),
+                                          const SizedBox(height: 12),
+                                          _buildCarryOverBanner(),
+                                          KonkurTodaySection(
+                                            subjects: _subjects,
+                                            topics: _topics,
+                                            todayPlanItems: _engineOutput!.todayPlanItems,
+                                            onRefresh: _loadAllData,
+                                            energyContext: _energyContext,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    // 2. BUDGET / TOPICS SECTION
+                                    SingleChildScrollView(
+                                      physics: const AlwaysScrollableScrollPhysics(),
+                                      padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                                      child: KonkurBudgetSection(
+                                        subjects: _subjects,
+                                        topics: _topics,
+                                        budgetCoverage: _engineOutput!.budgetCoverage,
+                                        perSubjectReadiness: _engineOutput!.perSubjectReadiness,
+                                        onRefresh: _loadAllData,
+                                      ),
+                                    ),
+
+                                    // 3. EXAMS SECTION
+                                    SingleChildScrollView(
+                                      physics: const AlwaysScrollableScrollPhysics(),
+                                      padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                                      child: KonkurExamsSection(
+                                        subjects: _subjects,
+                                        mockExams: _mockExams,
+                                        mockResults: _mockResults,
+                                        perSubjectTrend: _engineOutput!.perSubjectTrend,
+                                        onRefresh: _loadAllData,
+                                      ),
+                                    ),
+
+                                    // 4. STATS SECTION
+                                    SingleChildScrollView(
+                                      physics: const AlwaysScrollableScrollPhysics(),
+                                      padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                                      child: KonkurStatsSection(
+                                        subjects: _subjects,
+                                        data: _engineOutput!,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.school_outlined, color: Color(0xFF8B5CF6)),
-              tooltip: 'بارگذاری سرفصل‌های کنکور',
-              onPressed: _showFieldPicker,
-            ),
-            IconButton(
-              icon: const Icon(Icons.psychology, color: Color(0xFF8B5CF6)),
-              tooltip: 'دستیار هوش مصنوعی کنکور',
-              onPressed: _showAiAssistantSheet,
-            ),
-            IconButton(
-              icon: const Icon(Icons.settings),
-              tooltip: 'تنظیمات کنکور',
-              onPressed: _showSettingsSheet,
+
+            // Layer 2: Floating Capsule Header Island
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+                  child: _buildCapsuleHeader(context, isDark, colors),
+                ),
+              ),
             ),
           ],
         ),
-        body: RefreshIndicator(
-          onRefresh: _loadAllData,
-          color: const Color(0xFF8B5CF6),
-          child: _isLoading
-              ? const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
+      ),
+    );
+  }
+
+  Widget _buildCapsuleHeader(
+    BuildContext context,
+    bool isDark,
+    RitmoColors colors,
+  ) {
+    final capsuleBgColor = isDark
+        ? const Color(0xFF1E222A).withValues(alpha: 0.86)
+        : Colors.white.withValues(alpha: 0.88);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.white.withValues(alpha: 0.90);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.50)
+                : const Color(0xFFCBD5E1).withValues(alpha: 0.65),
+            offset: const Offset(0, 5),
+            blurRadius: 14,
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.white.withValues(alpha: 0.90),
+            offset: const Offset(0, -1),
+            blurRadius: 3,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+            decoration: BoxDecoration(
+              color: capsuleBgColor,
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: borderColor,
+                width: 1.0,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top Row: Back Button, Title, AI, Field Picker, Switch to Study, Settings
+                SizedBox(
+                  height: 48,
+                  child: Row(
                     children: [
-                      RitmoSkeletonCard(height: 180),
-                      SizedBox(height: 24),
-                      RitmoSkeletonList(itemCount: 3, itemHeight: 70),
+                      if (Navigator.canPop(context))
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 38,
+                            minHeight: 38,
+                          ),
+                          icon: Icon(
+                            CupertinoIcons.arrow_right,
+                            color: isDark ? Colors.white : const Color(0xFF1D2129),
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.pop(context);
+                          },
+                        )
+                      else
+                        const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'کنکور و مطالعه',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 17.5,
+                            letterSpacing: -0.4,
+                            color: isDark ? Colors.white : const Color(0xFF1D2129),
+                          ),
+                        ),
+                      ),
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.sparkles,
+                        iconColor: colors.primary,
+                        isAiButton: true,
+                        isDark: isDark,
+                        tooltip: 'دستیار هوش مصنوعی کنکور',
+                        onTap: _showAiAssistantSheet,
+                      ),
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.square_grid_2x2_fill,
+                        iconColor: const Color(0xFF8B5CF6),
+                        isDark: isDark,
+                        tooltip: 'سرفصل‌ها و رشته کنکور',
+                        onTap: _showFieldPicker,
+                      ),
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.book_fill,
+                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                        isDark: isDark,
+                        tooltip: 'حالت مطالعه عادی',
+                        onTap: _switchToStudyMode,
+                      ),
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.settings,
+                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                        isDark: isDark,
+                        tooltip: 'تنظیمات کنکور',
+                        onTap: _showSettingsSheet,
+                      ),
+                      const SizedBox(width: 2),
                     ],
                   ),
-                )
-              : _subjects.isEmpty
-                  ? _buildEmptyCurriculumState(context, colors)
-                  : _engineOutput == null
-                      ? const Center(child: Text('خطا در بارگذاری خروجی موتور کنکور'))
-                      : Column(
+                ),
 
-                      children: [
-                        _buildEnergyBanner(colors),
-                        // Countdown Hero
-                        KonkurHero(
-                          data: _engineOutput!,
-                          onSetDateTap: _showSettingsSheet,
+                // Bottom Collapsible 4-Tier Segmented Tabs
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeInOutCubic,
+                  height: _isTabsVisible ? 54.0 : 0.0,
+                  clipBehavior: Clip.hardEdge,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: _isTabsVisible ? 1.0 : 0.0,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: _buildSegmentedTabs(colors, isDark),
                         ),
-
-                    // TabBar
-                    TabBar(
-                      controller: _tabController,
-                      indicatorColor: const Color(0xFF8B5CF6),
-                      labelColor: const Color(0xFF8B5CF6),
-                      unselectedLabelColor: colors.textSecondary,
-                      labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                      tabs: const [
-                        Tab(text: 'امروز / برنامه', icon: Icon(Icons.today, size: 20)),
-                        Tab(text: 'بودجه‌بندی', icon: Icon(Icons.pie_chart, size: 20)),
-                        Tab(text: 'کارنامه', icon: Icon(Icons.assignment_turned_in, size: 20)),
-                        Tab(text: 'آمار', icon: Icon(Icons.bar_chart, size: 20)),
-                      ],
+                      ),
                     ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-                    // Scrollable Tab Views
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          // 1. TODAY / PLAN SECTION
-                          SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            child: Column(
+  Widget _buildSegmentedTabs(
+    RitmoColors colors,
+    bool isDark,
+  ) {
+    final trackBgColor = isDark ? const Color(0xFF16191E) : const Color(0xFFEFF2F6);
+    final pillBgColor = isDark
+        ? const Color(0xFF22262F)
+        : Color.lerp(Colors.white, colors.primary, 0.12)!;
+    final activeIndex = _tabController.index.clamp(0, 3);
+
+    const tabs = [
+      (title: 'امروز', icon: CupertinoIcons.today_fill),
+      (title: 'بودجه‌بندی', icon: CupertinoIcons.chart_pie_fill),
+      (title: 'کارنامه', icon: CupertinoIcons.doc_checkmark_fill),
+      (title: 'آمار', icon: CupertinoIcons.chart_bar_square_fill),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth;
+        const outerPadding = 4.0;
+        final availableWidth = totalWidth - (outerPadding * 2);
+        final tabWidth = availableWidth / 4;
+        const trackHeight = 44.0;
+        const pillHeight = trackHeight - (outerPadding * 2);
+
+        return Container(
+          height: trackHeight,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: trackBgColor,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.white.withValues(alpha: 0.90),
+              width: 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.70)
+                    : const Color(0xFFB8C2CE).withValues(alpha: 0.55),
+                offset: const Offset(2, 2),
+                blurRadius: 4,
+              ),
+              BoxShadow(
+                color: isDark
+                    ? const Color(0xFF222630)
+                    : Colors.white.withValues(alpha: 0.95),
+                offset: const Offset(-2, -2),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              // Sliding Pill Indicator
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeInOutCubic,
+                right: outerPadding + (activeIndex * tabWidth),
+                top: outerPadding,
+                width: tabWidth,
+                height: pillHeight,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: pillBgColor,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: isDark ? 0.40 : 0.28),
+                      width: 1.0,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark
+                            ? Colors.black.withValues(alpha: 0.60)
+                            : const Color(0xFFB2BDCB).withValues(alpha: 0.65),
+                        offset: const Offset(2, 2),
+                        blurRadius: 4,
+                      ),
+                      BoxShadow(
+                        color: isDark ? const Color(0xFF2E3440) : Colors.white,
+                        offset: const Offset(-2, -2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Tab Buttons
+              Row(
+                children: List.generate(4, (index) {
+                  final item = tabs[index];
+                  final isSelected = activeIndex == index;
+
+                  return Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        _tabController.animateTo(index);
+                        setState(() {});
+                      },
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                            color: isSelected
+                                ? colors.primary
+                                : (isDark
+                                    ? const Color(0xFF8A93A4)
+                                    : const Color(0xFF6B7280)),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                _buildCarryOverBanner(),
-                                KonkurTodaySection(
-                                  subjects: _subjects,
-                                  topics: _topics,
-                                  todayPlanItems: _engineOutput!.todayPlanItems,
-                                  onRefresh: _loadAllData,
-                                  energyContext: _energyContext,
+                                Icon(
+                                  item.icon,
+                                  size: 13,
+                                  color: isSelected
+                                      ? colors.primary
+                                      : (isDark
+                                          ? const Color(0xFF8A93A4)
+                                          : const Color(0xFF6B7280)),
                                 ),
+                                const SizedBox(width: 3),
+                                Text(item.title),
                               ],
                             ),
                           ),
-
-                          // 2. BUDGET / TOPICS SECTION
-                          SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            child: KonkurBudgetSection(
-                              subjects: _subjects,
-                              topics: _topics,
-                              budgetCoverage: _engineOutput!.budgetCoverage,
-                              perSubjectReadiness: _engineOutput!.perSubjectReadiness,
-                              onRefresh: _loadAllData,
-                            ),
-                          ),
-
-                          // 3. EXAMS SECTION
-                          SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            child: KonkurExamsSection(
-                              subjects: _subjects,
-                              mockExams: _mockExams,
-                              mockResults: _mockResults,
-                              perSubjectTrend: _engineOutput!.perSubjectTrend,
-                              onRefresh: _loadAllData,
-                            ),
-                          ),
-
-                          // 4. STATS SECTION
-                          SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            child: KonkurStatsSection(
-                              subjects: _subjects,
-                              data: _engineOutput!,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHeaderActionButton({
+    required IconData icon,
+    required Color iconColor,
+    required bool isDark,
+    required VoidCallback onTap,
+    String? tooltip,
+    bool isAiButton = false,
+  }) {
+    final button = GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: _buildHeaderActionButtonContent(
+        icon: icon,
+        iconColor: iconColor,
+        isDark: isDark,
+        isAiButton: isAiButton,
+      ),
+    );
+
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: button);
+    }
+    return button;
+  }
+
+  Widget _buildHeaderActionButtonContent({
+    required IconData icon,
+    required Color iconColor,
+    required bool isDark,
+    bool isAiButton = false,
+  }) {
+    return Container(
+      width: 36,
+      height: 36,
+      margin: const EdgeInsets.symmetric(horizontal: 3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isDark
+            ? (isAiButton
+                ? iconColor.withValues(alpha: 0.18)
+                : const Color(0xFF22262E))
+            : (isAiButton
+                ? iconColor.withValues(alpha: 0.12)
+                : const Color(0xFFF3F5F8)),
+        border: Border.all(
+          color: isDark
+              ? (isAiButton
+                  ? iconColor.withValues(alpha: 0.40)
+                  : Colors.white.withValues(alpha: 0.08))
+              : (isAiButton
+                  ? iconColor.withValues(alpha: 0.30)
+                  : Colors.white.withValues(alpha: 0.90)),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.white.withValues(alpha: 0.95),
+            offset: const Offset(-2, -2),
+            blurRadius: 4,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.55)
+                : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
+            offset: const Offset(2, 2),
+            blurRadius: 4,
+          ),
+          if (isAiButton)
+            BoxShadow(
+              color: iconColor.withValues(alpha: isDark ? 0.35 : 0.22),
+              blurRadius: 10,
+              spreadRadius: 1.0,
+            ),
+        ],
+      ),
+      child: Center(
+        child: Icon(
+          icon,
+          size: 18,
+          color: isAiButton
+              ? iconColor
+              : (isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280)),
         ),
       ),
     );

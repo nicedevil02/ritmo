@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
-class CycleAnimatedBackground extends StatefulWidget {
+class CycleAnimatedBackground extends StatelessWidget {
   const CycleAnimatedBackground({
     super.key,
     required this.phase,
@@ -18,164 +18,178 @@ class CycleAnimatedBackground extends StatefulWidget {
   final bool isPregnancy;
 
   @override
-  State<CycleAnimatedBackground> createState() =>
-      _CycleAnimatedBackgroundState();
-}
-
-class _CycleAnimatedBackgroundState extends State<CycleAnimatedBackground>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 20),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    Color primaryColor;
-    Color secondaryColor;
-    Color tertiaryColor;
-    Color baseBgColor;
+    Color targetPrimary;
+    Color targetSecondary;
+    Color targetTertiary;
+    final Color baseBgColor = isDark ? colors.bg : colors.surface;
 
-    if (widget.isPregnancy) {
-      primaryColor = colors.primary.withValues(alpha: 0.85);
-      secondaryColor = colors.accent.withValues(alpha: 0.80);
-      tertiaryColor = colors.warning.withValues(alpha: 0.75);
+    if (isPregnancy || phase == CyclePhase.pregnancy) {
+      targetPrimary = colors.primary;
+      targetSecondary = colors.accent;
+      targetTertiary = colors.warning;
     } else {
-      switch (widget.phase) {
+      switch (phase) {
         case CyclePhase.menstrual:
-          primaryColor = colors.error.withValues(alpha: 0.85);
-          secondaryColor = colors.primary.withValues(alpha: 0.80);
-          tertiaryColor = colors.primary.withValues(alpha: 0.65);
-        case CyclePhase.ovulation:
-          primaryColor = colors.accent.withValues(alpha: 0.85);
-          secondaryColor = colors.accent.withValues(alpha: 0.60);
-          tertiaryColor = colors.primary.withValues(alpha: 0.75);
-        case CyclePhase.luteal:
-          primaryColor = colors.primary.withValues(alpha: 0.85);
-          secondaryColor = colors.warning.withValues(alpha: 0.80);
-          tertiaryColor = colors.accent.withValues(alpha: 0.75);
+          targetPrimary = colors.error;
+          targetSecondary = colors.primary;
+          targetTertiary = colors.accent;
         case CyclePhase.follicular:
-        default:
-          primaryColor = colors.accent.withValues(alpha: 0.85);
-          secondaryColor = colors.primary.withValues(alpha: 0.80);
-          tertiaryColor = colors.accent.withValues(alpha: 0.65);
+          targetPrimary = colors.accent;
+          targetSecondary = colors.primary;
+          targetTertiary = colors.accent.withValues(alpha: 0.7);
+        case CyclePhase.ovulation:
+          targetPrimary = colors.accent;
+          targetSecondary = colors.warning;
+          targetTertiary = colors.primary;
+        case CyclePhase.luteal:
+          targetPrimary = colors.primary;
+          targetSecondary = colors.accent;
+          targetTertiary = colors.primary;
+        case CyclePhase.pregnancy:
+        case CyclePhase.dataStale:
+        case CyclePhase.noData:
+          targetPrimary = colors.accent;
+          targetSecondary = colors.primary;
+          targetTertiary = colors.accent;
       }
     }
 
-    baseBgColor = colors.surface;
-
-    return Stack(
-      children: [
-        // 1. Solid base background
-        Positioned.fill(child: Container(color: baseBgColor)),
-
-        // 2. Glowing Colored Floating Blobs underneath glass
-        // Blob 1 (Top-Left)
-        AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            final angle = _controller.value * 2 * math.pi;
-            final dx = math.sin(angle) * 70;
-            final dy = math.cos(angle) * 90;
-            return Positioned(top: 80 + dy, left: -40 + dx, child: child!);
-          },
-          child: Container(
-            width: 280,
-            height: 280,
-            decoration: BoxDecoration(
-              color: primaryColor,
-              shape: BoxShape.circle,
+    return RepaintBoundary(
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOutCubic,
+        key: ValueKey('${phase}_${isPregnancy}_$isDark'),
+        builder: (context, colorProgress, _) {
+          return CustomPaint(
+            size: Size.infinite,
+            painter: _AuroraMeshPainter(
+              progress: 0.0,
+              primaryColor: targetPrimary,
+              secondaryColor: targetSecondary,
+              tertiaryColor: targetTertiary,
+              baseBgColor: baseBgColor,
+              isDark: isDark,
             ),
-          ),
-        ),
-
-        // Blob 2 (Bottom-Right)
-        AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            final angle = _controller.value * 2 * math.pi + math.pi;
-            final dx = math.sin(angle) * 80;
-            final dy = math.cos(angle) * 70;
-            return Positioned(bottom: 120 + dy, right: -50 + dx, child: child!);
-          },
-          child: Container(
-            width: 320,
-            height: 320,
-            decoration: BoxDecoration(
-              color: secondaryColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-
-        // Blob 3 (Top-Right)
-        AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            final angle = _controller.value * 2 * math.pi;
-            final dx = math.cos(angle * 1.2) * 60;
-            final dy = math.sin(angle * 1.2) * 50;
-            return Positioned(top: 220 + dy, right: -40 + dx, child: child!);
-          },
-          child: Container(
-            width: 240,
-            height: 240,
-            decoration: BoxDecoration(
-              color: tertiaryColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-
-        // Blob 4 (Bottom-Left)
-        AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            final angle = _controller.value * 2 * math.pi + math.pi / 2;
-            final dx = math.cos(angle * 0.8) * 50;
-            final dy = math.sin(angle * 0.8) * 80;
-            return Positioned(bottom: 220 + dy, left: -50 + dx, child: child!);
-          },
-          child: Container(
-            width: 260,
-            height: 260,
-            decoration: BoxDecoration(
-              color: primaryColor.withValues(alpha: 0.65),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-
-        // 3. Full-screen Blur & Glass Pane Overlay
-        Positioned.fill(
-          child: ClipRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: widget.isDark
-                      ? colors.surface.withValues(alpha: 0.50)
-                      : Colors.white.withValues(alpha: 0.35),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+          );
+        },
+      ),
     );
+  }
+}
+
+/// شفق قطبی بومی سخت‌افزاری (Native GPU Mesh Aurora)
+/// رندر مستقیم با شیدرهای گرادیان شعاعی و حالت درخشش Screen روی GPU
+class _AuroraMeshPainter extends CustomPainter {
+  const _AuroraMeshPainter({
+    required this.progress,
+    required this.primaryColor,
+    required this.secondaryColor,
+    required this.tertiaryColor,
+    required this.baseBgColor,
+    required this.isDark,
+  });
+
+  final double progress;
+  final Color primaryColor;
+  final Color secondaryColor;
+  final Color tertiaryColor;
+  final Color baseBgColor;
+  final bool isDark;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final maxDim = math.max(size.width, size.height);
+
+    // ۱. رنگ زمینه یکدست بومی
+    canvas.drawRect(rect, Paint()..color = baseBgColor);
+
+    final angle = progress * 2 * math.pi;
+
+    // ۲. کانون اصلی نور (هاله بالای صفحه / هدر وضعیت)
+    final pCenter = Offset(
+      size.width * (0.65 + 0.22 * math.sin(angle)),
+      size.height * (0.16 + 0.12 * math.cos(angle)),
+    );
+    final pRadius = maxDim * (0.58 + 0.08 * math.sin(angle * 1.4));
+    final pShader = RadialGradient(
+      center: Alignment(
+        (pCenter.dx / size.width) * 2 - 1,
+        (pCenter.dy / size.height) * 2 - 1,
+      ),
+      radius: pRadius / size.width,
+      colors: [
+        primaryColor.withValues(alpha: isDark ? 0.50 : 0.32),
+        primaryColor.withValues(alpha: isDark ? 0.24 : 0.15),
+        primaryColor.withValues(alpha: 0.0),
+      ],
+      stops: const [0.0, 0.45, 1.0],
+    ).createShader(rect);
+    final pPaint = Paint()
+      ..shader = pShader
+      ..blendMode = isDark ? BlendMode.screen : BlendMode.srcOver;
+    canvas.drawRect(rect, pPaint);
+
+    // ۳. کانون دوم نور (هاله میانی/پایین سمت چپ)
+    final sCenter = Offset(
+      size.width * (0.30 + 0.20 * math.cos(angle + 0.6)),
+      size.height * (0.68 + 0.14 * math.sin(angle + 0.6)),
+    );
+    final sRadius = maxDim * (0.62 + 0.09 * math.cos(angle * 1.2));
+    final sShader = RadialGradient(
+      center: Alignment(
+        (sCenter.dx / size.width) * 2 - 1,
+        (sCenter.dy / size.height) * 2 - 1,
+      ),
+      radius: sRadius / size.width,
+      colors: [
+        secondaryColor.withValues(alpha: isDark ? 0.45 : 0.28),
+        secondaryColor.withValues(alpha: isDark ? 0.21 : 0.12),
+        secondaryColor.withValues(alpha: 0.0),
+      ],
+      stops: const [0.0, 0.48, 1.0],
+    ).createShader(rect);
+    final sPaint = Paint()
+      ..shader = sShader
+      ..blendMode = isDark ? BlendMode.screen : BlendMode.srcOver;
+    canvas.drawRect(rect, sPaint);
+
+    // ۴. کانون سوم اتمسفری (عمق و پیوند رنگی میانی)
+    final tCenter = Offset(
+      size.width * (0.75 + 0.18 * math.cos(angle * 0.9 + 2.2)),
+      size.height * (0.44 + 0.14 * math.sin(angle * 0.9 + 2.2)),
+    );
+    final tRadius = maxDim * (0.48 + 0.07 * math.sin(angle * 0.8));
+    final tShader = RadialGradient(
+      center: Alignment(
+        (tCenter.dx / size.width) * 2 - 1,
+        (tCenter.dy / size.height) * 2 - 1,
+      ),
+      radius: tRadius / size.width,
+      colors: [
+        tertiaryColor.withValues(alpha: isDark ? 0.38 : 0.24),
+        tertiaryColor.withValues(alpha: isDark ? 0.15 : 0.08),
+        tertiaryColor.withValues(alpha: 0.0),
+      ],
+      stops: const [0.0, 0.45, 1.0],
+    ).createShader(rect);
+    final tPaint = Paint()
+      ..shader = tShader
+      ..blendMode = isDark ? BlendMode.screen : BlendMode.srcOver;
+    canvas.drawRect(rect, tPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _AuroraMeshPainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+        oldDelegate.primaryColor != primaryColor ||
+        oldDelegate.secondaryColor != secondaryColor ||
+        oldDelegate.tertiaryColor != tertiaryColor ||
+        oldDelegate.baseBgColor != baseBgColor ||
+        oldDelegate.isDark != isDark;
   }
 }
 

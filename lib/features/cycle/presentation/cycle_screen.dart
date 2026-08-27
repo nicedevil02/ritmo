@@ -88,6 +88,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   BodyBurdenScore? _burdenScore;
   CycleAdaptiveAdvice? _adaptiveAdvice;
   Jalali _calendarMonth = Jalali.fromDateTime(CycleClock.now);
+  final ScrollController _overviewScrollController = ScrollController();
 
   @override
   void initState() {
@@ -99,6 +100,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
   @override
   void dispose() {
+    _overviewScrollController.dispose();
     CycleStateNotifier.instance.removeListener(_onStateNotifierChanged);
     super.dispose();
   }
@@ -918,6 +920,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   : Directionality(
                       textDirection: TextDirection.rtl,
                       child: ListView(
+                        controller: _overviewScrollController,
                         padding: const EdgeInsets.fromLTRB(14, 12, 14, 32),
                         children: [
                           CycleSegmentedTabs(
@@ -974,8 +977,23 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                       _pendingConfirmation!,
                                     )
                                   : null,
-                              onNavigateToCalendar: () =>
-                                  setState(() => _activeTab = 1),
+                              onNavigateToCalendar: () {
+                                if (_activeTab != 0) {
+                                  setState(() => _activeTab = 0);
+                                }
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  if (_overviewScrollController.hasClients) {
+                                    _overviewScrollController.animateTo(
+                                      _overviewScrollController
+                                          .position.maxScrollExtent,
+                                      duration:
+                                          const Duration(milliseconds: 650),
+                                      curve: Curves.easeInOutCubic,
+                                    );
+                                  }
+                                });
+                              },
                               onOpenSos: () => CycleSosSection.showSosModal(
                                 context,
                                 engineOutput: _engineOutput,

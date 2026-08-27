@@ -134,7 +134,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 340;
-        final cardHeight = isCompact ? 195.0 : 205.0 * m.densityFactor;
+        final cardHeight = isCompact ? 182.0 : 188.0 * m.densityFactor;
 
         return Container(
           width: double.infinity,
@@ -199,7 +199,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
 
               // ۳ نقطه نشانگر وضعیت در پایین کارت
               Positioned(
-                bottom: 10,
+                bottom: 8,
                 left: 0,
                 right: 0,
                 child: _buildBottomStatusDots(
@@ -217,6 +217,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
 
   // ---------------------------------------------------------------------------
   // اسلاید ۱: وضعیت لحظه‌ای (کلیک -> ثبت علائم)
+  // دایره و متن‌ها کاملاً در مرکز عمودی کارت قرار دارند
   // ---------------------------------------------------------------------------
   Widget _buildSlide1Status({
     required BuildContext context,
@@ -231,7 +232,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     required String remainingText,
     required String statusTip,
   }) {
-    final dialSize = isCompact ? 98.0 : 108.0 * m.densityFactor;
+    final dialSize = isCompact ? 94.0 : 104.0 * m.densityFactor;
 
     return Material(
       color: Colors.transparent,
@@ -241,55 +242,54 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             16 * m.densityFactor,
-            12 * m.densityFactor,
+            8 * m.densityFactor,
             16 * m.densityFactor,
-            20 * m.densityFactor,
+            16 * m.densityFactor,
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // متن‌ها در سمت راست
+              // متن‌ها در سمت راست و در مرکز عمودی
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        remainingText,
-                        style: TextStyle(
-                          fontSize: isCompact ? 15.5 : 17.5,
-                          fontWeight: FontWeight.w900,
-                          color: isDark
-                              ? const Color(0xFFF5F5F7)
-                              : const Color(0xFF1D2129),
-                          height: 1.2,
-                        ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      remainingText,
+                      style: TextStyle(
+                        fontSize: isCompact ? 15.0 : 17.0,
+                        fontWeight: FontWeight.w900,
+                        color: isDark
+                            ? const Color(0xFFF5F5F7)
+                            : const Color(0xFF1D2129),
+                        height: 1.2,
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        statusTip,
-                        style: TextStyle(
-                          fontSize: isCompact ? 11.0 : 11.8,
-                          height: 1.5,
-                          color: isDark
-                              ? const Color(0xFFA1A8B3)
-                              : const Color(0xFF6B7280),
-                        ),
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      statusTip,
+                      style: TextStyle(
+                        fontSize: isCompact ? 11.0 : 11.6,
+                        height: 1.45,
+                        color: isDark
+                            ? const Color(0xFFA1A8B3)
+                            : const Color(0xFF6B7280),
                       ),
-                    ],
-                  ),
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
 
               SizedBox(width: isCompact ? 10 : 14),
 
-              // دایره و کپسول فاز زیر آن در سمت چپ
+              // دایره و کپسول فاز زیر آن در مرکز عمودی سمت چپ
               Column(
                 mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   _buildNeumorphicAcrylicDial(
@@ -301,11 +301,11 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                     isDark: isDark,
                     phase: widget.phase,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
-                      vertical: 4,
+                      vertical: 3.5,
                     ),
                     decoration: BoxDecoration(
                       color: phaseColor.withValues(
@@ -322,12 +322,12 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(emoji, style: const TextStyle(fontSize: 10.5)),
+                        Text(emoji, style: const TextStyle(fontSize: 10)),
                         const SizedBox(width: 3),
                         Text(
                           phaseText,
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 9.8,
                             fontWeight: FontWeight.w700,
                             color: isDark
                                 ? phaseColor

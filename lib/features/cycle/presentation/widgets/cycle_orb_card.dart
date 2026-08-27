@@ -1,4 +1,4 @@
-// C-43, C-44: CycleOrbCard (3-Slide Neumorphic Soft UI & Apple Glassmorphic Carousel)
+// C-43, C-44: CycleOrbCard (3-Slide Neumorphic Soft UI & Apple Glassmorphism)
 import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +15,6 @@ class CycleOrbCard extends StatefulWidget {
     required this.dayOfCycle,
     required this.totalCycleLength,
     required this.avgPeriodDuration,
-    this.onMenuTap,
   });
 
   final CyclePhase phase;
@@ -24,7 +23,6 @@ class CycleOrbCard extends StatefulWidget {
   final int dayOfCycle;
   final double totalCycleLength;
   final double avgPeriodDuration;
-  final VoidCallback? onMenuTap;
 
   @override
   State<CycleOrbCard> createState() => _CycleOrbCardState();
@@ -156,21 +154,20 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
           ),
           child: Stack(
             children: [
-              // محتوای کاروسل ۳ اسلاید
+              // کاروسل ۳ اسلاید
               PageView(
                 controller: _pageController,
                 onPageChanged: (index) {
                   setState(() => _currentPage = index);
                 },
                 children: [
-                  // اسلاید ۱: وضعیت لحظه‌ای و دیال نئومورفیک
+                  // اسلاید ۱: وضعیت لحظه‌ای (دایره در سمت چپ و متن در سمت راست)
                   _buildSlide1Status(
                     context: context,
                     isCompact: isCompact,
                     m: m,
                     phaseColor: phaseColor,
                     isDark: isDark,
-                    cardBgColor: cardBgColor,
                     targetProgress: targetProgress,
                     currentDay: currentDay,
                     emoji: emoji,
@@ -185,7 +182,6 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                     isCompact: isCompact,
                     m: m,
                     isDark: isDark,
-                    cardBgColor: cardBgColor,
                     phaseColor: phaseColor,
                   ),
 
@@ -195,7 +191,6 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                     isCompact: isCompact,
                     m: m,
                     isDark: isDark,
-                    cardBgColor: cardBgColor,
                     phaseColor: phaseColor,
                   ),
                 ],
@@ -221,6 +216,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
 
   // ---------------------------------------------------------------------------
   // اسلاید ۱: وضعیت لحظه‌ای (Realtime Status & Dial)
+  // دایره در سمت چپ و عنوان و توضیحات در سمت راست
   // ---------------------------------------------------------------------------
   Widget _buildSlide1Status({
     required BuildContext context,
@@ -228,7 +224,6 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     required RitmoMetrics m,
     required Color phaseColor,
     required bool isDark,
-    required Color cardBgColor,
     required double targetProgress,
     required int currentDay,
     required String emoji,
@@ -248,85 +243,62 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // دیال حلقوی نئومورفیک
-          _buildNeumorphicAcrylicDial(
-            context: context,
-            dialSize: dialSize,
-            targetProgress: targetProgress,
-            phaseColor: phaseColor,
-            currentDay: currentDay,
-            isDark: isDark,
-            phase: widget.phase,
-          ),
-
-          SizedBox(width: isCompact ? 12 : 16),
-
-          // ستون متن‌ها و بج فاز
+          // ۱. ستون متن‌ها و عنوان فاز (در چیدمان راست‌به‌چپ در سمت راست قرار می‌گیرد)
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: phaseColor.withValues(
-                            alpha: isDark ? 0.22 : 0.14,
-                          ),
-                          borderRadius: BorderRadius.circular(100),
-                          border: Border.all(
-                            color: phaseColor.withValues(
-                              alpha: isDark ? 0.40 : 0.28,
-                            ),
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(emoji, style: const TextStyle(fontSize: 12)),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                phaseText,
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark
-                                      ? phaseColor
-                                      : Color.lerp(
-                                          phaseColor,
-                                          Colors.black,
-                                          0.25,
-                                        ),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
+                // کپسول شیشه‌ای فاز بالا
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 5.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: phaseColor.withValues(
+                      alpha: isDark ? 0.22 : 0.14,
+                    ),
+                    borderRadius: BorderRadius.circular(100),
+                    border: Border.all(
+                      color: phaseColor.withValues(
+                        alpha: isDark ? 0.40 : 0.28,
                       ),
+                      width: 1.0,
                     ),
-                    const SizedBox(width: 6),
-                    _buildNeumorphicMenuButton(
-                      isDark: isDark,
-                      cardBgColor: cardBgColor,
-                      onTap: widget.onMenuTap,
-                    ),
-                  ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(emoji, style: const TextStyle(fontSize: 13)),
+                      const SizedBox(width: 5),
+                      Text(
+                        phaseText,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? phaseColor
+                              : Color.lerp(
+                                  phaseColor,
+                                  Colors.black,
+                                  0.25,
+                                ),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
+
                 const SizedBox(height: 10),
+
+                // عنوان اصلی روز دوره
                 Text(
                   remainingText,
                   style: TextStyle(
-                    fontSize: isCompact ? 15.5 : 18.0,
+                    fontSize: isCompact ? 16.0 : 18.5,
                     fontWeight: FontWeight.w900,
                     color: isDark
                         ? const Color(0xFFF5F5F7)
@@ -334,11 +306,14 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                     height: 1.2,
                   ),
                 ),
+
                 const SizedBox(height: 6),
+
+                // توضیحات فاز زیر عنوان
                 Text(
                   statusTip,
                   style: TextStyle(
-                    fontSize: isCompact ? 11.0 : 11.8,
+                    fontSize: isCompact ? 11.2 : 12.0,
                     height: 1.5,
                     color: isDark
                         ? const Color(0xFFA1A8B3)
@@ -349,6 +324,19 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                 ),
               ],
             ),
+          ),
+
+          SizedBox(width: isCompact ? 12 : 16),
+
+          // ۲. دیال حلقوی نئومورفیک (در چیدمان راست‌به‌چپ در سمت چپ قرار می‌گیرد)
+          _buildNeumorphicAcrylicDial(
+            context: context,
+            dialSize: dialSize,
+            targetProgress: targetProgress,
+            phaseColor: phaseColor,
+            currentDay: currentDay,
+            isDark: isDark,
+            phase: widget.phase,
           ),
         ],
       ),
@@ -363,17 +351,14 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     required bool isCompact,
     required RitmoMetrics m,
     required bool isDark,
-    required Color cardBgColor,
     required Color phaseColor,
   }) {
-    // محاسبه روزهای پیش‌بینی بر اساس داده‌های واقعی موتور چرخه
     final cycleLen = widget.totalCycleLength > 0 ? widget.totalCycleLength.round() : 28;
     final periodDur = widget.avgPeriodDuration > 0 ? widget.avgPeriodDuration.round() : 5;
     final ovulationDay = (cycleLen - 14).clamp(periodDur + 2, cycleLen - 4);
     final follicularDays = (ovulationDay - periodDur).clamp(3, 16);
     final lutealDays = (cycleLen - ovulationDay - 2).clamp(5, 18);
 
-    // روزهای باقی‌مانده از دوره فعلی
     final daysUntilPeriodEnd = (periodDur - widget.activePeriodDay).clamp(1, periodDur);
 
     return Padding(
@@ -386,36 +371,25 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // سطر بالایی: عنوان و دکمه منو
-          Row(
+          // سطر بالایی: عنوان و زیرعنوان
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'پیش‌بینی روزهای آینده',
-                      style: TextStyle(
-                        fontSize: isCompact ? 15 : 17,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? Colors.white : const Color(0xFF1D2129),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'نمای کلی چرخه تا شروع دوره بعدی',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? const Color(0xFF9096A2) : const Color(0xFF7A828E),
-                      ),
-                    ),
-                  ],
+              Text(
+                'پیش‌بینی روزهای آینده',
+                style: TextStyle(
+                  fontSize: isCompact ? 15 : 17,
+                  fontWeight: FontWeight.w900,
+                  color: isDark ? Colors.white : const Color(0xFF1D2129),
                 ),
               ),
-              _buildNeumorphicMenuButton(
-                isDark: isDark,
-                cardBgColor: cardBgColor,
-                onTap: widget.onMenuTap,
+              const SizedBox(height: 2),
+              Text(
+                'نمای کلی چرخه تا شروع دوره بعدی',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? const Color(0xFF9096A2) : const Color(0xFF7A828E),
+                ),
               ),
             ],
           ),
@@ -571,7 +545,6 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
   }) {
     return Column(
       children: [
-        // خط ترنزیشن با ۴ نقطه رنگی
         Stack(
           alignment: Alignment.center,
           children: [
@@ -595,7 +568,6 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
           ],
         ),
         const SizedBox(height: 3),
-        // برچسب روزهای چرخه زیر هر نقطه
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -658,10 +630,8 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     required bool isCompact,
     required RitmoMetrics m,
     required bool isDark,
-    required Color cardBgColor,
     required Color phaseColor,
   }) {
-    // انتخاب ۴ توصیه پویا متناسب با فاز جاری
     final List<_CareTipItem> tips = _getPhaseRecommendations(widget.phase);
 
     return Padding(
@@ -674,36 +644,25 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // سطر عنوان و دکمه منو
-          Row(
+          // سطر عنوان و زیرعنوان
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'توصیه‌های امروز',
-                      style: TextStyle(
-                        fontSize: isCompact ? 15 : 17,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? Colors.white : const Color(0xFF1D2129),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _getPhaseSubtitle(widget.phase),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? const Color(0xFF9096A2) : const Color(0xFF7A828E),
-                      ),
-                    ),
-                  ],
+              Text(
+                'توصیه‌های امروز',
+                style: TextStyle(
+                  fontSize: isCompact ? 15 : 17,
+                  fontWeight: FontWeight.w900,
+                  color: isDark ? Colors.white : const Color(0xFF1D2129),
                 ),
               ),
-              _buildNeumorphicMenuButton(
-                isDark: isDark,
-                cardBgColor: cardBgColor,
-                onTap: widget.onMenuTap,
+              const SizedBox(height: 2),
+              Text(
+                _getPhaseSubtitle(widget.phase),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? const Color(0xFF9096A2) : const Color(0xFF7A828E),
+                ),
               ),
             ],
           ),
@@ -908,7 +867,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
   }
 
   // ---------------------------------------------------------------------------
-  // المان‌های مشترک دیال نئومورفیک و دکمه‌ها
+  // دیال نئومورفیک
   // ---------------------------------------------------------------------------
   Widget _buildNeumorphicAcrylicDial({
     required BuildContext context,
@@ -944,9 +903,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                   blurRadius: 7,
                 ),
                 BoxShadow(
-                  color: isDark
-                      ? const Color(0xFF282D36)
-                      : Colors.white,
+                  color: isDark ? const Color(0xFF282D36) : Colors.white,
                   offset: const Offset(-3.5, -3.5),
                   blurRadius: 7,
                 ),
@@ -1029,41 +986,6 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildNeumorphicMenuButton({
-    required bool isDark,
-    required Color cardBgColor,
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: cardBgColor,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? Colors.black.withValues(alpha: 0.5) : const Color(0xFFBAC4D0).withValues(alpha: 0.6),
-              offset: const Offset(2, 2),
-              blurRadius: 4,
-            ),
-            BoxShadow(
-              color: isDark ? const Color(0xFF2D333D) : Colors.white,
-              offset: const Offset(-2, -2),
-              blurRadius: 4,
-            ),
-          ],
-        ),
-        child: Icon(
-          Icons.more_vert_rounded,
-          size: 16,
-          color: isDark ? const Color(0xFF8E95A2) : const Color(0xFF6B7280),
-        ),
       ),
     );
   }

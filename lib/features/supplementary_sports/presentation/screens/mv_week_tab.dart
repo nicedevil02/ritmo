@@ -29,7 +29,10 @@ class MvWeekTab extends StatelessWidget {
     required this.onSlotUpdated,
     required this.onRegenerateWeek,
     this.onOpenCommitments,
+    this.topPadding = 16.0,
   });
+
+  final double topPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +42,7 @@ class MvWeekTab extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(metrics.spaceLg),
+      padding: EdgeInsets.fromLTRB(10, topPadding, 10, 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -88,7 +91,7 @@ class MvWeekTab extends StatelessWidget {
                 ),
             ],
           ),
-          SizedBox(height: metrics.spaceLg),
+          const SizedBox(height: 16),
 
           // Anchor CTA Card if no commitments (S8-T4)
           if (commitments.isEmpty) ...[
@@ -151,7 +154,7 @@ class MvWeekTab extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: metrics.spaceMd),
+            const SizedBox(height: 16),
           ],
 
           // Back-to-Back Conflict Banner (S2-T6, ADJ-6)
@@ -186,14 +189,14 @@ class MvWeekTab extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(height: metrics.spaceMd),
+            const SizedBox(height: 16),
           ],
 
           // 7 Day Slot Cards
           ...List.generate(weekSlots.length, (index) {
             final slot = weekSlots[index];
             return Padding(
-              padding: EdgeInsets.only(bottom: metrics.spaceSm),
+              padding: const EdgeInsets.only(bottom: 16),
               child: MvDaySlotCard(
                 slot: slot,
                 onTap: () {
@@ -207,7 +210,7 @@ class MvWeekTab extends StatelessWidget {
               ),
             );
           }),
-          SizedBox(height: metrics.spaceMd),
+          const SizedBox(height: 16),
 
           // Smart Fill / Re-align Action
           OutlinedButton.icon(

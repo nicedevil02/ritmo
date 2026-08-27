@@ -31,6 +31,7 @@ class MvTodayTab extends StatelessWidget {
   )
   onQuickLogSaved;
   final ValueChanged<String> onDateSelected;
+  final double topPadding;
 
   const MvTodayTab({
     super.key,
@@ -48,6 +49,7 @@ class MvTodayTab extends StatelessWidget {
     required this.onCheckinSaved,
     required this.onQuickLogSaved,
     required this.onDateSelected,
+    this.topPadding = 16.0,
   });
 
   @override
@@ -68,7 +70,7 @@ class MvTodayTab extends StatelessWidget {
         tomorrowSlot != null && tomorrowSlot.isLocked && !tomorrowSlot.isRest;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(vertical: metrics.spaceMd),
+      padding: EdgeInsets.fromLTRB(10, topPadding, 10, 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -78,186 +80,168 @@ class MvTodayTab extends StatelessWidget {
             selectedDateIso: todaySlot.dateIso,
             onDateSelected: onDateSelected,
           ),
-          SizedBox(height: metrics.spaceMd),
+          const SizedBox(height: 16),
 
           // Tomorrow Anchor Notice (S2-T6, S8-T5)
           if (showTomorrowAnchor) ...[
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
-              child: Container(
-                key: const ValueKey('mv_tomorrow_anchor_banner'),
-                padding: EdgeInsets.symmetric(
-                  horizontal: metrics.spaceMd,
-                  vertical: metrics.spaceSm,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(metrics.radiusCard),
-                  border: Border.all(
-                    color: colors.primary.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.lock_clock_rounded,
-                      size: metrics.iconSm,
-                      color: colors.accent,
-                    ),
-                    SizedBox(width: metrics.spaceSm),
-                    Expanded(
-                      child: Text(
-                        l10n != null && tomorrowSlot.plannedTime != null
-                            ? l10n.mv_tomorrow_anchor_notice(
-                                tomorrowSlot.headlineFa,
-                                toPersianDigits(tomorrowSlot.plannedTime),
-                              )
-                            : (l10n?.mv_tomorrow_anchor_notice(
-                                  tomorrowSlot.headlineFa,
-                                  toPersianDigits(tomorrowSlot.plannedTime ?? ''),
-                                ) ??
-                                'Tomorrow: ${tomorrowSlot.headlineFa}'),
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
+            Container(
+              key: const ValueKey('mv_tomorrow_anchor_banner'),
+              padding: EdgeInsets.symmetric(
+                horizontal: metrics.spaceMd,
+                vertical: metrics.spaceSm,
+              ),
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(metrics.radiusCard),
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: 0.3),
                 ),
               ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.lock_clock_rounded,
+                    size: metrics.iconSm,
+                    color: colors.accent,
+                  ),
+                  SizedBox(width: metrics.spaceSm),
+                  Expanded(
+                    child: Text(
+                      l10n != null && tomorrowSlot.plannedTime != null
+                          ? l10n.mv_tomorrow_anchor_notice(
+                              tomorrowSlot.headlineFa,
+                              toPersianDigits(tomorrowSlot.plannedTime),
+                            )
+                          : (l10n?.mv_tomorrow_anchor_notice(
+                                tomorrowSlot.headlineFa,
+                                toPersianDigits(tomorrowSlot.plannedTime ?? ''),
+                              ) ??
+                              'Tomorrow: ${tomorrowSlot.headlineFa}'),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: metrics.spaceMd),
+            const SizedBox(height: 16),
           ],
 
           // 2. Readiness Bar (tap to open quick checkin)
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
-            child: MvReadinessBar(
-              decision: readinessDecision,
-              onTap: () {
-                MvQuickCheckinSheet.show(
-                  context: context,
-                  dateIso: todaySlot.dateIso,
-                  onSave: onCheckinSaved,
-                );
-              },
-            ),
+          MvReadinessBar(
+            decision: readinessDecision,
+            onTap: () {
+              MvQuickCheckinSheet.show(
+                context: context,
+                dateIso: todaySlot.dateIso,
+                onSave: onCheckinSaved,
+              );
+            },
           ),
-          SizedBox(height: metrics.spaceLg),
+          const SizedBox(height: 16),
 
           // 3. Hero Card (Max 1 primary and 1 secondary action, AC-02)
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
-            child: MvHeroCard(
-              slot: todaySlot,
-              readinessTier: readinessDecision.value,
-              isInProgress: isSessionInProgress,
-              animationWidget: MvAnimationStage(
-                height: 180,
-                exerciseId:
-                    heroAnimationAsset ??
-                    (todaySlot.focusCodes.isNotEmpty
-                        ? 'bo009_squats'
-                        : 'bo001_side_leg_lift'),
-                animationAsset: heroAnimationAsset,
-              ),
-              onStart: onStartSession,
-              onContinue: onContinueSession,
-              onCantToday: () {
-                MvCantTodaySheet.show(
-                  context: context,
-                  slot: todaySlot,
-                  onMinimalDose: () {
-                    final adapted = todaySlot.copyWith(
-                      targetMinutes: 10,
-                      headlineFa: l10n?.mv_cant_today_option_minimal_title ?? 'Minimal Effective Dose',
-                      coachNoteFa: l10n?.mv_cant_today_option_minimal_desc ?? 'Short and light session.',
-                    );
-                    onSlotUpdated(adapted);
-                  },
-                  onMoveToTomorrow: () {
-                    final dt = MvCalendar.parseDateIso(todaySlot.dateIso);
-                    final tomorrowIso = MvCalendar.formatDateIso(
-                      dt.add(const Duration(days: 1)),
-                    );
-                    final moved = todaySlot.copyWith(
-                      status: MvSlotStatus.moved,
-                      movedToDateIso: tomorrowIso,
-                    );
-                    onSlotUpdated(moved);
-                  },
-                  onChangeToStretch: () {
-                    final stretch = todaySlot.copyWith(
-                      slotType: MvSlotType.mobility,
-                      targetMinutes: 10,
-                      headlineFa: l10n?.mv_cant_today_option_stretch_title ?? 'Stretch & Recovery',
-                    );
-                    onSlotUpdated(stretch);
-                  },
-                  onSkipEntirely: () {
-                    final skipped = todaySlot.copyWith(
-                      status: MvSlotStatus.skipped,
-                    );
-                    onSlotUpdated(skipped);
-                  },
-                );
-              },
+          MvHeroCard(
+            slot: todaySlot,
+            readinessTier: readinessDecision.value,
+            isInProgress: isSessionInProgress,
+            animationWidget: MvAnimationStage(
+              height: 180,
+              exerciseId:
+                  heroAnimationAsset ??
+                  (todaySlot.focusCodes.isNotEmpty
+                      ? 'bo009_squats'
+                      : 'bo001_side_leg_lift'),
+              animationAsset: heroAnimationAsset,
             ),
+            onStart: onStartSession,
+            onContinue: onContinueSession,
+            onCantToday: () {
+              MvCantTodaySheet.show(
+                context: context,
+                slot: todaySlot,
+                onMinimalDose: () {
+                  final adapted = todaySlot.copyWith(
+                    targetMinutes: 10,
+                    headlineFa: l10n?.mv_cant_today_option_minimal_title ?? 'Minimal Effective Dose',
+                    coachNoteFa: l10n?.mv_cant_today_option_minimal_desc ?? 'Short and light session.',
+                  );
+                  onSlotUpdated(adapted);
+                },
+                onMoveToTomorrow: () {
+                  final dt = MvCalendar.parseDateIso(todaySlot.dateIso);
+                  final tomorrowIso = MvCalendar.formatDateIso(
+                    dt.add(const Duration(days: 1)),
+                  );
+                  final moved = todaySlot.copyWith(
+                    status: MvSlotStatus.moved,
+                    movedToDateIso: tomorrowIso,
+                  );
+                  onSlotUpdated(moved);
+                },
+                onChangeToStretch: () {
+                  final stretch = todaySlot.copyWith(
+                    slotType: MvSlotType.mobility,
+                    targetMinutes: 10,
+                    headlineFa: l10n?.mv_cant_today_option_stretch_title ?? 'Stretch & Recovery',
+                  );
+                  onSlotUpdated(stretch);
+                },
+                onSkipEntirely: () {
+                  final skipped = todaySlot.copyWith(
+                    status: MvSlotStatus.skipped,
+                  );
+                  onSlotUpdated(skipped);
+                },
+              );
+            },
           ),
-          SizedBox(height: metrics.spaceLg),
+          const SizedBox(height: 16),
 
           // 4. Quick Activity Log (Two-tap action, AC-06, N-01)
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
-            child: MvQuickLogRow(
-              onQuickWalk: () => onQuickLogSaved(
-                MvKindCodes.walking,
-                30,
-                MvSessionFeeling.good,
-                null,
-              ),
-              onQuickStretch: () => onQuickLogSaved(
-                MvKindCodes.stretching,
-                15,
-                MvSessionFeeling.easy,
-                null,
-              ),
-              onCustomLog: () {
-                MvQuickLogSheet.show(
-                  context: context,
-                  initialKindCode: MvKindCodes.running,
-                  initialDuration: 30,
-                  kindUseCase: kindUseCase,
-                  onSave: (kindCode, dur, feel, note) =>
-                      onQuickLogSaved(kindCode, dur, feel, note),
-                );
-              },
+          MvQuickLogRow(
+            onQuickWalk: () => onQuickLogSaved(
+              MvKindCodes.walking,
+              30,
+              MvSessionFeeling.good,
+              null,
             ),
+            onQuickStretch: () => onQuickLogSaved(
+              MvKindCodes.stretching,
+              15,
+              MvSessionFeeling.easy,
+              null,
+            ),
+            onCustomLog: () {
+              MvQuickLogSheet.show(
+                context: context,
+                initialKindCode: MvKindCodes.running,
+                initialDuration: 30,
+                kindUseCase: kindUseCase,
+                onSave: (kindCode, dur, feel, note) =>
+                    onQuickLogSaved(kindCode, dur, feel, note),
+              );
+            },
           ),
-          SizedBox(height: metrics.spaceLg),
+          const SizedBox(height: 16),
 
           // 5. Weekly MET-min Budget Ring (AC-07, F-22)
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
-            child: MvMetricRing(
-              currentMet: budgetProgress.currentMetMinutes.toDouble(),
-              targetMet: budgetProgress.targetMetMinutes.toDouble(),
-              activeDays: budgetProgress.currentActiveDays,
-              targetDays: budgetProgress.targetActiveDays,
-            ),
+          MvMetricRing(
+            currentMet: budgetProgress.currentMetMinutes.toDouble(),
+            targetMet: budgetProgress.targetMetMinutes.toDouble(),
+            activeDays: budgetProgress.currentActiveDays,
+            targetDays: budgetProgress.targetActiveDays,
           ),
-          SizedBox(height: metrics.spaceLg),
+          const SizedBox(height: 16),
 
           // 6. Anatomical Body Map (AC-08, F-21)
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
-            child: MvBodyMap(
-              distribution: bodyMapDistribution,
-              onSuggestedActionTap: () {
-                // Focus neglected group in next planned session
-              },
-            ),
+          MvBodyMap(
+            distribution: bodyMapDistribution,
+            onSuggestedActionTap: () {
+              // Focus neglected group in next planned session
+            },
           ),
           SizedBox(height: metrics.spaceXxl),
         ],

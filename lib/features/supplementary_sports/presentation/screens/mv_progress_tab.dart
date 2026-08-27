@@ -39,37 +39,40 @@ class MvProgressTab extends StatelessWidget {
     this.bodyMapDistribution,
     this.hasEnoughDataForTrends = false,
     this.onCreateCampaign,
+    this.topPadding = 16.0,
   });
+
+  final double topPadding;
 
   @override
   Widget build(BuildContext context) {
     final metrics = context.metrics;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(metrics.spaceLg),
+      padding: EdgeInsets.fromLTRB(10, topPadding, 10, 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // 1. کارت «سلامت این هفته» (WHO Dual Currency Budget)
           _buildWeeklyHealthCard(context),
-          SizedBox(height: metrics.spaceLg),
+          const SizedBox(height: 16),
 
           // 2. کارت «بار تمرینی» (ACWR Training Load)
           _buildTrainingLoadCard(context),
-          SizedBox(height: metrics.spaceLg),
+          const SizedBox(height: 16),
 
           // 3. کارت «توزیع ورزش‌ها» (Monthly Kind Distribution)
           _buildKindDistributionCard(context),
-          SizedBox(height: metrics.spaceLg),
+          const SizedBox(height: 16),
 
           // 4. کارت «رکوردها به تفکیک نوع» (Partitioned PRs)
           _buildPersonalRecordsCard(context),
-          SizedBox(height: metrics.spaceLg),
+          const SizedBox(height: 16),
 
           // 5. بینش‌های پیشرفت بر مبنای قوانین مشخص (InsightEngine / S8-T8)
           if (insights.isNotEmpty) ...[
             _buildInsightsSection(context, insights),
-            SizedBox(height: metrics.spaceLg),
+            const SizedBox(height: 16),
           ],
 
           // 6. دورهٔ هدف‌دار (Active or Inactive CTA) (CampaignEngine / S8-T9)
@@ -78,12 +81,12 @@ class MvProgressTab extends StatelessWidget {
           ] else ...[
             _buildInactiveCampaignCard(context),
           ],
-          SizedBox(height: metrics.spaceLg),
+          const SizedBox(height: 16),
 
           // 7. هفته‌های فعال پیوسته (Hero streak)
           if (continuousActiveWeeks != null && continuousActiveWeeks! > 0) ...[
             _buildStreakHero(context, continuousActiveWeeks!),
-            SizedBox(height: metrics.spaceLg),
+            const SizedBox(height: 16),
           ],
 
           SizedBox(height: metrics.spaceXxl),

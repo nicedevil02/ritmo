@@ -1,13 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/migration/migration_runner.dart';
+import 'package:ritmo/core/database/schema/tables/ai_tables.dart';
+import 'package:ritmo/core/database/schema/tables/assistant_tables.dart';
 import 'package:ritmo/core/database/schema/tables/course_tables.dart';
 import 'package:ritmo/core/database/schema/tables/cycle_tables.dart';
+import 'package:ritmo/core/database/schema/tables/day_plan_tables.dart';
 import 'package:ritmo/core/database/schema/tables/goal_tables.dart';
 import 'package:ritmo/core/database/schema/tables/health_tables.dart';
 import 'package:ritmo/core/database/schema/tables/konkur_tables.dart';
+import 'package:ritmo/core/database/schema/tables/movement_tables.dart';
+import 'package:ritmo/core/database/schema/tables/note_tables.dart';
 import 'package:ritmo/core/database/schema/tables/routine_tables.dart';
+import 'package:ritmo/core/database/schema/tables/sleep_tables.dart';
 import 'package:ritmo/core/database/schema/tables/sports_tables.dart';
+import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
 import 'package:ritmo/core/database/schema/tables/system_tables.dart';
 import 'package:ritmo/core/database/schema/tables/worship_tables.dart';
 import 'package:ritmo/core/database/schema/tables/zone_tables.dart';
@@ -16,7 +23,7 @@ import 'package:sqflite/sqflite.dart';
 
 class RecordingDatabase implements Database {
   final Map<String, Set<String>> tables;
-  RecordingDatabase({Map<String, Set<String>>? tables}) : this.tables = tables ?? {};
+  RecordingDatabase({Map<String, Set<String>>? tables}) : tables = tables ?? {};
 
   void _parseSql(String sql) {
     // Strip single line comments --
@@ -206,6 +213,13 @@ Future<void> _createV1Tables(Database db) async {
   await KonkurTables.create(db);
   await SportsTables.create(db);
   await SystemTables.create(db);
+  await SupplementarySportsTables.create(db);
+  await AssistantTables.create(db);
+  await AiTables.create(db);
+  await DayPlanTables.create(db);
+  await NoteTables.create(db);
+  await SleepTables.create(db);
+  await MovementTables.create(db);
 }
 
 void main() {

@@ -17,7 +17,10 @@ class KonkurTables {
           examQuestionCount INTEGER NOT NULL DEFAULT 0,
           orderIndex INTEGER NOT NULL DEFAULT 0,
           colorHex TEXT,
-          isPreset INTEGER NOT NULL DEFAULT 0
+          isPreset INTEGER NOT NULL DEFAULT 0,
+          origin TEXT NOT NULL DEFAULT 'USER',
+          emoji TEXT,
+          weeklyTargetMinutes INTEGER NOT NULL DEFAULT 0
       );
     ''');
 
@@ -48,6 +51,7 @@ class KonkurTables {
           reviewTargetMinutes INTEGER NOT NULL DEFAULT 0,
           chapter TEXT,
           reviewCount INTEGER NOT NULL DEFAULT 0,
+          origin TEXT NOT NULL DEFAULT 'USER',
           FOREIGN KEY(subjectId) REFERENCES konkur_subjects(id) ON DELETE CASCADE,
           FOREIGN KEY(parentTopicId) REFERENCES konkur_topics(id) ON DELETE CASCADE
       );
@@ -100,9 +104,14 @@ class KonkurTables {
         testsCorrect INTEGER NOT NULL DEFAULT 0,
         testsWrong INTEGER NOT NULL DEFAULT 0,
         testsBlank INTEGER NOT NULL DEFAULT 0,
+        testsEmpty INTEGER NOT NULL DEFAULT 0,
         note TEXT,
         sessionOutcome TEXT,
-        createdAt INTEGER NOT NULL
+        createdAt INTEGER NOT NULL,
+        source TEXT NOT NULL DEFAULT 'MANUAL',
+        startedAtMs INTEGER,
+        endedAtMs INTEGER,
+        quality INTEGER
       );
     ''');
     await db.execute('CREATE INDEX IF NOT EXISTS index_konkur_sessions_dateIso ON konkur_study_sessions(dateIso);');
@@ -152,16 +161,127 @@ class KonkurTables {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_konkur_plans_status ON konkur_plans(status);',
     );
+
+    // study_deadlines table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS study_deadlines (
+          id TEXT PRIMARY KEY,
+          subjectId TEXT,
+          title TEXT NOT NULL,
+          deadlineType TEXT NOT NULL DEFAULT 'EXAM',
+          dueDateIso TEXT NOT NULL,
+          dueTime TEXT,
+          priority TEXT NOT NULL DEFAULT 'MEDIUM',
+          isCompleted INTEGER NOT NULL DEFAULT 0,
+          weight REAL NOT NULL DEFAULT 1.0,
+          note TEXT,
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER NOT NULL,
+          FOREIGN KEY(subjectId) REFERENCES konkur_subjects(id) ON DELETE CASCADE
+      );
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_study_deadlines_due ON study_deadlines(dueDateIso, isCompleted);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_study_deadlines_subject ON study_deadlines(subjectId);',
+    );
   }
 
   /// Self-healing schema validation to ensure konkur plan tables and topic columns exist.
   static Future<void> ensureSchema(DatabaseExecutor db) async {
+    // 1. konkur_subjects missing columns
+    await SchemaManager.safeAddColumn(
+      db,
+      'konkur_subjects',
+      'origin',
+      "TEXT NOT NULL DEFAULT 'USER'",
+    );
+    await SchemaManager.safeAddColumn(
+      db,
+      'konkur_subjects',
+      'emoji',
+      'TEXT',
+    );
+    await SchemaManager.safeAddColumn(
+      db,
+      'konkur_subjects',
+      'weeklyTargetMinutes',
+      'INTEGER NOT NULL DEFAULT 0',
+    );
+
+    // 2. konkur_topics missing columns
+    await SchemaManager.safeAddColumn(
+      db,
+      'konkur_topics',
+      'origin',
+      "TEXT NOT NULL DEFAULT 'USER'",
+    );
     await SchemaManager.safeAddColumn(
       db,
       'konkur_topics',
       'reviewCount',
       'INTEGER NOT NULL DEFAULT 0',
     );
+
+    // 3. konkur_study_sessions missing columns
+    await SchemaManager.safeAddColumn(
+      db,
+      'konkur_study_sessions',
+      'source',
+      "TEXT NOT NULL DEFAULT 'MANUAL'",
+    );
+    await SchemaManager.safeAddColumn(
+      db,
+      'konkur_study_sessions',
+      'startedAtMs',
+      'INTEGER',
+    );
+    await SchemaManager.safeAddColumn(
+      db,
+      'konkur_study_sessions',
+      'endedAtMs',
+      'INTEGER',
+    );
+    await SchemaManager.safeAddColumn(
+      db,
+      'konkur_study_sessions',
+      'quality',
+      'INTEGER',
+    );
+    await SchemaManager.safeAddColumn(
+      db,
+      'konkur_study_sessions',
+      'testsEmpty',
+      'INTEGER NOT NULL DEFAULT 0',
+    );
+
+    // 4. study_deadlines table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS study_deadlines (
+          id TEXT PRIMARY KEY,
+          subjectId TEXT,
+          title TEXT NOT NULL,
+          deadlineType TEXT NOT NULL DEFAULT 'EXAM',
+          dueDateIso TEXT NOT NULL,
+          dueTime TEXT,
+          priority TEXT NOT NULL DEFAULT 'MEDIUM',
+          isCompleted INTEGER NOT NULL DEFAULT 0,
+          weight REAL NOT NULL DEFAULT 1.0,
+          note TEXT,
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER NOT NULL,
+          FOREIGN KEY(subjectId) REFERENCES konkur_subjects(id) ON DELETE CASCADE
+      );
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_study_deadlines_due ON study_deadlines(dueDateIso, isCompleted);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_study_deadlines_subject ON study_deadlines(subjectId);',
+    );
+
+    // 5. konkur_plans table
     await db.execute('''
       CREATE TABLE IF NOT EXISTS konkur_plans (
         id TEXT PRIMARY KEY,
@@ -180,5 +300,15 @@ class KonkurTables {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_konkur_plans_status ON konkur_plans(status);',
     );
+
+    // 6. Data backfill: if origin is null or default, update preset subjects/topics
+    try {
+      await db.execute(
+        "UPDATE konkur_subjects SET origin = 'KONKUR_PRESET' WHERE isPreset = 1 AND (origin IS NULL OR origin = 'USER');",
+      );
+      await db.execute(
+        "UPDATE konkur_topics SET origin = 'KONKUR_PRESET' WHERE subjectId IN (SELECT id FROM konkur_subjects WHERE isPreset = 1) AND (origin IS NULL OR origin = 'USER');",
+      );
+    } catch (_) {}
   }
 }

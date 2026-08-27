@@ -979,6 +979,13 @@ class _AgendaRowState extends State<_AgendaRow> {
       widget.item.domain == AgendaDomain.task ||
       widget.item.domain == AgendaDomain.goalStep;
 
+  /// Items that can be marked done/completed via swipe:
+  /// Non-actionable informational items (like cycle actual period status, events, reflections) cannot be "completed".
+  bool get _canComplete =>
+      widget.item.kind != AgendaItemKind.event &&
+      (widget.item.domain != AgendaDomain.cycle ||
+          widget.item.kind == AgendaItemKind.reminder);
+
   bool get _isDone =>
       widget.item.completion == AgendaCompletion.done ||
       widget.item.completion == AgendaCompletion.skipped;
@@ -1091,12 +1098,18 @@ class _AgendaRowState extends State<_AgendaRow> {
       ),
     );
 
+    if (!_canComplete && !_canPostpone) {
+      return row;
+    }
+
     // K23 — wrap in Dismissible for swipe gestures
     return Dismissible(
       key: ValueKey(item.id),
-      direction: _canPostpone
+      direction: _canPostpone && _canComplete
           ? DismissDirection.horizontal
-          : DismissDirection.startToEnd,
+          : (_canPostpone
+              ? DismissDirection.endToStart
+              : DismissDirection.startToEnd),
       // Left→right: mark done (all domains)
       background: _SwipeBackground(
         color: colors.success,

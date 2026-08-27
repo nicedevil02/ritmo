@@ -43,6 +43,12 @@ class DayAgendaSnapshotBuilder {
     var remaining = 0;
 
     for (final item in items) {
+      if (item.kind == AgendaItemKind.event ||
+          (item.domain == AgendaDomain.cycle &&
+              item.kind != AgendaItemKind.reminder)) {
+        // Contextual/informational items do not count towards remaining actionable tasks
+        continue;
+      }
       if (item.isCompleted) {
         completed++;
       } else {

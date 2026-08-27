@@ -18,6 +18,7 @@ class CycleAgendaSource implements AgendaSource {
   final bool isPregnancy;
   final List<int> reminderLeadDays;
   final bool consentReminders;
+  final Set<String> acknowledgedIds;
 
   const CycleAgendaSource({
     required this.cycleOutput,
@@ -26,6 +27,7 @@ class CycleAgendaSource implements AgendaSource {
     this.isPregnancy = false,
     this.reminderLeadDays = const [3, 1],
     this.consentReminders = true,
+    this.acknowledgedIds = const {},
   });
 
   @override
@@ -61,14 +63,30 @@ class CycleAgendaSource implements AgendaSource {
         isPregnancy: false,
         reminderLeadDays: [3, 1],
         consentReminders: false,
+        acknowledgedIds: {},
       );
     }
 
     CycleEngineOutput? cycleOutput;
     List<Map<String, dynamic>> periodRows = const [];
+    Set<String> acknowledgedIds = const {};
 
     try {
       periodRows = await db.query('cycle_periods', orderBy: 'startDate ASC');
+
+      try {
+        final acks = await db.query(
+          'cycle_confirmations',
+          columns: ['id'],
+          where: "kind = 'REMINDER_ACK' AND answer = 'ACKNOWLEDGED'",
+        );
+        acknowledgedIds = acks
+            .map((r) => (r['id'] as String?)?.replaceFirst('ack_', ''))
+            .whereType<String>()
+            .toSet();
+      } catch (e) {
+        RitmoLog.debug('CycleAgendaSource', 'No cycle_confirmations table or query failed: $e');
+      }
 
       try {
         cycleOutput = await RitmoEngineBus.instance
@@ -106,6 +124,7 @@ class CycleAgendaSource implements AgendaSource {
       isPregnancy: isPregnant,
       reminderLeadDays: reminderLeadDays,
       consentReminders: consentReminders,
+      acknowledgedIds: acknowledgedIds,
     );
   }
 
@@ -119,7 +138,7 @@ class CycleAgendaSource implements AgendaSource {
     final day = CycleDateContract.cleanDate(date);
     final items = <AgendaItem>[];
 
-    // 1. Check actual recorded/past periods from cycle_periods (روزهای قاعدگی واقعی)
+    // 1. Check actual recorded/past periods from cycle_periods (نشانگر وضعیت زیستی روز — Event/Contextual)
     for (final row in periodRows) {
       final start = CycleDateContract.parseDayKey(row['startDate']?.toString());
       if (start == null) continue;
@@ -136,11 +155,13 @@ class CycleAgendaSource implements AgendaSource {
                 ctx.dateStr,
               ),
               domain: AgendaDomain.cycle,
+              kind: AgendaItemKind.event,
+              itemType: AgendaItemType.optional,
               sourceId: '${ctx.dateStr}_actual',
               title: 'دوره قاعدگی (روز ${toPersianDigits(dayNum)})',
               dateStr: ctx.dateStr,
               category: Category.personal,
-              priority: 0.85,
+              priority: 0.2,
               deepLink: AgendaDeepLink(
                 domain: AgendaDomain.cycle,
                 targetId: ctx.dateStr,
@@ -162,11 +183,13 @@ class CycleAgendaSource implements AgendaSource {
                 ctx.dateStr,
               ),
               domain: AgendaDomain.cycle,
+              kind: AgendaItemKind.event,
+              itemType: AgendaItemType.optional,
               sourceId: '${ctx.dateStr}_actual_open',
               title: 'دوره قاعدگی (روز ${toPersianDigits(dayNum)})',
               dateStr: ctx.dateStr,
               category: Category.personal,
-              priority: 0.85,
+              priority: 0.2,
               deepLink: AgendaDeepLink(
                 domain: AgendaDomain.cycle,
                 targetId: ctx.dateStr,
@@ -195,16 +218,21 @@ class CycleAgendaSource implements AgendaSource {
           if (reminderDate == day) {
             final leadText =
                 lead == 1 ? '۱ روز' : '${toPersianDigits(lead)} روز';
+            final sourceId = '${ctx.dateStr}_lead_period_$lead';
+            final isAck = acknowledgedIds.contains(sourceId);
+
             items.add(
               AgendaItem(
                 id: buildAgendaItemId(
                   AgendaDomain.cycle,
-                  '${ctx.dateStr}_lead_period_$lead',
+                  sourceId,
                   ctx.dateStr,
                 ),
                 domain: AgendaDomain.cycle,
                 kind: AgendaItemKind.reminder,
-                sourceId: '${ctx.dateStr}_lead_period_$lead',
+                completion:
+                    isAck ? AgendaCompletion.done : AgendaCompletion.none,
+                sourceId: sourceId,
                 title: 'یادآوری: $leadText تا شروع احتمالی قاعدگی',
                 dateStr: ctx.dateStr,
                 category: Category.personal,
@@ -225,16 +253,21 @@ class CycleAgendaSource implements AgendaSource {
         final cleanPmsDate = CycleDateContract.cleanDate(pmsStart);
         final pmsReminderDate = cleanPmsDate.subtract(const Duration(days: 1));
         if (pmsReminderDate == day) {
+          final sourceId = '${ctx.dateStr}_lead_pms';
+          final isAck = acknowledgedIds.contains(sourceId);
+
           items.add(
             AgendaItem(
               id: buildAgendaItemId(
                 AgendaDomain.cycle,
-                '${ctx.dateStr}_lead_pms',
+                sourceId,
                 ctx.dateStr,
               ),
               domain: AgendaDomain.cycle,
               kind: AgendaItemKind.reminder,
-              sourceId: '${ctx.dateStr}_lead_pms',
+              completion:
+                  isAck ? AgendaCompletion.done : AgendaCompletion.none,
+              sourceId: sourceId,
               title: 'یادآوری: احتمال شروع علائم PMS از فردا',
               dateStr: ctx.dateStr,
               category: Category.personal,

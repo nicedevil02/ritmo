@@ -176,5 +176,95 @@ void main() {
         expect(items.isEmpty, isTrue);
       },
     );
+
+    test(
+      'C-36: Actual period days have AgendaItemKind.event and priority 0.2',
+      () async {
+        await db.insert('cycle_periods', {
+          'id': 'p_actual_1',
+          'startDate': '2026-08-10',
+          'endDate': '2026-08-15',
+          'createdAt': 1000,
+          'updatedAt': 1000,
+        });
+
+        final source = await CycleAgendaSource.load(
+          db,
+          {
+            'user_gender': 'female',
+            'module_cycle_enabled': 'true',
+            'show_cycle_in_calendar': 'true',
+          },
+          true,
+        );
+
+        final ctx = AgendaDayContext(
+          date: DateTime(2026, 8, 10),
+          dateStr: '2026-08-10',
+          isToday: false,
+          prayerTimes: const {},
+          options: const AgendaQueryOptions(),
+        );
+
+        final items = source.itemsForDate(ctx);
+        expect(items.length, equals(1));
+        expect(items.first.kind, equals(AgendaItemKind.event));
+        expect(items.first.title.contains('دوره قاعدگی (روز ۱)'), isTrue);
+      },
+    );
+
+    test(
+      'C-36: Acknowledged cycle reminder returns AgendaCompletion.done',
+      () async {
+        // Insert acknowledgement in cycle_confirmations
+        await db.insert('cycle_confirmations', {
+          'id': 'ack_2026-08-17_lead_period_3',
+          'kind': 'REMINDER_ACK',
+          'targetDate': '2026-08-17',
+          'answer': 'ACKNOWLEDGED',
+          'createdAt': 1000,
+          'updatedAt': 1000,
+        });
+
+        final engineOutput = CycleEngineOutput(
+          currentPhase: CyclePhase.luteal,
+          dayOfCycle: 25,
+          dayOfPeriod: 0,
+          nextPeriodPrediction: DateTime(2026, 8, 20),
+          nextPeriodWindowStart: DateTime(2026, 8, 18),
+          nextPeriodWindowEnd: DateTime(2026, 8, 22),
+          pmsWindowStart: DateTime(2026, 8, 16),
+          pmsWindowEnd: DateTime(2026, 8, 19),
+          isIrregular: false,
+          stats: CycleStats(avgCycleLength: 28, avgPeriodDuration: 6),
+          dataMaturity: 'HIGH',
+          hasData: true,
+          trendPoints: const [],
+        );
+
+        final source = CycleAgendaSource(
+          cycleOutput: engineOutput,
+          cycleAllowed: true,
+          periodRows: const [],
+          isPregnancy: false,
+          reminderLeadDays: const [3, 1],
+          consentReminders: true,
+          acknowledgedIds: {'2026-08-17_lead_period_3'},
+        );
+
+        final ctx = AgendaDayContext(
+          date: DateTime(2026, 8, 17),
+          dateStr: '2026-08-17',
+          isToday: false,
+          prayerTimes: const {},
+          options: const AgendaQueryOptions(),
+        );
+
+        final items = source.itemsForDate(ctx);
+        expect(items.length, equals(1));
+        expect(items.first.completion, equals(AgendaCompletion.done));
+        expect(items.first.isCompleted, isTrue);
+      },
+    );
   });
 }

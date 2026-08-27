@@ -304,6 +304,38 @@ class AgendaActionHandler {
       return;
     }
 
+    if (item.domain == AgendaDomain.cycle) {
+      final db = await DatabaseHelper.instance.database;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      if (isDone) {
+        await db.insert(
+          'cycle_confirmations',
+          {
+            'id': 'ack_${item.sourceId}',
+            'kind': 'REMINDER_ACK',
+            'targetDate': item.dateStr,
+            'answer': 'ACKNOWLEDGED',
+            'createdAt': nowMs,
+            'updatedAt': nowMs,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      } else {
+        await db.delete(
+          'cycle_confirmations',
+          where: 'id = ?',
+          whereArgs: ['ack_${item.sourceId}'],
+        );
+      }
+
+      _invalidateAndNotify(item.dateStr, 'CycleReminderAcknowledged', {
+        'sourceId': item.sourceId,
+        'isDone': isDone,
+        'date': item.dateStr,
+      });
+      return;
+    }
+
     final db = await DatabaseHelper.instance.database;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 

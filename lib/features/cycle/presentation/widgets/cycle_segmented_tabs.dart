@@ -29,7 +29,7 @@ class CycleSegmentedTabs extends StatelessWidget {
     final tabs = <_TabItem>[
       const _TabItem(title: 'داشبورد', icon: CupertinoIcons.square_grid_2x2_fill),
       const _TabItem(title: 'داده‌ها', icon: CupertinoIcons.chart_bar_alt_fill),
-      const _TabItem(title: 'همه دستگیره‌ها', icon: CupertinoIcons.plus),
+      const _TabItem(title: 'همبستگی‌ها', icon: CupertinoIcons.sparkles),
       if (showWorship)
         const _TabItem(title: 'روزه قضا', icon: CupertinoIcons.bookmark_fill),
     ];

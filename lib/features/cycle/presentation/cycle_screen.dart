@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
@@ -91,6 +92,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   CycleAdaptiveAdvice? _adaptiveAdvice;
   Jalali _calendarMonth = Jalali.fromDateTime(CycleClock.now);
   final GlobalKey _calendarKey = GlobalKey();
+  bool _isTabsVisible = true;
 
   @override
   void initState() {
@@ -886,137 +888,137 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             ),
           ),
           SafeArea(
-            child: NestedScrollView(
-              headerSliverBuilder: (ctx, innerBoxIsScrolled) => [
-                SliverAppBar(
-                  floating: true,
-                  pinned: true,
-                  snap: false,
-                  expandedHeight: isPregnancyActive ? 56.0 : 120.0,
-                  toolbarHeight: 56.0,
-                  elevation: 0,
-                  backgroundColor: Colors.transparent,
-                  automaticallyImplyLeading: false,
-                  flexibleSpace: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final currentHeight = constraints.maxHeight;
-                      final topPadding = MediaQuery.paddingOf(context).top;
-                      final availableHeight = (currentHeight - topPadding).clamp(0.0, 120.0);
-                      final collapseRatio = ((120.0 - availableHeight) / (120.0 - 56.0)).clamp(0.0, 1.0);
-                      final tabOpacity = (1.0 - (collapseRatio * 1.8)).clamp(0.0, 1.0);
-
-                      return ClipRect(
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? colors.background.withValues(alpha: 0.85)
-                                  : const Color(0xFFF3F5F8).withValues(alpha: 0.90),
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: colors.border.withValues(alpha: 0.25),
-                                  width: 0.8,
-                                ),
-                              ),
-                            ),
-                            child: SafeArea(
-                              bottom: false,
-                              child: Stack(
-                                clipBehavior: Clip.hardEdge,
-                                children: [
-                                  // 1. Bottom Row: Tabs (Positioned right below top row with smooth slide-up effect)
-                                  if (!isPregnancyActive && tabOpacity > 0.01)
-                                    Positioned(
-                                      top: 56.0 - (collapseRatio * 32.0),
-                                      left: 10,
-                                      right: 10,
-                                      height: 48.0,
-                                      child: Opacity(
-                                        opacity: tabOpacity,
-                                        child: IgnorePointer(
-                                          ignoring: tabOpacity < 0.3,
-                                          child: Directionality(
-                                            textDirection: TextDirection.rtl,
-                                            child: CycleSegmentedTabs(
-                                              activeTab: _activeTab,
-                                              onTabChanged: (index) =>
-                                                  setState(() => _activeTab = index),
-                                              settings: _settings,
-                                              activeThemeColor:
-                                                  _getActivePhaseColor(context),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                  // 2. Top Row: Back + Title + Sparkles + Settings (Always pinned at top)
-                                  Positioned(
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    height: 56.0,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                                      child: Row(
-                                        children: [
-                                          if (Navigator.canPop(context))
-                                            IconButton(
-                                              icon: Icon(
-                                                CupertinoIcons.arrow_right,
-                                                color: isDark
-                                                    ? Colors.white
-                                                    : const Color(0xFF1D2129),
-                                                size: 22,
-                                              ),
-                                              onPressed: () => Navigator.pop(context),
-                                            )
-                                          else
-                                            const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              isPregnancyActive ? 'بارداری' : 'چرخه بدن',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w900,
-                                                fontSize: 20,
-                                                letterSpacing: -0.5,
-                                                color: isDark
-                                                    ? Colors.white
-                                                    : const Color(0xFF1D2129),
-                                              ),
-                                            ),
-                                          ),
-                                          _buildHeaderActionButton(
-                                            icon: CupertinoIcons.sparkles,
-                                            iconColor: _getActivePhaseColor(context),
-                                            isAiButton: true,
-                                            isDark: isDark,
-                                            onTap: _openAiAssistant,
-                                          ),
-                                          _buildHeaderActionButton(
-                                            icon: CupertinoIcons.gear_alt_fill,
-                                            iconColor: isDark
-                                                ? const Color(0xFF9096A2)
-                                                : const Color(0xFF6B7280),
-                                            isDark: isDark,
-                                            onTap: _openSettingsSheet,
-                                          ),
-                                          const SizedBox(width: 6),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                if (notification.metrics.axis == Axis.vertical) {
+                  if (notification.metrics.pixels <= 10) {
+                    if (!_isTabsVisible) {
+                      setState(() => _isTabsVisible = true);
+                    }
+                  } else if (notification is UserScrollNotification) {
+                    if (notification.direction == ScrollDirection.reverse) {
+                      // Scrolling down -> hide tabs
+                      if (_isTabsVisible) {
+                        setState(() => _isTabsVisible = false);
+                      }
+                    } else if (notification.direction == ScrollDirection.forward) {
+                      // Scrolling up -> show tabs immediately at any scroll offset
+                      if (!_isTabsVisible) {
+                        setState(() => _isTabsVisible = true);
+                      }
+                    }
+                  }
+                }
+                return false;
+              },
+              child: NestedScrollView(
+                headerSliverBuilder: (ctx, innerBoxIsScrolled) => [
+                  SliverAppBar(
+                    floating: false,
+                    pinned: true,
+                    elevation: 0,
+                    backgroundColor: isDark
+                        ? colors.background.withValues(alpha: 0.85)
+                        : const Color(0xFFF3F5F8).withValues(alpha: 0.90),
+                    automaticallyImplyLeading: false,
+                    titleSpacing: 0,
+                    flexibleSpace: ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            border: Border(
+                              bottom: BorderSide(
+                                color: colors.border.withValues(alpha: 0.25),
+                                width: 0.8,
                               ),
                             ),
                           ),
                         ),
-                      );
-                    },
+                      ),
+                    ),
+                    leading: Navigator.canPop(context)
+                        ? IconButton(
+                            icon: Icon(
+                              CupertinoIcons.arrow_right,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF1D2129),
+                              size: 22,
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                          )
+                        : const SizedBox(width: 12),
+                    title: Text(
+                      isPregnancyActive ? 'بارداری' : 'چرخه بدن',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 20,
+                        letterSpacing: -0.5,
+                        color: isDark ? Colors.white : const Color(0xFF1D2129),
+                      ),
+                    ),
+                    actions: [
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.sparkles,
+                        iconColor: _getActivePhaseColor(context),
+                        isAiButton: true,
+                        isDark: isDark,
+                        onTap: _openAiAssistant,
+                      ),
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.gear_alt_fill,
+                        iconColor: isDark
+                            ? const Color(0xFF9096A2)
+                            : const Color(0xFF6B7280),
+                        isDark: isDark,
+                        onTap: _openSettingsSheet,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    bottom: !isPregnancyActive
+                        ? PreferredSize(
+                            preferredSize: Size.fromHeight(
+                              _isTabsVisible ? 56.0 : 0.0,
+                            ),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 260),
+                              curve: Curves.easeInOutCubic,
+                              height: _isTabsVisible ? 56.0 : 0.0,
+                              clipBehavior: Clip.hardEdge,
+                              decoration: const BoxDecoration(),
+                              child: AnimatedOpacity(
+                                duration: const Duration(milliseconds: 200),
+                                opacity: _isTabsVisible ? 1.0 : 0.0,
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    10,
+                                    0,
+                                    10,
+                                    8,
+                                  ),
+                                  child: Align(
+                                    alignment: Alignment.bottomCenter,
+                                    child: Directionality(
+                                      textDirection: TextDirection.rtl,
+                                      child: CycleSegmentedTabs(
+                                        activeTab: _activeTab,
+                                        onTabChanged: (index) =>
+                                            setState(() => _activeTab = index),
+                                        settings: _settings,
+                                        activeThemeColor:
+                                            _getActivePhaseColor(context),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        : null,
                   ),
-                ),
-              ],
+                ],
               body: isPregnancyActive
                   ? (hasValidPregnancyDates
                         ? PregnancyLockGate(
@@ -1272,8 +1274,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     ),
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 }

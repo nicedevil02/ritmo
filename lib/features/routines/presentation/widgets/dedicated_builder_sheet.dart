@@ -46,14 +46,14 @@ class DedicatedBuilderSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final viewInsetsBottom = MediaQuery.viewInsetsOf(context).bottom;
+    final hasKeyboard = viewInsetsBottom > 0;
 
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
         return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.viewInsetsOf(context).bottom,
-          ),
+          padding: EdgeInsets.only(bottom: viewInsetsBottom),
           child: Container(
             constraints: BoxConstraints(
               maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
@@ -65,141 +65,146 @@ class DedicatedBuilderSheet extends StatelessWidget {
                 color: colors.border,
               ),
             ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: Scaffold(
-                  resizeToAvoidBottomInset: true,
-                  backgroundColor: Colors.transparent,
-                  body: Column(
-                    children: [
-                      // Header
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () => Navigator.pop(context),
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: colors.card.withValues(alpha: 0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.close_rounded,
-                                  size: 18,
-                                  color: colors.textPrimary,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    title,
-                                    style: TextStyle(
-                                      fontSize: 14.5,
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.textPrimary,
-                                    ),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Header
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+                          child: Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () => Navigator.pop(context),
+                                child: Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: colors.card.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
                                   ),
-                                  const SizedBox(height: 1),
-                                  Text(
-                                    subtitle,
-                                    style: TextStyle(
-                                      fontSize: 10.5,
-                                      color: colors.textSecondary
-                                          .withValues(alpha: 0.65),
-                                    ),
+                                  child: Icon(
+                                    Icons.close_rounded,
+                                    size: 18,
+                                    color: colors.textPrimary,
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 36),
-                          ],
-                        ),
-                      ),
-                      const Divider(height: 1),
-
-                      // Form Body
-                      Expanded(
-                        child: SingleChildScrollView(
-                          keyboardDismissBehavior:
-                              ScrollViewKeyboardDismissBehavior.onDrag,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 18, vertical: 8),
-                          child: formWidget,
-                        ),
-                      ),
-
-                      // Submit Button
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(
-                            18, 6, 18, 12 + MediaQuery.of(context).padding.bottom),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 46,
-                          child: ElevatedButton(
-                            onPressed: controller.title.trim().isEmpty || controller.isSaving
-                                ? null
-                                : () async {
-                                    final success = await controller.save(
-                                      context,
-                                      allowDelegation: false,
-                                    );
-                                    if (success) {
-                                      if (context.mounted) {
-                                        Navigator.pop(context);
-                                      }
-                                      onSaved();
-                                    }
-                                  },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: colors.primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: controller.isSaving
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'ذخیره $title',
-                                        style: const TextStyle(
-                                          fontSize: 13.5,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      title,
+                                      style: TextStyle(
+                                        fontSize: 14.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: colors.textPrimary,
                                       ),
-                                      const SizedBox(width: 6),
-                                      const Icon(Icons.check_rounded,
-                                          color: Colors.white, size: 16),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(height: 1),
+                                    Text(
+                                      subtitle,
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        color: colors.textSecondary
+                                            .withValues(alpha: 0.65),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 36),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+                        const Divider(height: 1),
+
+                        // Form Body
+                        Flexible(
+                          child: SingleChildScrollView(
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 8),
+                            child: formWidget,
+                          ),
+                        ),
+
+                        // Submit Button
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            18,
+                            6,
+                            18,
+                            hasKeyboard ? 12 : (12 + MediaQuery.of(context).padding.bottom),
+                          ),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 46,
+                            child: ElevatedButton(
+                              onPressed: controller.title.trim().isEmpty || controller.isSaving
+                                  ? null
+                                  : () async {
+                                      final success = await controller.save(
+                                        context,
+                                        allowDelegation: false,
+                                      );
+                                      if (success) {
+                                        if (context.mounted) {
+                                          Navigator.pop(context);
+                                        }
+                                        onSaved();
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colors.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: controller.isSaving
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'ذخیره $title',
+                                          style: const TextStyle(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        const Icon(Icons.check_rounded,
+                                            color: Colors.white, size: 16),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),);
+        );
       },
     );
   }

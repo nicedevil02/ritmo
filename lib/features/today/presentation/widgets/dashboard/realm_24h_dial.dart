@@ -607,14 +607,19 @@ class _NeuDialPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeWidth = stroke
       ..shader = SweepGradient(
-        startAngle: g.start,
-        endAngle: g.start + g.sweep,
+        startAngle: 0.0,
+        endAngle: g.sweep,
         tileMode: TileMode.clamp,
         colors: [
-          Color.lerp(seg.color, Colors.white, 0.45)!,
+          Color.lerp(seg.color, Colors.white, 0.35)!,
           seg.color,
-          Color.lerp(seg.color, Colors.black, 0.28)!,
+          Color.lerp(
+            seg.color,
+            isDarkMode ? Colors.white : const Color(0xFF1E2430),
+            0.15,
+          )!,
         ],
+        stops: const [0.0, 0.5, 1.0],
         transform: GradientRotation(g.start),
       ).createShader(ring);
     canvas.drawArc(ring, g.start, g.sweep, false, body);

@@ -954,6 +954,33 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     const SizedBox(width: 8),
                   ],
                 ),
+                if (!isPregnancyActive)
+                  SliverAppBar(
+                    floating: true,
+                    pinned: false,
+                    snap: true,
+                    primary: false,
+                    automaticallyImplyLeading: false,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    toolbarHeight: 56.0,
+                    flexibleSpace: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      child: Directionality(
+                        textDirection: TextDirection.rtl,
+                        child: CycleSegmentedTabs(
+                          activeTab: _activeTab,
+                          onTabChanged: (index) =>
+                              setState(() => _activeTab = index),
+                          settings: _settings,
+                          activeThemeColor: _getActivePhaseColor(context),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
               body: isPregnancyActive
                   ? (hasValidPregnancyDates
@@ -1048,16 +1075,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       textDirection: TextDirection.rtl,
                       child: ListView(
                         controller: _overviewScrollController,
-                        padding: const EdgeInsets.fromLTRB(10, 16, 10, 80),
+                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 80),
                         children: [
-                          CycleSegmentedTabs(
-                            activeTab: _activeTab,
-                            onTabChanged: (index) =>
-                                setState(() => _activeTab = index),
-                            settings: _settings,
-                            activeThemeColor: _getActivePhaseColor(context),
-                          ),
-                          const SizedBox(height: 16),
                           if (_activeTab == 0) ...[
                             if (_predictionConfidence != null &&
                                 _dataQualityReport != null)

@@ -984,7 +984,6 @@ class _NeumorphicGlowRingPainter extends CustomPainter {
     final radius = (size.width / 2) - 8;
     const strokeWidth = 12.0;
 
-    // 1. Background glass track
     final glassTrackPaint = Paint()
       ..color = isDark
           ? Colors.white.withValues(alpha: 0.06)
@@ -995,48 +994,37 @@ class _NeumorphicGlowRingPainter extends CustomPainter {
 
     if (percentage <= 0) return;
 
-    final sweepAngle = 2 * math.pi * percentage;
-    const startAngle = -math.pi / 2; // 12 o'clock
-
-    // 2. Smooth Segmented Gradient Arc (eliminates Skia SweepGradient wrap-around seam)
-    final segments = (percentage * 60).ceil().clamp(12, 60);
-    final segmentAngle = sweepAngle / segments;
     final rect = Rect.fromCircle(center: center, radius: radius);
+    final sweepAngle = 2 * math.pi * percentage;
 
-    for (int i = 0; i < segments; i++) {
-      final t1 = i / segments;
-      final t2 = (i + 1) / segments;
-      final currentStart = startAngle + (i * segmentAngle);
-      // Slight overlap of 0.01 rad to prevent any hairline subpixel gaps
-      final currentSweep = segmentAngle + 0.01;
+    // 1. Draw arc with butt caps to prevent shader seam wrapping across 12 o'clock
+    final jellyArcPaint = Paint()
+      ..shader = SweepGradient(
+        startAngle: 0.0,
+        endAngle: sweepAngle,
+        colors: [
+          activeColor.withValues(alpha: 0.18),
+          activeColor.withValues(alpha: 0.60),
+          activeColor,
+        ],
+        stops: const [0.0, 0.5, 1.0],
+        transform: const GradientRotation(-math.pi / 2),
+      ).createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.butt
+      ..strokeWidth = strokeWidth;
 
-      final color = Color.lerp(
-        activeColor.withValues(alpha: 0.15),
-        activeColor,
-        (t1 + t2) / 2,
-      )!;
+    canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, jellyArcPaint);
 
-      final segPaint = Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.butt
-        ..strokeWidth = strokeWidth;
-
-      canvas.drawArc(rect, currentStart, currentSweep, false, segPaint);
-    }
-
-    // 3. Rounded Start Cap at 12 o'clock (soft and pale)
-    final startCapCenter = Offset(
-      center.dx + radius * math.cos(startAngle),
-      center.dy + radius * math.sin(startAngle),
-    );
+    // 2. Start Cap at 12 o'clock: Soft, light circle cap matching the initial gradient alpha (no dark seam)
+    final startCapCenter = Offset(center.dx, center.dy - radius);
     final startCapPaint = Paint()
-      ..color = activeColor.withValues(alpha: 0.15)
+      ..color = activeColor.withValues(alpha: 0.18)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(startCapCenter, strokeWidth / 2, startCapPaint);
 
-    // 4. Rounded End Cap at Thumb Position (solid and bold tip)
-    final thumbAngle = startAngle + sweepAngle;
+    // 3. End Cap at thumb: 100% solid bold color matching the end of gradient
+    final thumbAngle = -math.pi / 2 + sweepAngle;
     final thumbX = center.dx + radius * math.cos(thumbAngle);
     final thumbY = center.dy + radius * math.sin(thumbAngle);
     final thumbCenter = Offset(thumbX, thumbY);
@@ -1046,20 +1034,20 @@ class _NeumorphicGlowRingPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawCircle(thumbCenter, strokeWidth / 2, endCapPaint);
 
-    // 5. Thumb Indicator Dot with Crisp Core and Glow
+    // 4. Apple Neumorphic thumb indicator on the bold end
     final outerGlowPaint = Paint()
-      ..color = activeColor.withValues(alpha: 0.60)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5)
+      ..color = activeColor.withValues(alpha: 0.85)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(thumbCenter, 7.5, outerGlowPaint);
+    canvas.drawCircle(thumbCenter, 9, outerGlowPaint);
 
     final whiteCorePaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(thumbCenter, 4.8, whiteCorePaint);
+    canvas.drawCircle(thumbCenter, 5.0, whiteCorePaint);
 
     final innerDotPaint = Paint()
-      ..color = activeColor
+      ..color = activeColor.withValues(alpha: 0.85)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(thumbCenter, 2.2, innerDotPaint);
   }

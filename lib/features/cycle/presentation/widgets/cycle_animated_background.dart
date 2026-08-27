@@ -265,31 +265,47 @@ class CycleProgressRingPainter extends CustomPainter {
 
     if (percentage <= 0) return;
 
-    // Active sweep arc
+    // Active sweep arc with butt caps to prevent seam bleeding
     final rect = Rect.fromCircle(center: center, radius: radius);
+    final sweepAngle = 2 * math.pi * percentage;
+
     final paintActive = Paint()
       ..shader = SweepGradient(
+        startAngle: 0.0,
+        endAngle: sweepAngle,
         colors: [
-          activeColor.withValues(alpha: 0.30),
-          activeColor.withValues(alpha: 0.85),
+          activeColor.withValues(alpha: 0.18),
+          activeColor.withValues(alpha: 0.60),
           activeColor,
         ],
-        stops: const [0.0, 0.6, 1.0],
+        stops: const [0.0, 0.5, 1.0],
         transform: const GradientRotation(-math.pi / 2),
       ).createShader(rect)
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
+      ..strokeCap = StrokeCap.butt
       ..strokeWidth = strokeWidth;
 
-    final sweepAngle = 2 * math.pi * percentage;
     canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, paintActive);
 
-    // Multi-layer Apple Glow indicator at the thumb
+    // Soft start cap at 12 o'clock
+    final startCapCenter = Offset(center.dx, center.dy - radius);
+    final startCapPaint = Paint()
+      ..color = activeColor.withValues(alpha: 0.18)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(startCapCenter, strokeWidth / 2, startCapPaint);
+
+    // Bold end cap at thumb
     final thumbAngle = -math.pi / 2 + sweepAngle;
     final thumbX = center.dx + radius * math.cos(thumbAngle);
     final thumbY = center.dy + radius * math.sin(thumbAngle);
     final thumbCenter = Offset(thumbX, thumbY);
 
+    final endCapPaint = Paint()
+      ..color = activeColor
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(thumbCenter, strokeWidth / 2, endCapPaint);
+
+    // Multi-layer Apple Glow indicator at the thumb
     // 1. Outer diffuse glow
     final outerGlowPaint = Paint()
       ..color = activeColor.withValues(alpha: isDark ? 0.70 : 0.50)

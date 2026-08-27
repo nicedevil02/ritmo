@@ -48,6 +48,7 @@ class FocusBlockSheet extends StatefulWidget {
 class _FocusBlockSheetState extends State<FocusBlockSheet> {
   late int _totalSeconds;
   late int _remainingSeconds;
+  DateTime? _targetEndTime;
   Timer? _timer;
   bool _isRunning = false;
 
@@ -70,24 +71,36 @@ class _FocusBlockSheetState extends State<FocusBlockSheet> {
   void _startTimer() {
     _timer?.cancel();
     _isRunning = true;
+    _targetEndTime = DateTime.now().add(Duration(seconds: _remainingSeconds));
     RitmoHapticsPolicy.selection();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
-      if (_remainingSeconds > 0) {
-        setState(() {
-          _remainingSeconds--;
-        });
-      } else {
-        _timer?.cancel();
-        _isRunning = false;
-        RitmoHapticsPolicy.success();
-        setState(() {});
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_targetEndTime != null) {
+        final left = _targetEndTime!.difference(DateTime.now()).inSeconds;
+        if (left > 0) {
+          setState(() {
+            _remainingSeconds = left.clamp(0, _totalSeconds);
+          });
+        } else {
+          _timer?.cancel();
+          _isRunning = false;
+          _remainingSeconds = 0;
+          RitmoHapticsPolicy.success();
+          setState(() {});
+        }
       }
     });
   }
 
   void _pauseTimer() {
     _timer?.cancel();
+    if (_targetEndTime != null) {
+      _remainingSeconds = _targetEndTime!.difference(DateTime.now()).inSeconds.clamp(0, _totalSeconds);
+    }
+    _targetEndTime = null;
     _isRunning = false;
     RitmoHapticsPolicy.selection();
     setState(() {});

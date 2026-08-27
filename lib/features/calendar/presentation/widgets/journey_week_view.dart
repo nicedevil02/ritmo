@@ -71,10 +71,15 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
 
   void _startMinuteTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted) {
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      final newNow = DateTime.now();
+      if (newNow.minute != _now.minute || newNow.hour != _now.hour) {
         setState(() {
-          _now = DateTime.now();
+          _now = newNow;
         });
       }
     });

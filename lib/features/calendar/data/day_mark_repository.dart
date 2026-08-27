@@ -1,6 +1,6 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
-import 'package:sqflite/sqflite.dart';
 
 enum DayMarkKind { normal, rest, travel, special }
 
@@ -87,13 +87,18 @@ class DayMarkRepository {
         finalNote = existing?.note;
       }
 
-      await db.insert('day_marks', {
-        'date': dateStr,
-        'kind': kindCode,
-        'note': finalNote,
-        'createdAt': nowMs,
-        'updatedAt': nowMs,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await UpsertHelper.upsert(
+        db,
+        'day_marks',
+        {
+          'date': dateStr,
+          'kind': kindCode,
+          'note': finalNote,
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        },
+        conflictColumns: const ['date'],
+      );
       return true;
     } catch (e, st) {
       RitmoLog.error('DayMarkRepository', 'setMark failed for $dateStr', e, st);

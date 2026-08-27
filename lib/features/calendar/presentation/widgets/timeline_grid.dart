@@ -107,14 +107,16 @@ class _TimelineGridState extends State<TimelineGrid> {
 
   void _startMinuteTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
       final newNow = DateTime.now();
       if (newNow.minute != _now.minute || newNow.hour != _now.hour) {
-        if (mounted) {
-          setState(() {
-            _now = newNow;
-          });
-        }
+        setState(() {
+          _now = newNow;
+        });
       }
     });
   }

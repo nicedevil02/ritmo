@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 
 class DayTemplateSlot {
   const DayTemplateSlot({
@@ -88,10 +88,11 @@ class DayTemplateRepository {
 
   Future<void> saveTemplate(DayTemplate template) async {
     final db = await _dbHelper.database;
-    await db.insert(
+    await UpsertHelper.upsert(
+      db,
       'day_templates',
       template.toDbMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      conflictColumns: const ['id'],
     );
   }
 

@@ -66,3 +66,15 @@ abstract class NotifActionBgMethods {
   static const changeEnergyDirect = 'changeEnergyDirect';
   static const handleAction = 'handleAction';
 }
+
+abstract class NotifTapBehavior {
+  static const openApp = 'OPEN_APP';
+  static const popup = 'POPUP';
+  static const popupForEssential = 'POPUP_FOR_ESSENTIAL';
+  static const defaultBehavior = 'POPUP_FOR_ESSENTIAL';
+}
+
+abstract class PrefKeys {
+  static const notifTapBehavior = 'notif_tap_behavior';
+}
+

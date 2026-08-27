@@ -15,10 +15,27 @@ class SnapshotHelper {
         int.tryParse(settings['coalescing_window_minutes'] ?? '10') ?? 10;
     final maxNonEssential =
         int.tryParse(settings['max_non_essential_per_hour'] ?? '3') ?? 3;
+    final tapBehavior = settings['notif_tap_behavior'] ?? 'POPUP_FOR_ESSENTIAL';
 
     await prefs.setString('notif_digest_mode', digestMode);
     await prefs.setInt('notif_coalescing_window_minutes', coalescingMinutes);
     await prefs.setInt('notif_max_non_essential_per_hour', maxNonEssential);
+    await prefs.setString('notif_tap_behavior', tapBehavior);
+  }
+
+  /// Updates the active realm info in SharedPreferences for Kotlin consumption.
+  /// Keys in SharedPreferences will be prefixed with 'flutter.' by the plugin.
+  /// In Kotlin, read: "flutter.active_realm_name", "flutter.active_realm_icon", "flutter.active_realm_mode"
+  static Future<void> updateActiveRealmSnapshot({
+    required String name,
+    required String icon,
+    required String mode,
+  }) async {
+    if (kIsWeb) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('active_realm_name', name);
+    await prefs.setString('active_realm_icon', icon);
+    await prefs.setString('active_realm_mode', mode);
   }
 
   /// Updates the snapshot used by the App Widgets.

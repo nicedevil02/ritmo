@@ -22,9 +22,11 @@ object AlarmChannelRegistrar {
                     val time = (call.argument<Number>("time"))?.toLong()
                     val title = call.argument<String>("title")
                     val isEssential = call.argument<Boolean>("isEssential") ?: false
+                    val firstPhysicalStep = call.argument<String>("firstPhysicalStep")
+                    val allowMinimal = call.argument<Boolean>("allowMinimal") ?: false
 
                     if (id != null && time != null && title != null) {
-                        val ok = scheduleAlarm(context, id, time, title, isEssential)
+                        val ok = scheduleAlarm(context, id, time, title, isEssential, firstPhysicalStep, allowMinimal)
                         result.success(ok)
                     } else {
                         result.error("INVALID_ARGUMENTS", "Missing id, time, or title", null)
@@ -87,7 +89,9 @@ object AlarmChannelRegistrar {
         id: String,
         timeMsUTC: Long,
         title: String,
-        isEssential: Boolean
+        isEssential: Boolean,
+        firstPhysicalStep: String? = null,
+        allowMinimal: Boolean = false
     ): Boolean {
         return try {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return false
@@ -98,6 +102,8 @@ object AlarmChannelRegistrar {
                 putExtra("title", title)
                 putExtra("isEssential", isEssential)
                 putExtra("scheduledTime", timeMsUTC)
+                if (firstPhysicalStep != null) putExtra("firstPhysicalStep", firstPhysicalStep)
+                putExtra("allowMinimal", allowMinimal)
             }
 
             val requestCode = generateRequestCode(id, "_ALARM")

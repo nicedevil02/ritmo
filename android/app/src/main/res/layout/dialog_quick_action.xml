@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layoutDirection="rtl"
+    android:background="@drawable/bg_popup_card"
+    android:padding="20dp">
+
+    <!-- Header: Realm and Title -->
+    <TextView
+        android:id="@+id/popup_realm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#38BDF8"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:text="🎯 آزاد" />
+
+    <TextView
+        android:id="@+id/popup_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="#F8FAFC"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:text="عنوان روتین" />
+
+    <!-- First Step -->
+    <TextView
+        android:id="@+id/popup_first_step"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:background="#0F172A"
+        android:padding="12dp"
+        android:textColor="#CBD5E1"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <!-- Action Buttons -->
+    <Button
+        android:id="@+id/popup_btn_done"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="#10B981"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:text="@string/popup_done" />
+
+    <Button
+        android:id="@+id/popup_btn_snooze"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="#334155"
+        android:textColor="#CBD5E1"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:text="@string/notif_action_snooze" />
+
+    <Button
+        android:id="@+id/popup_btn_open"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="#3B82F6"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:text="@string/popup_open" />
+
+</LinearLayout>

@@ -101,6 +101,17 @@
             android:taskAffinity="ir.ritmo.app.alarm"
             android:theme="@style/AlarmTheme" />
 
+        <!-- Quick Action Popup Activity (Layer 1) -->
+        <activity
+            android:name=".QuickActionActivity"
+            android:theme="@style/PopupTheme"
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity="ir.ritmo.app.popup"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden|locale|layoutDirection|density|uiMode" />
+
         <!-- Foreground Service Declaration -->
         <service
             android:name=".RitmoForegroundService"

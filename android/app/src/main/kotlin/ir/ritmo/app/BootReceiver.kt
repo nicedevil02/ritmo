@@ -53,6 +53,8 @@ class BootReceiver : BroadcastReceiver() {
             val title = intent.getStringExtra("title") ?: "یادآوری روتین"
             val isEssential = intent.getBooleanExtra("isEssential", false)
             val isSilentTick = intent.getBooleanExtra("isSilentTick", false)
+            val firstPhysicalStep = intent.getStringExtra("firstPhysicalStep")
+            val allowMinimal = intent.getBooleanExtra("allowMinimal", false)
             
             if (isSilentTick || id.startsWith("status_update_") || title == "REFRESH_STATUS") {
                 Log.d(TAG, "Silent tick or status update alarm fired, refreshing persistent notification")
@@ -63,7 +65,7 @@ class BootReceiver : BroadcastReceiver() {
                 }
                 context.sendBroadcast(updateIntent)
             } else {
-                showAlarmNotification(context, id, title, isEssential)
+                showAlarmNotification(context, id, title, isEssential, firstPhysicalStep, allowMinimal)
                 // Also trigger status notification refresh to show the next proposed task!
                 val updateIntent = Intent(context, NotificationActionReceiver::class.java).apply {
                     this.action = "com.ritmo.app.NOTIF_ACTION"
@@ -98,7 +100,8 @@ class BootReceiver : BroadcastReceiver() {
                 val id = alarmObj.getString("id")
                 val title = alarmObj.getString("title")
                 val scheduledTime = alarmObj.getLong("scheduledTime")
-                val isEssential = alarmObj.optBoolean("isEssential", false)
+                val firstPhysicalStep = if (alarmObj.has("firstPhysicalStep") && !alarmObj.isNull("firstPhysicalStep")) alarmObj.getString("firstPhysicalStep") else null
+                val allowMinimal = alarmObj.optBoolean("hasMinimalVariant", false)
 
                 val nowMs = System.currentTimeMillis()
                 if (scheduledTime > nowMs) {
@@ -107,6 +110,8 @@ class BootReceiver : BroadcastReceiver() {
                         putExtra("id", id)
                         putExtra("title", title)
                         putExtra("isEssential", isEssential)
+                        if (firstPhysicalStep != null) putExtra("firstPhysicalStep", firstPhysicalStep)
+                        putExtra("allowMinimal", allowMinimal)
                     }
 
                     val requestCode = generateRequestCode(id, "_ALARM")
@@ -143,7 +148,7 @@ class BootReceiver : BroadcastReceiver() {
                 } else if (nowMs - scheduledTime < 2 * 3600 * 1000L) {
                     // Missed alarm within 2 hours: fire immediately with late indicator
                     Log.d(TAG, "Firing missed alarm ($id) with late indicator (was scheduled at $scheduledTime)")
-                    showAlarmNotification(context, id, "$title (دیرکرد)", isEssential)
+                    showAlarmNotification(context, id, "$title (دیرکرد)", isEssential, firstPhysicalStep, allowMinimal)
                 }
             }
         } catch (e: Exception) {
@@ -157,7 +162,15 @@ class BootReceiver : BroadcastReceiver() {
 
         val scope = prefs.getString("flutter.notif_fullscreen_scope", "essential")
         val optedIn = prefs.getStringSet("flutter.notif_fullscreen_ids", emptySet())?.contains(id) == true
-        if (scope == "essential" && !isEssential && !optedIn) return false
+
+        val scopeAllows = when (scope) {
+            "all" -> true
+            "custom" -> optedIn
+            "none" -> false
+            "essential" -> isEssential || optedIn
+            else -> isEssential || optedIn
+        }
+        if (!scopeAllows) return false
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -177,7 +190,14 @@ class BootReceiver : BroadcastReceiver() {
             .build()
     }
 
-    private fun showAlarmNotification(context: Context, id: String, title: String, isEssential: Boolean) {
+    private fun showAlarmNotification(
+        context: Context,
+        id: String,
+        title: String,
+        isEssential: Boolean,
+        firstPhysicalStep: String? = null,
+        allowMinimal: Boolean = false
+    ) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         RitmoNotificationChannels.ensure(context, notificationManager)
 
@@ -199,15 +219,21 @@ class BootReceiver : BroadcastReceiver() {
             }
         }
 
-        // Open app when notification clicked
+        val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        val realmName = prefs.getString("flutter.active_realm_name", "آزاد") ?: "آزاد"
+        val realmEmoji = prefs.getString("flutter.active_realm_icon", "🎯") ?: "🎯"
+
         val notifNumericId = generateRequestCode(id, "_NOTIF")
-        val launchIntent = Intent(context, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            notifNumericId,
-            launchIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        val pendingIntent = NotificationIntents.buildTapIntent(
+            context = context,
+            reminderId = id,
+            notifId = notifNumericId,
+            title = title,
+            firstPhysicalStep = firstPhysicalStep,
+            isEssential = isEssential,
         )
+
+        val useFullScreen = shouldUseFullScreen(context, id, isEssential)
 
         if (isEssential) {
             val doneIntent = Intent(context, NotificationActionReceiver::class.java).apply {
@@ -254,7 +280,7 @@ class BootReceiver : BroadcastReceiver() {
                 .setColor(ContextCompat.getColor(context, R.color.ritmo_accent))
                 .setContentTitle(context.getString(R.string.notif_vital_routine_title))
                 .setContentText(title)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(if (useFullScreen) NotificationCompat.PRIORITY_MAX else NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                 .setPublicVersion(buildSanitizedPublicVersion(context, isEssential))
@@ -263,14 +289,26 @@ class BootReceiver : BroadcastReceiver() {
                 .setShowWhen(true)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
+                .setSubText("$realmEmoji $realmName")
                 .addAction(0, context.getString(R.string.notif_action_done), donePendingIntent)
                 .addAction(0, context.getString(R.string.notif_action_snooze), snoozePendingIntent)
                 .addAction(0, context.getString(R.string.notif_action_dismiss), dismissPendingIntent)
 
-            if (shouldUseFullScreen(context, id, isEssential)) {
+            if (!firstPhysicalStep.isNullOrBlank()) {
+                builder.setStyle(
+                    NotificationCompat.BigTextStyle()
+                        .bigText("قدم اول: $firstPhysicalStep")
+                        .setSummaryText(realmName)
+                )
+            }
+
+            if (useFullScreen) {
                 val alarmActivityIntent = Intent(context, AlarmActivity::class.java).apply {
-                    putExtra("reminderId", id)
-                    putExtra("title", title)
+                    putExtra(NotificationSurfaceActivity.EXTRA_REMINDER_ID, id)
+                    putExtra(NotificationSurfaceActivity.EXTRA_NOTIF_ID, notifNumericId)
+                    putExtra(NotificationSurfaceActivity.EXTRA_TITLE, title)
+                    putExtra(NotificationSurfaceActivity.EXTRA_FIRST_STEP, firstPhysicalStep)
+                    putExtra(NotificationSurfaceActivity.EXTRA_ALLOW_MINIMAL, allowMinimal)
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 }
                 val fullScreenPendingIntent = PendingIntent.getActivity(
@@ -284,7 +322,6 @@ class BootReceiver : BroadcastReceiver() {
 
             notificationManager.notify(notifNumericId, builder.build())
         } else {
-            val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
             val digestModeStr = prefs.getString("flutter.notif_digest_mode", "standard") ?: "standard"
             val digestMode = digestModeStr == "concise" || digestModeStr == "grouped" || digestModeStr == "true"
             val maxNonEssential = prefs.getSafeInt("flutter.notif_max_non_essential_per_hour", 3)
@@ -365,11 +402,37 @@ class BootReceiver : BroadcastReceiver() {
                     .setContentIntent(pendingIntent)
                     .setAutoCancel(true)
                     .setGroup(GROUP_KEY_NON_ESSENTIAL)
+                    .setSubText("$realmEmoji $realmName")
                     .addAction(0, context.getString(R.string.notif_action_done), donePendingIntent)
                     .addAction(0, context.getString(R.string.notif_action_snooze), snoozePendingIntent)
                     .addAction(0, context.getString(R.string.notif_action_dismiss), dismissPendingIntent)
 
-                if (isRateLimited) {
+                if (!firstPhysicalStep.isNullOrBlank()) {
+                    builder.setStyle(
+                        NotificationCompat.BigTextStyle()
+                            .bigText("قدم اول: $firstPhysicalStep")
+                            .setSummaryText(realmName)
+                    )
+                }
+
+                if (useFullScreen) {
+                    val alarmActivityIntent = Intent(context, AlarmActivity::class.java).apply {
+                        putExtra(NotificationSurfaceActivity.EXTRA_REMINDER_ID, id)
+                        putExtra(NotificationSurfaceActivity.EXTRA_NOTIF_ID, nonEssentialNotifId)
+                        putExtra(NotificationSurfaceActivity.EXTRA_TITLE, title)
+                        putExtra(NotificationSurfaceActivity.EXTRA_FIRST_STEP, firstPhysicalStep)
+                        putExtra(NotificationSurfaceActivity.EXTRA_ALLOW_MINIMAL, allowMinimal)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    }
+                    val fullScreenPendingIntent = PendingIntent.getActivity(
+                        context,
+                        generateRequestCode(id, "_FULLSCREEN"),
+                        alarmActivityIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                    builder.setFullScreenIntent(fullScreenPendingIntent, true)
+                    builder.priority = NotificationCompat.PRIORITY_MAX
+                } else if (isRateLimited) {
                     builder.setPriority(NotificationCompat.PRIORITY_LOW)
                     builder.setSound(null)
                     builder.setVibrate(null)
@@ -397,10 +460,11 @@ class BootReceiver : BroadcastReceiver() {
                     val activeNotifs = notificationManager.activeNotifications
                     var foundCurrent = false
                     var activeCount = 0
+                    val nonEssentialNotifId = generateRequestCode(id, "_NOTIF")
                     for (n in activeNotifs) {
                         if (n.notification.group == GROUP_KEY_NON_ESSENTIAL && n.id != SUMMARY_NOTIF_ID) {
                             activeCount++
-                            if (n.id == id.hashCode()) {
+                            if (n.id == nonEssentialNotifId) {
                                 foundCurrent = true
                             }
                         }
@@ -426,7 +490,7 @@ class BootReceiver : BroadcastReceiver() {
             )
 
             val summaryBuilder = NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(summaryTitle)
                 .setContentText(summaryText)
                 .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)

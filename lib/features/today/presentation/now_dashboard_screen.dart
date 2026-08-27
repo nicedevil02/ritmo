@@ -55,6 +55,7 @@ import 'package:ritmo/features/routines/shared/widgets/routine_niyyah_sheet.dart
 import 'package:ritmo/features/supplementary_sports/supplementary_sports.dart';
 import 'package:ritmo/features/today/presentation/active_timer_overlay.dart';
 import 'package:ritmo/features/today/presentation/dashboard_controller.dart';
+import 'package:ritmo/features/today/presentation/insights_screen.dart';
 import 'package:ritmo/features/today/presentation/home_focus_ranker.dart';
 import 'package:ritmo/features/notes/presentation/widgets/today_experience_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/daily_reflection_sheet.dart';
@@ -149,7 +150,10 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
   double? _currentEnergyPercent;
   String _currentEnergyLabel = 'متوسط';
   String _currentEnergyDesc = 'مناسب برای مطالعه، پروژه‌ها و روتین‌ها';
-  String? _peakPerformanceWindow;
+  List<String> _currentEnergyExplanation = [];
+  int _rhythmScore = 0;
+  bool _rhythmScoreHasData = false;
+  List<Map<String, dynamic>> _completionsToday = [];
   List<DashboardModuleSummary> _moduleSummaries = [];
 
   @override
@@ -224,7 +228,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
       }
       return;
     }
-    if (launchInfo != null && launchInfo['action'] == 'START_TIMER') {
+    if (launchInfo != null &&
+        (launchInfo['action'] == 'START_TIMER' ||
+            launchInfo['action'] == 'OPEN_ROUTINE')) {
       final reminderId = launchInfo['reminderId'] as String?;
       if (reminderId != null) {
         final db = await DatabaseHelper.instance.database;
@@ -233,8 +239,14 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
           where: 'id = ?',
           whereArgs: [reminderId],
         );
+        String? routineId;
         if (reminders.isNotEmpty) {
-          final routineId = reminders.first['routineId'] as String;
+          routineId = reminders.first['routineId'] as String?;
+        } else {
+          routineId = reminderId;
+        }
+
+        if (routineId != null) {
           final List<Map<String, dynamic>> routines = await db.query(
             'routines',
             where: 'id = ?',
@@ -258,6 +270,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
           }
         }
       }
+      return;
     }
   }
 
@@ -427,7 +440,10 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
           _currentEnergyPercent = controller.currentEnergyPercent;
           _currentEnergyLabel = controller.currentEnergyLabel;
           _currentEnergyDesc = controller.currentEnergyDesc;
-          _peakPerformanceWindow = controller.peakPerformanceWindow;
+          _currentEnergyExplanation = controller.currentEnergyExplanation;
+          _rhythmScore = controller.rhythmScore;
+          _rhythmScoreHasData = controller.rhythmScoreHasData;
+          _completionsToday = controller.completionsToday;
           _moduleSummaries = controller.moduleSummaries;
           _recentInboxItems = recentInbox;
           _showReplanBanner = showReplan;
@@ -614,6 +630,42 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
       remaining: total - done,
       total: total,
     );
+  }
+
+  /// مجموع دقایق تمرکز کارهای انجام‌شدهٔ امروز
+  int get _focusMinutesToday {
+    var total = 0;
+    if (_agendaItems.isNotEmpty) {
+      for (final item in _agendaItems) {
+        if (item.completion == AgendaCompletion.done) {
+          total += (item.durationMinutes ?? 15);
+        }
+      }
+    } else if (_completionsToday.isNotEmpty) {
+      for (final c in _completionsToday) {
+        final dur = (c['durationMinutes'] as int?) ??
+            (c['actual_duration_minutes'] as int?) ??
+            15;
+        total += dur;
+      }
+    }
+    return total;
+  }
+
+  /// فرمت‌بندی زمان تمرکز (مثلاً: ۱ ساعت و ۲۰ دقیقه)
+  static String _formatFocusTime(int totalMinutes) {
+    if (totalMinutes <= 0) {
+      return '۰ دقیقه';
+    }
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    if (hours == 0) {
+      return '$minutes دقیقه';
+    }
+    if (minutes == 0) {
+      return '$hours ساعت';
+    }
+    return '$hours ساعت و $minutes دقیقه';
   }
 
   /// میان‌برهای صفحهٔ خانه.
@@ -989,60 +1041,47 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                         progress: progress.ratio,
                         doneCount: progress.done,
                         totalCount: progress.total,
-                        caption:
-                            (_activeZoneName == null ||
-                                _activeZoneName!.isEmpty)
-                            ? null
-                            : 'قلمرو: ${_activeZoneName!}',
+                        onMenuTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const InsightsScreen(),
+                          ),
+                        ).then((_) => _loadDashboardData()),
                         metrics: [
                           HomePulseMetric(
                             label: 'انجام‌شده',
-                            value: '${progress.done} مورد',
+                            value: '${progress.done} از ${progress.total}',
                             icon: CupertinoIcons.checkmark_alt_circle_fill,
                             color: colors.success,
                           ),
                           HomePulseMetric(
-                            label: 'باقی‌مانده',
-                            value: '${progress.remaining} مورد',
-                            icon: CupertinoIcons.circle_lefthalf_fill,
-                            color: colors.warning,
-                          ),
-                          // اگر هیرو خودش هشدار دارویی است، اینجا تکرار نمیشود.
-                          if (_pendingMedDoses > 0 &&
-                              heroData.type != HeroPriorityType.medicalSafety)
-                            HomePulseMetric(
-                              label: 'دوز دارو',
-                              value: '$_pendingMedDoses باقی‌مانده',
-                              icon: CupertinoIcons.capsule_fill,
-                              color: colors.medicalRed,
-                              onTap: () => _openModuleScreen('medicine'),
-                            )
-                          else if (_peakPerformanceWindow != null &&
-                              _peakPerformanceWindow!.isNotEmpty)
-                            HomePulseMetric(
-                              label: 'پنجرهٔ اوج',
-                              value: _peakPerformanceWindow!,
-                              icon: CupertinoIcons.arrow_up_right_circle_fill,
-                              color: colors.primary,
-                              onTap: () => widget.onNavigateToTab?.call(
-                                RitmoShellMetrics.calendarTabIndexFor(
-                                  AppModeService.instance.current,
-                                ),
+                            label: 'زمان تمرکز',
+                            value: _formatFocusTime(_focusMinutesToday),
+                            icon: CupertinoIcons.timer,
+                            color: const Color(0xFF2563EB),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const InsightsScreen(),
                               ),
-                            )
-                          else
-                            HomePulseMetric(
-                              label: 'انرژی فعلی',
-                              value: _currentEnergyPercent == null
-                                  ? 'ثبت انرژی +'
-                                  : '${_currentEnergyPercent!.round()}٪',
-                              icon: CupertinoIcons.bolt_fill,
-                              color: _currentEnergyPercent == null
-                                  ? colors.primary
-                                  : colors.energyAccent,
-                              onTap: () =>
-                                  _showEnergyManagementSheet(isDarkMode),
-                            ),
+                            ).then((_) => _loadDashboardData()),
+                          ),
+                          HomePulseMetric(
+                            label: 'امتیاز ریتم',
+                            value: _rhythmScoreHasData
+                                ? '$_rhythmScore٪'
+                                : (progress.total > 0
+                                    ? '${(progress.ratio * 100).round()}٪'
+                                    : 'بدون داده'),
+                            icon: CupertinoIcons.waveform_path_ecg,
+                            color: const Color(0xFF8B5CF6),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const InsightsScreen(),
+                              ),
+                            ).then((_) => _loadDashboardData()),
+                          ),
                         ],
                       ),
                     ),
@@ -1056,6 +1095,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                         currentEnergyPercent: _currentEnergyPercent,
                         currentEnergyLabel: _currentEnergyLabel,
                         currentEnergyDesc: _currentEnergyDesc,
+                        energyFactors: _currentEnergyExplanation,
                         onEnergyTap: () =>
                             _showEnergyManagementSheet(isDarkMode),
                       ),

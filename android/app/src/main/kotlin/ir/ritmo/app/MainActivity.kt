@@ -144,11 +144,15 @@ class MainActivity : FlutterFragmentActivity() {
                     val rId = startTimerReminderId
                     val mId = openModuleId
                     val qAdd = openQuickAdd
+                    val routineRId = openRoutineReminderId
                     startTimerReminderId = null
                     openModuleId = null
                     openQuickAdd = false
+                    openRoutineReminderId = null
                     if (rId != null) {
                         result.success(mapOf("action" to "START_TIMER", "reminderId" to rId))
+                    } else if (routineRId != null) {
+                        result.success(mapOf("action" to "OPEN_ROUTINE", "reminderId" to routineRId))
                     } else if (mId != null) {
                         result.success(mapOf("action" to "OPEN_MODULE", "moduleId" to mId))
                     } else if (qAdd) {
@@ -161,6 +165,15 @@ class MainActivity : FlutterFragmentActivity() {
                                 launchIntent.action = null // consume
                                 if (coldId != null) {
                                     result.success(mapOf("action" to "START_TIMER", "reminderId" to coldId))
+                                } else {
+                                    result.success(null)
+                                }
+                            }
+                            "com.ritmo.app.OPEN_ROUTINE" -> {
+                                val coldId = launchIntent.getStringExtra("reminderId")
+                                launchIntent.action = null // consume
+                                if (coldId != null) {
+                                    result.success(mapOf("action" to "OPEN_ROUTINE", "reminderId" to coldId))
                                 } else {
                                     result.success(null)
                                 }
@@ -302,6 +315,7 @@ class MainActivity : FlutterFragmentActivity() {
     }
 
     private var startTimerReminderId: String? = null
+    private var openRoutineReminderId: String? = null
     private var openModuleId: String? = null
     private var openQuickAdd: Boolean = false
     private var sharedTextPayload: String? = null
@@ -338,6 +352,10 @@ class MainActivity : FlutterFragmentActivity() {
             "com.ritmo.app.START_TIMER" -> {
                 startTimerReminderId = intent.getStringExtra("reminderId")
                 android.util.Log.d("MainActivity", "onNewIntent: START_TIMER received for $startTimerReminderId")
+            }
+            "com.ritmo.app.OPEN_ROUTINE" -> {
+                openRoutineReminderId = intent.getStringExtra("reminderId")
+                android.util.Log.d("MainActivity", "onNewIntent: OPEN_ROUTINE received for $openRoutineReminderId")
             }
             "com.ritmo.app.OPEN_MODULE" -> {
                 openModuleId = intent.getStringExtra("moduleId")

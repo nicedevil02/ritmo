@@ -2,6 +2,7 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -44,10 +45,27 @@ class TaskAgendaSource implements AgendaSource {
     String todayStr, [
     String? appStartDateStr,
     int lookbackDays = 14,
+    Map<String, String>? settingsMap,
   ]) async {
     try {
       final startStr = DateKey.of(start);
       final endStr = DateKey.of(end);
+
+      final sportsEnabled = settingsMap != null
+          ? (ModuleGate.instance.isEnabledFrom(settingsMap, 'module_sports_enabled') ||
+              ModuleGate.instance.isEnabledFrom(settingsMap, 'module_supplementary_sports_enabled'))
+          : (ModuleGate.instance.isEnabled('module_sports_enabled') ||
+              ModuleGate.instance.isEnabled('module_supplementary_sports_enabled'));
+
+      bool isAllowedTask(Map<String, dynamic> r) {
+        if (!sportsEnabled) {
+          final title = r['title'] as String? ?? '';
+          if (title == 'تمرین قدرتی خانگی' || title == 'تمرین قدرتی باشگاه') {
+            return false;
+          }
+        }
+        return true;
+      }
 
       // 1) All tasks scheduled within range (dueDate >= startStr AND dueDate <= endStr)
       final rangeRows = await db.query(
@@ -60,6 +78,7 @@ class TaskAgendaSource implements AgendaSource {
       final tasksByDate = <String, List<Map<String, dynamic>>>{};
       final taskIds = <String>{};
       for (final r in rangeRows) {
+        if (!isAllowedTask(r)) continue;
         final dStr = r['dueDate'] as String?;
         if (dStr != null) {
           tasksByDate.putIfAbsent(dStr, () => []).add(r);
@@ -73,7 +92,10 @@ class TaskAgendaSource implements AgendaSource {
         where: "isDone = 0 AND (dueDate IS NULL OR dueDate = '')",
         orderBy: 'isImportant DESC, updatedAt DESC',
       );
+      final filteredDatelessRows = <Map<String, dynamic>>[];
       for (final r in datelessRows) {
+        if (!isAllowedTask(r)) continue;
+        filteredDatelessRows.add(r);
         taskIds.add(r['id'].toString());
       }
 
@@ -112,7 +134,10 @@ class TaskAgendaSource implements AgendaSource {
         orderBy: 'dueDate DESC, isImportant DESC',
         limit: 20, // Cap at 20 overdue tasks
       );
+      final filteredOverdueRows = <Map<String, dynamic>>[];
       for (final r in overdueRows) {
+        if (!isAllowedTask(r)) continue;
+        filteredOverdueRows.add(r);
         taskIds.add(r['id'].toString());
       }
 
@@ -139,9 +164,9 @@ class TaskAgendaSource implements AgendaSource {
 
       return TaskAgendaSource(
         tasksByDate: tasksByDate,
-        overdueTasks: overdueRows,
-        datelessTasks: datelessRows,
-        totalOverdueCount: totalOverdue,
+        overdueTasks: filteredOverdueRows,
+        datelessTasks: filteredDatelessRows,
+        totalOverdueCount: totalOverdue < filteredOverdueRows.length ? filteredOverdueRows.length : totalOverdue,
         stepCounts: stepCounts,
       );
     } catch (e, st) {

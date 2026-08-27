@@ -7,6 +7,7 @@ import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/snapshot_helper.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
@@ -36,6 +37,7 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
   String _quietEnd = '07:00';
   bool _persistentEnabled = true;
   String _digestMode = 'standard';
+  String _tapBehavior = 'POPUP_FOR_ESSENTIAL';
   int _maxNonEssential = 3;
   int _snoozeMinutes = 10;
   int _snoozeMaxDefer = 3;
@@ -61,6 +63,7 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
       _quietEnd = SettingsService.instance.get<String>('notif_quiet_end');
       _persistentEnabled = SettingsService.instance.get<bool>('persistent_status_notification_enabled');
       _digestMode = SettingsService.instance.get<String>('digest_mode');
+      _tapBehavior = SettingsService.instance.get<String>('notif_tap_behavior');
       _maxNonEssential = SettingsService.instance.get<int>('max_non_essential_per_hour');
       _snoozeMinutes = SettingsService.instance.get<int>('snooze_minutes');
       _snoozeMaxDefer = SettingsService.instance.get<int>('snooze_max_defer_count');
@@ -92,6 +95,12 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
 
   Future<void> _updateSetting(String key, Object val) async {
     await SettingsService.instance.set(key, val);
+    final db = await DatabaseHelper.instance.database;
+    final settingsMap = {
+      for (final row in await db.query('app_settings'))
+        row['key']! as String: row['value']! as String,
+    };
+    await SnapshotHelper.updateNotificationSettingsSnapshot(settingsMap);
     await AlarmSchedulerService.scheduleNextAlarms();
     _loadSettings();
   }
@@ -198,6 +207,7 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
               const SizedBox(height: 12),
 
               // 1. Master Control Section
+              // 1. Master Control Section
               _buildMasterSection(colors),
               const SizedBox(height: 12),
 
@@ -209,6 +219,10 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
               if (!_masterEnabled)
                 _buildDisabledBanner(colors)
               else ...[
+                // 2.5 Tap Behavior Section (Phase 8 Native Surface)
+                _buildTapBehaviorSection(colors),
+                const SizedBox(height: 12),
+
                 // 3. Quiet Hours Section
                 _buildQuietHoursSection(colors),
 
@@ -229,6 +243,51 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTapBehaviorSection(dynamic colors) {
+    return SettingsSection(
+      title: 'رفتار هنگام ضربه روی اعلان',
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'وقتی روی اعلان ضربه می‌زنم…',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 10),
+              RitmoSegmentedControl<String>(
+                selected: _tapBehavior,
+                segments: const {
+                  'OPEN_APP': 'باز کردن برنامه',
+                  'POPUP_FOR_ESSENTIAL': 'فقط مهم (پاپ‌آپ)',
+                  'POPUP': 'پنجره سریع',
+                },
+                onSelected: (val) {
+                  _updateSetting('notif_tap_behavior', val);
+                },
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _tapBehavior == 'OPEN_APP'
+                    ? 'ضربه روی هر اعلانی اپلیکیشن ریتمو را باز می‌کند.'
+                    : (_tapBehavior == 'POPUP'
+                        ? 'یک پنجرهٔ شناور سریع بدون ورود به برنامه باز می‌شود.'
+                        : 'برای روتین‌های ضروری پنجرهٔ شناور سریع و برای سایرین برنامه باز می‌شود (پیش‌فرض).'),
+                style: TextStyle(fontSize: 12, color: colors.textSecondary),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

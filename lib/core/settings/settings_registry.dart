@@ -603,6 +603,18 @@ class SettingsRegistry {
       searchTerms: ['اعلان دائم', 'استاتوس', 'نوار وضعیت'],
     ),
     SettingDescriptor(
+      key: 'notif_tap_behavior',
+      type: SettingType.enumeration,
+      scope: SettingScope.db,
+      defaultValue: 'POPUP_FOR_ESSENTIAL',
+      labelFa: 'رفتار ضربه روی اعلان',
+      group: SettingsGroup.notifications,
+      dependsOn: SettingCondition('notif_master_enabled'),
+      allowed: ['OPEN_APP', 'POPUP', 'POPUP_FOR_ESSENTIAL'],
+      descriptionFa: 'تعیین واکنش سیستم هنگام لمس اعلان‌ها (باز کردن برنامه یا پنجره سریع)',
+      searchTerms: ['ضربه', 'پاپ‌آپ', 'کلیک اعلان', 'رفتار ضربه'],
+    ),
+    SettingDescriptor(
       key: 'digest_mode',
       type: SettingType.enumeration,
       scope: SettingScope.db,

@@ -70,3 +70,15 @@ object NotifActionBgMethods {
     const val CHANGE_ENERGY_DIRECT = "changeEnergyDirect"
     const val HANDLE_ACTION = "handleAction"
 }
+
+object NotifTapBehavior {
+    const val OPEN_APP = "OPEN_APP"
+    const val POPUP = "POPUP"
+    const val POPUP_FOR_ESSENTIAL = "POPUP_FOR_ESSENTIAL"
+    const val DEFAULT = "POPUP_FOR_ESSENTIAL"
+}
+
+object PrefKeys {
+    const val NOTIF_TAP_BEHAVIOR = "notif_tap_behavior"
+}
+

@@ -15,10 +15,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class AlarmActivity : Activity() {
+class AlarmActivity : NotificationSurfaceActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (isFinishing) return
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
@@ -36,9 +37,7 @@ class AlarmActivity : Activity() {
 
         setContentView(R.layout.activity_alarm)
 
-        val reminderId = intent.getStringExtra("reminderId") ?: ""
-        val title = intent.getStringExtra("title") ?: getString(R.string.notif_vital_routine_title)
-        val firstStep = intent.getStringExtra("firstPhysicalStep")
+        val displayTitle = if (title.isNotEmpty()) title else getString(R.string.notif_vital_routine_title)
 
         val clockView = findViewById<TextView>(R.id.alarm_clock_text)
         val titleView = findViewById<TextView>(R.id.alarm_title_text)
@@ -50,50 +49,30 @@ class AlarmActivity : Activity() {
 
         val timeStr = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
         clockView.text = toPersianDigits(timeStr)
-        titleView.text = title
+        titleView.text = displayTitle
 
-        if (!firstStep.isNullOrEmpty()) {
+        if (!firstPhysicalStep.isNullOrEmpty()) {
             firstStepContainer.visibility = View.VISIBLE
-            firstStepText.text = firstStep
+            firstStepText.text = firstPhysicalStep
         } else {
             firstStepContainer.visibility = View.GONE
         }
 
+        btnMinimal.visibility = if (allowMinimal) View.VISIBLE else View.GONE
+
         btnDone.setOnClickListener {
-            sendAction("DONE", reminderId)
+            sendAction("DONE")
             finish()
         }
 
         btnMinimal.setOnClickListener {
-            sendAction("MINIMAL", reminderId)
+            sendAction("MINIMAL")
             finish()
         }
 
         btnLater.setOnClickListener {
-            sendAction("SNOOZE", reminderId)
+            sendAction("SNOOZE")
             finish()
         }
-    }
-
-    private fun sendAction(actionType: String, reminderId: String) {
-        val intent = Intent(this, NotificationActionReceiver::class.java).apply {
-            action = "com.ritmo.app.NOTIF_ACTION"
-            putExtra("actionType", actionType)
-            putExtra("reminderId", reminderId)
-        }
-        sendBroadcast(intent)
-    }
-
-    private fun toPersianDigits(input: String): String {
-        val fa = charArrayOf('۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹')
-        val sb = StringBuilder()
-        for (ch in input.toCharArray()) {
-            if (ch in '0'..'9') {
-                sb.append(fa[ch - '0'])
-            } else {
-                sb.append(ch)
-            }
-        }
-        return sb.toString()
     }
 }

@@ -11,6 +11,7 @@ import 'package:ritmo/core/domain/realm/sessions/zone_session.dart';
 import 'package:ritmo/core/domain/realm/sessions/zone_session_writer.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
 import 'package:ritmo/core/repositories/realm_repository.dart';
+import 'package:ritmo/core/utils/snapshot_helper.dart';
 
 class ForegroundNotificationUpdater {
   static Future<void> update() async {
@@ -29,6 +30,14 @@ class ForegroundNotificationUpdater {
       final activeZoneId = realmState.realmOrNull?.id;
       final activeZoneMode = realmModeToRaw(realmState.effectiveMode);
       final actZoneName = realmState.realmOrNull?.name ?? 'آزاد';
+      final actZoneIcon = realmState.realmOrNull?.icon ?? '🎯';
+
+      // Sync active realm to SharedPreferences for Kotlin native surfaces
+      await SnapshotHelper.updateActiveRealmSnapshot(
+        name: actZoneName,
+        icon: actZoneIcon,
+        mode: activeZoneMode,
+      );
 
       // 2. Reconcile zone presence session (F-02) — Always runs regardless of notification switch state
       final sessionSource = switch (realmState) {

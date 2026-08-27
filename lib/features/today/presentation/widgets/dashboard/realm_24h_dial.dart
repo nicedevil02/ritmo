@@ -588,12 +588,15 @@ class _NeuDialPainter extends CustomPainter {
     double k,
     double capAngle,
   ) {
+    final startColor = Color.lerp(seg.color, Colors.white, isDarkMode ? 0.25 : 0.15)!;
+    final endColor = seg.color;
+
     final glow = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
+      ..strokeCap = StrokeCap.butt
       ..strokeWidth = stroke * 1.05
-      ..color = seg.color.withValues(alpha: isDarkMode ? 0.50 : 0.38)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 11 * k);
+      ..color = seg.color.withValues(alpha: isDarkMode ? 0.45 : 0.32)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10 * k);
     canvas.drawArc(
       ring.shift(Offset(0.8 * k, 2.4 * k)),
       g.start,
@@ -604,25 +607,34 @@ class _NeuDialPainter extends CustomPainter {
 
     final body = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
+      ..strokeCap = StrokeCap.butt
       ..strokeWidth = stroke
       ..shader = SweepGradient(
         startAngle: 0.0,
         endAngle: g.sweep,
         tileMode: TileMode.clamp,
         colors: [
-          Color.lerp(seg.color, Colors.white, 0.35)!,
+          startColor,
           seg.color,
-          Color.lerp(
-            seg.color,
-            isDarkMode ? Colors.white : const Color(0xFF1E2430),
-            0.15,
-          )!,
+          endColor,
         ],
-        stops: const [0.0, 0.5, 1.0],
         transform: GradientRotation(g.start),
       ).createShader(ring);
     canvas.drawArc(ring, g.start, g.sweep, false, body);
+
+    // Rounded caps with matching start/end colors (eliminating dark seam artifact)
+    final radius = ring.width / 2;
+    final startCapCenter = ring.center + Offset(math.cos(g.start), math.sin(g.start)) * radius;
+    final startCapPaint = Paint()
+      ..color = startColor
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(startCapCenter, stroke / 2, startCapPaint);
+
+    final endCapCenter = ring.center + Offset(math.cos(g.start + g.sweep), math.sin(g.start + g.sweep)) * radius;
+    final endCapPaint = Paint()
+      ..color = endColor
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(endCapCenter, stroke / 2, endCapPaint);
 
     final innerShineSweep = g.sweep - capAngle * 0.8;
     if (innerShineSweep > 0.02) {

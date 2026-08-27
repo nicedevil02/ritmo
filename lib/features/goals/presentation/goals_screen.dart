@@ -1,22 +1,24 @@
-import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
-import 'package:ritmo/core/domain/personas/persona_registry.dart';
+import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/analytics/goals_engine.dart';
+import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
+import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/goals/logic/goals_controller.dart';
 import 'package:ritmo/features/goals/logic/goals_repository.dart';
 import 'package:ritmo/features/goals/models/goal_models.dart';
+import 'package:ritmo/features/goals/presentation/planning_screen.dart';
 import 'package:ritmo/features/goals/presentation/widgets/create_commitment_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/create_goal_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_archive_section.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_card_list_section.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_formatters.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_tree_section.dart';
-import 'package:ritmo/features/goals/presentation/planning_screen.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -28,6 +30,7 @@ class GoalsScreen extends StatefulWidget {
 class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late GoalsController _controller;
+  bool _isTabsVisible = true;
 
   @override
   void initState() {
@@ -231,6 +234,8 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final contentTopPadding = topPadding + 142.0;
 
     final viewState = _controller.state;
     if (viewState is GoalsFailed) {
@@ -238,50 +243,67 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
         textDirection: TextDirection.rtl,
         child: Scaffold(
           backgroundColor: colors.bg,
-          appBar: RitmoModuleAppBar.fromContext(
-            context: context,
-            title: 'اهداف و دستاوردها',
-            subtitle: 'نقشه راه رشد و گام‌های عملی',
-          ),
-          body: Center(
-            child: Container(
-              margin: const EdgeInsets.all(24),
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: colors.card,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: colors.warning.withValues(alpha: 0.3)),
+          body: Stack(
+            children: [
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: colors.card,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: colors.warning.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.warning_amber_rounded, size: 48, color: colors.warning),
+                      const SizedBox(height: 16),
+                      Text(
+                        'خطا در بارگذاری اهداف و برنامه‌ها',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        viewState.error.toString(),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        ),
+                        icon: const Icon(Icons.refresh, size: 18),
+                        label: const Text('تلاش مجدد', style: TextStyle(fontWeight: FontWeight.bold)),
+                        onPressed: () => _controller.reload(force: true),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.warning_amber_rounded, size: 48, color: colors.warning),
-                  const SizedBox(height: 16),
-                  Text(
-                    'خطا در بارگذاری اهداف و برنامه‌ها',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    viewState.error.toString(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+                    child: _buildCapsuleHeader(
+                      context,
+                      isDarkMode,
+                      colors,
+                      [],
+                      {},
                     ),
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('تلاش مجدد', style: TextStyle(fontWeight: FontWeight.bold)),
-                    onPressed: () => _controller.reload(force: true),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       );
@@ -302,210 +324,543 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: colors.bg,
-        appBar: RitmoModuleAppBar.fromContext(
-          context: context,
-          title: 'اهداف و دستاوردها',
-          subtitle: 'نقشه راه رشد و گام‌های عملی',
-          statusBadge: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xffF97316).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
+        body: Stack(
+          children: [
+            // Layer 1: Body Content (NotificationListener for Instant Quick-Return Header)
+            Positioned.fill(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification.metrics.axis == Axis.vertical) {
+                    if (notification.metrics.pixels <= 15) {
+                      if (!_isTabsVisible) {
+                        setState(() => _isTabsVisible = true);
+                      }
+                    } else if (notification is UserScrollNotification) {
+                      if (notification.direction == ScrollDirection.reverse) {
+                        if (_isTabsVisible) {
+                          setState(() => _isTabsVisible = false);
+                        }
+                      } else if (notification.direction == ScrollDirection.forward) {
+                        if (!_isTabsVisible) {
+                          setState(() => _isTabsVisible = true);
+                        }
+                      }
+                    }
+                  }
+                  return false;
+                },
+                child: isLoading
+                    ? Padding(
+                        padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 80),
+                        child: const RitmoSkeletonList(itemCount: 3),
+                      )
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          // Tab 0: Planning Horizons
+                          Padding(
+                            padding: EdgeInsets.only(top: contentTopPadding),
+                            child: PlanningScreen(
+                              embedded: true,
+                              upcomingTimeline: engineOutput?.upcomingTimeline ?? [],
+                            ),
+                          ),
+
+                          // Tab 1: Goals Card List or Tree View
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 4),
+                                child: _buildHeroSection(
+                                  activeGoals,
+                                  stepsByGoal,
+                                  engineOutput,
+                                  colors,
+                                  isDarkMode,
+                                ),
+                              ),
+                              Expanded(
+                                child: _controller.showTreeView
+                                    ? GoalsTreeSection(
+                                        goals: activeGoals,
+                                        stepsByGoal: stepsByGoal,
+                                        progressMap: engineOutput?.goalProgress ?? {},
+                                        routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
+                                        routines: routines,
+                                        onRefresh: () => _controller.reload(force: true),
+                                        onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
+                                        onDeleteGoal: (goalId) async {
+                                          await GoalsRepository.instance.deleteGoal(goalId);
+                                        },
+                                        onEditGoal: (goal) {
+                                          _showCreateGoalSheet(editGoal: goal);
+                                        },
+                                      )
+                                    : GoalsCardListSection(
+                                        goals: goals,
+                                        stepsByGoal: stepsByGoal,
+                                        progressMap: engineOutput?.goalProgress ?? {},
+                                        routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
+                                        routines: routines,
+                                        courses: courses,
+                                        onRefresh: () => _controller.reload(force: true),
+                                        onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
+                                        onDeleteGoal: (goalId) async {
+                                          await GoalsRepository.instance.deleteGoal(goalId);
+                                        },
+                                        onEditGoal: (goal) {
+                                          _showCreateGoalSheet(editGoal: goal);
+                                        },
+                                      ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+              ),
             ),
-            child: const Text(
-              'فعال',
-              style: TextStyle(fontSize: 10, color: Color(0xffF97316), fontWeight: FontWeight.bold),
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(CupertinoIcons.wand_stars, color: colors.primary),
-              tooltip: 'دستیار هوشمند برنامه‌ریزی',
-              onPressed: _showAiAssistantSheet,
-            ),
-            IconButton(
-              icon: Icon(CupertinoIcons.add, color: colors.primary),
-              tooltip: _tabController.index == 0 ? 'افزودن تعهد جدید' : 'ثبت هدف جدید',
-              onPressed: () {
-                if (_tabController.index == 0) {
-                  CreateCommitmentSheet.show(
+
+            // Layer 2: Floating Capsule Header Island
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+                  child: _buildCapsuleHeader(
                     context,
-                    onSaved: () => _controller.reload(force: true),
-                  );
-                } else {
-                  _showCreateGoalSheet();
-                }
-              },
-            ),
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: colors.textPrimary),
-              onSelected: (val) {
-                if (val == 'archive') {
-                  _showArchiveSheet(completedGoals, stepsByGoal);
-                } else if (val == 'toggle_view') {
-                  _controller.toggleViewMode(!_controller.showTreeView);
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'toggle_view',
-                  child: Text(
-                    _controller.showTreeView ? 'نمای کارت نتیجه‌محور' : 'نمای درختی اهداف',
-                    style: const TextStyle(),
+                    isDarkMode,
+                    colors,
+                    completedGoals,
+                    stepsByGoal,
                   ),
                 ),
-                const PopupMenuItem(
-                  value: 'archive',
-                  child: Text(
-                    'آرشیو اهداف',
-                    style: TextStyle(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCapsuleHeader(
+    BuildContext context,
+    bool isDark,
+    RitmoColors colors,
+    List<Goal> completedGoals,
+    Map<String, List<GoalStep>> stepsByGoal,
+  ) {
+    final capsuleBgColor = isDark
+        ? const Color(0xFF1E222A).withValues(alpha: 0.86)
+        : Colors.white.withValues(alpha: 0.88);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.white.withValues(alpha: 0.90);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.50)
+                : const Color(0xFFCBD5E1).withValues(alpha: 0.65),
+            offset: const Offset(0, 5),
+            blurRadius: 14,
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.white.withValues(alpha: 0.90),
+            offset: const Offset(0, -1),
+            blurRadius: 3,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+            decoration: BoxDecoration(
+              color: capsuleBgColor,
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: borderColor,
+                width: 1.0,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top Row: Back Button, Title, AI, Add, Menu
+                SizedBox(
+                  height: 48,
+                  child: Row(
+                    children: [
+                      if (Navigator.canPop(context))
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 38,
+                            minHeight: 38,
+                          ),
+                          icon: Icon(
+                            CupertinoIcons.arrow_right,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF1D2129),
+                            size: 20,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        )
+                      else
+                        const SizedBox(width: 10),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Text(
+                              'اهداف و دستاوردها',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 18,
+                                letterSpacing: -0.4,
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF1D2129),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.sparkles,
+                        iconColor: colors.primary,
+                        isAiButton: true,
+                        isDark: isDark,
+                        tooltip: 'دستیار هوشمند برنامه‌ریزی',
+                        onTap: _showAiAssistantSheet,
+                      ),
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.add,
+                        iconColor: isDark
+                            ? Colors.white
+                            : const Color(0xFF1D2129),
+                        isDark: isDark,
+                        tooltip: _tabController.index == 0
+                            ? 'افزودن تعهد جدید'
+                            : 'ثبت هدف جدید',
+                        onTap: () {
+                          if (_tabController.index == 0) {
+                            CreateCommitmentSheet.show(
+                              context,
+                              onSaved: () => _controller.reload(force: true),
+                            );
+                          } else {
+                            _showCreateGoalSheet();
+                          }
+                        },
+                      ),
+                      PopupMenuButton<String>(
+                        padding: EdgeInsets.zero,
+                        tooltip: 'گزینه‌ها',
+                        onSelected: (val) {
+                          if (val == 'archive') {
+                            _showArchiveSheet(completedGoals, stepsByGoal);
+                          } else if (val == 'toggle_view') {
+                            _controller.toggleViewMode(!_controller.showTreeView);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'toggle_view',
+                            child: Text(
+                              _controller.showTreeView
+                                  ? 'نمای کارت نتیجه‌محور'
+                                  : 'نمای درختی اهداف',
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'archive',
+                            child: Text('آرشیو اهداف'),
+                          ),
+                        ],
+                        child: _buildHeaderActionButtonContent(
+                          icon: CupertinoIcons.ellipsis_vertical,
+                          iconColor: isDark
+                              ? const Color(0xFF9096A2)
+                              : const Color(0xFF6B7280),
+                          isDark: isDark,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                    ],
+                  ),
+                ),
+
+                // Bottom Collapsible Segmented Tabs
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeInOutCubic,
+                  height: _isTabsVisible ? 54.0 : 0.0,
+                  clipBehavior: Clip.hardEdge,
+                  decoration: const BoxDecoration(),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: _isTabsVisible ? 1.0 : 0.0,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: _buildSegmentedTabs(colors, isDark),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-          ],
+          ),
         ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 1. Custom Segmented switcher (Right: برنامه‌ها, Left: اهداف)
-            Container(
-              margin: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-              height: 42,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: colors.border.withValues(alpha: 0.3)),
-              ),
-              padding: const EdgeInsets.all(3),
-              child: Row(
-                children: [
-                  // Right button in RTL: برنامه‌ها (Index 0)
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        _tabController.animateTo(0);
-                        if (mounted) setState(() {});
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: _tabController.index == 0 ? colors.primary : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'برنامه‌ها',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: _tabController.index == 0 ? Colors.white : colors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+      ),
+    );
+  }
 
-                  // Left button in RTL: اهداف (Index 1)
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        _tabController.animateTo(1);
-                        if (mounted) setState(() {});
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: _tabController.index == 1 ? colors.primary : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'اهداف',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: _tabController.index == 1 ? Colors.white : colors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+  Widget _buildSegmentedTabs(RitmoColors colors, bool isDark) {
+    final trackBgColor = isDark ? const Color(0xFF16191E) : const Color(0xFFEFF2F6);
+    final pillBgColor = isDark
+        ? const Color(0xFF22262F)
+        : Color.lerp(Colors.white, colors.primary, 0.12)!;
+    final activeIndex = _tabController.index.clamp(0, 1);
+
+    const tabs = [
+      (title: 'برنامه‌ها', icon: CupertinoIcons.calendar_today),
+      (title: 'اهداف', icon: CupertinoIcons.flag_fill),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth;
+        const outerPadding = 4.0;
+        final availableWidth = totalWidth - (outerPadding * 2);
+        final tabWidth = availableWidth / 2;
+        const trackHeight = 44.0;
+        const pillHeight = trackHeight - (outerPadding * 2);
+
+        return Container(
+          height: trackHeight,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: trackBgColor,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.white.withValues(alpha: 0.90),
+              width: 1.0,
             ),
-
-            // 2. Polaris Hero (Dynamic active goal vs empty templates - only on Goals tab: Index 1)
-            if (_tabController.index == 1) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                child: isLoading
-                    ? const RitmoSkeletonCard()
-                    : _buildHeroSection(activeGoals, stepsByGoal, engineOutput, colors, isDarkMode),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.70)
+                    : const Color(0xFFB8C2CE).withValues(alpha: 0.55),
+                offset: const Offset(2, 2),
+                blurRadius: 4,
               ),
-              Divider(
-                height: 16,
-                thickness: 1,
-                indent: 10,
-                endIndent: 10,
-                color: colors.border.withValues(alpha: 0.3),
+              BoxShadow(
+                color: isDark
+                    ? const Color(0xFF222630)
+                    : Colors.white.withValues(alpha: 0.95),
+                offset: const Offset(-2, -2),
+                blurRadius: 4,
               ),
             ],
-
-            // Skeletons / Tab views
-            Expanded(
-              child: isLoading
-                  ? const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: RitmoSkeletonList(itemCount: 3),
-                    )
-                  : TabBarView(
-                      controller: _tabController,
-                      children: [
-                        // Tab 0: Planning Horizons (Prompt 072)
-                        PlanningScreen(
-                          embedded: true,
-                          upcomingTimeline: engineOutput?.upcomingTimeline ?? [],
-                        ),
-
-                        // Tab 1: Goals Card List or Tree View
-                        if (_controller.showTreeView)
-                          GoalsTreeSection(
-                            goals: activeGoals,
-                            stepsByGoal: stepsByGoal,
-                            progressMap: engineOutput?.goalProgress ?? {},
-                            routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
-                            routines: routines,
-                            onRefresh: () => _controller.reload(force: true),
-                            onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
-                            onDeleteGoal: (goalId) async {
-                              await GoalsRepository.instance.deleteGoal(goalId);
-                            },
-                            onEditGoal: (goal) {
-                              _showCreateGoalSheet(editGoal: goal);
-                            },
-                          )
-                        else
-                          GoalsCardListSection(
-                            goals: goals,
-                            stepsByGoal: stepsByGoal,
-                            progressMap: engineOutput?.goalProgress ?? {},
-                            routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
-                            routines: routines,
-                            courses: courses,
-                            onRefresh: () => _controller.reload(force: true),
-                            onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
-                            onDeleteGoal: (goalId) async {
-                              await GoalsRepository.instance.deleteGoal(goalId);
-                            },
-                            onEditGoal: (goal) {
-                              _showCreateGoalSheet(editGoal: goal);
-                            },
-                          ),
-                      ],
+          ),
+          child: Stack(
+            children: [
+              // Sliding Pill Indicator
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeInOutCubic,
+                right: outerPadding + (activeIndex * tabWidth),
+                top: outerPadding,
+                width: tabWidth,
+                height: pillHeight,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: pillBgColor,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: isDark ? 0.40 : 0.28),
+                      width: 1.0,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark
+                            ? Colors.black.withValues(alpha: 0.60)
+                            : const Color(0xFFB2BDCB).withValues(alpha: 0.65),
+                        offset: const Offset(2, 2),
+                        blurRadius: 4,
+                      ),
+                      BoxShadow(
+                        color: isDark ? const Color(0xFF2E3440) : Colors.white,
+                        offset: const Offset(-2, -2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Tab Buttons
+              Row(
+                children: List.generate(2, (index) {
+                  final item = tabs[index];
+                  final isSelected = activeIndex == index;
+
+                  return Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        _tabController.animateTo(index);
+                        setState(() {});
+                      },
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                            color: isSelected
+                                ? colors.primary
+                                : (isDark
+                                    ? const Color(0xFF8A93A4)
+                                    : const Color(0xFF6B7280)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                item.icon,
+                                size: 14,
+                                color: isSelected
+                                    ? colors.primary
+                                    : (isDark
+                                        ? const Color(0xFF8A93A4)
+                                        : const Color(0xFF6B7280)),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(item.title),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHeaderActionButton({
+    required IconData icon,
+    required Color iconColor,
+    required bool isDark,
+    required VoidCallback onTap,
+    String? tooltip,
+    bool isAiButton = false,
+  }) {
+    final button = GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: _buildHeaderActionButtonContent(
+        icon: icon,
+        iconColor: iconColor,
+        isDark: isDark,
+        isAiButton: isAiButton,
+      ),
+    );
+
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: button);
+    }
+    return button;
+  }
+
+  Widget _buildHeaderActionButtonContent({
+    required IconData icon,
+    required Color iconColor,
+    required bool isDark,
+    bool isAiButton = false,
+  }) {
+    return Container(
+      width: 36,
+      height: 36,
+      margin: const EdgeInsets.symmetric(horizontal: 3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isDark
+            ? (isAiButton
+                ? iconColor.withValues(alpha: 0.18)
+                : const Color(0xFF22262E))
+            : (isAiButton
+                ? iconColor.withValues(alpha: 0.12)
+                : const Color(0xFFF3F5F8)),
+        border: Border.all(
+          color: isDark
+              ? (isAiButton
+                  ? iconColor.withValues(alpha: 0.40)
+                  : Colors.white.withValues(alpha: 0.08))
+              : (isAiButton
+                  ? iconColor.withValues(alpha: 0.30)
+                  : Colors.white.withValues(alpha: 0.90)),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.white.withValues(alpha: 0.95),
+            offset: const Offset(-2, -2),
+            blurRadius: 4,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.55)
+                : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
+            offset: const Offset(2, 2),
+            blurRadius: 4,
+          ),
+          if (isAiButton)
+            BoxShadow(
+              color: iconColor.withValues(alpha: isDark ? 0.35 : 0.22),
+              blurRadius: 10,
+              spreadRadius: 1.0,
             ),
-          ],
+        ],
+      ),
+      child: Center(
+        child: Icon(
+          icon,
+          size: 18,
+          color: isAiButton
+              ? iconColor
+              : (isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280)),
         ),
       ),
     );

@@ -145,7 +145,7 @@ class ThemeSettingsScreen extends StatelessWidget {
                       ),
                       if (!prefs.reduceTransparency) ...[
                         Divider(color: colors.divider, height: 1),
-                        // پیش‌نمایش زنده متریال شیشه‌ای
+                        // پیش‌نمایش زنده متریال شیشه‌ای (طراحی بر پایه Apple VisionOS / HIG)
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: RitmoSpacing.lg,
@@ -153,68 +153,206 @@ class ThemeSettingsScreen extends StatelessWidget {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(RitmoRadius.card),
-                            child: Stack(
-                              children: [
-                                // پس‌زمینه رنگی پیش‌نمایش
-                                Container(
-                                  height: 84,
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        colors.primary.withValues(alpha: 0.6),
-                                        colors.accent.withValues(alpha: 0.5),
-                                      ],
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      'پیش‌نمایش زنده متریال شیشه‌ای ریتمو',
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.7),
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13,
-                                        fontFamily: 'Vazirmatn',
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                // لایه شیشه روی آن
-                                Positioned.fill(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(10),
-                                    child: RitmoGlassCard(
-                                      borderRadius: BorderRadius.circular(12),
-                                      blurSigma: prefs.glassBlurSigma,
-                                      color: (context.isDark ? Colors.black : Colors.white).withValues(
-                                        alpha: (prefs.glassOpacityPercent / 100.0).clamp(0.05, 0.95),
-                                      ),
-                                      child: Center(
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.auto_awesome,
-                                              size: 18,
-                                              color: colors.primary,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'ماتی: ${prefs.glassBlurSigma.round()}px | شفافیت: ${prefs.glassOpacityPercent}٪',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: colors.textPrimary,
-                                                fontFamily: 'Vazirmatn',
-                                              ),
-                                            ),
+                            child: Container(
+                              height: 130,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: context.isDark
+                                    ? const Color(0xFF0F172A)
+                                    : const Color(0xFFE2E8F0),
+                              ),
+                              child: Stack(
+                                children: [
+                                  // ۱. گوی نورانی گرم و زنده (آمبر / نارنجی) در سمت راست
+                                  Positioned(
+                                    top: -15,
+                                    right: 20,
+                                    child: Container(
+                                      width: 110,
+                                      height: 110,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: RadialGradient(
+                                          colors: [
+                                            Color(0xFFFF9E44),
+                                            Color(0xFFFF5722),
+                                            Colors.transparent,
                                           ],
+                                          stops: [0.2, 0.7, 1.0],
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+
+                                  // ۲. گوی نورانی فیروزه‌ای / زمردی در سمت چپ
+                                  Positioned(
+                                    bottom: -20,
+                                    left: 30,
+                                    child: Container(
+                                      width: 120,
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: RadialGradient(
+                                          colors: [
+                                            colors.primary.withValues(alpha: 0.9),
+                                            const Color(0xFF00E5FF).withValues(alpha: 0.6),
+                                            Colors.transparent,
+                                          ],
+                                          stops: const [0.1, 0.6, 1.0],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  // ۳. کارت شناور شیشه‌ای روی هاله‌های نوری
+                                  Positioned.fill(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 12,
+                                      ),
+                                      child: RitmoGlassCard(
+                                        borderRadius: BorderRadius.circular(16),
+                                        blurSigma: prefs.glassBlurSigma,
+                                        color: (context.isDark ? Colors.black : Colors.white).withValues(
+                                          alpha: (prefs.glassOpacityPercent / 100.0).clamp(0.05, 0.95),
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 10,
+                                          ),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              // ردیف نشان کپسولی مات بالا
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 4,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: (context.isDark ? Colors.white : Colors.black)
+                                                          .withValues(alpha: 0.88),
+                                                      borderRadius: BorderRadius.circular(20),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.auto_awesome,
+                                                          size: 13,
+                                                          color: context.isDark ? Colors.black : Colors.white,
+                                                        ),
+                                                        const SizedBox(width: 5),
+                                                        Text(
+                                                          'متریال شیشه‌ای پرمیوم',
+                                                          style: TextStyle(
+                                                            fontSize: 11,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: context.isDark ? Colors.black : Colors.white,
+                                                            fontFamily: 'Vazirmatn',
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'پیش‌نمایش زنده',
+                                                    style: TextStyle(
+                                                      fontSize: 10.5,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: colors.textSecondary.withValues(alpha: 0.8),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+
+                                              // ردیف آمار و شاخص‌های بلور و شفافیت
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: colors.primary.withValues(alpha: 0.15),
+                                                      borderRadius: BorderRadius.circular(10),
+                                                      border: Border.all(
+                                                        color: colors.primary.withValues(alpha: 0.3),
+                                                        width: 1,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          'بلور (ماتی): ',
+                                                          style: TextStyle(
+                                                            fontSize: 11,
+                                                            color: colors.textPrimary.withValues(alpha: 0.7),
+                                                            fontFamily: 'Vazirmatn',
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          '${prefs.glassBlurSigma.round()}px',
+                                                          style: TextStyle(
+                                                            fontSize: 11.5,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: colors.primary,
+                                                            fontFamily: 'Vazirmatn',
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 14),
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(0xFFFF9E44).withValues(alpha: 0.15),
+                                                      borderRadius: BorderRadius.circular(10),
+                                                      border: Border.all(
+                                                        color: const Color(0xFFFF9E44).withValues(alpha: 0.3),
+                                                        width: 1,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          'شفافیت: ',
+                                                          style: TextStyle(
+                                                            fontSize: 11,
+                                                            color: colors.textPrimary.withValues(alpha: 0.7),
+                                                            fontFamily: 'Vazirmatn',
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          '${prefs.glassOpacityPercent}٪',
+                                                          style: const TextStyle(
+                                                            fontSize: 11.5,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: Color(0xFFFF9E44),
+                                                            fontFamily: 'Vazirmatn',
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

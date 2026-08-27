@@ -56,41 +56,81 @@ class RitmoGlassSurface extends StatelessWidget {
     final effectiveBlur =
         (blurSigma ?? context.glassBlurSigma).clamp(0.0, 50.0);
 
-    return ClipRRect(
-      borderRadius: effectiveRadius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: effectiveBlur, sigmaY: effectiveBlur),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: colors.glassTint,
-            borderRadius: effectiveRadius,
-            border:
-                border ??
-                Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.16)
-                      : Colors.white.withValues(alpha: 0.65),
-                  width: 1.0,
-                ),
-          ),
-          child: DecoratedBox(
+    final defaultShadows = isDark
+        ? [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.32),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+              spreadRadius: -4,
+            ),
+          ]
+        : [
+            BoxShadow(
+              color: colors.primary.withValues(alpha: 0.08),
+              blurRadius: 28,
+              offset: const Offset(0, 10),
+              spreadRadius: -4,
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ];
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: effectiveRadius,
+        boxShadow: defaultShadows,
+      ),
+      child: ClipRRect(
+        borderRadius: effectiveRadius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: effectiveBlur, sigmaY: effectiveBlur),
+          child: Container(
             decoration: BoxDecoration(
               borderRadius: effectiveRadius,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                  Colors.white.withValues(alpha: 0.0),
-                ],
-                stops: const [0.0, 0.45],
-              ),
+              gradient: border == null
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        isDark
+                            ? Colors.white.withValues(alpha: 0.36)
+                            : Colors.white.withValues(alpha: 0.85),
+                        isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.white.withValues(alpha: 0.25),
+                      ],
+                    )
+                  : null,
+              border: border,
             ),
-            child: Material(
-              type: MaterialType.transparency,
-              borderRadius: effectiveRadius,
-              child: child,
+            padding: border == null ? const EdgeInsets.all(1.2) : null,
+            child: Container(
+              padding: padding,
+              decoration: BoxDecoration(
+                color: colors.glassTint,
+                borderRadius: effectiveRadius,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    isDark
+                        ? Colors.white.withValues(alpha: 0.12)
+                        : Colors.white.withValues(alpha: 0.40),
+                    isDark
+                        ? Colors.white.withValues(alpha: 0.02)
+                        : Colors.white.withValues(alpha: 0.10),
+                  ],
+                ),
+              ),
+              child: Material(
+                type: MaterialType.transparency,
+                borderRadius: effectiveRadius,
+                child: child,
+              ),
             ),
           ),
         ),

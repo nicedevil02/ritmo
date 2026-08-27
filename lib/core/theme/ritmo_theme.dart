@@ -1037,12 +1037,33 @@ class RitmoGlassCardLight extends StatelessWidget {
     final effectiveBlur =
         (blurSigma ?? (context.glassBlurSigma * 1.1)).clamp(0.0, 50.0);
 
+    final defaultShadows = isDarkMode
+        ? [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.32),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+              spreadRadius: -4,
+            ),
+          ]
+        : [
+            BoxShadow(
+              color: colors.primary.withValues(alpha: 0.08),
+              blurRadius: 28,
+              offset: const Offset(0, 10),
+              spreadRadius: -4,
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ];
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: radius,
-        boxShadow:
-            shadows ??
-            (isDarkMode ? RitmoElevation.none : RitmoElevation.cardLight),
+        boxShadow: shadows ?? defaultShadows,
       ),
       child: ClipRRect(
         borderRadius: radius,
@@ -1051,30 +1072,41 @@ class RitmoGlassCardLight extends StatelessWidget {
             sigmaX: effectiveBlur,
             sigmaY: effectiveBlur,
           ),
-          child: DecoratedBox(
+          child: Container(
             decoration: BoxDecoration(
-              color: color ?? colors.glassTint,
               borderRadius: radius,
-              border:
-                  border ??
-                  Border.all(
-                    color: isDarkMode
-                        ? Colors.white.withValues(alpha: 0.18)
-                        : Colors.white.withValues(alpha: 0.70),
-                    width: 1.2,
-                  ),
+              gradient: border == null
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        isDarkMode
+                            ? Colors.white.withValues(alpha: 0.36)
+                            : Colors.white.withValues(alpha: 0.85),
+                        isDarkMode
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.white.withValues(alpha: 0.25),
+                      ],
+                    )
+                  : null,
+              border: border,
             ),
-            child: DecoratedBox(
+            padding: border == null ? const EdgeInsets.all(1.2) : null,
+            child: Container(
               decoration: BoxDecoration(
+                color: color ?? colors.glassTint,
                 borderRadius: radius,
                 gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withValues(alpha: isDarkMode ? 0.09 : 0.22),
-                    Colors.white.withValues(alpha: 0.0),
+                    isDarkMode
+                        ? Colors.white.withValues(alpha: 0.12)
+                        : Colors.white.withValues(alpha: 0.40),
+                    isDarkMode
+                        ? Colors.white.withValues(alpha: 0.02)
+                        : Colors.white.withValues(alpha: 0.10),
                   ],
-                  stops: const [0.0, 0.45],
                 ),
               ),
               child: Material(type: MaterialType.transparency, child: child),

@@ -252,65 +252,6 @@ class Realm24hDial extends StatelessWidget {
       }
     }
 
-    // فالبک: ۵ سگمنت پیش‌فرض مطابق طرح مرجع
-    if (segments.isEmpty) {
-      segments.addAll(const [
-        // ۱. خواب و ریکاوری (فعال) ۲۳:۰۰ تا ۰۶:۳۰
-        RealmDialSegment(
-          startMinute: 1380,
-          endMinute: 1440,
-          color: Color(0xFF6366F1),
-          isActive: true,
-          icon: CupertinoIcons.moon_fill,
-          name: 'خواب',
-        ),
-        RealmDialSegment(
-          startMinute: 0,
-          endMinute: 390,
-          color: Color(0xFF6366F1),
-          isActive: true,
-          icon: CupertinoIcons.moon_fill,
-          name: 'خواب',
-        ),
-        // ۲. کار و تمرکز ۰۶:۳۰ تا ۱۲:۰۰
-        RealmDialSegment(
-          startMinute: 390,
-          endMinute: 720,
-          color: Color(0xFF3B82F6),
-          isActive: false,
-          icon: CupertinoIcons.briefcase_fill,
-          name: 'کار',
-        ),
-        // ۳. انرژی و بهره‌وری ۱۲:۰۰ تا ۱۵:۳۰
-        RealmDialSegment(
-          startMinute: 720,
-          endMinute: 930,
-          color: Color(0xFFF59E0B),
-          isActive: false,
-          icon: CupertinoIcons.sparkles,
-          name: 'تمرکز',
-        ),
-        // ۴. طبیعت و ریکاوری ۱۵:۳۰ تا ۱۹:۳۰
-        RealmDialSegment(
-          startMinute: 930,
-          endMinute: 1170,
-          color: Color(0xFF10B981),
-          isActive: false,
-          icon: CupertinoIcons.leaf_arrow_circlepath,
-          name: 'طبیعت',
-        ),
-        // ۵. آرامش شبانه ۱۹:۳۰ تا ۲۳:۰۰
-        RealmDialSegment(
-          startMinute: 1170,
-          endMinute: 1380,
-          color: Color(0xFF8B5CF6),
-          isActive: false,
-          icon: CupertinoIcons.moon_stars_fill,
-          name: 'آرامش',
-        ),
-      ]);
-    }
-
     return segments;
   }
 

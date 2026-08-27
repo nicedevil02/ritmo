@@ -628,7 +628,6 @@ ${jsonEncode(digest.json)}
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final m = context.metrics;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     if (_isLoading) {
@@ -640,6 +639,9 @@ ${jsonEncode(digest.json)}
       );
     }
 
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final contentTopPadding = topPadding + 76.0;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: PopScope(
@@ -648,53 +650,180 @@ ${jsonEncode(digest.json)}
         },
         child: Scaffold(
           backgroundColor: colors.background,
-          body: SafeArea(
-            bottom: false,
-            child: RefreshIndicator(
-              onRefresh: _loadAnalytics,
-              color: colors.primary,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(m.spaceMd, m.spaceMd, m.spaceMd, 120),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Custom Header Row
-                    _buildHeader(colors),
-                    SizedBox(height: m.spaceLg),
+          body: Stack(
+            children: [
+              // Layer 1: Body Content
+              Positioned.fill(
+                child: RefreshIndicator(
+                  onRefresh: _loadAnalytics,
+                  color: colors.primary,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 120),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Time Window Ruler (ط۵)
+                        InsightsTimeWindowRuler(
+                          selectedWindow: _selectedWindow,
+                          onWindowChanged: (w) {
+                            setState(() {
+                              _selectedWindow = w;
+                            });
+                            _loadAnalytics();
+                          },
+                        ),
+                        const SizedBox(height: 16),
 
-                    // Time Window Ruler (ط۵)
-                    InsightsTimeWindowRuler(
-                      selectedWindow: _selectedWindow,
-                      onWindowChanged: (w) {
-                        setState(() {
-                          _selectedWindow = w;
-                        });
-                        _loadAnalytics();
-                      },
+                        // AI Briefing section
+                        PremiumGate(
+                          feature: PremiumFeature.unlimitedAi,
+                          child: _buildAIBriefingSection(colors, isDarkMode),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Maturity Gate Dispatcher
+                        if (!DataMaturityEngine.hasEnoughDataForWeeklyTrend(_daysOfData))
+                          _buildEarlyStageView(colors, isDarkMode)
+                        else
+                          PremiumGate(
+                            feature: PremiumFeature.advancedInsights,
+                            child: _buildAdvancedView(colors, isDarkMode),
+                          ),
+                        const SizedBox(height: 16),
+                        AdService.instance.getBannerAd(),
+                      ],
                     ),
-                    SizedBox(height: m.spaceXl),
-
-                    // AI Briefing section
-                    PremiumGate(
-                      feature: PremiumFeature.unlimitedAi,
-                      child: _buildAIBriefingSection(colors, isDarkMode),
-                    ),
-                    SizedBox(height: m.spaceXl),
-
-                    // Maturity Gate Dispatcher
-                    if (!DataMaturityEngine.hasEnoughDataForWeeklyTrend(_daysOfData))
-                      _buildEarlyStageView(colors, isDarkMode)
-                    else
-                      PremiumGate(
-                        feature: PremiumFeature.advancedInsights,
-                        child: _buildAdvancedView(colors, isDarkMode),
-                      ),
-                    SizedBox(height: m.spaceXl),
-                    AdService.instance.getBannerAd(),
-                  ],
+                  ),
                 ),
               ),
+
+              // Layer 2: Floating Capsule Header Island
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+                    child: _buildCapsuleHeader(context, isDarkMode, colors),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCapsuleHeader(
+    BuildContext context,
+    bool isDark,
+    RitmoColors colors,
+  ) {
+    final capsuleBgColor = isDark
+        ? const Color(0xFF1E222A).withValues(alpha: 0.86)
+        : Colors.white.withValues(alpha: 0.88);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.white.withValues(alpha: 0.90);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.50)
+                : const Color(0xFFCBD5E1).withValues(alpha: 0.65),
+            offset: const Offset(0, 5),
+            blurRadius: 14,
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.white.withValues(alpha: 0.90),
+            offset: const Offset(0, -1),
+            blurRadius: 3,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: capsuleBgColor,
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: borderColor,
+                width: 1.0,
+              ),
+            ),
+            child: Row(
+              children: [
+                if (Navigator.canPop(context))
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 38,
+                      minHeight: 38,
+                    ),
+                    icon: Icon(
+                      CupertinoIcons.arrow_right,
+                      color: isDark ? Colors.white : const Color(0xFF1D2129),
+                      size: 20,
+                    ),
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(context);
+                    },
+                  )
+                else
+                  const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'بینش‌ها و الگوها',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 17.5,
+                      letterSpacing: -0.4,
+                      color: isDark ? Colors.white : const Color(0xFF1D2129),
+                    ),
+                  ),
+                ),
+                _buildHeaderActionButton(
+                  icon: CupertinoIcons.calendar_today,
+                  iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                  isDark: isDark,
+                  tooltip: 'انتخاب بازه زمانی',
+                  onTap: () => _showDateRangePicker(colors),
+                ),
+                _buildHeaderActionButton(
+                  icon: CupertinoIcons.arrow_down_doc,
+                  iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                  isDark: isDark,
+                  tooltip: 'خروجی گرفتن',
+                  onTap: () => _showExportSheet(colors),
+                ),
+                Builder(
+                  builder: (btnCtx) => _buildHeaderActionButton(
+                    icon: CupertinoIcons.share,
+                    iconColor: colors.primary,
+                    isDark: isDark,
+                    tooltip: 'اشتراک‌گذاری گزارش',
+                    onTap: () => _simulateShare(btnCtx, colors),
+                  ),
+                ),
+                const SizedBox(width: 2),
+              ],
             ),
           ),
         ),
@@ -702,81 +831,94 @@ ${jsonEncode(digest.json)}
     );
   }
 
-  Widget _buildHeader(RitmoColors colors) {
-    final canPop = Navigator.canPop(context);
+  Widget _buildHeaderActionButton({
+    required IconData icon,
+    required Color iconColor,
+    required bool isDark,
+    required VoidCallback onTap,
+    String? tooltip,
+    bool isAiButton = false,
+  }) {
+    final button = GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: _buildHeaderActionButtonContent(
+        icon: icon,
+        iconColor: iconColor,
+        isDark: isDark,
+        isAiButton: isAiButton,
+      ),
+    );
 
-    return Row(
-      children: [
-        if (canPop) ...[
-          IconButton(
-            icon: const Icon(CupertinoIcons.back, size: 22),
-            color: colors.textPrimary,
-            tooltip: 'بازگشت',
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.all(4),
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            onPressed: () => Navigator.of(context).pop(),
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: button);
+    }
+    return button;
+  }
+
+  Widget _buildHeaderActionButtonContent({
+    required IconData icon,
+    required Color iconColor,
+    required bool isDark,
+    bool isAiButton = false,
+  }) {
+    return Container(
+      width: 36,
+      height: 36,
+      margin: const EdgeInsets.symmetric(horizontal: 3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isDark
+            ? (isAiButton
+                ? iconColor.withValues(alpha: 0.18)
+                : const Color(0xFF22262E))
+            : (isAiButton
+                ? iconColor.withValues(alpha: 0.12)
+                : const Color(0xFFF3F5F8)),
+        border: Border.all(
+          color: isDark
+              ? (isAiButton
+                  ? iconColor.withValues(alpha: 0.40)
+                  : Colors.white.withValues(alpha: 0.08))
+              : (isAiButton
+                  ? iconColor.withValues(alpha: 0.30)
+                  : Colors.white.withValues(alpha: 0.90)),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.white.withValues(alpha: 0.95),
+            offset: const Offset(-2, -2),
+            blurRadius: 4,
           ),
-          const SizedBox(width: 4),
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.55)
+                : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
+            offset: const Offset(2, 2),
+            blurRadius: 4,
+          ),
+          if (isAiButton)
+            BoxShadow(
+              color: iconColor.withValues(alpha: isDark ? 0.35 : 0.22),
+              blurRadius: 10,
+              spreadRadius: 1.0,
+            ),
         ],
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'بینش‌ها',
-                style: RitmoTextStyles.pageTitle(
-                  colors.textPrimary,
-                ).copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'درک روندها و الگوهای زندگی شما',
-                style: RitmoTextStyles.caption(colors.textSecondary),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+      ),
+      child: Center(
+        child: Icon(
+          icon,
+          size: 18,
+          color: isAiButton
+              ? iconColor
+              : (isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280)),
         ),
-        const SizedBox(width: 6),
-        // Header Actions
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(CupertinoIcons.calendar_today, size: 18),
-              color: colors.textSecondary,
-              tooltip: 'انتخاب بازه زمانی',
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              onPressed: () => _showDateRangePicker(colors),
-            ),
-            IconButton(
-              icon: const Icon(CupertinoIcons.arrow_down_doc, size: 18),
-              color: colors.textSecondary,
-              tooltip: 'خروجی گرفتن',
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              onPressed: () => _showExportSheet(colors),
-            ),
-            Builder(
-              builder: (btnCtx) => IconButton(
-                icon: const Icon(CupertinoIcons.share, size: 18),
-                color: colors.textSecondary,
-                tooltip: 'اشتراک‌گذاری',
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.all(4),
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                onPressed: () => _simulateShare(btnCtx, colors),
-              ),
-            ),
-          ],
-        ),
-      ],
+      ),
     );
   }
 

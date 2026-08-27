@@ -995,19 +995,18 @@ class _NeumorphicGlowRingPainter extends CustomPainter {
     if (percentage <= 0) return;
 
     final rect = Rect.fromCircle(center: center, radius: radius);
-    final sweepAngle = (2 * math.pi * percentage).clamp(0.001, 2 * math.pi);
+    final sweepAngle = 2 * math.pi * percentage;
 
     final jellyArcPaint = Paint()
       ..shader = SweepGradient(
         startAngle: 0.0,
         endAngle: sweepAngle,
         colors: [
-          activeColor.withValues(alpha: 0.25),
-          activeColor.withValues(alpha: 0.65),
+          activeColor.withValues(alpha: 0.20),
+          activeColor.withValues(alpha: 0.60),
           activeColor,
         ],
         stops: const [0.0, 0.5, 1.0],
-        tileMode: TileMode.clamp,
         transform: const GradientRotation(-math.pi / 2),
       ).createShader(rect)
       ..style = PaintingStyle.stroke

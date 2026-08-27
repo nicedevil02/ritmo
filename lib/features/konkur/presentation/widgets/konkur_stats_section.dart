@@ -28,7 +28,7 @@ class KonkurStatsSection extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(10, 16, 10, 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -102,10 +102,10 @@ class KonkurStatsSection extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                          color: colors.primary.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.rocket_launch, color: Color(0xFF8B5CF6), size: 24),
+                        child: Icon(Icons.rocket_launch, color: colors.primary, size: 24),
                       ),
                       const SizedBox(width: 16),
                       Expanded(

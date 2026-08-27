@@ -93,14 +93,14 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
         : <double>[];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(10, 16, 10, 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Trend Chart Card
           if (widget.subjects.isNotEmpty && trendScores.isNotEmpty) ...[
             _buildTrendChartCard(trendScores, colors),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
           ],
 
           Row(
@@ -122,15 +122,15 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8B5CF6),
-                  foregroundColor: Colors.white,
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           if (widget.mockExams.isEmpty)
             _buildEmptyState(colors)
@@ -173,7 +173,7 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
                 DropdownButton<KonkurSubject>(
                   value: _selectedTrendSubject,
                   underline: const SizedBox.shrink(),
-                  icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF8B5CF6)),
+                  icon: Icon(Icons.arrow_drop_down, color: colors.primary),
                   items: widget.subjects.map((sub) {
                     final trend = widget.perSubjectTrend[sub.id] ?? [];
                     return DropdownMenuItem(
@@ -204,7 +204,7 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
               child: CustomPaint(
                 painter: TrendChartPainter(
                   scores: trendScores,
-                  lineColor: const Color(0xFF8B5CF6),
+                  lineColor: colors.primary,
                   gridColor: colors.border,
                   textColor: colors.textSecondary,
                 ),
@@ -611,6 +611,7 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
+        final colors = ctx.colors;
         return Directionality(
           textDirection: TextDirection.rtl,
           child: Padding(
@@ -687,8 +688,8 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
                 ElevatedButton(
                   onPressed: () => Navigator.pop(ctx),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B5CF6),
-                    foregroundColor: Colors.white,
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -753,8 +754,8 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
                       Expanded(
                         child: TextButton.icon(
                           onPressed: _selectDate,
-                          icon: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF8B5CF6)),
-                          label: Text(dateDisplay, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6))),
+                          icon: Icon(Icons.calendar_today, size: 16, color: colors.primary),
+                          label: Text(dateDisplay, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary)),
                         ),
                       ),
                     ],
@@ -779,8 +780,8 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
             ElevatedButton(
               onPressed: _saveExam,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8B5CF6),
-                foregroundColor: Colors.white,
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),

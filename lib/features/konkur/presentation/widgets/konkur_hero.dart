@@ -19,16 +19,15 @@ class KonkurHero extends StatelessWidget {
     final colors = context.colors;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    // A beautiful purple-to-violet gradient for the background
     final gradient = LinearGradient(
       colors: isDarkMode
           ? [
-              const Color(0xFF7C3AED).withValues(alpha: 0.35),
-              const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+              colors.primary.withValues(alpha: 0.35),
+              colors.accent.withValues(alpha: 0.15),
             ]
           : [
-              const Color(0xFF8B5CF6).withValues(alpha: 0.85),
-              const Color(0xFFA78BFA).withValues(alpha: 0.95),
+              colors.primary.withValues(alpha: 0.88),
+              colors.primary.withValues(alpha: 0.70),
             ],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
@@ -39,7 +38,7 @@ class KonkurHero extends StatelessWidget {
     final m = context.metrics;
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: m.spaceLg, vertical: m.spaceSm),
+      margin: const EdgeInsets.fromLTRB(10, 16, 10, 16),
       decoration: BoxDecoration(
         gradient: gradient,
         borderRadius: BorderRadius.circular(m.radiusHero),
@@ -125,7 +124,7 @@ class KonkurHero extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _buildReadinessIndicator(data.overallReadiness, textColor, m),
+                  _buildReadinessIndicator(data.overallReadiness, textColor, m, colors),
                 ],
               ),
               const Divider(color: Colors.white24, height: 24, thickness: 1),
@@ -159,7 +158,12 @@ class KonkurHero extends StatelessWidget {
     );
   }
 
-  Widget _buildReadinessIndicator(double readiness, Color textColor, RitmoMetrics m) {
+  Widget _buildReadinessIndicator(
+    double readiness,
+    Color textColor,
+    RitmoMetrics m,
+    RitmoColors colors,
+  ) {
     final percent = (readiness * 100).toInt();
     return Column(
       children: [
@@ -172,7 +176,7 @@ class KonkurHero extends StatelessWidget {
               child: CircularProgressIndicator(
                 value: readiness,
                 backgroundColor: Colors.white24,
-                color: const Color(0xFF10B981),
+                color: colors.success,
                 strokeWidth: 6 * m.densityFactor,
                 strokeCap: StrokeCap.round,
               ),

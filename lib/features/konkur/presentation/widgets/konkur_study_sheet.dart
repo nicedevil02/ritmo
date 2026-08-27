@@ -479,13 +479,13 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
                     children: [
                       ElevatedButton.icon(
                         onPressed: _toggleTimer,
-                        icon: Icon(_isRunning ? Icons.pause : Icons.play_arrow, color: Colors.white),
+                        icon: Icon(_isRunning ? Icons.pause : Icons.play_arrow, color: colors.onPrimary),
                         label: Text(
                           _isRunning ? 'توقف موقت' : 'شروع تایمر',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(fontWeight: FontWeight.bold, color: colors.onPrimary),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _isRunning ? colors.warning : const Color(0xFF8B5CF6),
+                          backgroundColor: _isRunning ? colors.warning : colors.primary,
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
@@ -584,7 +584,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
               ChoiceChip(
                 label: const Text('📝 تمرین بیشتر لازمه', style: TextStyle(fontSize: 10)),
                 selected: _selectedOutcome == 'NEEDS_PRACTICE',
-                selectedColor: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                selectedColor: colors.primary.withValues(alpha: 0.2),
                 onSelected: (sel) => setState(() => _selectedOutcome = sel ? 'NEEDS_PRACTICE' : null),
               ),
             ],
@@ -612,7 +612,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
                     ),
                   ),
                   selected: isSelected,
-                  selectedColor: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                  selectedColor: colors.primary.withValues(alpha: 0.2),
                   onSelected: (selected) {
                     if (selected) {
                       setState(() {
@@ -645,8 +645,8 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
           ElevatedButton(
             onPressed: _secondsElapsed > 0 ? _saveSession : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B5CF6),
-              foregroundColor: Colors.white,
+              backgroundColor: colors.primary,
+              foregroundColor: colors.onPrimary,
               disabledBackgroundColor: colors.border,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -679,7 +679,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isSelected ? const Color(0xFF8B5CF6) : Colors.transparent,
+                color: isSelected ? colors.primary : Colors.transparent,
                 width: 2.5,
               ),
             ),
@@ -690,7 +690,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? const Color(0xFF8B5CF6) : colors.textSecondary,
+              color: isSelected ? colors.primary : colors.textSecondary,
             ),
           ),
         ),

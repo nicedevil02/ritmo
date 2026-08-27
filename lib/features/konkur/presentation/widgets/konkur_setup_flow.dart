@@ -203,8 +203,8 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                   ElevatedButton(
                     onPressed: _isSaving ? null : (_canGoToNext() ? _nextStep : null),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8B5CF6),
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
                       disabledBackgroundColor: colors.border,
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -257,9 +257,9 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isActive
-                    ? const Color(0xFF8B5CF6)
+                    ? colors.primary
                     : isDone
-                        ? const Color(0xFF10B981)
+                        ? colors.success
                         : colors.border,
               ),
               alignment: Alignment.center,
@@ -277,7 +277,7 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
               Container(
                 width: 40,
                 height: 3,
-                color: isDone ? const Color(0xFF10B981) : colors.border,
+                color: isDone ? colors.success : colors.border,
               ),
           ],
         );
@@ -320,12 +320,12 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
               side: BorderSide(
-                color: isSelected ? const Color(0xFF8B5CF6) : colors.border,
+                color: isSelected ? colors.primary : colors.border,
                 width: isSelected ? 2 : 1,
               ),
             ),
             color: isSelected
-                ? const Color(0xFF8B5CF6).withValues(alpha: 0.1)
+                ? colors.primary.withValues(alpha: 0.12)
                 : colors.card,
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
@@ -348,7 +348,7 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                       ),
                     ),
                     if (isSelected)
-                      const Icon(Icons.check_circle, color: Color(0xFF8B5CF6))
+                      Icon(Icons.check_circle, color: colors.primary)
                     else
                       const Icon(Icons.circle_outlined, color: Colors.grey),
                   ],
@@ -400,7 +400,7 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                const Icon(Icons.calendar_today, size: 48, color: Color(0xFF8B5CF6)),
+                Icon(Icons.calendar_today, size: 48, color: colors.primary),
                 const SizedBox(height: 16),
                 Text(
                   formattedDate,
@@ -413,13 +413,14 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: _selectDate,
-                  icon: const Icon(Icons.date_range, color: Colors.white),
+                  icon: Icon(Icons.date_range, color: colors.onPrimary),
                   label: const Text(
                     'انتخاب تاریخ شمسی کنکور',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B5CF6),
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -473,7 +474,6 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                       _includeGeneral = val;
                     });
                   },
-                  activeThumbColor: const Color(0xFF8B5CF6),
                 ),
               ],
             ),
@@ -516,10 +516,10 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
             children: [
               Text(
                 formatDuration(_dailyTargetMinutes),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF8B5CF6),
+                  color: colors.primary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -528,7 +528,7 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                 min: 60,
                 max: 720,
                 divisions: 22, // 30 minute steps
-                activeColor: const Color(0xFF8B5CF6),
+                activeColor: colors.primary,
                 inactiveColor: colors.border,
                 onChanged: (val) {
                   setState(() {

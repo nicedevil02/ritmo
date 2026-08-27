@@ -102,6 +102,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) {
+        final colors = ctx.colors;
         return AlertDialog(
           title: const Text('ثبت سریع', style: TextStyle(fontWeight: FontWeight.bold)),
           content: Column(
@@ -128,9 +129,12 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
               child: const Text('فقط تیک بزن (بدون ثبت زمان)', style: TextStyle()),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
+              ),
               onPressed: () => Navigator.pop(ctx, minutesController.text.trim()),
-              child: const Text('ثبت زمان و تیک', style: TextStyle(color: Colors.white)),
+              child: const Text('ثبت زمان و تیک', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -278,7 +282,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.psychology, color: Color(0xFF8B5CF6)),
+                  Icon(Icons.psychology, color: colors.primary),
                   const SizedBox(width: 8),
                   const Text(
                     'چرا این مبحث برنامه‌ریزی شد؟',
@@ -305,7 +309,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                  color: colors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -342,7 +346,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
     final colors = context.colors;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(10, 16, 10, 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -354,20 +358,20 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
             totalItems: _todayTotalItems,
             colors: colors,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
 
           // Quick Action Strip
           _buildQuickActionStrip(colors),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Header / Replanning card
           _buildSummaryCard(colors),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Low energy warning card
           if (_energyLevel.toUpperCase() == 'LOW') ...[
             _buildEnergyWarningCard(colors),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
           ],
 
           // List of today's plan items
@@ -462,8 +466,8 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                     ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8B5CF6),
-                foregroundColor: Colors.white,
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
@@ -560,7 +564,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                           shape: BoxShape.circle,
                           color: RitmoColor.fromHex(
                             subject.colorHex,
-                            fallback: const Color(0xFF8B5CF6),
+                            fallback: colors.primary,
                           ),
                         ),
                       ),
@@ -579,19 +583,19 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                            color: colors.primary.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.help_outline, size: 11, color: Color(0xFF8B5CF6)),
-                              SizedBox(width: 2),
+                              Icon(Icons.help_outline, size: 11, color: colors.primary),
+                              const SizedBox(width: 2),
                               Text(
                                 'چرا این؟',
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: Color(0xFF8B5CF6),
+                                  color: colors.primary,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -625,13 +629,14 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
               children: [
                 ElevatedButton.icon(
                   onPressed: () => _openStudySheet(topic),
-                  icon: const Icon(Icons.play_arrow, size: 14, color: Colors.white),
+                  icon: Icon(Icons.play_arrow, size: 14, color: colors.onPrimary),
                   label: const Text(
                     'شروع',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B5CF6),
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     minimumSize: Size.zero,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -666,8 +671,8 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
         Expanded(
           child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B5CF6),
-              foregroundColor: Colors.white,
+              backgroundColor: colors.primary,
+              foregroundColor: colors.onPrimary,
               padding: const EdgeInsets.symmetric(vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               elevation: 0,

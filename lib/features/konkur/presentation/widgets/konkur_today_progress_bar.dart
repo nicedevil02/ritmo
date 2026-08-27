@@ -25,7 +25,7 @@ class KonkurTodayProgressBar extends StatelessWidget {
     final ratio = min(actualMinutes / max(plannedMinutes, 1), 1.0);
     final fillColor = ratio >= 1.0
         ? colors.success
-        : (ratio >= 0.5 ? const Color(0xFF8B5CF6) : colors.warning);
+        : (ratio >= 0.5 ? colors.primary : colors.warning);
 
     return Container(
       padding: const EdgeInsets.all(16),

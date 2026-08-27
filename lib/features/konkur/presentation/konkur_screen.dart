@@ -205,29 +205,30 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
   Widget _buildCarryOverBanner() {
     if (_carryOverItems.isEmpty) return const SizedBox.shrink();
 
+    final colors = context.colors;
     final countStr = toPersianDigits(_carryOverItems.length.toString());
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF3CD),
+        color: colors.warning.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFFCA28)),
+        border: Border.all(color: colors.warning.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.history, color: Color(0xFFF57F17)),
+          Icon(Icons.history, color: colors.warning),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               '$countStr آیتم مطالعاتی از روزهای قبل باقی مانده — به امروز منتقل شود؟',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF5D4037)),
+              style: TextStyle(fontSize: 12, color: colors.textPrimary),
             ),
           ),
           TextButton(
             onPressed: () => _applyCarryForward(_carryOverItems),
-            child: const Text('انتقال', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6))),
+            child: Text('انتقال', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
           ),
         ],
       ),
@@ -429,8 +430,8 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
     if (_isLoading && !_setupDone) {
       return Scaffold(
         backgroundColor: colors.bg,
-        body: const Center(
-          child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+        body: Center(
+          child: CircularProgressIndicator(color: colors.primary),
         ),
       );
     }
@@ -525,7 +526,7 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
             Positioned.fill(
               child: RefreshIndicator(
                 onRefresh: _loadAllData,
-                color: const Color(0xFF8B5CF6),
+                color: colors.primary,
                 child: _isLoading
                     ? Padding(
                         padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 80),
@@ -740,7 +741,7 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
                             fontWeight: FontWeight.w900,
                             fontSize: 17.5,
                             letterSpacing: -0.4,
-                            color: isDark ? Colors.white : const Color(0xFF1D2129),
+                            color: colors.textPrimary,
                           ),
                         ),
                       ),
@@ -754,21 +755,21 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
                       ),
                       _buildHeaderActionButton(
                         icon: CupertinoIcons.square_grid_2x2_fill,
-                        iconColor: const Color(0xFF8B5CF6),
+                        iconColor: colors.primary,
                         isDark: isDark,
                         tooltip: 'سرفصل‌ها و رشته کنکور',
                         onTap: _showFieldPicker,
                       ),
                       _buildHeaderActionButton(
                         icon: CupertinoIcons.book_fill,
-                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                        iconColor: colors.textSecondary,
                         isDark: isDark,
                         tooltip: 'حالت مطالعه عادی',
                         onTap: _switchToStudyMode,
                       ),
                       _buildHeaderActionButton(
                         icon: CupertinoIcons.settings,
-                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                        iconColor: colors.textSecondary,
                         isDark: isDark,
                         tooltip: 'تنظیمات کنکور',
                         onTap: _showSettingsSheet,
@@ -812,10 +813,10 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
     RitmoColors colors,
     bool isDark,
   ) {
-    final trackBgColor = isDark ? const Color(0xFF16191E) : const Color(0xFFEFF2F6);
+    final trackBgColor = isDark ? colors.surface : colors.surfaceSunken;
     final pillBgColor = isDark
-        ? const Color(0xFF22262F)
-        : Color.lerp(Colors.white, colors.primary, 0.12)!;
+        ? colors.surfaceSunken
+        : Color.lerp(colors.surface, colors.primary, 0.12)!;
     final activeIndex = _tabController.index.clamp(0, 3);
 
     const tabs = [
@@ -850,13 +851,13 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
               BoxShadow(
                 color: isDark
                     ? Colors.black.withValues(alpha: 0.70)
-                    : const Color(0xFFB8C2CE).withValues(alpha: 0.55),
+                    : colors.border.withValues(alpha: 0.55),
                 offset: const Offset(2, 2),
                 blurRadius: 4,
               ),
               BoxShadow(
                 color: isDark
-                    ? const Color(0xFF222630)
+                    ? colors.surfaceSunken
                     : Colors.white.withValues(alpha: 0.95),
                 offset: const Offset(-2, -2),
                 blurRadius: 4,
@@ -885,12 +886,12 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
                       BoxShadow(
                         color: isDark
                             ? Colors.black.withValues(alpha: 0.60)
-                            : const Color(0xFFB2BDCB).withValues(alpha: 0.65),
+                            : colors.border.withValues(alpha: 0.65),
                         offset: const Offset(2, 2),
                         blurRadius: 4,
                       ),
                       BoxShadow(
-                        color: isDark ? const Color(0xFF2E3440) : Colors.white,
+                        color: isDark ? colors.surface : Colors.white,
                         offset: const Offset(-2, -2),
                         blurRadius: 4,
                       ),
@@ -921,9 +922,7 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                             color: isSelected
                                 ? colors.primary
-                                : (isDark
-                                    ? const Color(0xFF8A93A4)
-                                    : const Color(0xFF6B7280)),
+                                : colors.textSecondary,
                           ),
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
@@ -935,9 +934,7 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
                                   size: 13,
                                   color: isSelected
                                       ? colors.primary
-                                      : (isDark
-                                          ? const Color(0xFF8A93A4)
-                                          : const Color(0xFF6B7280)),
+                                      : colors.textSecondary,
                                 ),
                                 const SizedBox(width: 3),
                                 Text(item.title),
@@ -1145,9 +1142,9 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
           ),
           const SizedBox(height: 16),
           ListTile(
-            title: const Text('تغییر به حالت عمومی درس و مطالعه', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF3B82F6))),
+            title: Text('تغییر به حالت عمومی درس و مطالعه', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.primary)),
             subtitle: Text('خروج از حالت اختصاصی کنکور و خروج به محیط عمومی مطالعه.', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
-            trailing: const Icon(Icons.swap_horiz_rounded, color: Color(0xFF3B82F6)),
+            trailing: Icon(Icons.swap_horiz_rounded, color: colors.primary),
             onTap: () async {
               await StudySettingsRepository.instance.setKonkurMode(false);
               if (context.mounted) Navigator.pop(context);
@@ -1159,7 +1156,7 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
           ListTile(
             title: const Text('بارگذاری سرفصل‌های کنکور', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             subtitle: Text('افزودن دروس و مباحث استاندارد کنکور بر اساس رشته تحصیلی.', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
-            trailing: const Icon(Icons.school, color: Color(0xFF8B5CF6)),
+            trailing: Icon(Icons.school, color: colors.primary),
             onTap: () {
               Navigator.pop(context);
               widget.onOpenCurriculumPicker?.call();
@@ -1172,8 +1169,8 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
             subtitle: Text(dateStr, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
             trailing: TextButton.icon(
               onPressed: _selectDate,
-              icon: const Icon(Icons.edit, size: 16, color: Color(0xFF8B5CF6)),
-              label: const Text('تغییر تاریخ', style: TextStyle(color: Color(0xFF8B5CF6), fontSize: 12)),
+              icon: Icon(Icons.edit, size: 16, color: colors.primary),
+              label: Text('تغییر تاریخ', style: TextStyle(color: colors.primary, fontSize: 12)),
             ),
           ),
           const Divider(),
@@ -1187,7 +1184,7 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('هدف زمان مطالعه روزانه', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                    Text(formatDuration(_dailyTargetMinutes), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6))),
+                    Text(formatDuration(_dailyTargetMinutes), style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.primary)),
                   ],
                 ),
                 Slider(
@@ -1195,7 +1192,7 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
                   min: 60,
                   max: 720,
                   divisions: 22,
-                  activeColor: const Color(0xFF8B5CF6),
+                  activeColor: colors.primary,
                   onChanged: (val) {
                     setState(() {
                       _dailyTargetMinutes = val.toInt();
@@ -1210,7 +1207,6 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
           SwitchListTile(
             title: const Text('نمایش برنامه‌ریزی امروز در داشبورد اصلی', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             value: _showInDashboard,
-            activeThumbColor: const Color(0xFF8B5CF6),
             onChanged: (val) {
               setState(() {
                 _showInDashboard = val;
@@ -1221,9 +1217,9 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
           const Divider(),
           // Reset Button
           ListTile(
-            title: const Text('ریست کل اطلاعات کنکور', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red)),
+            title: Text('ریست کل اطلاعات کنکور', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.error)),
             subtitle: Text('پاک کردن تمام دروس، مباحث و تاریخچه‌ها جهت شروع مجدد.', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
-            trailing: const Icon(Icons.warning, color: Colors.red),
+            trailing: Icon(Icons.warning, color: colors.error),
             onTap: widget.onReset,
           ),
           const SizedBox(height: 24),
@@ -1231,8 +1227,8 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
           ElevatedButton(
             onPressed: _saveSettings,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B5CF6),
-              foregroundColor: Colors.white,
+              backgroundColor: colors.primary,
+              foregroundColor: colors.onPrimary,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),

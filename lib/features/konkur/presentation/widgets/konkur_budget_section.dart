@@ -93,6 +93,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
     showDialog(
       context: context,
       builder: (ctx) {
+        final colors = ctx.colors;
         return AlertDialog(
           title: const Text('افزودن درس جدید', style: TextStyle(fontWeight: FontWeight.bold)),
           content: Column(
@@ -122,7 +123,10 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
+              ),
               onPressed: () async {
                 if (_subjectNameController.text.isEmpty) return;
                 final factor = double.tryParse(_subjectFactorController.text) ?? 1.0;
@@ -159,6 +163,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
     showDialog(
       context: context,
       builder: (ctx) {
+        final colors = ctx.colors;
         return AlertDialog(
           title: const Text('ویرایش درس', style: TextStyle(fontWeight: FontWeight.bold)),
           content: Column(
@@ -212,7 +217,10 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
+              ),
               onPressed: () async {
                 if (_subjectNameController.text.isEmpty) return;
                 final factor = double.tryParse(_subjectFactorController.text) ?? 1.0;
@@ -256,6 +264,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
     showDialog(
       context: context,
       builder: (ctx) {
+        final colors = ctx.colors;
         return AlertDialog(
           title: Text('افزودن مبحث جدید به ${sub.name}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
           content: SingleChildScrollView(
@@ -310,7 +319,10 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
+              ),
               onPressed: () async {
                 if (_topicNameController.text.isEmpty) return;
                 final qCount = int.tryParse(_topicQuestionsController.text) ?? 0;
@@ -356,6 +368,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
     showDialog(
       context: context,
       builder: (ctx) {
+        final colors = ctx.colors;
         return AlertDialog(
           title: Text('ویرایش مبحث (${topic.name})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           content: SingleChildScrollView(
@@ -432,7 +445,10 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               child: const Text('انصراف', style: TextStyle()),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
+              ),
               onPressed: () async {
                 if (_topicNameController.text.isEmpty) return;
                 final qCount = int.tryParse(_topicQuestionsController.text) ?? 0;
@@ -500,17 +516,17 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
     final budgetPercent = (widget.budgetCoverage * 100).toInt();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(10, 16, 10, 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Budget Coverage Bar
           _buildBudgetProgressHeader(budgetPercent, colors),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Mastery Filter Bar
           _buildMasteryFilterBar(colors),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -525,15 +541,15 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               ),
               TextButton.icon(
                 onPressed: _showAddSubjectDialog,
-                icon: const Icon(Icons.add, size: 16, color: Color(0xFF8B5CF6)),
-                label: const Text(
+                icon: Icon(Icons.add, size: 16, color: colors.primary),
+                label: Text(
                   'افزودن درس',
-                  style: TextStyle(color: Color(0xFF8B5CF6), fontWeight: FontWeight.bold, fontSize: 12),
+                  style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold, fontSize: 12),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
 
           // Subject List with Expandable Tiles
           if (widget.subjects.isEmpty)
@@ -612,10 +628,10 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               ),
               Text(
                 '${toPersianDigits(percent)}٪ مباحث خوانده شده',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF8B5CF6),
+                  color: colors.primary,
                 ),
               ),
             ],
@@ -626,7 +642,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
             child: LinearProgressIndicator(
               value: widget.budgetCoverage,
               backgroundColor: colors.border,
-              color: const Color(0xFF8B5CF6),
+              color: colors.primary,
               minHeight: 8,
             ),
           ),
@@ -658,7 +674,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
     final percent = (readiness * 100).toInt();
     final circleColor = RitmoColor.fromHex(
       subject.colorHex,
-      fallback: const Color(0xFF8B5CF6),
+      fallback: colors.primary,
     );
 
     return Container(
@@ -786,10 +802,10 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
             alignment: Alignment.centerRight,
             child: TextButton.icon(
               onPressed: () => _showAddTopicDialog(subject),
-              icon: const Icon(Icons.add_circle_outline, size: 18, color: Color(0xFF8B5CF6)),
-              label: const Text(
+              icon: Icon(Icons.add_circle_outline, size: 18, color: colors.primary),
+              label: Text(
                 'افزودن مبحث',
-                style: TextStyle(color: Color(0xFF8B5CF6), fontWeight: FontWeight.bold, fontSize: 12),
+                style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold, fontSize: 12),
               ),
             ),
           ),
@@ -830,14 +846,14 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                          color: colors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           '≈ ${toPersianDigits(topic.examQuestionCount)} تست',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
-                            color: Color(0xFF8B5CF6),
+                            color: colors.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -985,7 +1001,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                     value: practiceFill,
                     minHeight: 4,
                     backgroundColor: colors.border,
-                    color: const Color(0xFF8B5CF6),
+                    color: colors.primary,
                   ),
                 ),
                 const SizedBox(height: 2),

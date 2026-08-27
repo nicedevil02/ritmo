@@ -25,8 +25,14 @@ extension RealmModeBehavior on RealmMode {
   bool get suppressesNotifications => this == RealmMode.silent;
 
   /// Whether essential routines are allowed to bypass suppression.
-  /// In SILENT mode, essential routines cannot bypass unless they are critical medical.
   bool get allowsEssentialBypass => this != RealmMode.silent;
+
+  /// Persian label for the mode
+  String get label => switch (this) {
+    RealmMode.normal => 'عادی',
+    RealmMode.focus => 'تمرکز',
+    RealmMode.silent => 'بی‌صدا',
+  };
 }
 
 /// Safely parses a raw database or settings string into a [RealmMode].

@@ -1,6 +1,8 @@
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/domain/realm/presets/realm_presets.dart';
+import 'package:ritmo/core/domain/realm/sessions/zone_session.dart';
+import 'package:ritmo/core/domain/realm/sessions/zone_session_writer.dart';
 import 'package:sqflite/sqflite.dart';
 
 class RealmRepository {
@@ -124,8 +126,8 @@ class RealmRepository {
           ? activeProfiles.first['id'] as String?
           : null;
 
-      final resolver = ActiveRealmResolver(clock: clock);
-      return resolver.resolve(
+      final ctx = RealmContext(
+        now: clock.now(),
         realms: realms,
         schedules: schedules,
         triggers: triggers,
@@ -137,6 +139,8 @@ class RealmRepository {
         isCharging: isCharging,
         activeCalendarTags: activeCalendarTags,
       );
+
+      return const CompositeRealmResolver().resolve(ctx);
     } catch (e) {
       return RealmErrorState(e);
     }
@@ -168,6 +172,12 @@ class RealmRepository {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     });
+
+    final realmState = await getActiveRealmState();
+    await ZoneSessionWriter(dbHelper: _dbHelper).reconcile(
+      realmState,
+      source: ZoneSource.manual,
+    );
   }
 
   /// Atomically clears manual override.
@@ -192,6 +202,12 @@ class RealmRepository {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     });
+
+    final realmState = await getActiveRealmState();
+    await ZoneSessionWriter(dbHelper: _dbHelper).reconcile(
+      realmState,
+      source: ZoneSource.schedule,
+    );
   }
 
   /// Atomically saves or updates a realm and its schedules (ق-۱۰).

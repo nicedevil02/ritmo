@@ -444,34 +444,54 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
 
               // Days Selector with Shortcuts
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('روزهای فعال:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: () => setState(() => _selectedDays = {6, 7, 1, 2, 3, 4, 5}),
-                        child: const Text('همه روزها', style: TextStyle(fontSize: 11)),
-                      ),
-                      TextButton(
-                        onPressed: () => setState(() => _selectedDays = {6, 7, 1, 2, 3, 4}),
-                        child: const Text('روزهای کاری', style: TextStyle(fontSize: 11)),
-                      ),
-                    ],
+                  Text(
+                    'روزهای فعال:',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => setState(() => _selectedDays = {6, 7, 1, 2, 3, 4, 5}),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('همه روزها', style: TextStyle(fontSize: 11)),
+                  ),
+                  const SizedBox(width: 4),
+                  TextButton(
+                    onPressed: () => setState(() => _selectedDays = {6, 7, 1, 2, 3, 4}),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('روزهای کاری', style: TextStyle(fontSize: 11)),
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
 
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildDayChip('ش', 6),
-                  _buildDayChip('ی', 7),
-                  _buildDayChip('د', 1),
-                  _buildDayChip('س', 2),
-                  _buildDayChip('چ', 3),
-                  _buildDayChip('پ', 4),
-                  _buildDayChip('ج', 5),
+                  Expanded(child: _buildDayChip('ش', 6)),
+                  const SizedBox(width: 5),
+                  Expanded(child: _buildDayChip('ی', 7)),
+                  const SizedBox(width: 5),
+                  Expanded(child: _buildDayChip('د', 1)),
+                  const SizedBox(width: 5),
+                  Expanded(child: _buildDayChip('س', 2)),
+                  const SizedBox(width: 5),
+                  Expanded(child: _buildDayChip('چ', 3)),
+                  const SizedBox(width: 5),
+                  Expanded(child: _buildDayChip('پ', 4)),
+                  const SizedBox(width: 5),
+                  Expanded(child: _buildDayChip('ج', 5)),
                 ],
               ),
 
@@ -571,25 +591,48 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
     final isSelected = _selectedDays.contains(weekday);
     final colors = context.colors;
 
-    return FilterChip(
-      label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : colors.textPrimary)),
-      selected: isSelected,
-      onSelected: (val) {
-        setState(() {
-          if (val) {
-            _selectedDays.add(weekday);
-          } else {
-            _selectedDays.remove(weekday);
-          }
-          if (_daysError != null && _selectedDays.isNotEmpty) {
-            _daysError = null;
-          }
-        });
-      },
-      selectedColor: colors.primary,
-      backgroundColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      padding: EdgeInsets.zero,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            if (isSelected) {
+              _selectedDays.remove(weekday);
+            } else {
+              _selectedDays.add(weekday);
+            }
+            if (_daysError != null && _selectedDays.isNotEmpty) {
+              _daysError = null;
+            }
+          });
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? colors.primary
+                : colors.textPrimary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected
+                  ? colors.primary
+                  : colors.textPrimary.withValues(alpha: 0.12),
+              width: 1.2,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+              color: isSelected ? Colors.white : colors.textPrimary,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

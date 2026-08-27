@@ -81,6 +81,9 @@ class DashboardController {
   Map<String, String> prayerTimes = {};
   List<Map<String, dynamic>> medicationRoutines = [];
   Map<String, int> medicationCompletionsToday = {};
+  ActiveRealmState realmState = const FreeRealmState();
+  List<RealmData> allRealms = [];
+  List<RealmScheduleData> allSchedules = [];
 
   // P3-1: برای ساخت کارتهای «کارهای امروز» و برچسبگذاری دستهٔ تکمیلها.
   final Map<String, Routine> _routinesById = {};
@@ -1342,10 +1345,14 @@ class DashboardController {
     Database db,
     DateTime now,
   ) async {
-    final realmState = await RealmRepository().getActiveRealmState();
+    final realmRepo = RealmRepository();
+    allRealms = await realmRepo.loadRealms();
+    allSchedules = await realmRepo.loadSchedules();
+    final resolvedState = await realmRepo.getActiveRealmState(executor: db);
+    realmState = resolvedState;
 
     // Reconcile zone presence session (F-02)
-    final sessionSource = switch (realmState) {
+    final sessionSource = switch (resolvedState) {
       ManualRealmState() => ZoneSource.manual,
       ScheduledRealmState(:final isDefaultFallback) =>
         isDefaultFallback ? ZoneSource.defaultRealm : ZoneSource.schedule,

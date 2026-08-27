@@ -5,7 +5,7 @@ class DefaultRealmLayer implements RealmResolutionLayer {
   const DefaultRealmLayer();
 
   @override
-  Future<ActiveRealmState?> tryResolve(RealmContext ctx) async {
+  ActiveRealmState? tryResolve(RealmContext ctx) {
     final defaultRealm = ctx.realms.where((r) => r.isDefault).firstOrNull;
     if (defaultRealm == null) return null;
 

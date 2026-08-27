@@ -23,6 +23,7 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/daily_behavior.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:ritmo/core/domain/models/inbox_item.dart';
+import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
 import 'package:ritmo/core/security/app_lock_service.dart';
@@ -73,7 +74,8 @@ import 'package:ritmo/features/today/presentation/widgets/dashboard/next_action_
 import 'package:ritmo/features/today/presentation/widgets/dashboard/today_details_section.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/today_path_progress_banner.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/todays_tasks_section.dart';
-import 'package:ritmo/features/today/presentation/widgets/dashboard/zone_card.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_dashboard_card.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/energy_dashboard_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/morning_checkin_sheet.dart';
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
 import 'package:ritmo/features/worship/presentation/worship_screen.dart';
@@ -128,6 +130,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
 
   DailyBehavior? _dailyBehavior;
   Map<String, dynamic>? _activeZone;
+  ActiveRealmState _realmState = const FreeRealmState();
+  List<RealmData> _allRealms = const [];
+  List<RealmScheduleData> _allSchedules = const [];
   String? _activeZoneName;
   String? _activeZoneIcon;
   String? _activeZoneTimeRange;
@@ -144,7 +149,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
   double? _currentEnergyPercent;
   String _currentEnergyLabel = 'متوسط';
   String _currentEnergyDesc = 'مناسب برای مطالعه، پروژه‌ها و روتین‌ها';
-  String? _currentEnergyTimeAgo;
   String? _peakPerformanceWindow;
   List<DashboardModuleSummary> _moduleSummaries = [];
 
@@ -361,6 +365,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
         _timelineItems = controller.timelineItems;
         _settingsMap = controller.settingsMap;
         _activeZone = controller.activeZone;
+        _realmState = controller.realmState;
+        _allRealms = controller.allRealms;
+        _allSchedules = controller.allSchedules;
         _activeZoneName = controller.activeZoneName;
         _activeZoneIcon = controller.activeZoneIcon;
         _activeZoneTimeRange = controller.activeZoneTimeRange;
@@ -420,7 +427,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
           _currentEnergyPercent = controller.currentEnergyPercent;
           _currentEnergyLabel = controller.currentEnergyLabel;
           _currentEnergyDesc = controller.currentEnergyDesc;
-          _currentEnergyTimeAgo = controller.currentEnergyTimeAgo;
           _peakPerformanceWindow = controller.peakPerformanceWindow;
           _moduleSummaries = controller.moduleSummaries;
           _recentInboxItems = recentInbox;
@@ -915,9 +921,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
               ),
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
-                  14,
+                  10,
                   RitmoSpacing.md,
-                  14,
+                  10,
                   140,
                 ),
                 sliver: SliverList(
@@ -925,12 +931,12 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                     // ۰. هشدارهای بحرانی — بالاتر از همه چیز
                     if (alerts.isNotEmpty) ...[
                       _enter(0, CriticalAlertsCard(alerts: alerts)),
-                      const SizedBox(height: RitmoSpacing.lg),
+                      const SizedBox(height: 10),
                     ],
 
                     // ۰.۵ میانبر شبانه — فقط در پنجرهٔ پیش‌خواب دیده می‌شود
                     SleepTonightShortcut(
-                      padding: const EdgeInsets.only(bottom: RitmoSpacing.md),
+                      padding: const EdgeInsets.only(bottom: 10),
                       onOpen: () => _openModuleScreen('sleep'),
                     ),
 
@@ -951,15 +957,34 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                         ),
                       ),
                     ),
-                    const SizedBox(height: RitmoSpacing.md),
+                    const SizedBox(height: 10),
 
                     // ۲. تمرکز اکنون — تنها اقدام مهم این لحظه
                     _enter(2, HomeFocusHero(data: heroData)),
-                    const SizedBox(height: RitmoSpacing.md),
+                    const SizedBox(height: 10),
 
-                    // ۳. نبض امروز — وضعیت روز در یک نگاه
+                    // ۳. کارت قلمرو فعلی — بالای نبض امروز
                     _enter(
                       3,
+                      RealmDashboardCard(
+                        isDarkMode: isDarkMode,
+                        realmState: _realmState,
+                        activeZone: _activeZone,
+                        activeZoneName: _activeZoneName,
+                        activeZoneIcon: _activeZoneIcon,
+                        activeZoneColorHex: _activeZoneColorHex,
+                        activeZoneRoutinesCount: _activeZoneRoutinesCount,
+                        activeZoneTimeRange: _activeZoneTimeRange,
+                        onRealmChanged: _loadDashboardData,
+                        schedules: _allSchedules,
+                        realms: _allRealms,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // ۴. نبض امروز — وضعیت روز در یک نگاه
+                    _enter(
+                      4,
                       HomePulseStrip(
                         progress: progress.ratio,
                         doneCount: progress.done,
@@ -1021,20 +1046,34 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                         ],
                       ),
                     ),
-                    const SizedBox(height: RitmoSpacing.md),
+                    const SizedBox(height: 10),
 
-                    // ۴. میانبرهای سریع
+                    // ۵. کارت انرژی فعلی — زیر نبض امروز
                     _enter(
-                      4,
+                      5,
+                      EnergyDashboardCard(
+                        isDarkMode: isDarkMode,
+                        currentEnergyPercent: _currentEnergyPercent,
+                        currentEnergyLabel: _currentEnergyLabel,
+                        currentEnergyDesc: _currentEnergyDesc,
+                        onEnergyTap: () =>
+                            _showEnergyManagementSheet(isDarkMode),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // ۶. میانبرهای سریع
+                    _enter(
+                      6,
                       HomeQuickActions(
                         actions: _quickActions(colors, isDarkMode),
                       ),
                     ),
-                    const SizedBox(height: RitmoSpacing.xl),
+                    const SizedBox(height: 10),
 
-                    // ۵. کارهای امروز (تیتر و اکشنها داخل خودش)
+                    // ۷. کارهای امروز (تیتر و اکشنها داخل خودش)
                     _enter(
-                      5,
+                      7,
                       TodaysTasksSection(
                         // G-6: لیست کامل پاس داده میشود؛ برش ۴تایی مسئولیت خود ویجت است.
                         tasks: tasksList,
@@ -1048,58 +1087,25 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                         ),
                       ),
                     ),
+                    const SizedBox(height: 10),
 
-                    // ۶. کارت تجربهٔ امروز
-                    _enter(6, const TodayExperienceCard()),
-                    const SizedBox(height: RitmoSpacing.lg),
+                    // ۸. کارت تجربهٔ امروز
+                    _enter(8, const TodayExperienceCard()),
+                    const SizedBox(height: 10),
 
-                    // ۷. انرژی و قلمرو — دکمهٔ مدیریت داخل خود کارت است
+                    // ۹. سیستمهای فعال (تیتر داخل خودش)
                     _enter(
-                      7,
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          HomeSectionHeader(
-                            title: 'انرژی و قلمرو',
-                            subtitle: _currentEnergyTimeAgo == null
-                                ? _currentEnergyDesc
-                                : 'آخرین ثبت: ${_currentEnergyTimeAgo!}',
-                            icon: CupertinoIcons.bolt_horizontal_fill,
-                            accent: colors.energyAccent,
-                          ),
-                          ZoneCard(
-                            isDarkMode: isDarkMode,
-                            currentEnergyPercent: _currentEnergyPercent,
-                            currentEnergyLabel: _currentEnergyLabel,
-                            currentEnergyDesc: _currentEnergyDesc,
-                            activeZone: _activeZone,
-                            activeZoneName: _activeZoneName,
-                            activeZoneIcon: _activeZoneIcon,
-                            activeZoneColorHex: _activeZoneColorHex,
-                            activeZoneRoutinesCount: _activeZoneRoutinesCount,
-                            activeZoneTimeRange: _activeZoneTimeRange,
-                            onEnergyTap: () =>
-                                _showEnergyManagementSheet(isDarkMode),
-                            onRealmChanged: _loadDashboardData,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: RitmoSpacing.xl),
-
-                    // ۸. سیستمهای فعال (تیتر داخل خودش)
-                    _enter(
-                      8,
+                      9,
                       ModuleSummaryGrid(
                         summaries: _moduleSummaries,
                         onModuleTap: _openModuleScreen,
                       ),
                     ),
-                    const SizedBox(height: RitmoSpacing.lg),
+                    const SizedBox(height: 10),
 
-                    // ۹. دستیار — فقط بریفینگ؛ ورود به گفتوگو کار داک پایین است
+                    // ۱۰. دستیار — فقط بریفینگ؛ ورود به گفتوگو کار داک پایین است
                     _enter(
-                      9,
+                      10,
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

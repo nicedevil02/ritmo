@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/features/today/presentation/widgets/dashboard/zone_card.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_dashboard_card.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 
 Widget _buildWrapper({
@@ -45,6 +46,7 @@ void main() {
             currentEnergyPercent: 75.0,
             currentEnergyLabel: 'متوسط',
             currentEnergyDesc: 'تعادل انرژی مناسب',
+            realmState: const FreeRealmState(),
             activeZone: null,
             activeZoneName: null,
             activeZoneIcon: null,
@@ -66,6 +68,21 @@ void main() {
     });
 
     testWidgets('2. Renders active realm details and title when in active realm', (tester) async {
+      const workRealm = RealmData(
+        id: 'work_zone',
+        name: 'قلمرو کار',
+        colorHex: '#3B82F6',
+        icon: '💼',
+        mode: RealmMode.normal,
+      );
+      const workSchedule = RealmScheduleData(
+        id: 'work_sched',
+        zoneId: 'work_zone',
+        daysOfWeek: {1, 2, 3, 4, 5, 6, 7},
+        startTime: '09:00',
+        endTime: '17:00',
+      );
+
       await tester.pumpWidget(
         _buildWrapper(
           child: ZoneCard(
@@ -73,6 +90,15 @@ void main() {
             currentEnergyPercent: 90.0,
             currentEnergyLabel: 'بالا',
             currentEnergyDesc: 'آماده برای تمرکز',
+            realmState: ScheduledRealmState(
+              realm: workRealm,
+              schedule: workSchedule,
+              startsAt: DateTime(2026, 1, 1, 9, 0),
+              endsAt: DateTime(2026, 1, 1, 17, 0),
+              remaining: const Duration(hours: 4),
+              progress: 0.5,
+              explanation: 'طبق زمان‌بندی',
+            ),
             activeZone: const {
               'id': 'work_zone',
               'name': 'قلمرو کار',

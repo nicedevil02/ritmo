@@ -8,7 +8,7 @@ class CalendarTagLayer implements RealmResolutionLayer {
   const CalendarTagLayer();
 
   @override
-  Future<ActiveRealmState?> tryResolve(RealmContext ctx) async {
+  ActiveRealmState? tryResolve(RealmContext ctx) {
     if (ctx.activeCalendarTags.isEmpty) return null;
 
     final calendarTriggers = ctx.triggers

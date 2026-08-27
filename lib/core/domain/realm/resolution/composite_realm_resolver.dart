@@ -27,13 +27,18 @@ class CompositeRealmResolver {
 
   final List<RealmResolutionLayer> layers;
 
-  Future<ActiveRealmState> resolve(RealmContext ctx) async {
+  ActiveRealmState resolve(RealmContext ctx) {
     for (final layer in layers) {
-      final result = await layer.tryResolve(ctx);
+      final result = layer.tryResolve(ctx);
       if (result != null) return result;
     }
 
-    final nextSchedule = ActiveRealmResolver.findNextSchedule(ctx.now, ctx.realms, ctx.schedules);
+    final nextSchedule = ActiveRealmResolver.findNextSchedule(
+      ctx.now,
+      ctx.realms,
+      ctx.schedules,
+      activeProfileId: ctx.activeProfileId,
+    );
     final explanation = nextSchedule != null
         ? 'الان در زمان آزاد هستی تا ساعت ${ActiveRealmResolver.formatTime(nextSchedule.scheduleStartDt)} که قلمرو «${nextSchedule.realm.name}» شروع می‌شود.'
         : 'الان در زمان آزاد هستی و هیچ قلمرویی فعال نیست.';

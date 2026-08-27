@@ -317,6 +317,11 @@ class _RitmoAppState extends State<RitmoApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (SettingsService.instance.isInitialized) {
+      try {
+        _onboardingCompleted = SettingsService.instance.get<bool>('onboarding_completed') == true;
+      } catch (_) {}
+    }
     _initializationFuture = _initialize();
   }
 
@@ -363,25 +368,37 @@ class _RitmoAppState extends State<RitmoApp> with WidgetsBindingObserver {
       // 1. Critical DDL schema verification - blocking without timeout (RIT-003)
       await DatabaseHelper.ensureCriticalSchema(db);
 
-      // 2. Non-critical background warmup tasks with timeout (BOOT-07)
-      await DatabaseHelper.warmUp(db).timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => RitmoLog.warning('Init', 'Database warmup timed out'),
+      // 2. Check if onboarding is completed via OnboardingGate FIRST!
+      final isDone = await OnboardingGate.isCompleted(db);
+      if (mounted) {
+        setState(() {
+          _onboardingCompleted = isDone;
+        });
+      }
+
+      // 3. Non-critical background warmup tasks with timeout (BOOT-07)
+      unawaited(
+        DatabaseHelper.warmUp(db).timeout(
+          const Duration(seconds: 5),
+          onTimeout: () => RitmoLog.warning('Init', 'Database warmup timed out'),
+        ).catchError((e, st) {
+          RitmoLog.warning('Init', 'Database warmup non-fatal error: $e', e, st);
+        }),
       );
 
-      // 3. Save real device timezone for background isolates (REG-03, RIT-040)
-      await _syncDeviceTimezone();
+      // 4. Save real device timezone for background isolates (REG-03, RIT-040)
+      unawaited(_syncDeviceTimezone());
 
-      // 4. Ensure periodic backup registration if enabled in settings (RIT-041)
+      // 5. Ensure periodic backup registration if enabled in settings (RIT-041)
       try {
         final autoBackup = SettingsService.instance.get<bool>('backup_auto_enabled');
         if (autoBackup == true) {
-          await Workmanager().registerPeriodicTask(
+          unawaited(Workmanager().registerPeriodicTask(
             'weekly_backup_task',
             'weekly_backup_task',
             frequency: const Duration(days: 7),
             existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
-          );
+          ));
         }
       } catch (_) {}
 
@@ -390,13 +407,10 @@ class _RitmoAppState extends State<RitmoApp> with WidgetsBindingObserver {
 
       // Restore any in-progress course study timer safely
       try {
-        await CourseTimerService.instance.initOnAppStart();
+        unawaited(CourseTimerService.instance.initOnAppStart());
       } catch (e, st) {
         RitmoLog.warning('Init', 'Course timer init non-fatal error: $e', e, st);
       }
-
-      // Check if onboarding is completed via OnboardingGate
-      _onboardingCompleted = await OnboardingGate.isCompleted(db);
     } catch (e, st) {
       await PrivacyErrorSink.instance.logError(
         'Init',

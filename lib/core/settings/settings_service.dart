@@ -233,7 +233,10 @@ class SettingsService {
                 'value': strVal,
                 'updatedAt': now,
               }, conflictAlgorithm: ConflictAlgorithm.replace);
-              await prefs.remove(key);
+              // Preserve onboarding_completed in SharedPreferences for dual-redundancy
+              if (key != 'onboarding_completed') {
+                await prefs.remove(key);
+              }
             }
           }
         }

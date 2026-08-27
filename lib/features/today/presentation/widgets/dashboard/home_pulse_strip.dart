@@ -26,6 +26,8 @@ class HomePulseMetric {
 
 /// کارت «نبض امروز»: حلقهٔ پیشرفت مسیر روز در کنار سنجه‌های کلیدی،
 /// تا کاربر بدون رفتن به صفحهٔ دیگر بداند امروز کجاست.
+///
+/// طراحی نئومورفیک (Neumorphic) در حالت روشن؛ شیشه‌ای/تیره در حالت دارک.
 class HomePulseStrip extends StatelessWidget {
   const HomePulseStrip({
     super.key,
@@ -35,6 +37,7 @@ class HomePulseStrip extends StatelessWidget {
     required this.metrics,
     this.title = 'نبض امروز',
     this.caption,
+    this.onMenuTap,
   });
 
   /// نسبت پیشرفت (۰ تا ۱).
@@ -44,174 +47,360 @@ class HomePulseStrip extends StatelessWidget {
   final List<HomePulseMetric> metrics;
   final String title;
   final String? caption;
+  final VoidCallback? onMenuTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final clamped = progress.clamp(0.0, 1.0).toDouble();
-    final ringColors = colors.brandGradient.length >= 2
-        ? colors.brandGradient
-        : <Color>[colors.primary, colors.primary];
+
+    // ─── رنگ‌های نئومورفیک ───
+    final neumorphBg = isDark
+        ? colors.card.withValues(alpha: 0.50)
+        : const Color(0xFFE3E6EC);
+    final shadowLight = isDark
+        ? Colors.white.withValues(alpha: 0.04)
+        : const Color(0xFFFBFBFD);
+    final shadowDark = isDark
+        ? Colors.black.withValues(alpha: 0.40)
+        : const Color(0xFFBCC3CF);
 
     return Container(
-      padding: const EdgeInsets.all(RitmoSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: RitmoSpacing.lg,
+        vertical: RitmoSpacing.sm + 2,
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(RitmoRadius.cardLarge),
-        color: isDark
-            ? colors.card.withValues(alpha: 0.50)
-            : Colors.white.withValues(alpha: 0.74),
-        border: Border.all(color: colors.border.withValues(alpha: 0.7)),
-        boxShadow: isDark ? RitmoElevation.none : RitmoElevation.cardLight,
+        borderRadius: BorderRadius.circular(24),
+        color: neumorphBg,
+        border: isDark
+            ? Border.all(color: colors.border.withValues(alpha: 0.7))
+            : null,
+        boxShadow: isDark
+            ? RitmoElevation.none
+            : [
+                BoxShadow(
+                  color: shadowLight,
+                  offset: const Offset(-6, -6),
+                  blurRadius: 16,
+                ),
+                BoxShadow(
+                  color: shadowDark,
+                  offset: const Offset(6, 6),
+                  blurRadius: 16,
+                ),
+              ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _ring(context, colors, clamped, ringColors),
-          const SizedBox(width: RitmoSpacing.md),
+          // ── ستون راست (RTL): عنوان + متریک‌ها ──
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
               children: [
+                // هدر: عنوان + منو
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: colors.textPrimary,
-                          ),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Vazirmatn',
+                        color: colors.textPrimary,
                       ),
                     ),
-                    if (caption != null && caption!.isNotEmpty)
-                      Text(
-                        toPersianDigits(caption!),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: colors.textTertiary,
-                          ),
-                      ),
+                    const Spacer(),
+                    _menuDots(colors, isDark),
                   ],
                 ),
                 const SizedBox(height: RitmoSpacing.sm),
+                // متریک‌ها
                 for (int i = 0; i < metrics.length; i++) ...[
                   if (i > 0) const SizedBox(height: 6),
-                  _metricRow(context, colors, metrics[i]),
+                  _neumorphicMetricRow(context, colors, isDark, metrics[i]),
                 ],
               ],
             ),
           ),
+          const SizedBox(width: RitmoSpacing.md),
+
+          // ── ستون چپ (RTL): حلقه ──
+          _neumorphicRing(context, colors, isDark, clamped),
         ],
       ),
     );
   }
 
-  Widget _ring(
+  // ─────────────────────────────────────────────────────────────
+  // دکمه سه‌نقطه منو
+  // ─────────────────────────────────────────────────────────────
+
+  Widget _menuDots(RitmoColors colors, bool isDark) {
+    final dotColor = colors.textTertiary;
+    final bg = isDark
+        ? colors.surfaceSunken.withValues(alpha: 0.4)
+        : const Color(0xFFD4D7DD);
+
+    Widget dots = Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: bg,
+        boxShadow: isDark
+            ? null
+            : [
+                const BoxShadow(
+                  color: Color(0xFFFBFBFD),
+                  offset: Offset(-2, -2),
+                  blurRadius: 4,
+                ),
+                const BoxShadow(
+                  color: Color(0xFFBCC3CF),
+                  offset: Offset(2, 2),
+                  blurRadius: 4,
+                ),
+              ],
+      ),
+      child: Center(
+        child: Icon(
+          CupertinoIcons.ellipsis,
+          size: 16,
+          color: dotColor,
+        ),
+      ),
+    );
+
+    if (onMenuTap != null) {
+      dots = GestureDetector(onTap: onMenuTap, child: dots);
+    }
+
+    return dots;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // حلقه پیشرفت نئومورفیک
+  // ─────────────────────────────────────────────────────────────
+
+  Widget _neumorphicRing(
     BuildContext context,
     RitmoColors colors,
+    bool isDark,
     double value,
-    List<Color> ringColors,
   ) {
+    const ringSize = 108.0;
+    const innerSize = 68.0;
+
+    // رنگ‌های حلقه بنفش/لاوندر
+    const ringColors = <Color>[
+      Color(0xFFCDBBF0), // لاوندر روشن — شروع
+      Color(0xFF8B6FD6), // بنفش تیره — پایان
+    ];
+
     return SizedBox(
-      height: 82,
-      width: 82,
+      height: ringSize,
+      width: ringSize,
       child: TweenAnimationBuilder<double>(
         tween: Tween<double>(begin: 0, end: value),
         duration: RitmoMotion.reduceMotion(context)
             ? Duration.zero
             : const Duration(milliseconds: 900),
         curve: Curves.easeOutCubic,
-        builder: (context, animated, _) => CustomPaint(
-          painter: _PulseRingPainter(
-            progress: animated,
-            trackColor: colors.surfaceSunken.withValues(alpha: 0.9),
-            ringColors: ringColors,
-          ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  toPersianDigits('${(animated * 100).round()}٪'),
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: colors.textPrimary,
-                    ),
+        builder: (context, animated, _) {
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              // ── حلقه ترک (نئومورفیک inset) ──
+              Container(
+                width: ringSize,
+                height: ringSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark
+                      ? colors.surfaceSunken.withValues(alpha: 0.5)
+                      : const Color(0xFFDDE0E6),
+                  boxShadow: isDark
+                      ? null
+                      : [
+                          // سایه داخلی (شبیه‌سازی inset با inner shadow)
+                          const BoxShadow(
+                            color: Color(0xFFA8ADB7),
+                            offset: Offset(4, 4),
+                            blurRadius: 8,
+                          ),
+                          const BoxShadow(
+                            color: Color(0xFFF5F7FA),
+                            offset: Offset(-4, -4),
+                            blurRadius: 8,
+                          ),
+                        ],
                 ),
-                Text(
-                  toPersianDigits('$doneCount از $totalCount'),
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: colors.textSecondary,
-                    ),
+              ),
+              // ── آرک پیشرفت + نقطه درخشان ──
+              CustomPaint(
+                size: const Size(ringSize, ringSize),
+                painter: _NeumorphicPulseRingPainter(
+                  progress: animated,
+                  trackColor: isDark
+                      ? colors.surfaceSunken.withValues(alpha: 0.9)
+                      : const Color(0xFFD5D8DE),
+                  ringColors: ringColors,
+                  isDark: isDark,
                 ),
-              ],
-            ),
-          ),
-        ),
+              ),
+              // ── دایره مرکزی برجسته ──
+              Container(
+                width: innerSize,
+                height: innerSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark
+                      ? colors.surface.withValues(alpha: 0.6)
+                      : const Color(0xFFE4E7ED),
+                  boxShadow: isDark
+                      ? null
+                      : [
+                          const BoxShadow(
+                            color: Color(0xFFF9FBFF),
+                            offset: Offset(-3, -3),
+                            blurRadius: 6,
+                          ),
+                          const BoxShadow(
+                            color: Color(0xFFBCC1CA),
+                            offset: Offset(3, 3),
+                            blurRadius: 6,
+                          ),
+                        ],
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        toPersianDigits('${(animated * 100).round()}٪'),
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Vazirmatn',
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        toPersianDigits('از ۱۰۰'),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontFamily: 'Vazirmatn',
+                          color: colors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _metricRow(
+  // ─────────────────────────────────────────────────────────────
+  // ردیف متریک نئومورفیک
+  // ─────────────────────────────────────────────────────────────
+
+  Widget _neumorphicMetricRow(
     BuildContext context,
     RitmoColors colors,
+    bool isDark,
     HomePulseMetric metric,
   ) {
-    final row = Row(
-      children: [
-        Container(
-          height: 22,
-          width: 22,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: metric.color.withValues(alpha: 0.13),
-            borderRadius: BorderRadius.circular(7),
-          ),
-          child: Icon(metric.icon, size: 12, color: metric.color),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            metric.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11.5,
-              color: colors.textSecondary,
+    final pillBg = isDark
+        ? colors.surfaceSunken.withValues(alpha: 0.3)
+        : const Color(0xFFE8EBF0);
+
+    final row = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: pillBg,
+        boxShadow: isDark
+            ? null
+            : [
+                const BoxShadow(
+                  color: Color(0xFFF5F7FA),
+                  offset: Offset(-2, -2),
+                  blurRadius: 4,
+                ),
+                const BoxShadow(
+                  color: Color(0xFFC5CAD4),
+                  offset: Offset(2, 2),
+                  blurRadius: 4,
+                ),
+              ],
+      ),
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Row(
+          children: [
+            // آیکن دایره‌ای رنگی
+            Container(
+              height: 28,
+              width: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: metric.color.withValues(alpha: 0.15),
+                boxShadow: isDark
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: metric.color.withValues(alpha: 0.08),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
               ),
-          ),
-        ),
-        Flexible(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              toPersianDigits(metric.value),
+              child: Center(
+                child: Icon(metric.icon, size: 14, color: metric.color),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // لیبل
+            Text(
+              metric.label,
               style: TextStyle(
                 fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Vazirmatn',
+                color: colors.textSecondary,
+              ),
+            ),
+            const Spacer(),
+            // مقدار
+            Text(
+              toPersianDigits(metric.value),
+              style: TextStyle(
+                fontSize: 13.5,
                 fontWeight: FontWeight.w800,
+                fontFamily: 'Vazirmatn',
                 color: colors.textPrimary,
               ),
             ),
-          ),
+            if (metric.onTap != null) ...[
+              const SizedBox(width: 2),
+              Icon(
+                CupertinoIcons.chevron_left,
+                size: 11,
+                color: colors.textTertiary,
+              ),
+            ],
+          ],
         ),
-        if (metric.onTap != null) ...[
-          const SizedBox(width: 2),
-          Icon(
-            CupertinoIcons.chevron_left,
-            size: 11,
-            color: colors.textTertiary,
-          ),
-        ],
-      ],
+      ),
     );
 
     if (metric.onTap == null) return row;
@@ -219,29 +408,36 @@ class HomePulseStrip extends StatelessWidget {
     return RitmoPressable(
       onTap: metric.onTap,
       semanticLabel: '${metric.label}: ${metric.value}',
-      scaleDown: 0.99,
+      scaleDown: 0.98,
       child: row,
     );
   }
 }
 
-class _PulseRingPainter extends CustomPainter {
-  const _PulseRingPainter({
+// ═══════════════════════════════════════════════════════════════
+// CustomPainter — آرک پیشرفت نئومورفیک با نقطه درخشان
+// ═══════════════════════════════════════════════════════════════
+
+class _NeumorphicPulseRingPainter extends CustomPainter {
+  const _NeumorphicPulseRingPainter({
     required this.progress,
     required this.trackColor,
     required this.ringColors,
+    required this.isDark,
   });
 
   final double progress;
   final Color trackColor;
   final List<Color> ringColors;
+  final bool isDark;
 
   @override
   void paint(Canvas canvas, Size size) {
-    const stroke = 7.0;
+    const stroke = 10.0;
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (math.min(size.width, size.height) - stroke) / 2;
 
+    // ── ترک (track) ──
     final track = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke
@@ -251,7 +447,10 @@ class _PulseRingPainter extends CustomPainter {
 
     if (progress <= 0) return;
 
+    final sweepAngle = 2 * math.pi * progress.clamp(0.0, 1.0);
     final rect = Rect.fromCircle(center: center, radius: radius);
+
+    // ── آرک گرادیان بنفش ──
     final arc = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke
@@ -264,16 +463,31 @@ class _PulseRingPainter extends CustomPainter {
     canvas.drawArc(
       rect,
       -math.pi / 2,
-      2 * math.pi * progress.clamp(0.0, 1.0).toDouble(),
+      sweepAngle,
       false,
       arc,
     );
+
+    // ── نقطه درخشان در سر آرک ──
+    final tipAngle = -math.pi / 2 + sweepAngle;
+    final tipX = center.dx + radius * math.cos(tipAngle);
+    final tipY = center.dy + radius * math.sin(tipAngle);
+
+    // هاله بیرونی (glow)
+    final glow = Paint()
+      ..color = ringColors.last.withValues(alpha: 0.35)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawCircle(Offset(tipX, tipY), 7, glow);
+
+    // نقطه سفید مرکزی
+    final dot = Paint()..color = Colors.white;
+    canvas.drawCircle(Offset(tipX, tipY), 4.5, dot);
   }
 
   @override
-  bool shouldRepaint(covariant _PulseRingPainter oldDelegate) {
+  bool shouldRepaint(covariant _NeumorphicPulseRingPainter oldDelegate) {
     return oldDelegate.progress != progress ||
         oldDelegate.trackColor != trackColor ||
-        oldDelegate.ringColors != ringColors;
+        oldDelegate.isDark != isDark;
   }
 }

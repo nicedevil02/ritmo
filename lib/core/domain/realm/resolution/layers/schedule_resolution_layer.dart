@@ -5,7 +5,7 @@ class ScheduleResolutionLayer implements RealmResolutionLayer {
   const ScheduleResolutionLayer();
 
   @override
-  Future<ActiveRealmState?> tryResolve(RealmContext ctx) async {
+  ActiveRealmState? tryResolve(RealmContext ctx) {
     final now = ctx.now;
     final currentWeekday = now.weekday;
 

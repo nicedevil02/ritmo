@@ -349,15 +349,6 @@ class SettingsRegistry {
       group: SettingsGroup.identity,
       visibility: SettingVisibility.internal,
     ),
-    SettingDescriptor(
-      key: 'onboarding_completed',
-      type: SettingType.boolean,
-      scope: SettingScope.prefs,
-      defaultValue: false,
-      labelFa: 'تکمیل راه‌اندازی اولیه',
-      group: SettingsGroup.identity,
-      visibility: SettingVisibility.internal,
-    ),
 
     // ----------------------------------------------------
     // ۲. ماژول‌ها و بخش‌های برنامه (Modules)

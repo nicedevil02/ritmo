@@ -23,23 +23,14 @@ class ForegroundNotificationUpdater {
           row['key']! as String: row['value']! as String,
       };
 
-      final notifMasterEnabled = settingsMap['notif_master_enabled'] != 'false';
-      final isPersistentEnabled =
-          settingsMap['persistent_status_notification_enabled'] != 'false';
-
-      if (!notifMasterEnabled || !isPersistentEnabled) {
-        await sl<NotificationPlatform>().stopForegroundService();
-        return;
-      }
-
-      // RIE details — Single source of truth for active realm (B-01, B-03)
+      // 1. Single source of truth for active realm (B-01, B-03)
       final realmRepo = RealmRepository();
       final realmState = await realmRepo.getActiveRealmState();
       final activeZoneId = realmState.realmOrNull?.id;
       final activeZoneMode = realmModeToRaw(realmState.effectiveMode);
       final actZoneName = realmState.realmOrNull?.name ?? 'آزاد';
 
-      // Reconcile zone presence session (F-02)
+      // 2. Reconcile zone presence session (F-02) — Always runs regardless of notification switch state
       final sessionSource = switch (realmState) {
         ManualRealmState() => ZoneSource.manual,
         ScheduledRealmState(:final isDefaultFallback) =>
@@ -60,6 +51,16 @@ class ForegroundNotificationUpdater {
         source: sessionSource,
         executor: db,
       );
+
+      // 3. Verify both master notif switch and persistent status notification switch
+      final notifMasterEnabled = settingsMap['notif_master_enabled'] != 'false';
+      final isPersistentEnabled =
+          settingsMap['persistent_status_notification_enabled'] != 'false';
+
+      if (!notifMasterEnabled || !isPersistentEnabled) {
+        await sl<NotificationPlatform>().stopForegroundService();
+        return;
+      }
 
       final currentEnergyStr = settingsMap['current_energy_state'] ?? 'MEDIUM';
       final currentEnergy = EnergyLevel.values.firstWhere(
@@ -169,8 +170,18 @@ class ForegroundNotificationUpdater {
       final totalPrayers = activePrayers.length;
       final completedPrayers = completedPrayersList.length;
 
-      // 3. Fetch list of available zones
-      final zonesList = await db.query('zones');
+      // 3. Fetch list of available zones (respecting hideOtherRealms privacy F-11)
+      final List<Map<String, dynamic>> zonesList;
+      final activeRealm = realmState.realmOrNull;
+      if (activeRealm != null && activeRealm.hideOtherRealms) {
+        zonesList = await db.query(
+          'zones',
+          where: 'id = ?',
+          whereArgs: [activeRealm.id],
+        );
+      } else {
+        zonesList = await db.query('zones');
+      }
       final zoneNames = zonesList.map((e) => e['name']! as String).toList();
       final zoneIds = zonesList.map((e) => e['id']! as String).toList();
 

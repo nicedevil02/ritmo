@@ -121,7 +121,7 @@ void main() {
       // Verify Section Headers
       expect(find.text('موقعیت مکانی و روش محاسبه'), findsOneWidget);
       expect(find.text('تقویم قمری و تصحیح هلال ماه'), findsOneWidget);
-      expect(find.text('یادآوری و تقویم نمازها'), findsOneWidget);
+      expect(find.text('اعلان و یادآوری نمازها'), findsOneWidget);
       expect(find.text('قضا و ثبت معوقات'), findsOneWidget);
       expect(find.text('نمایش در تقویم ریتمو'), findsOneWidget);
 
@@ -136,7 +136,6 @@ void main() {
       expect(find.text('تغییر شهر'), findsOneWidget);
 
       // Verify Prayer Reminder Switch and Active shifts
-      expect(find.text('ارسال نمازهای واجب به تقویم اصلی'), findsOneWidget);
       expect(find.text('اعلان و یادآوری موعد نماز'), findsOneWidget);
       expect(find.text('نماز صبح'), findsOneWidget);
       expect(find.text('نماز ظهر'), findsOneWidget);
@@ -144,8 +143,10 @@ void main() {
 
       // Verify Qada & Calendar Switches
       expect(find.text('ثبت خودکار نمازهای نخوانده در قضا'), findsOneWidget);
+      expect(find.text('نمایش نمازهای واجب در تقویم'), findsOneWidget);
       expect(find.text('نمایش مستحبات و مناسبت‌ها در تقویم'), findsOneWidget);
       expect(find.text('نمایش بدهی‌های قضا در تقویم'), findsOneWidget);
+
 
     });
 

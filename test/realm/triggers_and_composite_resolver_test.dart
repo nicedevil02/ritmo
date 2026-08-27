@@ -178,7 +178,7 @@ void main() {
         triggers: const [],
       );
 
-      final state = await composite.resolve(context);
+      final state = composite.resolve(context);
       expect(state, isA<ScheduledRealmState>());
       expect(state.realmOrNull?.id, 'work_zone');
     });

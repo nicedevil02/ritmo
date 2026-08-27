@@ -5,7 +5,7 @@ class ManualOverrideLayer implements RealmResolutionLayer {
   const ManualOverrideLayer();
 
   @override
-  Future<ActiveRealmState?> tryResolve(RealmContext ctx) async {
+  ActiveRealmState? tryResolve(RealmContext ctx) {
     final now = ctx.now;
     final nowMs = now.millisecondsSinceEpoch;
 

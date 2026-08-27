@@ -658,10 +658,10 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
                             ),
                             const SizedBox(height: 20),
 
-                            // 3. PRAYER REMINDERS & CALENDAR INTEGRATION CARD
+                            // 3. PRAYER NOTIFICATIONS & REMINDERS CARD
                             _buildSectionHeader(
                               icon: CupertinoIcons.bell_fill,
-                              title: 'یادآوری و تقویم نمازها',
+                              title: 'اعلان و یادآوری نمازها',
                               colors: colors,
                             ),
                             const SizedBox(height: 8),
@@ -669,26 +669,7 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
                               colors: colors,
                               isDark: isDark,
                               children: [
-                                // 1. Main Calendar Integration Toggle
-                                _buildSwitchTile(
-                                  title: 'ارسال نمازهای واجب به تقویم اصلی',
-                                  subtitle:
-                                      'نمایش اوقات و ثبت نمازها در تایم‌لاین تقویم روزانه و صفحهٔ امروز',
-                                  value: _showObligatoryInCalendar,
-                                  colors: colors,
-                                  onChanged: (val) {
-                                    setState(
-                                      () => _showObligatoryInCalendar = val,
-                                    );
-                                    _saveSetting(
-                                      'calendar_show_worship_obligatory',
-                                      val.toString(),
-                                    );
-                                  },
-                                ),
-                                const Divider(height: 20),
-
-                                // 2. Master Prayer Notification Toggle
+                                // Master Prayer Notification Toggle
                                 _buildSwitchTile(
                                   title: 'اعلان و یادآوری موعد نماز',
                                   subtitle:
@@ -705,6 +686,7 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
                                         .schedulePrayerReminders();
                                   },
                                 ),
+
 
                                 if (_adhanEnabled) ...[
                                   const Divider(height: 16),

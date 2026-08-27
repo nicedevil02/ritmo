@@ -8,7 +8,7 @@ class TriggerResolutionLayer implements RealmResolutionLayer {
   const TriggerResolutionLayer();
 
   @override
-  Future<ActiveRealmState?> tryResolve(RealmContext ctx) async {
+  ActiveRealmState? tryResolve(RealmContext ctx) {
     final enabledTriggers = ctx.triggers.where((t) => t.isEnabled).toList()
       ..sort((a, b) => b.priority.compareTo(a.priority));
 

@@ -98,6 +98,11 @@ class ZoneAndEssentialFilter implements RoutineFilter {
         return false;
       }
 
+      // In SILENT mode, essential routines cannot bypass unless they are critical medical (B-10, allowsEssentialBypass)
+      if (mode == RealmMode.silent && !isCriticalMedical) {
+        return false;
+      }
+
       // F-11: Real separation - strictly hide routines tagged with a different realm
       if (snapshot.hideOtherRealms &&
           snapshot.activeZoneId != null &&

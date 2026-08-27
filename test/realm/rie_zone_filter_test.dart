@@ -81,15 +81,21 @@ void main() {
       expect(visible.length, 3);
     });
 
-    test('2. FOCUS and SILENT realm modes suppress non-essential routines (B-02, B-10)', () {
+    test('2. FOCUS allows all essential routines, SILENT allows only critical medical routines (B-02, B-10)', () {
       final focusSnapshot = buildSnapshot(mode: RealmMode.focus);
       final silentSnapshot = buildSnapshot(mode: RealmMode.silent);
 
-      final focusVisible = filter.filter([normalRoutine, workTask, essentialWorkRoutine], focusSnapshot);
-      expect(focusVisible.map((r) => r.id), ['r_work_essential']);
+      final focusVisible = filter.filter(
+        [normalRoutine, workTask, essentialWorkRoutine, essentialMedicalRoutine],
+        focusSnapshot,
+      );
+      expect(focusVisible.map((r) => r.id), ['r_work_essential', 'r_med_essential']);
 
-      final silentVisible = filter.filter([normalRoutine, workTask, essentialWorkRoutine], silentSnapshot);
-      expect(silentVisible.map((r) => r.id), ['r_work_essential']);
+      final silentVisible = filter.filter(
+        [normalRoutine, workTask, essentialWorkRoutine, essentialMedicalRoutine],
+        silentSnapshot,
+      );
+      expect(silentVisible.map((r) => r.id), ['r_med_essential']);
     });
 
     test('3. Explicit user BLOCKED rule takes precedence over isEssential for non-medical routines (B-11)', () {

@@ -63,11 +63,11 @@ void main() {
     );
 
     test(
-      'C-36: Day in both PMS and prediction windows produces both items without dropping one',
+      'C-36: Point-in-time reminder produced on configured lead days (e.g. 3 days and 1 day before next period)',
       () {
         final engineOutput = CycleEngineOutput(
           currentPhase: CyclePhase.luteal,
-          dayOfCycle: 26,
+          dayOfCycle: 25,
           dayOfPeriod: 0,
           nextPeriodPrediction: DateTime(2026, 8, 20),
           nextPeriodWindowStart: DateTime(2026, 8, 18),
@@ -81,30 +81,62 @@ void main() {
           trendPoints: const [],
         );
 
-        // We test with custom source containing engineOutput
         final populatedSource = CycleAgendaSource(
           cycleOutput: engineOutput,
           cycleAllowed: true,
           periodRows: const [],
           isPregnancy: false,
+          reminderLeadDays: const [3, 1],
+          consentReminders: true,
         );
 
-        // Date: 2026-08-18 (Overlaps both PMS [16..19] and Period Prediction [18..22])
-        final ctx = AgendaDayContext(
+        // Date: 2026-08-17 (3 days before 2026-08-20) -> should have 1 period reminder
+        final ctx3Days = AgendaDayContext(
+          date: DateTime(2026, 8, 17),
+          dateStr: '2026-08-17',
+          isToday: false,
+          prayerTimes: const {},
+          options: const AgendaQueryOptions(),
+        );
+        final items3Days = populatedSource.itemsForDate(ctx3Days);
+        expect(items3Days.length, equals(1));
+        expect(items3Days.first.title.contains('۳ روز تا شروع احتمالی قاعدگی'), isTrue);
+        expect(items3Days.first.kind, equals(AgendaItemKind.reminder));
+
+        // Date: 2026-08-19 (1 day before 2026-08-20) -> should have 1 period reminder
+        final ctx1Day = AgendaDayContext(
+          date: DateTime(2026, 8, 19),
+          dateStr: '2026-08-19',
+          isToday: false,
+          prayerTimes: const {},
+          options: const AgendaQueryOptions(),
+        );
+        final items1Day = populatedSource.itemsForDate(ctx1Day);
+        expect(items1Day.length, equals(1));
+        expect(items1Day.first.title.contains('۱ روز تا شروع احتمالی قاعدگی'), isTrue);
+
+        // Date: 2026-08-15 (1 day before PMS start 2026-08-16) -> should have 1 PMS reminder
+        final ctxPms = AgendaDayContext(
+          date: DateTime(2026, 8, 15),
+          dateStr: '2026-08-15',
+          isToday: false,
+          prayerTimes: const {},
+          options: const AgendaQueryOptions(),
+        );
+        final itemsPms = populatedSource.itemsForDate(ctxPms);
+        expect(itemsPms.length, equals(1));
+        expect(itemsPms.first.title.contains('PMS'), isTrue);
+
+        // Date: 2026-08-18 (Not a lead day) -> should produce ZERO items (no everyday spam!)
+        final ctxNormal = AgendaDayContext(
           date: DateTime(2026, 8, 18),
           dateStr: '2026-08-18',
           isToday: false,
           prayerTimes: const {},
           options: const AgendaQueryOptions(),
         );
-
-        final items = populatedSource.itemsForDate(ctx);
-        expect(items.length, equals(2));
-        expect(
-          items.any((i) => i.title.contains('پیش‌بینی دوره قاعدگی') || i.title.contains('Period Prediction Window')),
-          isTrue,
-        );
-        expect(items.any((i) => i.title.contains('PMS')), isTrue);
+        final itemsNormal = populatedSource.itemsForDate(ctxNormal);
+        expect(itemsNormal.isEmpty, isTrue);
       },
     );
 

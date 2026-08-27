@@ -16,12 +16,16 @@ class CycleAgendaSource implements AgendaSource {
   final bool cycleAllowed;
   final List<Map<String, dynamic>> periodRows;
   final bool isPregnancy;
+  final List<int> reminderLeadDays;
+  final bool consentReminders;
 
   const CycleAgendaSource({
     required this.cycleOutput,
     required this.cycleAllowed,
     this.periodRows = const [],
     this.isPregnancy = false,
+    this.reminderLeadDays = const [3, 1],
+    this.consentReminders = true,
   });
 
   @override
@@ -46,6 +50,8 @@ class CycleAgendaSource implements AgendaSource {
     final effectiveAllowed =
         isFemale && isCycleEnabled && calendarConsent && cycleAllowed;
     final isPregnant = CycleSettings.isPregnancyMode(settingsMap);
+    final reminderLeadDays = CycleSettings.getReminderLeadDays(settingsMap);
+    final consentReminders = settingsMap['cycle_consent_reminders'] != 'false';
 
     if (!effectiveAllowed) {
       return const CycleAgendaSource(
@@ -53,6 +59,8 @@ class CycleAgendaSource implements AgendaSource {
         cycleAllowed: false,
         periodRows: [],
         isPregnancy: false,
+        reminderLeadDays: [3, 1],
+        consentReminders: false,
       );
     }
 
@@ -96,6 +104,8 @@ class CycleAgendaSource implements AgendaSource {
       cycleAllowed: effectiveAllowed,
       periodRows: periodRows,
       isPregnancy: isPregnant,
+      reminderLeadDays: reminderLeadDays,
+      consentReminders: consentReminders,
     );
   }
 
@@ -109,7 +119,7 @@ class CycleAgendaSource implements AgendaSource {
     final day = CycleDateContract.cleanDate(date);
     final items = <AgendaItem>[];
 
-    // 1. Check actual recorded/past periods from cycle_periods (روزهای قاعدگی)
+    // 1. Check actual recorded/past periods from cycle_periods (روزهای قاعدگی واقعی)
     for (final row in periodRows) {
       final start = CycleDateContract.parseDayKey(row['startDate']?.toString());
       if (start == null) continue;
@@ -168,66 +178,75 @@ class CycleAgendaSource implements AgendaSource {
       }
     }
 
-    // 2. Future prediction items (پیش‌بینی قاعدگی بعدی و PMS — بدون پنجره باروری)
+    // 2. Future prediction reminder items (یادآوری‌های قبل از موعد تنظیمی کاربر به جای پر کردن کل روزهای آینده)
     final out = cycleOutput;
-    if (out != null &&
+    if (consentReminders &&
+        out != null &&
         out.hasData &&
         out.currentPhase != CyclePhase.pregnancy) {
-      bool inFutureWindow(DateTime? start, DateTime? end) {
-        if (start == null || end == null) return false;
-        final s = CycleDateContract.cleanDate(start);
-        final e = CycleDateContract.cleanDate(end);
-        return CycleDateContract.inWindow(day, s, e);
+      final targetPeriod =
+          out.nextPeriodPrediction ?? out.nextPeriodWindowStart;
+
+      // Period prediction reminders based on lead days (e.g. 1 to 3 days before)
+      if (targetPeriod != null) {
+        final cleanPeriodDate = CycleDateContract.cleanDate(targetPeriod);
+        for (final lead in reminderLeadDays) {
+          final reminderDate = cleanPeriodDate.subtract(Duration(days: lead));
+          if (reminderDate == day) {
+            final leadText =
+                lead == 1 ? '۱ روز' : '${toPersianDigits(lead)} روز';
+            items.add(
+              AgendaItem(
+                id: buildAgendaItemId(
+                  AgendaDomain.cycle,
+                  '${ctx.dateStr}_lead_period_$lead',
+                  ctx.dateStr,
+                ),
+                domain: AgendaDomain.cycle,
+                kind: AgendaItemKind.reminder,
+                sourceId: '${ctx.dateStr}_lead_period_$lead',
+                title: 'یادآوری: $leadText تا شروع احتمالی قاعدگی',
+                dateStr: ctx.dateStr,
+                category: Category.personal,
+                priority: 0.8,
+                deepLink: AgendaDeepLink(
+                  domain: AgendaDomain.cycle,
+                  targetId: ctx.dateStr,
+                ),
+              ),
+            );
+          }
+        }
       }
 
-      // Next period prediction window (پیش‌بینی قاعدگی بعدی)
-      if (inFutureWindow(out.nextPeriodWindowStart, out.nextPeriodWindowEnd)) {
-        items.add(
-          AgendaItem(
-            id: buildAgendaItemId(
-              AgendaDomain.cycle,
-              '${ctx.dateStr}_pred_period',
-              ctx.dateStr,
-            ),
-            domain: AgendaDomain.cycle,
-            sourceId: '${ctx.dateStr}_pred_period',
-            title: 'پیش‌بینی دوره قاعدگی بعدی',
-            dateStr: ctx.dateStr,
-            category: Category.personal,
-            priority: 0.8,
-            deepLink: AgendaDeepLink(
+      // PMS reminder (1 day before estimated PMS start or on PMS start day)
+      final pmsStart = out.pmsWindowStart;
+      if (pmsStart != null) {
+        final cleanPmsDate = CycleDateContract.cleanDate(pmsStart);
+        final pmsReminderDate = cleanPmsDate.subtract(const Duration(days: 1));
+        if (pmsReminderDate == day) {
+          items.add(
+            AgendaItem(
+              id: buildAgendaItemId(
+                AgendaDomain.cycle,
+                '${ctx.dateStr}_lead_pms',
+                ctx.dateStr,
+              ),
               domain: AgendaDomain.cycle,
-              targetId: ctx.dateStr,
+              kind: AgendaItemKind.reminder,
+              sourceId: '${ctx.dateStr}_lead_pms',
+              title: 'یادآوری: احتمال شروع علائم PMS از فردا',
+              dateStr: ctx.dateStr,
+              category: Category.personal,
+              priority: 0.75,
+              deepLink: AgendaDeepLink(
+                domain: AgendaDomain.cycle,
+                targetId: ctx.dateStr,
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
-
-      // PMS window prediction (پیش‌بینی PMS)
-      if (inFutureWindow(out.pmsWindowStart, out.pmsWindowEnd)) {
-        items.add(
-          AgendaItem(
-            id: buildAgendaItemId(
-              AgendaDomain.cycle,
-              '${ctx.dateStr}_pred_pms',
-              ctx.dateStr,
-            ),
-            domain: AgendaDomain.cycle,
-            sourceId: '${ctx.dateStr}_pred_pms',
-            title: 'پیش‌بینی سندروم پیش از قاعدگی (PMS)',
-            dateStr: ctx.dateStr,
-            category: Category.personal,
-            priority: 0.75,
-            deepLink: AgendaDeepLink(
-              domain: AgendaDomain.cycle,
-              targetId: ctx.dateStr,
-            ),
-          ),
-        );
-      }
-
-      // NOTE: Fertile window (پنجره باروری) is deliberately excluded from the main calendar agenda,
-      // and remains visible exclusively within the private Cycle screen calendar.
     }
 
     return items;

@@ -685,18 +685,14 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 }
                 return false;
               },
-              child: RefreshIndicator(
-                onRefresh: _loadAllData,
-                color: colors.primary,
-                child: TabBarView(
-                  controller: _tabController,
-                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                  children: [
-                    _WellbeingTabKeepAlive(child: _buildTodayTab(context, contentTopPadding)),
-                    _WellbeingTabKeepAlive(child: _buildSleepTab(context, contentTopPadding)),
-                    _WellbeingTabKeepAlive(child: _buildEnergyTab(context, contentTopPadding)),
-                  ],
-                ),
+              child: TabBarView(
+                controller: _tabController,
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                children: [
+                  _WellbeingTabKeepAlive(child: _buildTodayTab(context, contentTopPadding)),
+                  _WellbeingTabKeepAlive(child: _buildSleepTab(context, contentTopPadding)),
+                  _WellbeingTabKeepAlive(child: _buildEnergyTab(context, contentTopPadding)),
+                ],
               ),
             ),
           ),
@@ -798,6 +794,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     final snapshot = _insightSnapshot;
 
     return CustomScrollView(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       slivers: [
         SliverPadding(
           padding: EdgeInsets.fromLTRB(10, topPadding, 10, 80),
@@ -966,6 +963,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         return false;
       },
       child: CustomScrollView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         slivers: [
           SliverPadding(
             padding: EdgeInsets.fromLTRB(10, topPadding, 10, 80),
@@ -1012,6 +1010,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
   Widget _buildEnergyTab(BuildContext context, [double topPadding = 16.0]) {
     return CustomScrollView(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       slivers: [
         SliverPadding(
           padding: EdgeInsets.fromLTRB(10, topPadding, 10, 80),

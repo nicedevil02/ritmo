@@ -372,7 +372,7 @@ class _NeuDialPainter extends CustomPainter {
 
     final labelGap =
         showHourLabels ? (dim * 0.115).clamp(12.0, 30.0) : 0.0;
-    final stroke = ((dim - labelGap * 2) * 0.19).clamp(10.0, 40.0);
+    final stroke = ((dim - labelGap * 2) * 0.145).clamp(8.0, 32.0);
     final radius = (dim - labelGap * 2 - stroke) / 2;
     if (radius <= 6) return;
 
@@ -754,29 +754,19 @@ class _NeuDialPainter extends CustomPainter {
     _drawText(
       canvas,
       emoji,
-      center.translate(0, -hubRadius * 0.34),
-      TextStyle(fontSize: (hubRadius * 0.34).clamp(14.0, 32.0)),
-    );
-    _drawText(
-      canvas,
-      'الان در قلمرو',
-      center.translate(0, hubRadius * 0.14),
-      TextStyle(
-        fontSize: (hubRadius * 0.155).clamp(9.0, 15.0),
-        fontWeight: FontWeight.w600,
-        color: RealmNeu.muted(isDarkMode),
-      ),
+      center.translate(0, -hubRadius * 0.20),
+      TextStyle(fontSize: (hubRadius * 0.38).clamp(16.0, 34.0)),
     );
     _drawText(
       canvas,
       activeZoneName,
-      center.translate(0, hubRadius * 0.44),
+      center.translate(0, hubRadius * 0.26),
       TextStyle(
-        fontSize: (hubRadius * 0.22).clamp(11.0, 22.0),
+        fontSize: (hubRadius * 0.23).clamp(11.5, 23.0),
         fontWeight: FontWeight.w900,
         color: nameColor,
       ),
-      maxWidth: hubRadius * 1.7,
+      maxWidth: hubRadius * 1.65,
     );
   }
 

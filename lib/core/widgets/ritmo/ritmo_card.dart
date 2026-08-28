@@ -1296,6 +1296,10 @@ class RitmoNeuMasterCard extends StatelessWidget {
     required IconData icon,
     required Color color,
   }) {
+    final shadowDarkColor = isDark
+        ? Colors.black.withValues(alpha: 0.45)
+        : Color.lerp(colors.surfaceElevated, Colors.black, 0.18)!.withValues(alpha: 0.55);
+
     return Container(
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -1310,21 +1314,19 @@ class RitmoNeuMasterCard extends StatelessWidget {
                   Color.lerp(colors.surfaceElevated, Colors.black, 0.15)!,
                 ]
               : [
-                  Colors.white,
-                  Color.lerp(colors.surfaceElevated, const Color(0xFFE2E8F0), 0.4)!,
+                  Color.lerp(colors.surfaceElevated, Colors.white, 0.85)!,
+                  colors.surfaceElevated,
                 ],
         ),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.08)
-              : Colors.white,
+              : Color.lerp(colors.surfaceElevated, Colors.white, 0.70)!,
           width: 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.45)
-                : const Color(0xFFBAC7D7).withValues(alpha: 0.65),
+            color: shadowDarkColor,
             offset: const Offset(3, 3.5),
             blurRadius: 7,
           ),
@@ -1343,7 +1345,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
           Icon(
             icon,
             size: 15,
-            color: isDark ? colors.textSecondary : const Color(0xFF475569),
+            color: colors.textSecondary,
           ),
           const SizedBox(width: 6),
           Expanded(
@@ -1370,6 +1372,10 @@ class RitmoNeuMasterCard extends StatelessWidget {
     required RitmoColors colors,
     required String timeRange,
   }) {
+    final shadowDarkColor = isDark
+        ? Colors.black.withValues(alpha: 0.45)
+        : Color.lerp(colors.surfaceElevated, Colors.black, 0.18)!.withValues(alpha: 0.55);
+
     return Container(
       height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1384,21 +1390,19 @@ class RitmoNeuMasterCard extends StatelessWidget {
                   Color.lerp(colors.surfaceElevated, Colors.black, 0.15)!,
                 ]
               : [
-                  Colors.white,
-                  Color.lerp(colors.surfaceElevated, const Color(0xFFE2E8F0), 0.4)!,
+                  Color.lerp(colors.surfaceElevated, Colors.white, 0.85)!,
+                  colors.surfaceElevated,
                 ],
         ),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.07)
-              : Colors.white,
+              : Color.lerp(colors.surfaceElevated, Colors.white, 0.70)!,
           width: 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.45)
-                : const Color(0xFFBAC7D7).withValues(alpha: 0.65),
+            color: shadowDarkColor,
             offset: const Offset(3.5, 4),
             blurRadius: 8,
           ),
@@ -1416,7 +1420,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
           Icon(
             CupertinoIcons.clock,
             size: 15,
-            color: isDark ? colors.textSecondary : const Color(0xFF64748B),
+            color: colors.textSecondary,
           ),
           const SizedBox(width: 8),
           Expanded(

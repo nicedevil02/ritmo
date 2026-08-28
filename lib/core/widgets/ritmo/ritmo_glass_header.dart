@@ -138,12 +138,12 @@ class RitmoGlassHeader extends StatelessWidget {
             ),
           ];
 
-    final defaultBorder = isDark
-        ? null
-        : Border.all(
-            color: Colors.white.withValues(alpha: 0.70),
-            width: 1.0,
-          );
+    final defaultBorder = Border.all(
+      color: isDark
+          ? const Color(0xFF94A3B8).withValues(alpha: 0.16)
+          : Colors.white.withValues(alpha: 0.70),
+      width: isDark ? 0.9 : 1.0,
+    );
 
     return RepaintBoundary(
       child: Container(

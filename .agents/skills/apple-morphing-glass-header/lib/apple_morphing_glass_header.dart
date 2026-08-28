@@ -177,10 +177,12 @@ class AppleMorphingGlassHeader extends StatelessWidget {
         alpha: (t * (isDark ? 0.78 : 0.86)).clamp(0.0, 0.95),
       );
 
-      border = (t > 0.05 && !isDark)
+      border = t > 0.05
           ? Border.all(
-              color: Colors.white.withValues(alpha: 0.70 * t),
-              width: 1.0,
+              color: isDark
+                  ? const Color(0xFF94A3B8).withValues(alpha: 0.16 * t)
+                  : Colors.white.withValues(alpha: 0.70 * t),
+              width: isDark ? 0.9 : 1.0,
             )
           : null;
 
@@ -251,17 +253,28 @@ class AppleMorphingGlassHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(currentRadius),
               border: border,
               boxShadow: shadows,
-              gradient: (t > 0.05 && !isDark)
-                  ? LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withValues(alpha: 0.75 * t),
-                        Colors.white.withValues(alpha: 0.20 * t),
-                        Colors.transparent,
-                      ],
-                      stops: const [0.0, 0.03, 0.45],
-                    )
+              gradient: t > 0.05
+                  ? (isDark
+                      ? LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            const Color(0xFF94A3B8).withValues(alpha: 0.10 * t),
+                            const Color(0xFF64748B).withValues(alpha: 0.03 * t),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.04, 0.40],
+                        )
+                      : LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.75 * t),
+                            Colors.white.withValues(alpha: 0.20 * t),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.03, 0.45],
+                        ))
                   : null,
             ),
             child: Stack(

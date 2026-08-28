@@ -62,7 +62,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
   // Selected time window ruler state (ط۵)
   InsightsTimeWindow _selectedWindow = InsightsTimeWindow.last7Days;
-  bool _isTabsVisible = true;
+  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
+  final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
 
   // Gate & Metrics
   int _daysOfData = 0;
@@ -119,6 +120,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
   @override
   void dispose() {
+    _scrollOffset.dispose();
+    _isTabsExpanded.dispose();
     super.dispose();
   }
 
@@ -751,7 +754,7 @@ ${jsonEncode(digest.json)}
     final colors = context.colors;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.paddingOf(context).top;
-    final contentTopPadding = topPadding + 142.0;
+    final contentTopPadding = topPadding + 190.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -763,15 +766,20 @@ ${jsonEncode(digest.json)}
           backgroundColor: colors.background,
           body: NotificationListener<ScrollNotification>(
             onNotification: (notification) {
-              if (notification is UserScrollNotification) {
-                if (notification.direction == ScrollDirection.reverse && _isTabsVisible) {
-                  setState(() => _isTabsVisible = false);
-                } else if (notification.direction == ScrollDirection.forward && !_isTabsVisible) {
-                  setState(() => _isTabsVisible = true);
-                }
-              } else if (notification is ScrollUpdateNotification) {
-                if (notification.metrics.pixels <= 15 && !_isTabsVisible) {
-                  setState(() => _isTabsVisible = true);
+              if (notification.metrics.axis == Axis.vertical) {
+                _scrollOffset.value = notification.metrics.pixels;
+                if (notification.metrics.pixels <= 15) {
+                  if (!_isTabsExpanded.value) _isTabsExpanded.value = true;
+                } else if (notification is UserScrollNotification) {
+                  if (notification.direction == ScrollDirection.reverse) {
+                    if (notification.metrics.pixels > 75 && _isTabsExpanded.value) {
+                      _isTabsExpanded.value = false;
+                    }
+                  } else if (notification.direction == ScrollDirection.forward) {
+                    if (!_isTabsExpanded.value) {
+                      _isTabsExpanded.value = true;
+                    }
+                  }
                 }
               }
               return false;
@@ -791,7 +799,7 @@ ${jsonEncode(digest.json)}
                           onRefresh: () => _loadAnalytics(isRefresh: true),
                           color: colors.primary,
                           child: SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
+                            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                             padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 120),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -832,332 +840,63 @@ ${jsonEncode(digest.json)}
                         ),
                 ),
 
-                // Layer 2: Floating Capsule Header Island
+                // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
                 Positioned(
                   top: 0,
                   left: 0,
                   right: 0,
-                  child: SafeArea(
-                    bottom: false,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-                      child: _buildCapsuleHeader(context, isDarkMode, colors),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCapsuleHeader(
-    BuildContext context,
-    bool isDark,
-    RitmoColors colors,
-  ) {
-    return RitmoGlassHeader(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Top Row (52 height)
-                SizedBox(
-                  height: 52,
-                  child: Row(
-                    children: [
-                      if (Navigator.canPop(context))
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 38,
-                            minHeight: 38,
-                          ),
-                          icon: Icon(
-                            CupertinoIcons.arrow_right,
-                            color: isDark ? Colors.white : const Color(0xFF1D2129),
-                            size: 20,
-                          ),
-                          onPressed: () {
-                            HapticFeedback.lightImpact();
-                            Navigator.pop(context);
-                          },
-                        )
-                      else
-                        const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'بینش‌ها و الگوها',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 17.5,
-                            letterSpacing: -0.4,
-                            color: isDark ? Colors.white : const Color(0xFF1D2129),
-                          ),
-                        ),
-                      ),
-                      Builder(
-                        builder: (btnCtx) => _buildHeaderActionButton(
-                          icon: CupertinoIcons.share,
-                          iconColor: colors.primary,
-                          isDark: isDark,
-                          tooltip: 'اشتراک‌گذاری گزارش',
-                          onTap: () => _simulateShare(btnCtx, colors),
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                    ],
-                  ),
-                ),
-
-                // Bottom Collapsible Time Window Ruler
-                ClipRect(
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 260),
-                    curve: Curves.easeInOutCubic,
-                    height: _isTabsVisible ? 54.0 : 0.0,
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: _isTabsVisible ? 1.0 : 0.0,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
-                        child: Align(
-                          alignment: Alignment.center,
-                          child: Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: _buildTimeWindowSegmentedRuler(colors, isDark),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildTimeWindowSegmentedRuler(RitmoColors colors, bool isDark) {
-    final trackBgColor = isDark ? const Color(0xFF16191E) : const Color(0xFFEFF2F6);
-    final pillBgColor = isDark
-        ? const Color(0xFF22262F)
-        : Color.lerp(Colors.white, colors.primary, 0.12)!;
-    final activeIndex = InsightsTimeWindow.values.indexOf(_selectedWindow).clamp(0, 3);
-
-    const tabs = InsightsTimeWindow.values;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final totalWidth = constraints.maxWidth;
-        const outerPadding = 4.0;
-        final availableWidth = totalWidth - (outerPadding * 2);
-        final tabWidth = availableWidth / tabs.length;
-        const trackHeight = 44.0;
-        const pillHeight = trackHeight - (outerPadding * 2);
-
-        return Container(
-          height: trackHeight,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: trackBgColor,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.white.withValues(alpha: 0.90),
-              width: 1.0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.70)
-                    : const Color(0xFFB8C2CE).withValues(alpha: 0.55),
-                offset: const Offset(2, 2),
-                blurRadius: 4,
-              ),
-              BoxShadow(
-                color: isDark
-                    ? const Color(0xFF222630)
-                    : Colors.white.withValues(alpha: 0.95),
-                offset: const Offset(-2, -2),
-                blurRadius: 4,
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              // Sliding Pill Indicator
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeInOutCubic,
-                right: outerPadding + (activeIndex * tabWidth),
-                top: outerPadding,
-                width: tabWidth,
-                height: pillHeight,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: pillBgColor,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: colors.primary.withValues(alpha: isDark ? 0.40 : 0.28),
-                      width: 1.0,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isDark
-                            ? Colors.black.withValues(alpha: 0.60)
-                            : const Color(0xFFB2BDCB).withValues(alpha: 0.65),
-                        offset: const Offset(2, 2),
-                        blurRadius: 4,
-                      ),
-                      BoxShadow(
-                        color: isDark ? const Color(0xFF2E3440) : Colors.white,
-                        offset: const Offset(-2, -2),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Tab Buttons
-              Positioned.fill(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: outerPadding),
-                  child: Row(
-                    children: tabs.map((window) {
-                      final isSelected = window == _selectedWindow;
-                      return Expanded(
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            if (!isSelected) {
-                              HapticFeedback.selectionClick();
-                              setState(() {
-                                _selectedWindow = window;
-                              });
-                              _loadAnalytics(showLoading: false);
-                            }
-                          },
-                          child: Center(
-                            child: Text(
-                              window.label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                color: isSelected
-                                    ? (isDark ? Colors.white : const Color(0xFF1D2129))
-                                    : (isDark ? const Color(0xFF8E95A2) : const Color(0xFF6B7280)),
-                              ),
+                  child: AnimatedBuilder(
+                    animation: Listenable.merge([_scrollOffset, _isTabsExpanded]),
+                    builder: (context, _) {
+                      return RitmoAppleMorphingGlassHeader(
+                        title: 'بینش‌ها و الگوها',
+                        subtitle: 'هوش تحلیلی، نبض زیستی و گزارش دوره‌ای عملکرد',
+                        scrollOffset: _scrollOffset.value,
+                        isTabsExpanded: _isTabsExpanded.value,
+                        collapseDistance: 55.0,
+                        onBack: () => Navigator.maybePop(context),
+                        actions: [
+                          Builder(
+                            builder: (btnCtx) => RitmoVibrancyActionButton(
+                              icon: CupertinoIcons.share,
+                              iconColor: colors.primary,
+                              tooltip: 'اشتراک‌گذاری گزارش',
+                              onTap: () => _simulateShare(btnCtx, colors),
                             ),
                           ),
+                        ],
+                        tabs: RitmoGlassSegmentedControl<InsightsTimeWindow>(
+                          items: InsightsTimeWindow.values.map((w) => RitmoTabItem<InsightsTimeWindow>(
+                            title: w.label,
+                            icon: switch (w) {
+                              InsightsTimeWindow.last7Days => CupertinoIcons.calendar_today,
+                              InsightsTimeWindow.last30Days => CupertinoIcons.calendar,
+                              InsightsTimeWindow.lastSeason => CupertinoIcons.sparkles,
+                              InsightsTimeWindow.allTime => CupertinoIcons.chart_bar_alt_fill,
+                            },
+                            value: w,
+                          )).toList(),
+                          selectedIndex: InsightsTimeWindow.values.indexOf(_selectedWindow).clamp(0, 3),
+                          onTabChanged: (index) {
+                            setState(() => _selectedWindow = InsightsTimeWindow.values[index]);
+                            _loadAnalytics();
+                          },
+                          accentColor: colors.primary,
+                          height: 46.0,
                         ),
                       );
-                    }).toList(),
+                    },
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildHeaderActionButton({
-    required IconData icon,
-    required Color iconColor,
-    required bool isDark,
-    required VoidCallback onTap,
-    String? tooltip,
-    bool isAiButton = false,
-  }) {
-    final button = GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: _buildHeaderActionButtonContent(
-        icon: icon,
-        iconColor: iconColor,
-        isDark: isDark,
-        isAiButton: isAiButton,
-      ),
-    );
-
-    if (tooltip != null) {
-      return Tooltip(message: tooltip, child: button);
-    }
-    return button;
-  }
-
-  Widget _buildHeaderActionButtonContent({
-    required IconData icon,
-    required Color iconColor,
-    required bool isDark,
-    bool isAiButton = false,
-  }) {
-    return Container(
-      width: 36,
-      height: 36,
-      margin: const EdgeInsets.symmetric(horizontal: 3),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isDark
-            ? (isAiButton
-                ? iconColor.withValues(alpha: 0.18)
-                : const Color(0xFF22262E))
-            : (isAiButton
-                ? iconColor.withValues(alpha: 0.12)
-                : const Color(0xFFF3F5F8)),
-        border: Border.all(
-          color: isDark
-              ? (isAiButton
-                  ? iconColor.withValues(alpha: 0.40)
-                  : Colors.white.withValues(alpha: 0.08))
-              : (isAiButton
-                  ? iconColor.withValues(alpha: 0.30)
-                  : Colors.white.withValues(alpha: 0.90)),
-          width: 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.04)
-                : Colors.white.withValues(alpha: 0.95),
-            offset: const Offset(-2, -2),
-            blurRadius: 4,
-          ),
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.55)
-                : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
-            offset: const Offset(2, 2),
-            blurRadius: 4,
-          ),
-          if (isAiButton)
-            BoxShadow(
-              color: iconColor.withValues(alpha: isDark ? 0.35 : 0.22),
-              blurRadius: 10,
-              spreadRadius: 1.0,
+              ],
             ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          icon,
-          size: 18,
-          color: isAiButton
-              ? iconColor
-              : (isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280)),
+          ),
         ),
       ),
     );
   }
+
+
 
   // Gate Check Badge
   Widget _buildMaturityBadge() {

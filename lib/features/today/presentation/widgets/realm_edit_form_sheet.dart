@@ -822,7 +822,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                   borderRadius: sheetRadius,
                   border: Border.all(
                     color: isDark
-                        ? Colors.white.withValues(alpha: 0.06)
+                        ? Colors.white.withValues(alpha: 0.10)
                         : Colors.white.withValues(alpha: 0.70),
                     width: 1.0,
                   ),
@@ -835,8 +835,8 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
+                              Colors.white.withValues(alpha: 0.14),
                               Colors.white.withValues(alpha: 0.04),
-                              Colors.white.withValues(alpha: 0.01),
                               Colors.white.withValues(alpha: 0.0),
                             ],
                             stops: const [0.0, 0.03, 0.45],

@@ -926,4 +926,395 @@ class RitmoCardDivider extends StatelessWidget {
   }
 }
 
+/// سطح ۳ بعدی نئومورفیک (برآمده / فرورفته / هاله نوری)
+class RitmoNeuSurface extends StatelessWidget {
+  const RitmoNeuSurface({
+    super.key,
+    required this.child,
+    this.height,
+    this.width,
+    this.radius = 16,
+    this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    this.tint,
+    this.glowColor,
+    this.sunken = false,
+    this.blur = 10,
+    this.distance = 3.5,
+    this.onTap,
+  });
+
+  final Widget child;
+  final double? height;
+  final double? width;
+  final double radius;
+  final EdgeInsetsGeometry padding;
+  final Color? tint;
+  final Color? glowColor;
+  final bool sunken;
+  final double blur;
+  final double distance;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isDark = context.isDark;
+    final base = colors.surfaceElevated;
+
+    final tintColor = tint;
+
+    final decoration = BoxDecoration(
+      borderRadius: BorderRadius.circular(radius),
+      gradient: tintColor != null
+          ? LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.lerp(tintColor, Colors.white, isDark ? 0.05 : 0.40)!,
+                tintColor,
+              ],
+            )
+          : (sunken
+              ? RitmoNeu.sunkenGradient(colors.surfaceSunken, isDark)
+              : RitmoNeu.raisedGradient(base, isDark)),
+      border: Border.all(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.white.withValues(alpha: 0.70),
+        width: 0.6,
+      ),
+      boxShadow: glowColor != null
+          ? [
+              BoxShadow(
+                color: glowColor!.withValues(alpha: isDark ? 0.35 : 0.25),
+                blurRadius: blur + 4,
+                offset: Offset(0, distance),
+              ),
+              BoxShadow(
+                color: RitmoNeu.lightShadow(isDark),
+                blurRadius: blur,
+                offset: Offset(-distance, -distance),
+              ),
+            ]
+          : (sunken
+              ? RitmoNeu.sunkenShadows(isDark, blur: blur, distance: distance)
+              : RitmoNeu.raisedShadows(isDark, blur: blur, distance: distance)),
+    );
+
+    Widget result = Container(
+      height: height,
+      width: width,
+      padding: padding,
+      alignment: height != null ? Alignment.center : null,
+      decoration: decoration,
+      child: child,
+    );
+
+    if (onTap != null) {
+      result = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          RitmoHapticsPolicy.selection();
+          onTap?.call();
+        },
+        child: result,
+      );
+    }
+
+    return result;
+  }
+}
+
+/// کارت مرجع شاهکار نئومورفیک (Ritmo Master Reference Hero Card)
+/// شامل چیدمان دو ستونه: گیج ۲۴ ساعته + دکمه تعاملی + چیپ‌های نئومورفیک + تایمر شمارش معکوس
+class RitmoNeuMasterCard extends StatelessWidget {
+  const RitmoNeuMasterCard({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.activeChipLabel,
+    this.activeChipIcon = Icons.nightlight_round,
+    this.statusLabel = 'قلمرو فعال',
+    required this.timeRange,
+    required this.remainingTime,
+    this.activeColor,
+    this.gaugeWidget,
+    this.actionButtonText = 'مدیریت قلمرو',
+    this.onActionTap,
+    this.onTap,
+    this.height = 176,
+  });
+
+  final String title;
+  final String subtitle;
+  final String activeChipLabel;
+  final IconData activeChipIcon;
+  final String statusLabel;
+  final String timeRange;
+  final String remainingTime;
+  final Color? activeColor;
+  final Widget? gaugeWidget;
+  final String actionButtonText;
+  final VoidCallback? onActionTap;
+  final VoidCallback? onTap;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isDark = context.isDark;
+    final effectiveColor = activeColor ?? colors.primary;
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: RitmoCard.neumorphic(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(28),
+        padding: const EdgeInsets.fromLTRB(10, 8, 14, 8),
+        child: SizedBox(
+          height: height - 16,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── ستون راست (RTL): اطلاعات، چیپ‌ها و پیل‌های نئومورفیک ──
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // ردیف هدر چیپ‌ها
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: RitmoNeuSurface(
+                            sunken: true,
+                            radius: 14,
+                            blur: 6,
+                            distance: 2,
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: Text(
+                              statusLabel,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: RitmoNeuSurface(
+                            tint: isDark
+                                ? effectiveColor.withValues(alpha: 0.35)
+                                : effectiveColor.withValues(alpha: 0.15),
+                            glowColor: effectiveColor,
+                            radius: 14,
+                            blur: 7,
+                            distance: 2,
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  activeChipLabel,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: isDark ? Colors.white : effectiveColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(activeChipIcon, size: 12, color: isDark ? Colors.white : effectiveColor),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // عنوان اصلی و زیرعنوان
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 17.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.3,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // پیل بازه زمانی
+                    RitmoNeuSurface(
+                      height: 30,
+                      radius: 15,
+                      blur: 7,
+                      distance: 2,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.access_time_filled_rounded, size: 14, color: colors.textSecondary),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              timeRange,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // پیل شمارش معکوس با هاله نئومورفیک
+                    RitmoNeuSurface(
+                      height: 30,
+                      radius: 15,
+                      tint: isDark
+                          ? effectiveColor.withValues(alpha: 0.35)
+                          : effectiveColor.withValues(alpha: 0.15),
+                      glowColor: effectiveColor,
+                      blur: 8,
+                      distance: 2,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.hourglass_top_rounded, size: 14, color: isDark ? Colors.white : effectiveColor),
+                          const SizedBox(width: 6),
+                          Text(
+                            'باقی‌مانده:',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white70 : effectiveColor,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              remainingTime,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                                color: isDark ? Colors.white : effectiveColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+
+              // ── ستون چپ: گیج نئومورفیک و دکمه مدیریت ──
+              SizedBox(
+                width: 110,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (gaugeWidget != null)
+                      gaugeWidget!
+                    else
+                      _buildDefaultSampleGauge(context, effectiveColor, isDark),
+                    const SizedBox(height: 4),
+                    RitmoNeuButton(
+                      height: 30,
+                      radius: 15,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      onTap: onActionTap ?? () {},
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              actionButtonText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.chevron_left_rounded,
+                            size: 13,
+                            color: colors.textSecondary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDefaultSampleGauge(BuildContext context, Color color, bool isDark) {
+    return Container(
+      width: 102,
+      height: 102,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RitmoNeu.sunkenGradient(context.colors.surfaceSunken, isDark),
+        boxShadow: RitmoNeu.sunkenShadows(isDark, blur: 8, distance: 3.0),
+      ),
+      child: Center(
+        child: Container(
+          width: 68,
+          height: 68,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RitmoNeu.raisedGradient(context.colors.surfaceElevated, isDark),
+            boxShadow: RitmoNeu.raisedShadows(isDark, blur: 6, distance: 2.0),
+          ),
+          child: Center(
+            child: Icon(
+              activeChipIcon,
+              size: 26,
+              color: isDark ? Colors.amberAccent : color,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
 

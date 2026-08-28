@@ -1,15 +1,14 @@
-// =============================================================================
-//  cards_showcase_screen.dart
-//  صفحه نمایش زنده و تست ویجت‌های سیستم مرجع کارت‌های ریتمو (Ritmo Universal Card System)
-// =============================================================================
-
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/domain/realm/realm_mode.dart';
+import 'package:ritmo/core/domain/realm/realm_state.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_24h_dial.dart';
 
 class CardsShowcaseScreen extends StatefulWidget {
   const CardsShowcaseScreen({super.key});
@@ -23,6 +22,22 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
   bool _taskDone = false;
   int _focusMinutes = 25;
   int _counter = 0;
+  Timer? _ticker;
+  DateTime _now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +57,15 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           _buildHeroHeader(colors, isDark),
           const SizedBox(height: 20),
 
-          // ── ۱. کارت‌های برجسته نئومورفیک (Neumorphic Raised) ──
-          _buildSectionTitle('۱. کارت برجسته نئومورفیک ۳ بعدی (Raised)', 'سایه دوگانه متضاد + گرادیان محدب ملایم'),
+          // ── ۱. کارت مرجع شاهکار نئومورفیک (Master Reference Card) ──
+          _buildSectionTitle('۱. کارت مرجع کامل نئومورفیک (Master Hero Card)', 'ترکیب گیج ۲۴ ساعته، چیپ‌های فرورفته/برآمده، پیل زمان و تایمر'),
+          const SizedBox(height: 10),
+
+          _buildMasterReferenceCard(colors, isDark),
+          const SizedBox(height: 24),
+
+          // ── ۲. کارت‌های برجسته نئومورفیک داشبورد (Neumorphic Raised) ──
+          _buildSectionTitle('۲. کارت برجسته داشبورد ریتمو (Raised Card)', 'سایه دوگانه متضاد + المان‌های اتمیک نئومورفیک'),
           const SizedBox(height: 10),
 
           // کارت نمونه ویجت داشبورد با المان‌های اتمیک نئومورفیک
@@ -379,4 +401,85 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
       ],
     );
   }
+
+  Widget _buildMasterReferenceCard(RitmoColors colors, bool isDark) {
+    final activeColor = colors.primary;
+
+    final sampleRealms = [
+      RealmData(
+        id: 'sleep',
+        name: 'خواب و ریکاوری',
+        colorHex: '#${activeColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}',
+        icon: '🌙',
+        mode: RealmMode.silent,
+      ),
+      const RealmData(
+        id: 'work',
+        name: 'کار و تمرکز',
+        colorHex: '#3B82F6',
+        icon: '💼',
+        mode: RealmMode.focus,
+      ),
+    ];
+
+    final sampleSchedules = [
+      const RealmScheduleData(
+        id: 's1',
+        zoneId: 'sleep',
+        daysOfWeek: {1, 2, 3, 4, 5, 6, 7},
+        startTime: '22:30',
+        endTime: '05:30',
+      ),
+      const RealmScheduleData(
+        id: 's2',
+        zoneId: 'work',
+        daysOfWeek: {1, 2, 3, 4, 5, 6, 7},
+        startTime: '08:30',
+        endTime: '17:00',
+      ),
+    ];
+
+    return RitmoNeuMasterCard(
+      title: 'خواب و ریکاوری',
+      subtitle: 'ذهنی آرام‌تر، فردایی بهتر',
+      activeChipLabel: 'خواب و ریکاوری',
+      activeChipIcon: CupertinoIcons.moon_fill,
+      statusLabel: 'قلمرو فعال',
+      timeRange: '${toPersianDigits("۰۵:۳۰")}  ➔  ${toPersianDigits("۲۲:۳۰")}',
+      remainingTime: toPersianDigits('۰۵:۵۶:۱۶'),
+      activeColor: activeColor,
+      gaugeWidget: Realm24hDial(
+        size: 104,
+        activeZoneId: 'sleep',
+        activeZoneColor: activeColor,
+        activeZoneIcon: '🌙',
+        activeZoneName: 'خواب و ریکاوری',
+        schedules: sampleSchedules,
+        realms: sampleRealms,
+        isDarkMode: isDark,
+        now: _now,
+        showHourLabels: false,
+      ),
+      actionButtonText: 'مدیریت قلمرو',
+      onActionTap: () {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('دکمه نئومورفیک «مدیریت قلمرو» لمس شد'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      },
+      onTap: () {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('کارت شاهکار نئومورفیک لمس شد (فیزیک فرورفتگی + لرزش هپتیک)'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      },
+    );
+  }
 }
+

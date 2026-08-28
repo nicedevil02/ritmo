@@ -177,22 +177,31 @@ class AppleMorphingGlassHeader extends StatelessWidget {
         alpha: (t * (isDark ? 0.78 : 0.86)).clamp(0.0, 0.95),
       );
 
-      border = (t > 0.05 && !isDark)
+      border = t > 0.05
           ? Border.all(
-              color: Colors.white.withValues(alpha: 0.70 * t),
-              width: 1.0,
+              color: (isDark
+                      ? theme.colorScheme.primary.withValues(alpha: 0.20)
+                      : Colors.white.withValues(alpha: 0.70))
+                  .withValues(alpha: t),
+              width: 0.9,
             )
           : null;
 
       shadows = t > 0.15
           ? [
               BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: t * 0.35)
-                    : theme.colorScheme.primary.withValues(alpha: t * 0.08),
+                color: (isDark
+                    ? theme.colorScheme.primary.withValues(alpha: t * 0.16)
+                    : theme.colorScheme.primary.withValues(alpha: t * 0.08)),
                 offset: Offset(0, 3 * t),
-                blurRadius: 10 * t,
+                blurRadius: 16 * t,
               ),
+              if (isDark)
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: t * 0.40),
+                  offset: Offset(0, 2 * t),
+                  blurRadius: 8 * t,
+                ),
             ]
           : null;
     }
@@ -238,16 +247,24 @@ class AppleMorphingGlassHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(currentRadius),
               border: border,
               boxShadow: shadows,
-              gradient: (t > 0.05 && !isDark)
+              gradient: t > 0.05
                   ? LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withValues(alpha: 0.75 * t),
-                        Colors.white.withValues(alpha: 0.20 * t),
-                        Colors.transparent,
-                      ],
-                      stops: const [0.0, 0.03, 0.45],
+                      colors: isDark
+                          ? [
+                              Colors.white.withValues(alpha: 0.08 * t),
+                              Colors.white.withValues(alpha: 0.02 * t),
+                              Colors.transparent,
+                            ]
+                          : [
+                              Colors.white.withValues(alpha: 0.75 * t),
+                              Colors.white.withValues(alpha: 0.20 * t),
+                              Colors.transparent,
+                            ],
+                      stops: isDark
+                          ? const [0.0, 0.04, 0.35]
+                          : const [0.0, 0.03, 0.45],
                     )
                   : null,
             ),

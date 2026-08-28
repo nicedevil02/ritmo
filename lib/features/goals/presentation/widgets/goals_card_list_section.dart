@@ -25,8 +25,17 @@ class GoalsCardListSection extends StatelessWidget {
     required this.onToggleStep,
     required this.onDeleteGoal,
     required this.onEditGoal,
+    this.header,
+    this.topPadding = 16.0,
     super.key,
   });
+
+  /// Optional header widget to scroll seamlessly with goals.
+  final Widget? header;
+
+  /// Top padding for the scroll view.
+  final double topPadding;
+
   /// List of goals to display.
   final List<Goal> goals;
 
@@ -67,32 +76,52 @@ class GoalsCardListSection extends StatelessWidget {
         .toList();
 
     if (activeRootGoals.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(CupertinoIcons.flag, size: 48, color: colors.textSecondary.withValues(alpha: 0.3)),
-            const SizedBox(height: 12),
-            Text(
-              'هیچ هدف فعالی در حال حاضر وجود ندارد.',
-              style: TextStyle(fontSize: 14.5, color: colors.textSecondary),
-            ),
-          ],
+      final emptyWidget = Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(CupertinoIcons.flag, size: 48, color: colors.textSecondary.withValues(alpha: 0.3)),
+              const SizedBox(height: 12),
+              Text(
+                'هیچ هدف فعالی در حال حاضر وجود ندارد.',
+                style: TextStyle(fontSize: 14.5, color: colors.textSecondary),
+              ),
+            ],
+          ),
         ),
       );
+
+      if (header != null) {
+        return ListView(
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          padding: EdgeInsets.fromLTRB(10, topPadding, 10, 80),
+          children: [
+            header!,
+            const SizedBox(height: 16),
+            emptyWidget,
+          ],
+        );
+      }
+
+      return emptyWidget;
     }
 
-    return RefreshIndicator(
-      onRefresh: () async => onRefresh(),
-      color: colors.primary,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        itemCount: activeRootGoals.length,
-        itemBuilder: (context, index) {
-          final goal = activeRootGoals[index];
+    final hasHeader = header != null;
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      padding: EdgeInsets.fromLTRB(10, topPadding, 10, 80),
+      itemCount: activeRootGoals.length + (hasHeader ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (hasHeader) {
+          if (index == 0) return header!;
+          final goal = activeRootGoals[index - 1];
           return _buildGoalCard(context, goal, colors);
-        },
-      ),
+        }
+        final goal = activeRootGoals[index];
+        return _buildGoalCard(context, goal, colors);
+      },
     );
   }
 
@@ -111,7 +140,7 @@ class GoalsCardListSection extends StatelessWidget {
     final courseConnCount = courses.where((c) => c.linkedGoalId == goal.id).length;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: colors.card.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(20),

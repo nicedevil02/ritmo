@@ -21,7 +21,16 @@ class GoalsTreeSection extends StatefulWidget {
     required this.onToggleStep,
     required this.onDeleteGoal,
     required this.onEditGoal,
+    this.header,
+    this.topPadding = 16.0,
   });
+
+  /// Optional header widget to scroll seamlessly with tree goals.
+  final Widget? header;
+
+  /// Top padding for the scroll view.
+  final double topPadding;
+
   final List<Goal> goals;
   final Map<String, List<GoalStep>> stepsByGoal;
   final Map<String, double> progressMap;
@@ -45,32 +54,51 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
     final rootGoals = widget.goals.where((g) => g.parentGoalId == null || g.parentGoalId!.isEmpty).toList();
 
     if (rootGoals.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.flag_outlined, size: 48, color: colors.textSecondary.withValues(alpha: 0.3)),
-            const SizedBox(height: 12),
-            Text(
-              'هیچ هدفی ثبت نشده است.',
-              style: TextStyle(fontSize: 14.5, color: colors.textSecondary),
-            ),
-          ],
+      final emptyWidget = Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.flag_outlined, size: 48, color: colors.textSecondary.withValues(alpha: 0.3)),
+              const SizedBox(height: 12),
+              Text(
+                'هیچ هدفی ثبت نشده است.',
+                style: TextStyle(fontSize: 14.5, color: colors.textSecondary),
+              ),
+            ],
+          ),
         ),
       );
+
+      if (widget.header != null) {
+        return ListView(
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          padding: EdgeInsets.fromLTRB(10, widget.topPadding, 10, 80),
+          children: [
+            widget.header!,
+            const SizedBox(height: 16),
+            emptyWidget,
+          ],
+        );
+      }
+
+      return emptyWidget;
     }
 
     final visited = <String>{};
-    return RefreshIndicator(
-      onRefresh: () async => widget.onRefresh(),
-      color: colors.primary,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        itemCount: rootGoals.length,
-        itemBuilder: (context, index) {
-          return _buildGoalNode(rootGoals[index], colors, 0, visited);
-        },
-      ),
+    final hasHeader = widget.header != null;
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      padding: EdgeInsets.fromLTRB(10, widget.topPadding, 10, 80),
+      itemCount: rootGoals.length + (hasHeader ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (hasHeader) {
+          if (index == 0) return widget.header!;
+          return _buildGoalNode(rootGoals[index - 1], colors, 0, visited);
+        }
+        return _buildGoalNode(rootGoals[index], colors, 0, visited);
+      },
     );
   }
 

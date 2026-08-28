@@ -186,6 +186,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
     final effectiveTop = widget.topPadding ?? 16.0;
 
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       padding: EdgeInsets.fromLTRB(10, effectiveTop, 10, 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -544,6 +545,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
       children: [
         Expanded(
           child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
             padding: EdgeInsets.fromLTRB(10, effectiveTop, 10, 80),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -353,55 +353,60 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                           ),
 
                           // Tab 1: Goals Card List or Tree View
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 4),
-                                child: _buildHeroSection(
-                                  activeGoals,
-                                  stepsByGoal,
-                                  engineOutput,
-                                  colors,
-                                  isDarkMode,
+                          _controller.showTreeView
+                              ? GoalsTreeSection(
+                                  header: Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: _buildHeroSection(
+                                      activeGoals,
+                                      stepsByGoal,
+                                      engineOutput,
+                                      colors,
+                                      isDarkMode,
+                                    ),
+                                  ),
+                                  topPadding: contentTopPadding,
+                                  goals: activeGoals,
+                                  stepsByGoal: stepsByGoal,
+                                  progressMap: engineOutput?.goalProgress ?? {},
+                                  routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
+                                  routines: routines,
+                                  onRefresh: () => _controller.reload(force: true),
+                                  onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
+                                  onDeleteGoal: (goalId) async {
+                                    await GoalsRepository.instance.deleteGoal(goalId);
+                                  },
+                                  onEditGoal: (goal) {
+                                    _showCreateGoalSheet(editGoal: goal);
+                                  },
+                                )
+                              : GoalsCardListSection(
+                                  header: Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: _buildHeroSection(
+                                      activeGoals,
+                                      stepsByGoal,
+                                      engineOutput,
+                                      colors,
+                                      isDarkMode,
+                                    ),
+                                  ),
+                                  topPadding: contentTopPadding,
+                                  goals: goals,
+                                  stepsByGoal: stepsByGoal,
+                                  progressMap: engineOutput?.goalProgress ?? {},
+                                  routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
+                                  routines: routines,
+                                  courses: courses,
+                                  onRefresh: () => _controller.reload(force: true),
+                                  onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
+                                  onDeleteGoal: (goalId) async {
+                                    await GoalsRepository.instance.deleteGoal(goalId);
+                                  },
+                                  onEditGoal: (goal) {
+                                    _showCreateGoalSheet(editGoal: goal);
+                                  },
                                 ),
-                              ),
-                              Expanded(
-                                child: _controller.showTreeView
-                                    ? GoalsTreeSection(
-                                        goals: activeGoals,
-                                        stepsByGoal: stepsByGoal,
-                                        progressMap: engineOutput?.goalProgress ?? {},
-                                        routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
-                                        routines: routines,
-                                        onRefresh: () => _controller.reload(force: true),
-                                        onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
-                                        onDeleteGoal: (goalId) async {
-                                          await GoalsRepository.instance.deleteGoal(goalId);
-                                        },
-                                        onEditGoal: (goal) {
-                                          _showCreateGoalSheet(editGoal: goal);
-                                        },
-                                      )
-                                    : GoalsCardListSection(
-                                        goals: goals,
-                                        stepsByGoal: stepsByGoal,
-                                        progressMap: engineOutput?.goalProgress ?? {},
-                                        routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
-                                        routines: routines,
-                                        courses: courses,
-                                        onRefresh: () => _controller.reload(force: true),
-                                        onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
-                                        onDeleteGoal: (goalId) async {
-                                          await GoalsRepository.instance.deleteGoal(goalId);
-                                        },
-                                        onEditGoal: (goal) {
-                                          _showCreateGoalSheet(editGoal: goal);
-                                        },
-                                      ),
-                              ),
-                            ],
-                          ),
                         ],
                       ),
               ),

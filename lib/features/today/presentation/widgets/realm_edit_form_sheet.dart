@@ -795,6 +795,15 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
               color: isDark ? colors.border : colors.divider,
               width: 1.0,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.50)
+                    : Colors.black.withValues(alpha: 0.16),
+                offset: const Offset(0, -6),
+                blurRadius: 28,
+              ),
+            ],
           ),
           child: sheetContent,
         );
@@ -805,10 +814,17 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
             boxShadow: [
               BoxShadow(
                 color: isDark
-                    ? Colors.black.withValues(alpha: 0.35)
+                    ? Colors.black.withValues(alpha: 0.50)
+                    : Colors.black.withValues(alpha: 0.15),
+                offset: const Offset(0, -6),
+                blurRadius: 28,
+              ),
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.25)
                     : colors.primary.withValues(alpha: 0.08),
-                offset: const Offset(0, -3),
-                blurRadius: 16,
+                offset: const Offset(0, -2),
+                blurRadius: 10,
               ),
             ],
           ),

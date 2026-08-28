@@ -1,7 +1,8 @@
 // =============================================================================
 //  ritmo_card.dart
 //  سیستم مرجع واحد کارت‌های ریتمو (Ritmo Universal Card System)
-//  مطابق استانداردهای Apple HIG Acrylic Surface، یکپارچه با ۱۲ پالت رنگی
+//  ترکیب مهندسی نئومورفیسم مدرن (Soft UI) و استانداردهای متریال اپل
+//  یکپارچه با ۱۲ پالت رنگی و سیستم تم مرکزی
 // =============================================================================
 
 import 'dart:ui';
@@ -10,17 +11,99 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 /// گونه‌های متریال کارت مرجع ریتمو
 enum RitmoCardVariant {
-  /// متریال اکریلیک مات و اعلا — پیش‌فرض کارت‌های داشبورد و فید (Apple Acrylic)
+  /// سطح برآمده نئومورفیک ۳ بعدی (Neumorphic Raised) با سایه‌های دوگانه متضاد و گرادیان سطحی
+  neumorphic,
+
+  /// سطح فرورفته نئومورفیک (Neumorphic Sunken/Inset) با سایه و گرادیان معکوس برای گودی‌ها و ورودی‌ها
+  neumorphicSunken,
+
+  /// متریال اکریلیک مات اپل (Apple Elevated Acrylic)
   elevated,
 
-  /// متریال شیشه کامل شفاف با بلور بلادرنگ — برای کارت‌های روی بنر و عناصر شناور
+  /// متریال شیشه کامل شفاف با بلور بلادرنگ (Liquid Glass)
   glass,
 
-  /// سطح فرورفته — برای اینپوت‌ها و بخش‌های متمرکز داخلی
-  sunken,
-
-  /// سطح بدون پرشدگی با خط کادر نرم — برای آیتم‌های ثانویه و دکمه‌های «+ افزودن»
+  /// سطح بدون پرشدگی با خط کادر نرم (Outlined)
   outlined,
+}
+
+/// -----------------------------------------------------------------------------
+/// موتور محاسبات نور، سایه‌ها و گرادیان‌های نئومورفیک (Ritmo Neu Engine)
+/// -----------------------------------------------------------------------------
+class RitmoNeu {
+  const RitmoNeu._();
+
+  /// لبه روشن سطح (بالا-چپ) برای گرادیان محدب
+  static Color highlightColor(Color base, bool isDark) =>
+      Color.lerp(base, Colors.white, isDark ? 0.06 : 0.40)!;
+
+  /// لبه تیره سطح (پایین-راست) برای گرادیان مقعر
+  static Color shadowBaseColor(Color base, bool isDark) =>
+      Color.lerp(base, Colors.black, isDark ? 0.25 : 0.08)!;
+
+  /// سایه روشن نور بالا-چپ
+  static Color lightShadow(bool isDark) => isDark
+      ? Colors.white.withValues(alpha: 0.045)
+      : Colors.white.withValues(alpha: 0.95);
+
+  /// سایه تیره پایین-راست
+  static Color darkShadow(bool isDark) => isDark
+      ? Colors.black.withValues(alpha: 0.52)
+      : const Color(0xFFBAC4D2).withValues(alpha: 0.80);
+
+  /// گرادیان محدب برآمده نئومورفیک (روشن در بالا-چپ به رنگ پایه در پایین-راست)
+  static LinearGradient raisedGradient(Color base, bool isDark) =>
+      LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [highlightColor(base, isDark), base],
+      );
+
+  /// گرادیان مقعر فرورفته نئومورفیک (تیره در بالا-چپ به روشن در پایین-راست)
+  static LinearGradient sunkenGradient(Color base, bool isDark) =>
+      LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [shadowBaseColor(base, isDark), highlightColor(base, isDark)],
+      );
+
+  /// سایه‌های دوگانه متضاد برآمده (نور از بالا-چپ ۱۳۵ درجه)
+  static List<BoxShadow> raisedShadows(
+    bool isDark, {
+    double blur = 14,
+    double distance = 4.5,
+  }) =>
+      [
+        BoxShadow(
+          color: darkShadow(isDark),
+          offset: Offset(distance, distance * 1.1),
+          blurRadius: blur,
+        ),
+        BoxShadow(
+          color: lightShadow(isDark),
+          offset: Offset(-distance, -distance),
+          blurRadius: blur * 0.9,
+        ),
+      ];
+
+  /// سایه‌های دوگانه فرورفته (گودی در بوم)
+  static List<BoxShadow> sunkenShadows(
+    bool isDark, {
+    double blur = 8,
+    double distance = 3,
+  }) =>
+      [
+        BoxShadow(
+          color: darkShadow(isDark),
+          offset: Offset(-distance, -distance),
+          blurRadius: blur,
+        ),
+        BoxShadow(
+          color: lightShadow(isDark),
+          offset: Offset(distance, distance),
+          blurRadius: blur,
+        ),
+      ];
 }
 
 /// کارت مرجع واحد سیستم طراحی ریتمو
@@ -28,7 +111,7 @@ class RitmoCard extends StatefulWidget {
   const RitmoCard({
     super.key,
     required this.child,
-    this.variant = RitmoCardVariant.elevated,
+    this.variant = RitmoCardVariant.neumorphic,
     this.padding = const EdgeInsets.all(RitmoSpacing.lg),
     this.margin,
     this.borderRadius,
@@ -43,7 +126,42 @@ class RitmoCard extends StatefulWidget {
     this.clipBehavior = Clip.antiAlias,
   });
 
-  /// متد کارخانه‌ای سریع برای کارت‌های اکریلیک پیش‌فرض
+  /// متد کارخانه‌ای برای کارت برآمده نئومورفیک (پیش‌فرض اصلی ریتمو)
+  const factory RitmoCard.neumorphic({
+    Key? key,
+    required Widget child,
+    EdgeInsetsGeometry padding,
+    EdgeInsetsGeometry? margin,
+    BorderRadius? borderRadius,
+    Color? borderColor,
+    double? borderWidth,
+    Color? backgroundColor,
+    List<BoxShadow>? customShadows,
+    VoidCallback? onTap,
+    VoidCallback? onLongPress,
+    bool isSelected,
+    bool enableSpring,
+    Clip clipBehavior,
+  }) = _RitmoNeumorphicCard;
+
+  /// متد کارخانه‌ای برای کارت فرورفته نئومورفیک
+  const factory RitmoCard.neumorphicSunken({
+    Key? key,
+    required Widget child,
+    EdgeInsetsGeometry padding,
+    EdgeInsetsGeometry? margin,
+    BorderRadius? borderRadius,
+    Color? borderColor,
+    double? borderWidth,
+    Color? backgroundColor,
+    VoidCallback? onTap,
+    VoidCallback? onLongPress,
+    bool isSelected,
+    bool enableSpring,
+    Clip clipBehavior,
+  }) = _RitmoNeumorphicSunkenCard;
+
+  /// متد کارخانه‌ای برای کارت اکریلیک مات اپل
   const factory RitmoCard.elevated({
     Key? key,
     required Widget child,
@@ -78,23 +196,6 @@ class RitmoCard extends StatefulWidget {
     bool enableSpring,
     Clip clipBehavior,
   }) = _RitmoGlassCard;
-
-  /// متد کارخانه‌ای برای کارت‌های فرورفته
-  const factory RitmoCard.sunken({
-    Key? key,
-    required Widget child,
-    EdgeInsetsGeometry padding,
-    EdgeInsetsGeometry? margin,
-    BorderRadius? borderRadius,
-    Color? borderColor,
-    double? borderWidth,
-    Color? backgroundColor,
-    VoidCallback? onTap,
-    VoidCallback? onLongPress,
-    bool isSelected,
-    bool enableSpring,
-    Clip clipBehavior,
-  }) = _RitmoSunkenCard;
 
   /// متد کارخانه‌ای برای کارت‌های خطی Outline
   const factory RitmoCard.outlined({
@@ -158,33 +259,67 @@ class _RitmoCardState extends State<RitmoCard> {
     final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
     final effectiveRadius = widget.borderRadius ?? BorderRadius.circular(24);
 
-    // ۱. تعیین رنگ پس‌زمینه بر اساس گونه کارت و تم
-    Color resolveBackgroundColor() {
-      if (widget.backgroundColor != null) return widget.backgroundColor!;
+    final baseColor = widget.backgroundColor ?? colors.surfaceElevated;
+
+    // ۱. تعیین دکوراسیون و گرادیان نئومورفیک
+    Gradient? resolveGradient() {
       if (widget.isSelected) {
-        return colors.primary.withValues(alpha: isDark ? 0.16 : 0.10);
+        return LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.lerp(colors.primary, Colors.white, isDark ? 0.08 : 0.35)!,
+            colors.primary.withValues(alpha: isDark ? 0.85 : 0.90),
+          ],
+        );
       }
 
       switch (widget.variant) {
+        case RitmoCardVariant.neumorphic:
+          return _isPressed
+              ? RitmoNeu.sunkenGradient(baseColor, isDark)
+              : RitmoNeu.raisedGradient(baseColor, isDark);
+        case RitmoCardVariant.neumorphicSunken:
+          return RitmoNeu.sunkenGradient(colors.surfaceSunken, isDark);
         case RitmoCardVariant.elevated:
-          return colors.surfaceElevated;
         case RitmoCardVariant.glass:
-          return isGlass
-              ? colors.glassTint
-              : (isDark ? colors.surfaceElevated : Colors.white);
-        case RitmoCardVariant.sunken:
+        case RitmoCardVariant.outlined:
+          return null;
+      }
+    }
+
+    Color resolveSolidColor() {
+      if (widget.backgroundColor != null) return widget.backgroundColor!;
+      if (widget.isSelected) return colors.primary;
+
+      switch (widget.variant) {
+        case RitmoCardVariant.neumorphic:
+        case RitmoCardVariant.elevated:
+          return baseColor;
+        case RitmoCardVariant.neumorphicSunken:
           return colors.surfaceSunken;
+        case RitmoCardVariant.glass:
+          return isGlass ? colors.glassTint : (isDark ? baseColor : Colors.white);
         case RitmoCardVariant.outlined:
           return Colors.transparent;
       }
     }
 
-    // ۲. تعیین حاشیه تیتانیومی مات استاندارد
-    Border resolveBorder() {
+    // ۲. تعیین حاشیه ظریف تیتانیومی
+    Border? resolveBorder() {
+      if (widget.variant == RitmoCardVariant.neumorphic && !widget.isSelected && !highContrast) {
+        // در نئومورفیسم لایت نیازی به خط دور نیست، در دارک یک کادر بسیار محو به تفکیک کمک می‌کند
+        if (isDark) {
+          return Border.all(
+            color: const Color(0xFF94A3B8).withValues(alpha: 0.12),
+            width: 0.8,
+          );
+        }
+        return null;
+      }
+
       final double width = widget.borderWidth ??
-          (widget.isSelected
-              ? 1.5
-              : (highContrast ? 2.0 : (isDark ? 0.9 : 0.8)));
+          (widget.isSelected ? 1.5 : (highContrast ? 2.0 : (isDark ? 0.9 : 0.8)));
 
       final Color color = widget.borderColor ??
           (widget.isSelected
@@ -198,49 +333,54 @@ class _RitmoCardState extends State<RitmoCard> {
       return Border.all(color: color, width: width);
     }
 
-    // ۳. تعیین سایه عمیق تماسی بدون هاله رنگی
+    // ۳. تعیین سایه‌های نئومورفیک دوگانه
     List<BoxShadow> resolveShadows() {
       if (widget.customShadows != null) return widget.customShadows!;
-      if (widget.variant == RitmoCardVariant.sunken ||
-          widget.variant == RitmoCardVariant.outlined) {
-        return const [];
+      if (widget.variant == RitmoCardVariant.outlined) return const [];
+
+      if (widget.isSelected) {
+        return [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: isDark ? 0.40 : 0.30),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: RitmoNeu.lightShadow(isDark),
+            blurRadius: 10,
+            offset: const Offset(-3, -3),
+          ),
+        ];
       }
 
-      if (isDark) {
-        return [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.40),
-            offset: const Offset(0, 3),
-            blurRadius: 10,
-          ),
-          if (widget.isSelected)
+      switch (widget.variant) {
+        case RitmoCardVariant.neumorphic:
+          return _isPressed
+              ? RitmoNeu.sunkenShadows(isDark, blur: 8, distance: 2.5)
+              : RitmoNeu.raisedShadows(isDark, blur: 15, distance: 5.0);
+        case RitmoCardVariant.neumorphicSunken:
+          return RitmoNeu.sunkenShadows(isDark, blur: 9, distance: 3.0);
+        case RitmoCardVariant.elevated:
+        case RitmoCardVariant.glass:
+          return [
             BoxShadow(
-              color: colors.primary.withValues(alpha: 0.25),
-              offset: const Offset(0, 2),
-              blurRadius: 12,
+              color: Colors.black.withValues(alpha: isDark ? 0.40 : 0.08),
+              offset: const Offset(0, 3),
+              blurRadius: 10,
             ),
-        ];
-      } else {
-        return [
-          BoxShadow(
-            color: const Color(0xFF64748B).withValues(alpha: 0.08),
-            offset: const Offset(0, 3),
-            blurRadius: 10,
-          ),
-          if (widget.isSelected)
-            BoxShadow(
-              color: colors.primary.withValues(alpha: 0.18),
-              offset: const Offset(0, 2),
-              blurRadius: 8,
-            ),
-        ];
+          ];
+        case RitmoCardVariant.outlined:
+          return const [];
       }
     }
 
-    Widget content = Container(
+    Widget content = AnimatedContainer(
+      duration: const Duration(milliseconds: 130),
+      curve: Curves.easeOutCubic,
       padding: widget.padding,
       decoration: BoxDecoration(
-        color: resolveBackgroundColor(),
+        color: resolveGradient() == null ? resolveSolidColor() : null,
+        gradient: resolveGradient(),
         borderRadius: effectiveRadius,
         border: resolveBorder(),
         boxShadow: resolveShadows(),
@@ -261,12 +401,10 @@ class _RitmoCardState extends State<RitmoCard> {
       );
     }
 
-    // اعمال مارجین بیرونی در صورت وجود
     if (widget.margin != null) {
       content = Padding(padding: widget.margin!, child: content);
     }
 
-    // اتصال به انیمیشن فشردن اپل و فیدبک لمسی
     if (widget.onTap != null || widget.onLongPress != null) {
       content = GestureDetector(
         onTapDown: _handleTapDown,
@@ -284,8 +422,8 @@ class _RitmoCardState extends State<RitmoCard> {
             : null,
         behavior: HitTestBehavior.opaque,
         child: AnimatedScale(
-          scale: _isPressed ? 0.975 : 1.0,
-          duration: const Duration(milliseconds: 140),
+          scale: _isPressed ? 0.98 : 1.0,
+          duration: const Duration(milliseconds: 120),
           curve: Curves.easeOutCubic,
           child: content,
         ),
@@ -299,6 +437,43 @@ class _RitmoCardState extends State<RitmoCard> {
 // -----------------------------------------------------------------------------
 // Constructors Factory Wrappers
 // -----------------------------------------------------------------------------
+
+class _RitmoNeumorphicCard extends RitmoCard {
+  const _RitmoNeumorphicCard({
+    super.key,
+    required super.child,
+    super.padding,
+    super.margin,
+    super.borderRadius,
+    super.borderColor,
+    super.borderWidth,
+    super.backgroundColor,
+    super.customShadows,
+    super.onTap,
+    super.onLongPress,
+    super.isSelected = false,
+    super.enableSpring = true,
+    super.clipBehavior = Clip.antiAlias,
+  }) : super(variant: RitmoCardVariant.neumorphic);
+}
+
+class _RitmoNeumorphicSunkenCard extends RitmoCard {
+  const _RitmoNeumorphicSunkenCard({
+    super.key,
+    required super.child,
+    super.padding,
+    super.margin,
+    super.borderRadius,
+    super.borderColor,
+    super.borderWidth,
+    super.backgroundColor,
+    super.onTap,
+    super.onLongPress,
+    super.isSelected = false,
+    super.enableSpring = true,
+    super.clipBehavior = Clip.antiAlias,
+  }) : super(variant: RitmoCardVariant.neumorphicSunken);
+}
 
 class _RitmoElevatedCard extends RitmoCard {
   const _RitmoElevatedCard({
@@ -338,24 +513,6 @@ class _RitmoGlassCard extends RitmoCard {
   }) : super(variant: RitmoCardVariant.glass);
 }
 
-class _RitmoSunkenCard extends RitmoCard {
-  const _RitmoSunkenCard({
-    super.key,
-    required super.child,
-    super.padding,
-    super.margin,
-    super.borderRadius,
-    super.borderColor,
-    super.borderWidth,
-    super.backgroundColor,
-    super.onTap,
-    super.onLongPress,
-    super.isSelected = false,
-    super.enableSpring = true,
-    super.clipBehavior = Clip.antiAlias,
-  }) : super(variant: RitmoCardVariant.sunken);
-}
-
 class _RitmoOutlinedCard extends RitmoCard {
   const _RitmoOutlinedCard({
     super.key,
@@ -375,10 +532,10 @@ class _RitmoOutlinedCard extends RitmoCard {
 }
 
 // =============================================================================
-//  المان‌های اتمیک داخلی کارت‌ها (Internal Atomic Components)
+//  المان‌های اتمیک نئومورفیک داخل کارت‌ها (Neumorphic Atomic Components)
 // =============================================================================
 
-/// هدر استاندارد کارت ریتمو با آیکون، تایتل، زیرعنوان و اکشن
+/// هدر استاندارد کارت ریتمو با آیکون ۳ بعدی، تایتل، زیرعنوان و اکشن
 class RitmoCardHeader extends StatelessWidget {
   const RitmoCardHeader({
     super.key,
@@ -402,6 +559,7 @@ class RitmoCardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
     final effectiveIconColor = iconColor ?? colors.primary;
 
     return Padding(
@@ -411,20 +569,35 @@ class RitmoCardHeader extends StatelessWidget {
         children: [
           if (icon != null) ...[
             Container(
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: effectiveIconColor.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: effectiveIconColor.withValues(alpha: 0.30),
-                  width: 0.8,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color.lerp(effectiveIconColor, Colors.white, isDark ? 0.10 : 0.35)!,
+                    effectiveIconColor,
+                  ],
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: effectiveIconColor.withValues(alpha: isDark ? 0.40 : 0.30),
+                    blurRadius: 8,
+                    offset: const Offset(1.5, 2.5),
+                  ),
+                  BoxShadow(
+                    color: RitmoNeu.lightShadow(isDark),
+                    blurRadius: 6,
+                    offset: const Offset(-1.5, -1.5),
+                  ),
+                ],
               ),
-              child: Icon(icon, size: 17, color: effectiveIconColor),
+              child: Icon(icon, size: 18, color: Colors.white),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
           ],
           Expanded(
             child: Column(
@@ -462,8 +635,8 @@ class RitmoCardHeader extends StatelessWidget {
   }
 }
 
-/// کپسول متریک یا ردیف تعاملی داخل کارت ریتمو
-class RitmoCardTile extends StatelessWidget {
+/// کپسول متریک یا ردیف تعاملی ۳ بعدی داخل کارت ریتمو
+class RitmoCardTile extends StatefulWidget {
   const RitmoCardTile({
     super.key,
     required this.title,
@@ -472,9 +645,9 @@ class RitmoCardTile extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.backgroundColor,
-    this.borderColor,
     this.borderRadius,
-    this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+    this.isSunken = false,
   });
 
   final String title;
@@ -483,37 +656,51 @@ class RitmoCardTile extends StatelessWidget {
   final Widget? trailing;
   final VoidCallback? onTap;
   final Color? backgroundColor;
-  final Color? borderColor;
   final BorderRadius? borderRadius;
   final EdgeInsetsGeometry padding;
+  final bool isSunken;
+
+  @override
+  State<RitmoCardTile> createState() => _RitmoCardTileState();
+}
+
+class _RitmoCardTileState extends State<RitmoCardTile> {
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
-    final radius = borderRadius ?? BorderRadius.circular(14);
+    final radius = widget.borderRadius ?? BorderRadius.circular(14);
+    final baseColor = widget.backgroundColor ??
+        (isDark ? colors.surfaceSunken.withValues(alpha: 0.50) : colors.surface);
 
-    Widget tile = Container(
-      padding: padding,
+    final isActuallySunken = widget.isSunken || _pressed;
+
+    Widget tile = AnimatedContainer(
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      padding: widget.padding,
       decoration: BoxDecoration(
         borderRadius: radius,
-        color: backgroundColor ??
-            (isDark
-                ? colors.surfaceSunken.withValues(alpha: 0.35)
-                : colors.surface.withValues(alpha: 0.85)),
+        gradient: isActuallySunken
+            ? RitmoNeu.sunkenGradient(baseColor, isDark)
+            : RitmoNeu.raisedGradient(baseColor, isDark),
         border: Border.all(
-          color: borderColor ??
-              (isDark
-                  ? colors.border.withValues(alpha: 0.25)
-                  : colors.divider),
-          width: 0.7,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.04)
+              : Colors.white.withValues(alpha: 0.70),
+          width: 0.6,
         ),
+        boxShadow: isActuallySunken
+            ? RitmoNeu.sunkenShadows(isDark, blur: 6, distance: 2.0)
+            : RitmoNeu.raisedShadows(isDark, blur: 8, distance: 2.5),
       ),
       child: Row(
         children: [
-          if (leading != null) ...[
-            leading!,
-            const SizedBox(width: 8),
+          if (widget.leading != null) ...[
+            widget.leading!,
+            const SizedBox(width: 10),
           ],
           Expanded(
             child: Column(
@@ -521,18 +708,18 @@ class RitmoCardTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  title,
+                  widget.title,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Vazirmatn',
                     color: colors.textPrimary,
                   ),
                 ),
-                if (subtitle != null) ...[
+                if (widget.subtitle != null) ...[
                   const SizedBox(height: 1.5),
                   Text(
-                    subtitle!,
+                    widget.subtitle!,
                     style: TextStyle(
                       fontSize: 10.5,
                       fontFamily: 'Vazirmatn',
@@ -543,22 +730,22 @@ class RitmoCardTile extends StatelessWidget {
               ],
             ),
           ),
-          ?trailing,
+          ?widget.trailing,
         ],
       ),
     );
 
-    if (onTap != null) {
-      tile = Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            RitmoHapticsPolicy.selection();
-            onTap?.call();
-          },
-          borderRadius: radius,
-          child: tile,
-        ),
+    if (widget.onTap != null) {
+      tile = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTap: () {
+          RitmoHapticsPolicy.selection();
+          widget.onTap?.call();
+        },
+        child: tile,
       );
     }
 
@@ -566,7 +753,75 @@ class RitmoCardTile extends StatelessWidget {
   }
 }
 
-/// نشانگر وضعیت یا برچسب متصل به رنگ‌های معنایی پالت
+/// دکمه برجسته نئومورفیک ۳ بعدی
+class RitmoNeuButton extends StatefulWidget {
+  const RitmoNeuButton({
+    super.key,
+    required this.child,
+    required this.onTap,
+    this.height = 42,
+    this.radius = 18,
+    this.color,
+    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+  });
+
+  final Widget child;
+  final VoidCallback onTap;
+  final double height;
+  final double radius;
+  final Color? color;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  State<RitmoNeuButton> createState() => _RitmoNeuButtonState();
+}
+
+class _RitmoNeuButtonState extends State<RitmoNeuButton> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isDark = context.isDark;
+    final base = widget.color ?? colors.surfaceElevated;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTap: () {
+        RitmoHapticsPolicy.selection();
+        widget.onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 110),
+        curve: Curves.easeOut,
+        height: widget.height,
+        padding: widget.padding,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.radius),
+          gradient: _pressed
+              ? RitmoNeu.sunkenGradient(base, isDark)
+              : RitmoNeu.raisedGradient(base, isDark),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.white.withValues(alpha: 0.85),
+            width: 0.7,
+          ),
+          boxShadow: _pressed
+              ? RitmoNeu.sunkenShadows(isDark, blur: 6, distance: 2.0)
+              : RitmoNeu.raisedShadows(isDark, blur: 10, distance: 3.5),
+        ),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+/// نشانگر وضعیت یا برچسب نئومورفیک متصل به رنگ‌های معنایی پالت
 class RitmoCardBadge extends StatelessWidget {
   const RitmoCardBadge({
     super.key,
@@ -583,21 +838,42 @@ class RitmoCardBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDark;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
       decoration: BoxDecoration(
-        color: isOutlined ? Colors.transparent : color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
+        gradient: isOutlined
+            ? null
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.lerp(color, Colors.white, isDark ? 0.08 : 0.35)!,
+                  color,
+                ],
+              ),
+        color: isOutlined ? Colors.transparent : null,
+        borderRadius: BorderRadius.circular(9),
         border: Border.all(
           color: color.withValues(alpha: isOutlined ? 0.8 : 0.35),
           width: 0.8,
         ),
+        boxShadow: isOutlined
+            ? null
+            : [
+                BoxShadow(
+                  color: color.withValues(alpha: isDark ? 0.35 : 0.25),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 11, color: color),
+            Icon(icon, size: 11, color: isOutlined ? color : Colors.white),
             const SizedBox(width: 4),
           ],
           Text(
@@ -606,7 +882,7 @@ class RitmoCardBadge extends StatelessWidget {
               fontSize: 10.5,
               fontWeight: FontWeight.w800,
               fontFamily: 'Vazirmatn',
-              color: color,
+              color: isOutlined ? color : Colors.white,
             ),
           ),
         ],
@@ -615,7 +891,7 @@ class RitmoCardBadge extends StatelessWidget {
   }
 }
 
-/// خط جداکننده محو داخلی برای بخش‌بندی کارت‌ها
+/// خط جداکننده محو نئومورفیک (خط دوگانه شیاردار)
 class RitmoCardDivider extends StatelessWidget {
   const RitmoCardDivider({super.key, this.margin = const EdgeInsets.symmetric(vertical: 10)});
 
@@ -623,17 +899,31 @@ class RitmoCardDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     final isDark = context.isDark;
 
     return Padding(
       padding: margin,
-      child: Divider(
-        height: 1,
-        thickness: 0.8,
-        color: isDark ? colors.border.withValues(alpha: 0.20) : colors.divider,
+      child: Container(
+        height: 1.5,
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.45)
+                  : const Color(0xFFBAC3CF).withValues(alpha: 0.60),
+              width: 0.8,
+            ),
+            bottom: BorderSide(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.white,
+              width: 0.8,
+            ),
+          ),
+        ),
       ),
     );
   }
 }
+
 

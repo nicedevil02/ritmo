@@ -22,6 +22,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
   int _selectedCardIndex = 0;
   bool _taskDone = false;
   int _focusMinutes = 25;
+  int _counter = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -31,27 +32,27 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
     return RitmoPageScaffold(
       appBar: RitmoModuleAppBar.fromContext(
         context: context,
-        title: 'سیستم مرجع کارت‌ها',
+        title: 'سیستم مرجع کارت‌های نئومورفیک',
         showBackButton: true,
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         children: [
-          // ── هدر معرفی سیستم مرجع ──
+          // ── هدر معرفی سیستم نئومورفیک ──
           _buildHeroHeader(colors, isDark),
           const SizedBox(height: 20),
 
-          // ── ۱. کارت‌های برجسته اکریلیک (Elevated Surface) ──
-          _buildSectionTitle('۱. کارت‌های برجسته اکریلیک (Elevated)', 'پایه و اساس کارت‌های داشبورد و صفحات اصلی'),
+          // ── ۱. کارت‌های برجسته نئومورفیک (Neumorphic Raised) ──
+          _buildSectionTitle('۱. کارت برجسته نئومورفیک ۳ بعدی (Raised)', 'سایه دوگانه متضاد + گرادیان محدب ملایم'),
           const SizedBox(height: 10),
 
-          // کارت نمونه ویجت داشبورد با المان‌های اتمیک
-          RitmoCard.elevated(
+          // کارت نمونه ویجت داشبورد با المان‌های اتمیک نئومورفیک
+          RitmoCard.neumorphic(
             onTap: () {
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('کارت اکریلیک لمس شد (فیزیک فنری اپل)'),
+                  content: Text('کارت نئومورفیک لمس شد (انیمیشن فرورفتگی + لرزش اپل)'),
                   duration: Duration(seconds: 1),
                 ),
               );
@@ -70,16 +71,16 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                     icon: CupertinoIcons.checkmark_alt,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 RitmoCardTile(
                   leading: Container(
-                    width: 28,
-                    height: 28,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       color: colors.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(9),
                     ),
-                    child: Icon(CupertinoIcons.flame_fill, size: 16, color: colors.primary),
+                    child: Icon(CupertinoIcons.flame_fill, size: 17, color: colors.primary),
                   ),
                   title: 'زمان تمرکز عمیق',
                   subtitle: 'هدف امروز: ۲ ساعت',
@@ -95,16 +96,16 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                     setState(() => _focusMinutes += 5);
                   },
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 RitmoCardTile(
                   leading: Container(
-                    width: 28,
-                    height: 28,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       color: colors.success.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(9),
                     ),
-                    child: Icon(CupertinoIcons.checkmark_seal_fill, size: 16, color: colors.success),
+                    child: Icon(CupertinoIcons.checkmark_seal_fill, size: 17, color: colors.success),
                   ),
                   title: 'عادت‌های روزانه',
                   subtitle: '۳ از ۴ مورد انجام شده',
@@ -119,7 +120,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'برای مشاهده جزئیات کلیک کنید',
+                      'برای فرورفتن و تست کلیک کنید',
                       style: TextStyle(
                         fontSize: 11,
                         color: colors.textTertiary,
@@ -132,16 +133,16 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          // ── ۲. کارت‌ها در حالت انتخاب (Selected / Active State) ──
-          _buildSectionTitle('۲. حالت انتخاب‌شده (Selected State)', 'حاشیه فعال با رنگ اصلی پالت + هاله تمرکز'),
+          // ── ۲. کارت‌ها در حالت انتخاب نئومورفیک (Selected State) ──
+          _buildSectionTitle('۲. حالت انتخاب‌شده (Selected State)', 'گرادیان زنده پالت + هاله نوری نئومورفیک'),
           const SizedBox(height: 10),
 
           Row(
             children: [
               Expanded(
-                child: RitmoCard.elevated(
+                child: RitmoCard.neumorphic(
                   isSelected: _selectedCardIndex == 0,
                   onTap: () => setState(() => _selectedCardIndex = 0),
                   padding: const EdgeInsets.all(14),
@@ -150,7 +151,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                       Icon(
                         CupertinoIcons.sun_max_fill,
                         size: 26,
-                        color: _selectedCardIndex == 0 ? colors.primary : colors.textSecondary,
+                        color: _selectedCardIndex == 0 ? Colors.white : colors.primary,
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -158,21 +159,22 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
-                          color: colors.textPrimary,
+                          color: _selectedCardIndex == 0 ? Colors.white : colors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       RitmoCardBadge(
                         label: 'فعال',
-                        color: _selectedCardIndex == 0 ? colors.primary : colors.textSecondary,
+                        color: _selectedCardIndex == 0 ? Colors.white : colors.primary,
+                        isOutlined: _selectedCardIndex == 0,
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
-                child: RitmoCard.elevated(
+                child: RitmoCard.neumorphic(
                   isSelected: _selectedCardIndex == 1,
                   onTap: () => setState(() => _selectedCardIndex = 1),
                   padding: const EdgeInsets.all(14),
@@ -181,7 +183,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                       Icon(
                         CupertinoIcons.moon_stars_fill,
                         size: 26,
-                        color: _selectedCardIndex == 1 ? colors.primary : colors.textSecondary,
+                        color: _selectedCardIndex == 1 ? Colors.white : colors.textSecondary,
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -189,13 +191,14 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
-                          color: colors.textPrimary,
+                          color: _selectedCardIndex == 1 ? Colors.white : colors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       RitmoCardBadge(
                         label: 'رزرو',
-                        color: _selectedCardIndex == 1 ? colors.primary : colors.textSecondary,
+                        color: _selectedCardIndex == 1 ? Colors.white : colors.textSecondary,
+                        isOutlined: _selectedCardIndex == 1,
                       ),
                     ],
                   ),
@@ -203,24 +206,24 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          // ── ۳. کارت فرورفته (Sunken Depth) ──
-          _buildSectionTitle('۳. کارت فرورفته (Sunken Surface)', 'مناسب برای اینپوت‌ها، لاگ‌ها و بلوک‌های داخلی'),
+          // ── ۳. کارت فرورفته نئومورفیک (Sunken Inset) ──
+          _buildSectionTitle('۳. سطح فرورفته نئومورفیک (Sunken Inset)', 'سایه معکوس برای اینپوت‌ها، پیش‌نمایش و گودی‌ها'),
           const SizedBox(height: 10),
 
-          RitmoCard.sunken(
+          RitmoCard.neumorphicSunken(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Icon(CupertinoIcons.info_circle_fill, size: 16, color: colors.primary),
-                    const SizedBox(width: 6),
+                    Icon(CupertinoIcons.info_circle_fill, size: 17, color: colors.primary),
+                    const SizedBox(width: 8),
                     Text(
-                      'نکته بهره‌وری سیستم',
+                      'گودی نئومورفیک فیزیکی (Physical Inset)',
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: colors.textPrimary,
                       ),
@@ -229,9 +232,9 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'این کارت از سطح surfaceSunken پالت فعال برای ایجاد عمق منفی استفاده می‌کند و برای یادداشت‌ها یا پیش‌نمایش‌ها عالی است.',
+                  'این کارت با سایه معکوس در زاویه ۱۳۵ درجه، حس فرورفتن در عمق بوم را شبیه‌سازی می‌کند و برای یادداشت‌ها یا ترک‌های پیشرفت عالی است.',
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 12,
                     height: 1.5,
                     color: colors.textSecondary,
                   ),
@@ -239,29 +242,56 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          // ── ۴. کارت بدون پرشدگی (Outlined Placeholder) ──
-          _buildSectionTitle('۴. کارت خطی (Outlined Card)', 'مناسب برای آیتم‌های ثانویه و دکمه‌های افزودن'),
+          // ── ۴. دکمه‌های نئومورفیک ۳ بعدی (Tactile 3D Buttons) ──
+          _buildSectionTitle('۴. دکمه‌های نئومورفیک ۳ بعدی (Tactile Buttons)', 'فشردن فیزیکی با تغییر وضعیت به فرورفته'),
           const SizedBox(height: 10),
 
-          RitmoCard.outlined(
-            onTap: () {},
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(CupertinoIcons.plus_circle, size: 18, color: colors.primary),
-                const SizedBox(width: 8),
-                Text(
-                  'افزودن کارت یا ماژول جدید به داشبورد',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: colors.primary,
+          Row(
+            children: [
+              Expanded(
+                child: RitmoNeuButton(
+                  onTap: () => setState(() => _counter++),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(CupertinoIcons.add_circled_solid, size: 18, color: colors.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        toPersianDigits('شمارنده: $_counter'),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: RitmoNeuButton(
+                  onTap: () => setState(() => _counter = 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(CupertinoIcons.refresh_circled, size: 18, color: colors.error),
+                      const SizedBox(width: 8),
+                      Text(
+                        'بازنشانی',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: colors.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 32),
         ],
@@ -290,7 +320,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              CupertinoIcons.square_stack_3d_up_fill,
+              CupertinoIcons.cube_box_fill,
               color: Colors.white,
               size: 22,
             ),
@@ -301,7 +331,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ویترین زنده سیستم مرجع کارت‌ها',
+                  'ویترین زنده سیستم مرجع نئومورفیک',
                   style: TextStyle(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w900,
@@ -310,7 +340,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'تست زنده تعاملات، پالت‌های رنگی و فیزیک اپل',
+                  'عمق ۳ بعدی، سایه‌های دوگانه، فرورفتگی و برجستگی',
                   style: TextStyle(
                     fontSize: 11,
                     color: colors.textSecondary,

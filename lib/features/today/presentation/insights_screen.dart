@@ -795,10 +795,7 @@ ${jsonEncode(digest.json)}
                             child: CircularProgressIndicator(color: colors.primary),
                           ),
                         )
-                      : RefreshIndicator(
-                          onRefresh: () => _loadAnalytics(isRefresh: true),
-                          color: colors.primary,
-                          child: SingleChildScrollView(
+                        : SingleChildScrollView(
                             physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                             padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 120),
                             child: Column(
@@ -837,7 +834,6 @@ ${jsonEncode(digest.json)}
                               ],
                             ),
                           ),
-                        ),
                 ),
 
                 // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)

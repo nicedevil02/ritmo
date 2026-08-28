@@ -90,44 +90,73 @@ class EnergyDashboardCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1B202B) : const Color(0xFFEFF2F6),
-        borderRadius: BorderRadius.circular(22),
+        color: colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isDarkMode
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.white.withValues(alpha: 0.90),
-          width: 1.0,
+              ? const Color(0xFF94A3B8).withValues(alpha: 0.14)
+              : colors.border,
+          width: 0.9,
         ),
-        boxShadow: [
-          // سایه نرم تیره پایین-راست
-          BoxShadow(
-            color: isDarkMode
-                ? Colors.black.withValues(alpha: 0.48)
-                : const Color(0xFFCAD3DF).withValues(alpha: 0.75),
-            offset: const Offset(3, 4),
-            blurRadius: 10,
-          ),
-          // هایلایت نورانی بالا-چپ
-          BoxShadow(
-            color: isDarkMode
-                ? Colors.white.withValues(alpha: 0.03)
-                : Colors.white,
-            offset: const Offset(-3, -3),
-            blurRadius: 8,
-          ),
-        ],
+        boxShadow: isDarkMode
+            ? [
+                BoxShadow(
+                  color: colors.primary.withValues(alpha: 0.08),
+                  offset: const Offset(0, 4),
+                  blurRadius: 16,
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  offset: const Offset(0, 2),
+                  blurRadius: 8,
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: colors.primary.withValues(alpha: 0.05),
+                  offset: const Offset(0, 4),
+                  blurRadius: 16,
+                ),
+                BoxShadow(
+                  color: const Color(0xFF64748B).withValues(alpha: 0.08),
+                  offset: const Offset(0, 2),
+                  blurRadius: 8,
+                ),
+              ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onEnergyTap,
-          borderRadius: BorderRadius.circular(22),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      isDarkMode
+                          ? const Color(0xFF94A3B8).withValues(alpha: 0.08)
+                          : Colors.white.withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.35],
+                  ),
+                ),
+              ),
             ),
-            child: Row(
+          ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onEnergyTap,
+              borderRadius: BorderRadius.circular(24),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // سمت راست (شروع خوانش RTL): عنوان انرژی همراه آیکون، سطح، توضیح و علل
@@ -327,6 +356,8 @@ class EnergyDashboardCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ],
+  ),
+);
   }
 }

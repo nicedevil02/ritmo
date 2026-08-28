@@ -55,82 +55,109 @@ class HomePulseStrip extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final clamped = progress.clamp(0.0, 1.0).toDouble();
 
-    // ─── رنگ‌های نئومورفیک ───
-    final neumorphBg = isDark
-        ? colors.card.withValues(alpha: 0.50)
-        : const Color(0xFFE3E6EC);
-    final shadowLight = isDark
-        ? Colors.white.withValues(alpha: 0.04)
-        : const Color(0xFFFBFBFD);
-    final shadowDark = isDark
-        ? Colors.black.withValues(alpha: 0.40)
-        : const Color(0xFFBCC3CF);
-
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
-        vertical: 8,
+        vertical: 10,
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: neumorphBg,
-        border: isDark
-            ? Border.all(color: colors.border.withValues(alpha: 0.7))
-            : null,
+        color: colors.surfaceElevated,
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFF94A3B8).withValues(alpha: 0.14)
+              : colors.border,
+          width: 0.9,
+        ),
         boxShadow: isDark
-            ? RitmoElevation.none
-            : [
+            ? [
                 BoxShadow(
-                  color: shadowLight,
-                  offset: const Offset(-6, -6),
+                  color: colors.primary.withValues(alpha: 0.08),
+                  offset: const Offset(0, 4),
                   blurRadius: 16,
                 ),
                 BoxShadow(
-                  color: shadowDark,
-                  offset: const Offset(6, 6),
+                  color: Colors.black.withValues(alpha: 0.35),
+                  offset: const Offset(0, 2),
+                  blurRadius: 8,
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: colors.primary.withValues(alpha: 0.05),
+                  offset: const Offset(0, 4),
                   blurRadius: 16,
+                ),
+                BoxShadow(
+                  color: const Color(0xFF64748B).withValues(alpha: 0.08),
+                  offset: const Offset(0, 2),
+                  blurRadius: 8,
                 ),
               ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Stack(
         children: [
-          // ── ستون راست (RTL): عنوان + متریک‌ها ──
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // هدر: عنوان + منو (۳ نقطه پشت نبض امروز)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Vazirmatn',
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _menuDots(colors, isDark),
-                  ],
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      isDark
+                          ? const Color(0xFF94A3B8).withValues(alpha: 0.08)
+                          : Colors.white.withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.35],
+                  ),
                 ),
-                const SizedBox(height: 6),
-                // متریک‌ها
-                for (int i = 0; i < metrics.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 4.5),
-                  _neumorphicMetricRow(context, colors, isDark, metrics[i]),
-                ],
-              ],
+              ),
             ),
           ),
-          const SizedBox(width: RitmoSpacing.md),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // ── ستون راست (RTL): عنوان + متریک‌ها ──
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // هدر: عنوان + منو (۳ نقطه پشت نبض امروز)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Vazirmatn',
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _menuDots(colors, isDark),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // متریک‌ها
+                    for (int i = 0; i < metrics.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 4.5),
+                      _neumorphicMetricRow(context, colors, isDark, metrics[i]),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: RitmoSpacing.md),
 
-          // ── ستون چپ (RTL): حلقه ──
-          _neumorphicRing(context, colors, isDark, clamped),
+              // ── ستون چپ (RTL): حلقه ──
+              _neumorphicRing(context, colors, isDark, clamped),
+            ],
+          ),
         ],
       ),
     );
@@ -326,40 +353,18 @@ class HomePulseStrip extends StatelessWidget {
     HomePulseMetric metric,
   ) {
     final row = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(11),
-        color: isDark ? colors.surfaceSunken.withValues(alpha: 0.3) : null,
-        gradient: isDark
-            ? null
-            : const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFF3F6FA),
-                  Color(0xFFE5E9F0),
-                ],
-              ),
+        borderRadius: BorderRadius.circular(12),
+        color: isDark
+            ? colors.surfaceSunken.withValues(alpha: 0.35)
+            : colors.surface.withValues(alpha: 0.85),
         border: Border.all(
           color: isDark
-              ? colors.border.withValues(alpha: 0.4)
-              : Colors.white.withValues(alpha: 0.85),
+              ? colors.border.withValues(alpha: 0.25)
+              : colors.divider,
           width: 0.7,
         ),
-        boxShadow: isDark
-            ? null
-            : const [
-                BoxShadow(
-                  color: Color(0xFFFFFFFF),
-                  offset: Offset(-2, -2),
-                  blurRadius: 4,
-                ),
-                BoxShadow(
-                  color: Color(0xFFB8C0CD),
-                  offset: Offset(2, 2.5),
-                  blurRadius: 5,
-                ),
-              ],
       ),
       child: Directionality(
         textDirection: TextDirection.rtl,

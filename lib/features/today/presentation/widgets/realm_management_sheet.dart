@@ -169,6 +169,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => RealmEditFormSheet(
         initialRealm: defaultRealm,
@@ -197,6 +198,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => RealmEditFormSheet(
         onSave: (realm, schedules) async {
@@ -213,6 +215,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => RealmEditFormSheet(
         initialRealm: realm,

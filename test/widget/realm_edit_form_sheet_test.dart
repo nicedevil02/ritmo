@@ -33,6 +33,28 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('RealmEditFormSheet Responsive & Day Selection Tests', () {
+    testWidgets('Configures DraggableScrollableSheet with Apple HIG detents (0.60 medium, 0.95 large)', (tester) async {
+      await tester.pumpWidget(
+        _buildWrapper(
+          width: 360,
+          child: RealmEditFormSheet(
+            onSave: (realm, schedules) async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final sheetFinder = find.byType(DraggableScrollableSheet);
+      expect(sheetFinder, findsOneWidget);
+
+      final sheetWidget = tester.widget<DraggableScrollableSheet>(sheetFinder);
+      expect(sheetWidget.initialChildSize, 0.60);
+      expect(sheetWidget.minChildSize, 0.35);
+      expect(sheetWidget.maxChildSize, 0.95);
+      expect(sheetWidget.snap, isTrue);
+      expect(sheetWidget.snapSizes, const [0.60, 0.95]);
+    });
+
     testWidgets('Renders days row without 75px overflow on narrow 320dp screen', (tester) async {
       tester.view.physicalSize = const Size(320 * 3, 1000 * 3);
       tester.view.devicePixelRatio = 3.0;
@@ -76,12 +98,19 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // Ensure 'ج' is scrolled into view in the nested scrollable before tapping
+      await tester.ensureVisible(find.text('ج'));
+      await tester.pumpAndSettle();
+
       // Tap 'ج' (Friday) to toggle
       await tester.tap(find.text('ج'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      // Tap 'همه روزها' shortcut
+      // Ensure 'همه روزها' is visible and tap
+      await tester.ensureVisible(find.text('همه روزها'));
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text('همه روزها'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);

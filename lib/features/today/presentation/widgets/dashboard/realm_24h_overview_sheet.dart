@@ -203,6 +203,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => RealmEditFormSheet(
         initialSchedules: initialSchedules,
@@ -222,6 +223,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => RealmEditFormSheet(
         initialRealm: realm,

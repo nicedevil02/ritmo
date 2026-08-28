@@ -49,6 +49,7 @@ class MvProgressTab extends StatelessWidget {
     final metrics = context.metrics;
 
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       padding: EdgeInsets.fromLTRB(10, topPadding, 10, 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

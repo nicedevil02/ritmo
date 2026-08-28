@@ -42,6 +42,7 @@ class MvWeekTab extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       padding: EdgeInsets.fromLTRB(10, topPadding, 10, 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

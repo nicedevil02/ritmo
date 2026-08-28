@@ -3,8 +3,6 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
@@ -90,7 +88,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   CycleAdaptiveAdvice? _adaptiveAdvice;
   Jalali _calendarMonth = Jalali.fromDateTime(CycleClock.now);
   final GlobalKey _calendarKey = GlobalKey();
-  bool _isTabsVisible = true;
+  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
 
   @override
   void initState() {
@@ -103,6 +101,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   @override
   void dispose() {
     CycleStateNotifier.instance.removeListener(_onStateNotifierChanged);
+    _scrollOffset.dispose();
     super.dispose();
   }
 
@@ -762,174 +761,16 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     );
   }
 
-  Widget _buildHeaderActionButton({
-    required IconData icon,
-    required Color iconColor,
-    required VoidCallback onTap,
-    required bool isDark,
-    bool isAiButton = false,
-  }) {
-    final btnBgColor = isDark
-        ? (isAiButton
-            ? iconColor.withValues(alpha: 0.15)
-            : const Color(0xFF1E222A))
-        : (isAiButton
-            ? Color.lerp(Colors.white, iconColor, 0.12)!
-            : const Color(0xFFEFF2F6));
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        width: 38,
-        height: 38,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        decoration: BoxDecoration(
-          color: btnBgColor,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isDark
-                ? (isAiButton
-                    ? iconColor.withValues(alpha: 0.40)
-                    : Colors.white.withValues(alpha: 0.08))
-                : (isAiButton
-                    ? iconColor.withValues(alpha: 0.25)
-                    : Colors.white.withValues(alpha: 0.90)),
-            width: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? const Color(0xFF2B303C) : Colors.white,
-              offset: const Offset(-2, -2),
-              blurRadius: 4,
-            ),
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.60)
-                  : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
-              offset: const Offset(2, 2),
-              blurRadius: 4,
-            ),
-            if (isAiButton)
-              BoxShadow(
-                color: iconColor.withValues(alpha: isDark ? 0.35 : 0.22),
-                blurRadius: 10,
-                spreadRadius: 1.0,
-              ),
-          ],
-        ),
-        child: Center(
-          child: Icon(
-            icon,
-            size: 18,
-            color: isAiButton
-                ? iconColor
-                : (isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280)),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCapsuleHeader(
-    BuildContext context,
-    bool isDark,
-    RitmoColors colors,
-    bool isPregnancyActive,
-  ) {
-    return RitmoGlassHeader(
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-      child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  height: 48,
-                  child: Row(
-                    children: [
-                      if (Navigator.canPop(context))
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 38,
-                            minHeight: 38,
-                          ),
-                          icon: Icon(
-                            CupertinoIcons.arrow_right,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF1D2129),
-                            size: 20,
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                        )
-                      else
-                        const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          isPregnancyActive ? 'بارداری' : 'چرخه بدن',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 19,
-                            letterSpacing: -0.4,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF1D2129),
-                          ),
-                        ),
-                      ),
-                      _buildHeaderActionButton(
-                        icon: CupertinoIcons.sparkles,
-                        iconColor: _getActivePhaseColor(context),
-                        isAiButton: true,
-                        isDark: isDark,
-                        onTap: _openAiAssistant,
-                      ),
-                      _buildHeaderActionButton(
-                        icon: CupertinoIcons.gear_alt_fill,
-                        iconColor: isDark
-                            ? const Color(0xFF9096A2)
-                            : const Color(0xFF6B7280),
-                        isDark: isDark,
-                        onTap: _openSettingsSheet,
-                      ),
-                      const SizedBox(width: 4),
-                    ],
-                  ),
-                ),
-                if (!isPregnancyActive)
-                  ClipRect(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 260),
-                      curve: Curves.easeInOutCubic,
-                      height: _isTabsVisible ? 56.0 : 0.0,
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 200),
-                        opacity: _isTabsVisible ? 1.0 : 0.0,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
-                          child: Align(
-                            alignment: Alignment.center,
-                            child: Directionality(
-                              textDirection: TextDirection.rtl,
-                              child: CycleSegmentedTabs(
-                                activeTab: _activeTab,
-                                onTabChanged: (index) =>
-                                    setState(() => _activeTab = index),
-                                settings: _settings,
-                                activeThemeColor:
-                                    _getActivePhaseColor(context),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-    );
+  String _getPhaseTitle(CyclePhase phase) {
+    return switch (phase) {
+      CyclePhase.menstrual => 'فاز قاعدگی',
+      CyclePhase.follicular => 'فاز فولیکولار',
+      CyclePhase.ovulation => 'فاز تخمک‌گذاری',
+      CyclePhase.luteal => 'فاز لوتئال',
+      CyclePhase.dataStale => 'نیاز به ثبت دوره جدید',
+      CyclePhase.pregnancy => 'دوران بارداری',
+      CyclePhase.noData => 'ردیاب هوشمند چرخه',
+    };
   }
 
   @override
@@ -937,6 +778,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.paddingOf(context).top;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
     if (_isLoading) {
       return const Scaffold(
@@ -992,21 +834,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             child: NotificationListener<ScrollNotification>(
               onNotification: (notification) {
                 if (notification.metrics.axis == Axis.vertical) {
-                  if (notification.metrics.pixels <= 15) {
-                    if (!_isTabsVisible) {
-                      setState(() => _isTabsVisible = true);
-                    }
-                  } else if (notification is UserScrollNotification) {
-                    if (notification.direction == ScrollDirection.reverse) {
-                      if (_isTabsVisible) {
-                        setState(() => _isTabsVisible = false);
-                      }
-                    } else if (notification.direction == ScrollDirection.forward) {
-                      if (!_isTabsVisible) {
-                        setState(() => _isTabsVisible = true);
-                      }
-                    }
-                  }
+                  _scrollOffset.value = notification.metrics.pixels;
                 }
                 return false;
               },
@@ -1109,11 +937,31 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       child: ListView(
                         padding: EdgeInsets.fromLTRB(
                           10,
-                          topPadding + 140.0,
+                          topPadding + 52.0,
                           10,
-                          80,
+                          bottomPadding + 14.0,
                         ),
                         children: [
+                          if (!isPregnancyActive) ...[
+                            RitmoLargeTitleHero(
+                              title: 'چرخه بدن',
+                              subtitle: _engineOutput != null
+                                  ? '${_getPhaseTitle(_engineOutput!.currentPhase)} • روز ${RitmoNumber.toFa(_engineOutput!.dayOfCycle)} چرخه'
+                                  : 'ردیاب هوشمند سلامت و الگوهای هورمونی',
+                              titleColor: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),
+                              child: CycleSegmentedTabs(
+                                activeTab: _activeTab,
+                                onTabChanged: (index) =>
+                                    setState(() => _activeTab = index),
+                                settings: _settings,
+                                activeThemeColor:
+                                    _getActivePhaseColor(context),
+                              ),
+                            ),
+                          ],
                           if (_activeTab == 0) ...[
                             CycleOverviewTab(
                               engineOutput: _engineOutput,
@@ -1269,29 +1117,44 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               onReloadData: _loadData,
                             ),
                           ],
-                          const SizedBox(height: 32),
                         ],
                       ),
                     ),
             ),
           ),
 
-          // 3. Floating Capsule Header Island
+          // 3. Apple Dynamic Large Title Collapsing Glass Top Bar
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-                child: _buildCapsuleHeader(
-                  context,
-                  isDark,
-                  colors,
-                  isPregnancyActive,
-                ),
-              ),
+            child: ValueListenableBuilder<double>(
+              valueListenable: _scrollOffset,
+              builder: (context, offset, _) {
+                return RitmoDynamicGlassAppBar(
+                  title: isPregnancyActive ? 'دوران بارداری' : 'چرخه بدن',
+                  scrollOffset: offset,
+                  collapseDistance: 50.0,
+                  onBack: () => Navigator.pop(context),
+                  actions: [
+                    RitmoVibrancyActionButton(
+                      icon: CupertinoIcons.sparkles,
+                      iconColor: _getActivePhaseColor(context),
+                      isAiButton: true,
+                      accentColor: _getActivePhaseColor(context),
+                      tooltip: 'دستیار هوشمند چرخه',
+                      onTap: _openAiAssistant,
+                    ),
+                    const SizedBox(width: 8),
+                    RitmoVibrancyActionButton(
+                      icon: CupertinoIcons.gear_alt_fill,
+                      iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                      tooltip: 'تنظیمات چرخه',
+                      onTap: _openSettingsSheet,
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ],

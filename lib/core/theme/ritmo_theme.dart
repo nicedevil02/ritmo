@@ -24,6 +24,8 @@ export 'package:ritmo/core/theme/tokens/ritmo_metrics.dart';
 export 'package:ritmo/core/theme/tokens/ritmo_springs.dart';
 export 'package:ritmo/core/theme/ui_scale.dart';
 export 'package:ritmo/core/widgets/ritmo/ritmo_glass_header.dart';
+export 'package:ritmo/core/widgets/ritmo/ritmo_glass_segmented_control.dart';
+export 'package:ritmo/core/widgets/ritmo/ritmo_collapsing_glass_bar.dart';
 
 /// توکن‌های فاصله‌گذاری — فقط ۷ مقدار مجاز (سند طراحی §۳.۲)
 abstract final class RitmoSpacing {

@@ -72,93 +72,58 @@ class HomePulseStrip extends StatelessWidget {
         boxShadow: isDark
             ? [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.45),
-                  offset: const Offset(0, 4),
-                  blurRadius: 16,
-                  spreadRadius: -2,
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.30),
-                  offset: const Offset(0, 2),
-                  blurRadius: 6,
+                  color: Colors.black.withValues(alpha: 0.40),
+                  offset: const Offset(0, 3),
+                  blurRadius: 10,
                 ),
               ]
             : [
                 BoxShadow(
-                  color: const Color(0xFF64748B).withValues(alpha: 0.10),
-                  offset: const Offset(0, 4),
-                  blurRadius: 16,
-                ),
-                BoxShadow(
-                  color: const Color(0xFF64748B).withValues(alpha: 0.06),
-                  offset: const Offset(0, 2),
-                  blurRadius: 6,
+                  color: const Color(0xFF64748B).withValues(alpha: 0.08),
+                  offset: const Offset(0, 3),
+                  blurRadius: 10,
                 ),
               ],
       ),
-      child: Stack(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Positioned.fill(
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      isDark
-                          ? const Color(0xFF94A3B8).withValues(alpha: 0.08)
-                          : Colors.white.withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
-                    stops: const [0.0, 0.35],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // ── ستون راست (RTL): عنوان + متریک‌ها ──
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
+          // ── ستون راست (RTL): عنوان + متریک‌ها ──
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // هدر: عنوان + منو (۳ نقطه پشت نبض امروز)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    // هدر: عنوان + منو (۳ نقطه پشت نبض امروز)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w800,
-                            fontFamily: 'Vazirmatn',
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _menuDots(colors, isDark),
-                      ],
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Vazirmatn',
+                        color: colors.textPrimary,
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    // متریک‌ها
-                    for (int i = 0; i < metrics.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 4.5),
-                      _neumorphicMetricRow(context, colors, isDark, metrics[i]),
-                    ],
+                    const SizedBox(width: 8),
+                    _menuDots(colors, isDark),
                   ],
                 ),
-              ),
-              const SizedBox(width: RitmoSpacing.md),
-
-              // ── ستون چپ (RTL): حلقه ──
-              _neumorphicRing(context, colors, isDark, clamped),
-            ],
+                const SizedBox(height: 6),
+                // متریک‌ها
+                for (int i = 0; i < metrics.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 4.5),
+                  _neumorphicMetricRow(context, colors, isDark, metrics[i]),
+                ],
+              ],
+            ),
           ),
+          const SizedBox(width: RitmoSpacing.md),
+
+          // ── ستون چپ (RTL): حلقه ──
+          _neumorphicRing(context, colors, isDark, clamped),
         ],
       ),
     );

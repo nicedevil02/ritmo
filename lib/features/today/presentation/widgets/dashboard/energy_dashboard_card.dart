@@ -101,63 +101,30 @@ class EnergyDashboardCard extends StatelessWidget {
         boxShadow: isDarkMode
             ? [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.45),
-                  offset: const Offset(0, 4),
-                  blurRadius: 16,
-                  spreadRadius: -2,
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.30),
-                  offset: const Offset(0, 2),
-                  blurRadius: 6,
+                  color: Colors.black.withValues(alpha: 0.40),
+                  offset: const Offset(0, 3),
+                  blurRadius: 10,
                 ),
               ]
             : [
                 BoxShadow(
-                  color: const Color(0xFF64748B).withValues(alpha: 0.10),
-                  offset: const Offset(0, 4),
-                  blurRadius: 16,
-                ),
-                BoxShadow(
-                  color: const Color(0xFF64748B).withValues(alpha: 0.06),
-                  offset: const Offset(0, 2),
-                  blurRadius: 6,
+                  color: const Color(0xFF64748B).withValues(alpha: 0.08),
+                  offset: const Offset(0, 3),
+                  blurRadius: 10,
                 ),
               ],
       ),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      isDarkMode
-                          ? const Color(0xFF94A3B8).withValues(alpha: 0.08)
-                          : Colors.white.withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
-                    stops: const [0.0, 0.35],
-                  ),
-                ),
-              ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onEnergyTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
             ),
-          ),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onEnergyTap,
-              borderRadius: BorderRadius.circular(24),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // سمت راست (شروع خوانش RTL): عنوان انرژی همراه آیکون، سطح، توضیح و علل
@@ -357,8 +324,6 @@ class EnergyDashboardCard extends StatelessWidget {
           ),
         ),
       ),
-    ],
-  ),
-);
+    );
   }
 }

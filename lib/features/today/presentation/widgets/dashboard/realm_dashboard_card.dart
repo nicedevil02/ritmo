@@ -253,75 +253,40 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
                 boxShadow: isDark
                     ? [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.45),
-                          offset: const Offset(0, 4),
-                          blurRadius: 16,
-                          spreadRadius: -2,
-                        ),
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.30),
-                          offset: const Offset(0, 2),
-                          blurRadius: 6,
+                          color: Colors.black.withValues(alpha: 0.40),
+                          offset: const Offset(0, 3),
+                          blurRadius: 10,
                         ),
                       ]
                     : [
                         BoxShadow(
-                          color: const Color(0xFF64748B).withValues(alpha: 0.10),
-                          offset: const Offset(0, 4),
-                          blurRadius: 16,
-                        ),
-                        BoxShadow(
-                          color: const Color(0xFF64748B).withValues(alpha: 0.06),
-                          offset: const Offset(0, 2),
-                          blurRadius: 6,
+                          color: const Color(0xFF64748B).withValues(alpha: 0.08),
+                          offset: const Offset(0, 3),
+                          blurRadius: 10,
                         ),
                       ],
               ),
-              child: Stack(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              isDark
-                                  ? const Color(0xFF94A3B8).withValues(alpha: 0.08)
-                                  : Colors.white.withValues(alpha: 0.35),
-                              Colors.transparent,
-                            ],
-                            stops: const [0.0, 0.35],
-                          ),
-                        ),
-                      ),
+                  Expanded(
+                    child: _buildInfoColumn(
+                      isDark: isDark,
+                      realmName: realmName,
+                      chipName: chipName,
+                      subtitle: subtitle,
+                      range: range,
+                      remainingStr: remainingStr,
+                      activeColor: activeColor,
                     ),
                   ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _buildInfoColumn(
-                          isDark: isDark,
-                          realmName: realmName,
-                          chipName: chipName,
-                          subtitle: subtitle,
-                          range: range,
-                          remainingStr: remainingStr,
-                          activeColor: activeColor,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      _buildDialAndActionColumn(
-                        isDark: isDark,
-                        dialSize: dialSize,
-                        chipName: chipName,
-                        activeColor: activeColor,
-                        isOutOfZone: isOutOfZone,
-                      ),
-                    ],
+                  const SizedBox(width: 10),
+                  _buildDialAndActionColumn(
+                    isDark: isDark,
+                    dialSize: dialSize,
+                    chipName: chipName,
+                    activeColor: activeColor,
+                    isOutOfZone: isOutOfZone,
                   ),
                 ],
               ),

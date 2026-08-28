@@ -479,83 +479,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                         _buildSearchBar(colors),
                         const SizedBox(height: 14),
                       ],
-                      GestureDetector(
-                        onTap: _showModulesManagementSheet,
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDarkMode
-                                ? colors.card.withValues(alpha: 0.6)
-                                : colors.surface.withValues(alpha: 0.8),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: colors.primary.withValues(
-                                alpha: isDarkMode ? 0.2 : 0.15,
-                              ),
-                              width: 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: colors.primary.withValues(
-                                  alpha: isDarkMode ? 0.08 : 0.04,
-                                ),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(7),
-                                decoration: BoxDecoration(
-                                  color: colors.primary.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Icon(
-                                  CupertinoIcons.square_grid_2x2,
-                                  color: colors.primary,
-                                  size: 18,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'مدیریت ماژول‌ها و بخش‌ها',
-                                      style: TextStyle(
-                                        fontSize: 13.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: colors.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 1),
-                                    Text(
-                                      'فعال یا غیرفعال‌سازی سیستم‌های کلی زندگی ریتمو',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: colors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                Icons.arrow_back_ios_new_rounded,
-                                color: colors.textSecondary.withValues(alpha: 0.5),
-                                size: 13,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
                       _buildModulesGrid(colors, isDarkMode),
                     ],
                   ),
@@ -594,8 +517,10 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                       ),
                       const SizedBox(width: 6),
                       RitmoVibrancyActionButton(
-                        icon: CupertinoIcons.slider_horizontal_3,
-                        tooltip: 'مدیریت ماژول‌ها',
+                        icon: CupertinoIcons.square_grid_2x2,
+                        tooltip: 'مدیریت ماژول‌ها و بخش‌ها',
+                        isAiButton: true,
+                        accentColor: colors.primary,
                         onTap: _showModulesManagementSheet,
                       ),
                     ],

@@ -16,10 +16,10 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/repositories/realm_repository.dart';
 import 'package:ritmo/core/utils/ritmo_color.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_24h_dial.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_24h_overview_sheet.dart';
-import 'package:ritmo/features/today/presentation/widgets/realm_management_sheet.dart';
 
 Color _parseColorSafe(String? colorStr, Color fallback) {
   return RitmoColor.fromHex(colorStr, fallback: fallback);
@@ -288,15 +288,20 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
   }
 
   void _openManagementSheet() {
-    HapticFeedback.lightImpact();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => RealmManagementSheet(
-        isDarkMode: widget.isDarkMode,
-        onChanged: widget.onRealmChanged,
-      ),
+    final isOutOfZone = widget.realmState is FreeRealmState;
+    final chipName = isOutOfZone
+        ? 'آزاد'
+        : (widget.realmState.realmOrNull?.name ??
+            widget.activeZoneName ??
+            'خواب');
+    final activeColor = _parseColorSafe(
+      widget.activeZoneColorHex,
+      RealmNeu.accent,
+    );
+    _openEnlargedDialSheet(
+      activeColor: activeColor,
+      chipName: chipName,
+      isOutOfZone: isOutOfZone,
     );
   }
 
@@ -326,185 +331,237 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
   }
 
   void _openCountdownControlSheet(String realmName, Color activeColor) {
-    HapticFeedback.lightImpact();
+    RitmoHapticsPolicy.selection();
     final isDark = widget.isDarkMode;
+    final colors = context.colors;
     final repo = RealmRepository();
 
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) {
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            decoration: BoxDecoration(
-              gradient: RealmNeu.surfaceGradient(isDark),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, -5),
-                ),
-              ],
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(context).bottom,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: RealmNeu.muted(isDark).withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Row(
+            child: RitmoGlassSheet(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: activeColor.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: colors.textTertiary.withValues(alpha: 0.35),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
-                      child: Icon(CupertinoIcons.hourglass, color: activeColor, size: 20),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'مدیریت زمان: $realmName',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: RealmNeu.title(isDark),
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: activeColor.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: activeColor.withValues(alpha: 0.30),
+                              width: 1.0,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'تمدید یا تغییر مدت زمان این قلمرو',
-                            style: TextStyle(fontSize: 11, color: RealmNeu.muted(isDark)),
+                          child: Icon(CupertinoIcons.hourglass, color: activeColor, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'مدیریت زمان: $realmName',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: colors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'تمدید یا تغییر مدت زمان این قلمرو',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(
+                            CupertinoIcons.xmark_circle_fill,
+                            size: 22,
+                            color: colors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'تمدید سریع مدت زمان قلمرو:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: colors.textSecondary,
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(CupertinoIcons.xmark_circle_fill, size: 20),
-                      color: RealmNeu.muted(isDark),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        _buildQuickExtensionButton(
+                          label: '+۱۵ دقیقه',
+                          colors: colors,
+                          isDark: isDark,
+                          onTap: () async {
+                            Navigator.pop(context);
+                            final realmId = widget.realmState.realmOrNull?.id ??
+                                widget.activeZone?['id'] as String? ??
+                                'temp';
+                            await repo.setManualOverride(realmId: realmId, durationMinutes: 15);
+                            widget.onRealmChanged();
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        _buildQuickExtensionButton(
+                          label: '+۳۰ دقیقه',
+                          colors: colors,
+                          isDark: isDark,
+                          onTap: () async {
+                            Navigator.pop(context);
+                            final realmId = widget.realmState.realmOrNull?.id ??
+                                widget.activeZone?['id'] as String? ??
+                                'temp';
+                            await repo.setManualOverride(realmId: realmId, durationMinutes: 30);
+                            widget.onRealmChanged();
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        _buildQuickExtensionButton(
+                          label: '+۱ ساعت',
+                          colors: colors,
+                          isDark: isDark,
+                          onTap: () async {
+                            Navigator.pop(context);
+                            final realmId = widget.realmState.realmOrNull?.id ??
+                                widget.activeZone?['id'] as String? ??
+                                'temp';
+                            await repo.setManualOverride(realmId: realmId, durationMinutes: 60);
+                            widget.onRealmChanged();
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () async {
+                            RitmoHapticsPolicy.selection();
+                            Navigator.pop(context);
+                            await repo.clearManualOverride();
+                            widget.onRealmChanged();
+                          },
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: colors.error.withValues(alpha: isDark ? 0.12 : 0.08),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: colors.error.withValues(alpha: isDark ? 0.35 : 0.45),
+                                width: 1.2,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(CupertinoIcons.stop_circle, size: 18, color: colors.error),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'پایان زودهنگام و ورود به زمان آزاد',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.error,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'تمدید سریع مدت زمان قلمرو:',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: RealmNeu.muted(isDark)),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _NeuTapButton(
-                        isDark: isDark,
-                        height: 40,
-                        radius: 12,
-                        onTap: () async {
-                          Navigator.pop(context);
-                          final realmId = widget.realmState.realmOrNull?.id ??
-                              widget.activeZone?['id'] as String? ??
-                              'temp';
-                          await repo.setManualOverride(realmId: realmId, durationMinutes: 15);
-                          widget.onRealmChanged();
-                        },
-                        child: const Center(
-                          child: Text(
-                            '+۱۵ دقیقه',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _NeuTapButton(
-                        isDark: isDark,
-                        height: 40,
-                        radius: 12,
-                        onTap: () async {
-                          Navigator.pop(context);
-                          final realmId = widget.realmState.realmOrNull?.id ??
-                              widget.activeZone?['id'] as String? ??
-                              'temp';
-                          await repo.setManualOverride(realmId: realmId, durationMinutes: 30);
-                          widget.onRealmChanged();
-                        },
-                        child: const Center(
-                          child: Text(
-                            '+۳۰ دقیقه',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _NeuTapButton(
-                        isDark: isDark,
-                        height: 40,
-                        radius: 12,
-                        onTap: () async {
-                          Navigator.pop(context);
-                          final realmId = widget.realmState.realmOrNull?.id ??
-                              widget.activeZone?['id'] as String? ??
-                              'temp';
-                          await repo.setManualOverride(realmId: realmId, durationMinutes: 60);
-                          widget.onRealmChanged();
-                        },
-                        child: const Center(
-                          child: Text(
-                            '+۱ ساعت',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      await repo.clearManualOverride();
-                      widget.onRealmChanged();
-                    },
-                    icon: const Icon(CupertinoIcons.stop_circle, size: 16, color: Color(0xFFEF4444)),
-                    label: const Text(
-                      'پایان زودهنگام و ورود به زمان آزاد',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFEF4444)),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: const Color(0xFFEF4444).withValues(alpha: 0.4)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildQuickExtensionButton({
+    required String label,
+    required RitmoColors colors,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            RitmoHapticsPolicy.selection();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: colors.textPrimary.withValues(alpha: isDark ? 0.06 : 0.04),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? colors.border : colors.divider,
+                width: 1.0,
+              ),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+                color: colors.textPrimary,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -513,15 +570,16 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
     required Color activeColor,
     required _RealmTimeRange range,
   }) {
-    HapticFeedback.lightImpact();
+    RitmoHapticsPolicy.selection();
     final isDark = widget.isDarkMode;
+    final colors = context.colors;
     final state = widget.realmState;
 
     final String reasonText;
     final String modeLabel;
 
     if (state is ScheduledRealmState) {
-      reasonText = 'این قلمرو طبق جدول زمان‌بندی روزانه شما از ساعت ${toPersianDigits(range.start ?? '')} تا ${toPersianDigits(range.end ?? '')} فعال شده است.';
+      reasonText = 'این قلمرو طبق جدول زمان‌بندی روزانه شما از ساعت ${range.start ?? ''} تا ${range.end ?? ''} فعال شده است.';
       modeLabel = state.realm.mode.label;
     } else if (state is ManualRealmState) {
       reasonText = 'این قلمرو به صورت دستی توسط شما فعال شده و تا پایان زمان تعیین‌شده ادامه خواهد داشت.';
@@ -531,148 +589,171 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
       modeLabel = 'آزاد';
     }
 
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) {
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            decoration: BoxDecoration(
-              gradient: RealmNeu.surfaceGradient(isDark),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, -5),
-                ),
-              ],
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(context).bottom,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: RealmNeu.muted(isDark).withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Row(
+            child: RitmoGlassSheet(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: activeColor.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: activeColor.withValues(alpha: 0.4)),
-                      ),
-                      child: Text(
-                        widget.realmState.realmOrNull?.icon ?? widget.activeZoneIcon ?? '✨',
-                        style: const TextStyle(fontSize: 22),
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: colors.textTertiary.withValues(alpha: 0.35),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
+                    Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: activeColor.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: activeColor.withValues(alpha: 0.4)),
+                          ),
+                          child: Text(
+                            widget.realmState.realmOrNull?.icon ?? widget.activeZoneIcon ?? '✨',
+                            style: const TextStyle(fontSize: 22),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    realmName,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: colors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                    decoration: BoxDecoration(
+                                      color: activeColor,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      modeLabel,
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'وضعیت و قوانین قلمروی فعال',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(
+                            CupertinoIcons.xmark_circle_fill,
+                            size: 22,
+                            color: colors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: colors.textPrimary.withValues(alpha: isDark ? 0.05 : 0.04),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark ? colors.border : colors.divider,
+                          width: 1.0,
+                        ),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
+                              Icon(CupertinoIcons.info_circle_fill, color: activeColor, size: 16),
+                              const SizedBox(width: 6),
                               Text(
-                                realmName,
+                                'چرا این قلمرو فعال است؟',
                                 style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: RealmNeu.title(isDark),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: activeColor,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  modeLabel,
-                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: colors.textPrimary,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 6),
                           Text(
-                            'وضعیت و قوانین قلمروی فعال',
-                            style: TextStyle(fontSize: 11, color: RealmNeu.muted(isDark)),
+                            reasonText,
+                            style: TextStyle(
+                              fontSize: 12,
+                              height: 1.5,
+                              color: colors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(CupertinoIcons.xmark_circle_fill, size: 20),
-                      color: RealmNeu.muted(isDark),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _openManagementSheet();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: activeColor,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: const Text(
+                          'مدیریت و ویرایش قلمروها',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF141921).withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: RealmNeu.muted(isDark).withValues(alpha: 0.15)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(CupertinoIcons.info_circle_fill, color: activeColor, size: 16),
-                          const SizedBox(width: 6),
-                          Text(
-                            'چرا این قلمرو فعال است؟',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: RealmNeu.title(isDark)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        reasonText,
-                        style: TextStyle(fontSize: 12, height: 1.5, color: RealmNeu.body(isDark)),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _openManagementSheet();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: activeColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      elevation: 0,
-                    ),
-                    child: const Text('مدیریت و ویرایش قلمروها', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         );

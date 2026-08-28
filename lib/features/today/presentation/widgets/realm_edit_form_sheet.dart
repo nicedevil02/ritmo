@@ -1,5 +1,7 @@
 import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
@@ -37,40 +39,49 @@ class RealmEditFormSheet extends StatefulWidget {
 
   static const List<RealmTemplate> readyTemplates = [
     RealmTemplate(
-      name: 'کار عمیق',
-      icon: '💻',
-      colorHex: '#6366F1',
+      name: 'کار و تمرکز عمیق',
+      icon: '💼',
+      colorHex: '#3B82F6',
       mode: RealmMode.focus,
-      startTime: '09:00',
-      endTime: '17:00',
-      daysOfWeek: {6, 7, 1, 2, 3, 4}, // Sat to Thu
-    ),
-    RealmTemplate(
-      name: 'خواب و استراحت',
-      icon: '🌙',
-      colorHex: '#8B5CF6',
-      mode: RealmMode.silent,
-      startTime: '23:00',
-      endTime: '06:00',
-      daysOfWeek: {1, 2, 3, 4, 5, 6, 7}, // Every day
+      startTime: '08:30',
+      endTime: '16:30',
+      daysOfWeek: {6, 7, 1, 2, 3}, // شنبه تا چهارشنبه
     ),
     RealmTemplate(
       name: 'ورزش و تندرستی',
-      icon: '🏃‍♂️',
-      colorHex: '#10B981',
-      mode: RealmMode.normal,
-      startTime: '06:00',
-      endTime: '07:30',
-      daysOfWeek: {1, 2, 3, 4, 5, 6, 7},
+      icon: '🏋️',
+      colorHex: '#EF4444',
+      mode: RealmMode.focus,
+      startTime: '17:00',
+      endTime: '18:30',
+      daysOfWeek: {6, 1, 3}, // فرد: شنبه، دوشنبه، چهارشنبه
     ),
     RealmTemplate(
       name: 'مطالعه و یادگیری',
       icon: '📚',
-      colorHex: '#EC4899',
+      colorHex: '#8B5CF6',
       mode: RealmMode.focus,
-      startTime: '18:00',
-      endTime: '20:00',
+      startTime: '20:00',
+      endTime: '21:30',
       daysOfWeek: {6, 7, 1, 2, 3, 4},
+    ),
+    RealmTemplate(
+      name: 'استراحت و خانواده',
+      icon: '🏡',
+      colorHex: '#10B981',
+      mode: RealmMode.normal,
+      startTime: '19:00',
+      endTime: '22:30',
+      daysOfWeek: {5}, // جمعه
+    ),
+    RealmTemplate(
+      name: 'خواب شبانه',
+      icon: '🌙',
+      colorHex: '#6366F1',
+      mode: RealmMode.silent,
+      startTime: '23:30',
+      endTime: '07:00',
+      daysOfWeek: {1, 2, 3, 4, 5, 6, 7}, // هر شب
     ),
   ];
 
@@ -98,11 +109,36 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
   late TimeOfDay _startTime;
   late TimeOfDay _endTime;
 
+  // Dirty State & Discard Guard
+  late String _initialName;
+  late String _initialIcon;
+  late String _initialColorHex;
+  late RealmMode _initialMode;
+  late Set<int> _initialDays;
+  late TimeOfDay _initialStartTime;
+  late TimeOfDay _initialEndTime;
+
+  double _lastReportedSize = 0.60;
   String? _nameError;
   String? _daysError;
   bool _isSubmitting = false;
 
   bool get isEditing => widget.initialRealm != null;
+
+  bool get _isDirty {
+    if (_nameController.text.trim() != _initialName) return true;
+    if (_selectedIcon != _initialIcon) return true;
+    if (_selectedColorHex != _initialColorHex) return true;
+    if (_selectedMode != _initialMode) return true;
+    if (_selectedDays.length != _initialDays.length ||
+        !_selectedDays.containsAll(_initialDays)) {
+      return true;
+    }
+    if (_startTime != _initialStartTime || _endTime != _initialEndTime) {
+      return true;
+    }
+    return false;
+  }
 
   @override
   void initState() {
@@ -122,14 +158,42 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
       }
     });
 
+    // Snap Haptics (Item 1)
+    _sheetController.addListener(() {
+      if (!_sheetController.isAttached) return;
+      final currentSize = _sheetController.size;
+      if ((_lastReportedSize < 0.77 && currentSize >= 0.77) ||
+          (_lastReportedSize > 0.77 && currentSize <= 0.77)) {
+        HapticFeedback.selectionClick();
+      }
+      _lastReportedSize = currentSize;
+    });
+
     _selectedIcon = r?.icon ?? '🎯';
     _selectedColorHex = r?.colorHex ?? '#6366F1';
     _selectedMode = r?.mode ?? RealmMode.focus;
+    _selectedDays = sched != null ? Set.from(sched.daysOfWeek) : {6, 7, 1, 2, 3, 4};
 
-    _selectedDays = sched?.daysOfWeek ?? {6, 7, 1, 2, 3, 4}; // Sat to Thu by default
+    // Smart Auto-Time (Item 5)
+    if (sched != null) {
+      _startTime = _parseTimeOfDay(sched.startTime);
+      _endTime = _parseTimeOfDay(sched.endTime);
+    } else {
+      final now = DateTime.now();
+      final nextHour = (now.minute >= 30 ? now.hour + 1 : now.hour) % 24;
+      final endHour = (nextHour + 2) % 24;
+      _startTime = TimeOfDay(hour: nextHour, minute: 0);
+      _endTime = TimeOfDay(hour: endHour, minute: 0);
+    }
 
-    _startTime = _parseTimeOfDay(sched?.startTime ?? '09:00');
-    _endTime = _parseTimeOfDay(sched?.endTime ?? '17:00');
+    // Capture initial values for Discard Guard
+    _initialName = _nameController.text.trim();
+    _initialIcon = _selectedIcon;
+    _initialColorHex = _selectedColorHex;
+    _initialMode = _selectedMode;
+    _initialDays = Set.from(_selectedDays);
+    _initialStartTime = _startTime;
+    _initialEndTime = _endTime;
   }
 
   @override
@@ -236,6 +300,45 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
     }
   }
 
+  Future<bool> _handleDiscardConfirmation() async {
+    if (!_isDirty || _isSubmitting) return true;
+
+    final shouldDiscard = await showCupertinoModalPopup<bool>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: const Text(
+          'تغییرات ذخیره نشده‌اند',
+          style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+        ),
+        message: const Text(
+          'آیا از خروج و حذف تغییرات اطمینان دارید؟',
+          style: TextStyle(fontFamily: 'Vazirmatn'),
+        ),
+        actions: [
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('حذف تغییرات', style: TextStyle(fontFamily: 'Vazirmatn')),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('ادامه ویرایش', style: TextStyle(fontFamily: 'Vazirmatn')),
+        ),
+      ),
+    );
+
+    return shouldDiscard ?? false;
+  }
+
+  void _onCancelPressed() async {
+    final canDismiss = await _handleDiscardConfirmation();
+    if (canDismiss && mounted) {
+      Navigator.pop(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -269,9 +372,9 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Leading (Right in RTL): Cancel action
+                    // Leading (Right in RTL): Cancel action with Discard Guard
                     TextButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: _onCancelPressed,
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                         minimumSize: Size.zero,
@@ -287,14 +390,42 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                       ),
                     ),
 
-                    // Center: Modal Title
-                    Text(
-                      isEditing ? 'ویرایش قلمرو' : 'ساخت قلمرو جدید',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
+                    // Center: Modal Title + Live Morphing Preview Chip (Item 3)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOutCubic,
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: Color(int.parse(_selectedColorHex.replaceAll('#', '0xFF'))),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(int.parse(_selectedColorHex.replaceAll('#', '0xFF'))).withValues(alpha: 0.4),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            _selectedIcon,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          isEditing ? 'ویرایش قلمرو' : 'ساخت قلمرو جدید',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
 
                     // Trailing (Left in RTL): Save/Create action
@@ -703,10 +834,11 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
+                        Colors.white.withValues(alpha: isDark ? 0.35 : 0.75),
                         Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
                         Colors.white.withValues(alpha: 0.0),
                       ],
-                      stops: const [0.0, 0.45],
+                      stops: const [0.0, 0.03, 0.45],
                     ),
                   ),
                   child: sheetContent,
@@ -726,17 +858,27 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: DraggableScrollableSheet(
-        controller: _sheetController,
-        initialChildSize: 0.60,
-        minChildSize: 0.35,
-        maxChildSize: 0.95,
-        snap: true,
-        snapSizes: const [0.60, 0.95],
-        expand: false,
-        builder: (context, scrollController) {
-          return buildSheetContainer(scrollController);
+      child: PopScope(
+        canPop: !_isDirty || _isSubmitting,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          final canDismiss = await _handleDiscardConfirmation();
+          if (canDismiss && context.mounted) {
+            Navigator.pop(context);
+          }
         },
+        child: DraggableScrollableSheet(
+          controller: _sheetController,
+          initialChildSize: 0.60,
+          minChildSize: 0.35,
+          maxChildSize: 0.95,
+          snap: true,
+          snapSizes: const [0.60, 0.95],
+          expand: false,
+          builder: (context, scrollController) {
+            return buildSheetContainer(scrollController);
+          },
+        ),
       ),
     );
   }

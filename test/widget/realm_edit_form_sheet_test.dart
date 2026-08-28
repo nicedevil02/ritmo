@@ -177,6 +177,60 @@ void main() {
       expect(saved, isTrue);
     });
 
+    testWidgets('Live Header Preview Chip displays icon and updates on template select', (tester) async {
+      await tester.pumpWidget(
+        _buildWrapper(
+          width: 360,
+          child: RealmEditFormSheet(
+            onSave: (realm, schedules) async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Initial icon is 🎯
+      expect(find.text('🎯'), findsWidgets);
+
+      // Select 'ورزش و تندرستی' template
+      await tester.tap(find.text('ورزش و تندرستی'));
+      await tester.pumpAndSettle();
+
+      // Chip updates to 🏋️
+      expect(find.text('🏋️'), findsWidgets);
+    });
+
+    testWidgets('Discard Guard shows CupertinoActionSheet when cancelling with dirty state', (tester) async {
+      await tester.pumpWidget(
+        _buildWrapper(
+          width: 360,
+          child: RealmEditFormSheet(
+            onSave: (realm, schedules) async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Enter name so form becomes dirty
+      await tester.enterText(find.byType(TextField), 'نام جدید قلمرو');
+      await tester.pumpAndSettle();
+
+      // Tap 'انصراف'
+      await tester.tap(find.text('انصراف'));
+      await tester.pumpAndSettle();
+
+      // CupertinoActionSheet should appear
+      expect(find.text('تغییرات ذخیره نشده‌اند'), findsOneWidget);
+      expect(find.text('حذف تغییرات'), findsOneWidget);
+      expect(find.text('ادامه ویرایش'), findsOneWidget);
+
+      // Tap 'ادامه ویرایش'
+      await tester.tap(find.text('ادامه ویرایش'));
+      await tester.pumpAndSettle();
+
+      // Sheet should still be present
+      expect(find.byType(TextField), findsOneWidget);
+    });
+
     testWidgets('AppleCardDeckHost renders child and handles route secondary animation safely', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(

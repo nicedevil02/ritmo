@@ -184,15 +184,15 @@ class RitmoSheetScaffold extends StatelessWidget {
 }
 
 /// Wraps any screen or navigation shell to provide the authentic Apple iOS 26 Card Deck
-/// background transformation (7% scale-down, 18dp rounded top corners, dimming overlay,
-/// parallax shift) when a modal sheet is pushed on top of it.
+/// background transformation (7% scale-down, 20dp rounded top corners, background blur/frosting,
+/// subtle ambient depth, and upward peek shift) when a modal sheet is pushed on top of it.
 class AppleCardDeckHost extends StatelessWidget {
   final Widget child;
   final Animation<double>? animation;
   final double scaleDownFactor; // 0.07 -> scale reaches 0.93
-  final double topCornerRadius; // 18.0
-  final double maxDimAlpha; // 0.25
-
+  final double topCornerRadius; // 20.0
+  final double maxBlurSigma; // 6.0 (smooth Apple background frosting)
+  final double maxDimAlpha; // 0.08 (subtle, non-muddy ambient depth)
   final double shiftUpDistance; // 18.0pt upward shift for Apple deck peeking
 
   const AppleCardDeckHost({
@@ -201,7 +201,8 @@ class AppleCardDeckHost extends StatelessWidget {
     this.animation,
     this.scaleDownFactor = 0.07,
     this.topCornerRadius = 20.0,
-    this.maxDimAlpha = 0.25,
+    this.maxBlurSigma = 6.0,
+    this.maxDimAlpha = 0.08,
     this.shiftUpDistance = 18.0,
   });
 
@@ -225,7 +226,20 @@ class AppleCardDeckHost extends StatelessWidget {
         final scale = 1.0 - (scaleDownFactor * progress);
         final radius = topCornerRadius * progress;
         final translateY = -shiftUpDistance * progress;
+        final blurSigma = (maxBlurSigma * progress).clamp(0.0, 20.0);
         final dimOpacity = (maxDimAlpha * progress).clamp(0.0, 1.0);
+
+        Widget filteredChild = staticChild!;
+        if (blurSigma > 0.01) {
+          filteredChild = ImageFiltered(
+            imageFilter: ImageFilter.blur(
+              sigmaX: blurSigma,
+              sigmaY: blurSigma,
+              tileMode: TileMode.clamp,
+            ),
+            child: staticChild,
+          );
+        }
 
         return Transform.translate(
           offset: Offset(0, translateY),
@@ -236,15 +250,26 @@ class AppleCardDeckHost extends StatelessWidget {
               borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
               child: Stack(
                 children: [
-                  staticChild!,
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      ignoring: true,
-                      child: ColoredBox(
-                        color: Colors.black.withValues(alpha: dimOpacity),
+                  filteredChild,
+                  if (dimOpacity > 0.001)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        ignoring: true,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withValues(alpha: dimOpacity * 1.5),
+                                Colors.black.withValues(alpha: dimOpacity * 0.4),
+                              ],
+                              stops: const [0.0, 0.35],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),

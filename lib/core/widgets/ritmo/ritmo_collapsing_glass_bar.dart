@@ -214,26 +214,27 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
             ]
           : null;
     } else {
+      final glassAlpha = colors.glassTint.a;
       bgColor = colors.glassTint.withValues(
-        alpha: t * materialSpec.tintAlpha,
+        alpha: t * glassAlpha,
       );
       border = t > 0.05
           ? Border.all(
               color: (isDark
-                      ? Colors.white.withValues(alpha: 0.14)
-                      : colors.border.withValues(alpha: 0.25))
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70))
                   .withValues(alpha: t),
-              width: 0.8,
+              width: 1.0,
             )
           : null;
       shadows = t > 0.15
           ? [
               BoxShadow(
                 color: isDark
-                    ? Colors.black.withValues(alpha: t * 0.40)
-                    : const Color(0xFF94A3B8).withValues(alpha: t * 0.35),
+                    ? Colors.black.withValues(alpha: t * 0.35)
+                    : colors.primary.withValues(alpha: t * 0.08),
                 offset: Offset(0, 3 * t),
-                blurRadius: 8 * t,
+                blurRadius: 10 * t,
               ),
             ]
           : null;
@@ -285,10 +286,12 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.white.withValues(alpha: t * materialSpec.highlightAlpha),
+                          Colors.white.withValues(
+                            alpha: (isDark ? 0.08 : 0.20) * t,
+                          ),
                           Colors.white.withValues(alpha: 0.0),
                         ],
-                        stops: const [0.0, 0.35],
+                        stops: const [0.0, 0.45],
                       )
                     : null,
               ),

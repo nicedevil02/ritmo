@@ -180,10 +180,10 @@ class AppleMorphingGlassHeader extends StatelessWidget {
       border = t > 0.05
           ? Border.all(
               color: (isDark
-                      ? Colors.white.withValues(alpha: 0.14)
-                      : effectiveAccent.withValues(alpha: 0.18))
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70))
                   .withValues(alpha: t),
-              width: 0.8,
+              width: 1.0,
             )
           : null;
 
@@ -191,10 +191,10 @@ class AppleMorphingGlassHeader extends StatelessWidget {
           ? [
               BoxShadow(
                 color: isDark
-                    ? Colors.black.withValues(alpha: t * 0.40)
-                    : const Color(0xFF94A3B8).withValues(alpha: t * 0.35),
+                    ? Colors.black.withValues(alpha: t * 0.35)
+                    : theme.colorScheme.primary.withValues(alpha: t * 0.08),
                 offset: Offset(0, 3 * t),
-                blurRadius: 8 * t,
+                blurRadius: 10 * t,
               ),
             ]
           : null;
@@ -239,16 +239,17 @@ class AppleMorphingGlassHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(currentRadius),
               border: border,
               boxShadow: shadows,
-              gradient: t > 0.1
+              gradient: t > 0.05
                   ? LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        (isDark ? Colors.white : Colors.white).withValues(
-                          alpha: (t * (isDark ? 0.08 : 0.40)).clamp(0.0, 0.45),
+                        Colors.white.withValues(
+                          alpha: (isDark ? 0.08 : 0.20) * t,
                         ),
                         Colors.transparent,
                       ],
+                      stops: const [0.0, 0.45],
                     )
                   : null,
             ),

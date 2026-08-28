@@ -111,13 +111,13 @@ class RitmoGlassHeader extends StatelessWidget {
     final defaultShadows = isDark
         ? [
             BoxShadow(
-              color: colors.primary.withValues(alpha: 0.16),
+              color: colors.primary.withValues(alpha: 0.22),
               offset: const Offset(0, 4),
-              blurRadius: 16,
-              spreadRadius: 0,
+              blurRadius: 20,
+              spreadRadius: 1.5,
             ),
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.40),
+              color: Colors.black.withValues(alpha: 0.50),
               offset: const Offset(0, 2),
               blurRadius: 8,
               spreadRadius: 0,
@@ -138,12 +138,12 @@ class RitmoGlassHeader extends StatelessWidget {
             ),
           ];
 
-    final defaultBorder = Border.all(
-      color: isDark
-          ? colors.primary.withValues(alpha: 0.20)
-          : Colors.white.withValues(alpha: 0.70),
-      width: 0.9,
-    );
+    final defaultBorder = isDark
+        ? null
+        : Border.all(
+            color: Colors.white.withValues(alpha: 0.70),
+            width: 1.0,
+          );
 
     return RepaintBoundary(
       child: Container(

@@ -214,31 +214,36 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
             ]
           : null;
     } else {
-      final glassAlpha = colors.glassTint.a;
-      bgColor = colors.glassTint.withValues(
-        alpha: t * glassAlpha,
-      );
-      border = t > 0.05
+      if (isDark) {
+        final darkGlassBase = Color.lerp(colors.glassTint, colors.surfaceElevated, 0.40)!;
+        bgColor = darkGlassBase.withValues(
+          alpha: (t * (colors.glassTint.a * 1.35)).clamp(0.0, 0.90),
+        );
+      } else {
+        final glassAlpha = colors.glassTint.a;
+        bgColor = colors.glassTint.withValues(
+          alpha: t * glassAlpha,
+        );
+      }
+      border = (t > 0.05 && !isDark)
           ? Border.all(
-              color: (isDark
-                      ? colors.primary.withValues(alpha: 0.20)
-                      : Colors.white.withValues(alpha: 0.70))
-                  .withValues(alpha: t),
-              width: 0.9,
+              color: Colors.white.withValues(alpha: 0.70 * t),
+              width: 1.0,
             )
           : null;
       shadows = t > 0.15
           ? [
               BoxShadow(
                 color: (isDark
-                    ? colors.primary.withValues(alpha: t * 0.16)
+                    ? colors.primary.withValues(alpha: t * 0.22)
                     : colors.primary.withValues(alpha: t * 0.08)),
-                offset: Offset(0, 3 * t),
-                blurRadius: 16 * t,
+                offset: Offset(0, 4 * t),
+                blurRadius: 20 * t,
+                spreadRadius: isDark ? (1.5 * t) : 0.0,
               ),
               if (isDark)
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: t * 0.40),
+                  color: Colors.black.withValues(alpha: t * 0.50),
                   offset: Offset(0, 2 * t),
                   blurRadius: 8 * t,
                 ),
@@ -293,9 +298,9 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
                         end: Alignment.bottomCenter,
                         colors: isDark
                             ? [
-                                Colors.white.withValues(alpha: 0.08 * t),
-                                Colors.white.withValues(alpha: 0.02 * t),
-                                Colors.white.withValues(alpha: 0.0),
+                                Colors.white.withValues(alpha: 0.06 * t),
+                                Colors.white.withValues(alpha: 0.01 * t),
+                                Colors.transparent,
                               ]
                             : [
                                 Colors.white.withValues(alpha: 0.75 * t),

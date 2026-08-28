@@ -177,13 +177,10 @@ class AppleMorphingGlassHeader extends StatelessWidget {
         alpha: (t * (isDark ? 0.78 : 0.86)).clamp(0.0, 0.95),
       );
 
-      border = t > 0.05
+      border = (t > 0.05 && !isDark)
           ? Border.all(
-              color: (isDark
-                      ? theme.colorScheme.primary.withValues(alpha: 0.20)
-                      : Colors.white.withValues(alpha: 0.70))
-                  .withValues(alpha: t),
-              width: 0.9,
+              color: Colors.white.withValues(alpha: 0.70 * t),
+              width: 1.0,
             )
           : null;
 
@@ -191,14 +188,15 @@ class AppleMorphingGlassHeader extends StatelessWidget {
           ? [
               BoxShadow(
                 color: (isDark
-                    ? theme.colorScheme.primary.withValues(alpha: t * 0.16)
+                    ? theme.colorScheme.primary.withValues(alpha: t * 0.22)
                     : theme.colorScheme.primary.withValues(alpha: t * 0.08)),
-                offset: Offset(0, 3 * t),
-                blurRadius: 16 * t,
+                offset: Offset(0, 4 * t),
+                blurRadius: 20 * t,
+                spreadRadius: isDark ? (1.5 * t) : 0.0,
               ),
               if (isDark)
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: t * 0.40),
+                  color: Colors.black.withValues(alpha: t * 0.50),
                   offset: Offset(0, 2 * t),
                   blurRadius: 8 * t,
                 ),

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
@@ -50,6 +49,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
   bool _coursesEnabled = true;
   StreamSubscription<dynamic>? _eventSub;
   Timer? _debounceTimer;
+  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
 
   @override
   void initState() {
@@ -70,6 +70,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
   void dispose() {
     _debounceTimer?.cancel();
     _eventSub?.cancel();
+    _scrollOffset.dispose();
     super.dispose();
   }
 
@@ -233,7 +234,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
     final allSessions = _courseSessionsMap.values.expand((e) => e).toList();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.paddingOf(context).top;
-    final contentTopPadding = topPadding + 76.0;
+    final contentTopPadding = topPadding + 130.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -245,110 +246,170 @@ class _CoursesScreenState extends State<CoursesScreen> {
             Positioned.fill(
               child: RefreshIndicator(
                 onRefresh: _loadAllData,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Floating Timer Bar Widget (Fixes D-9 & 7.3)
-                      const FloatingTimerBar(),
-                      const SizedBox(height: 12),
-                      if (_isLoading) ...[
-                        const RitmoSkeletonCard(height: 150),
-                        const SizedBox(height: 24),
-                        const RitmoSkeletonList(itemCount: 3, itemHeight: 90),
-                      ] else if (_activeCourses.isEmpty && _completedCourses.isEmpty && _archivedCourses.isEmpty) ...[
-                        RitmoEmptyState(
-                          icon: CupertinoIcons.book,
-                          title: 'هنوز هیچ دوره‌ای ایجاد نکرده‌اید',
-                          description: 'کتاب‌ها، مهارت‌ها و اهداف یادگیری خود را در قالب دوره ثبت کنید تا روند پیشرفت مطالعه خود را ردیابی کنید.',
-                          ctaLabel: 'ایجاد اولین دوره',
-                          onCta: _openCreateCourseSheet,
-                        ),
-                      ] else ...[
-                        // 1. "What to Read Now" Single Decision Hero Card (Fixes 7.2)
-                        if (_activeCourses.isNotEmpty) ...[
-                          WhatToReadNowCard(
-                            courses: _activeCourses,
-                            sessionsMap: _courseSessionsMap,
-                            currentEnergyLevel: _currentEnergyLevel,
-                            todayStr: todayStr,
-                            onStartSession: _loadAllData,
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification.metrics.axis == Axis.vertical) {
+                      _scrollOffset.value = notification.metrics.pixels;
+                    }
+                    return false;
+                  },
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                    padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Floating Timer Bar Widget (Fixes D-9 & 7.3)
+                        const FloatingTimerBar(),
+                        const SizedBox(height: 12),
+                        if (_isLoading) ...[
+                          const RitmoSkeletonCard(height: 150),
+                          const SizedBox(height: 24),
+                          const RitmoSkeletonList(itemCount: 3, itemHeight: 90),
+                        ] else if (_activeCourses.isEmpty && _completedCourses.isEmpty && _archivedCourses.isEmpty) ...[
+                          RitmoEmptyState(
+                            icon: CupertinoIcons.book,
+                            title: 'هنوز هیچ دوره‌ای ایجاد نکرده‌اید',
+                            description: 'کتاب‌ها، مهارت‌ها و اهداف یادگیری خود را در قالب دوره ثبت کنید تا روند پیشرفت مطالعه خود را ردیابی کنید.',
+                            ctaLabel: 'ایجاد اولین دوره',
+                            onCta: _openCreateCourseSheet,
                           ),
+                        ] else ...[
+                          // 1. "What to Read Now" Single Decision Hero Card (Fixes 7.2)
+                          if (_activeCourses.isNotEmpty) ...[
+                            WhatToReadNowCard(
+                              courses: _activeCourses,
+                              sessionsMap: _courseSessionsMap,
+                              currentEnergyLevel: _currentEnergyLevel,
+                              todayStr: todayStr,
+                              onStartSession: _loadAllData,
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+
+                          // 2. Weekly aggregates card
+                          if (_engineOutput != null)
+                            CoursesWeeklyHero(
+                              weeklyDoneSessions: _engineOutput!.weeklyDoneSessions,
+                              weeklyTargetSessions: _engineOutput!.weeklyTargetSessions,
+                              weeklyStudyMinutes: _engineOutput!.weeklyStudyMinutes,
+                              studyStreakDays: _engineOutput!.studyStreakDays,
+                              estimatedMinutesIncluded: _engineOutput!.estimatedMinutesIncluded,
+                            ),
+
                           const SizedBox(height: 16),
-                        ],
 
-                        // 2. Weekly aggregates card
-                        if (_engineOutput != null)
-                          CoursesWeeklyHero(
-                            weeklyDoneSessions: _engineOutput!.weeklyDoneSessions,
-                            weeklyTargetSessions: _engineOutput!.weeklyTargetSessions,
-                            weeklyStudyMinutes: _engineOutput!.weeklyStudyMinutes,
-                            studyStreakDays: _engineOutput!.studyStreakDays,
-                            estimatedMinutesIncluded: _engineOutput!.estimatedMinutesIncluded,
+                          // 3. Jalali Weekly Heatmap Widget (Fixes 7.5)
+                          JalaliWeeklyHeatmap(
+                            sessions: allSessions,
+                            today: DateTime.now(),
                           ),
 
-                        const SizedBox(height: 16),
+                          const SizedBox(height: 24),
 
-                        // 3. Jalali Weekly Heatmap Widget (Fixes 7.5)
-                        JalaliWeeklyHeatmap(
-                          sessions: allSessions,
-                          today: DateTime.now(),
-                        ),
+                          // 4. Today's Sessions Section
+                          if (_engineOutput != null)
+                            TodaySessionsSection(
+                              todaySessions: _engineOutput!.todaySessions,
+                              courses: [..._activeCourses, ..._completedCourses],
+                              currentEnergyLevel: _currentEnergyLevel,
+                              onRefresh: _loadAllData,
+                            ),
 
-                        const SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
-                        // 4. Today's Sessions Section
-                        if (_engineOutput != null)
-                          TodaySessionsSection(
-                            todaySessions: _engineOutput!.todaySessions,
-                            courses: [..._activeCourses, ..._completedCourses],
-                            currentEnergyLevel: _currentEnergyLevel,
+                          // 5. Active Courses List (Fixes 7.1)
+                          ActiveCoursesSection(
+                            courses: _activeCourses,
+                            courseSessionsMap: _courseSessionsMap,
+                            onCourseTap: (course) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CourseDetailScreen(course: course),
+                                ),
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // 6. Completed and Archived Courses List (Fixes N1)
+                          CompletedCoursesSection(
+                            completedCourses: _completedCourses,
+                            archivedCourses: _archivedCourses,
+                            courseSessionsMap: _courseSessionsMap,
                             onRefresh: _loadAllData,
                           ),
-
-                        // 5. Active Courses List
-                        ActiveCoursesSection(
-                          courses: _activeCourses,
-                          courseSessionsMap: _courseSessionsMap,
-                          onCourseTap: (course) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CourseDetailScreen(course: course),
-                              ),
-                            );
-                          },
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // 6. Completed and Archived Courses List (Fixes N1)
-                        CompletedCoursesSection(
-                          completedCourses: _completedCourses,
-                          archivedCourses: _archivedCourses,
-                          courseSessionsMap: _courseSessionsMap,
-                          onRefresh: _loadAllData,
-                        ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
 
-            // Layer 2: Floating Capsule Header Island
+            // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
             Positioned(
               top: 0,
               left: 0,
               right: 0,
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-                  child: _buildCapsuleHeader(context, isDark, colors),
-                ),
+              child: AnimatedBuilder(
+                animation: _scrollOffset,
+                builder: (context, _) {
+                  return RitmoAppleMorphingGlassHeader(
+                    title: 'دوره‌های آموزشی',
+                    subtitle: 'یادگیری مستمر، جلسات مطالعه و مدیریت سرفصل‌ها',
+                    scrollOffset: _scrollOffset.value,
+                    collapseDistance: 55.0,
+                    onBack: () => Navigator.maybePop(context),
+                    statusBadge: _activeCourses.isNotEmpty
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: colors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Text(
+                              '${toPersianDigits(_activeCourses.length)} فعال',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: colors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          )
+                        : null,
+                    actions: [
+                      RitmoVibrancyActionButton(
+                        icon: CupertinoIcons.sparkles,
+                        iconColor: colors.primary,
+                        isAiButton: true,
+                        accentColor: colors.primary,
+                        tooltip: 'دستیار هوشمند دوره‌ها',
+                        onTap: _openAiAssistantSheet,
+                      ),
+                      const SizedBox(width: 8),
+                      RitmoVibrancyActionButton(
+                        icon: CupertinoIcons.doc_on_clipboard_fill,
+                        iconColor: const Color(0xFF8B5CF6),
+                        tooltip: 'ورود سرفصل AI',
+                        onTap: _openAiSyllabusSheet,
+                      ),
+                      const SizedBox(width: 8),
+                      RitmoVibrancyActionButton(
+                        icon: CupertinoIcons.plus,
+                        iconColor: isDark ? Colors.white : const Color(0xFF1D2129),
+                        tooltip: 'ایجاد دوره جدید',
+                        onTap: _openCreateCourseSheet,
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -357,191 +418,6 @@ class _CoursesScreenState extends State<CoursesScreen> {
           onPressed: _openCreateCourseSheet,
           backgroundColor: colors.primary,
           child: const Icon(CupertinoIcons.add, color: Colors.white),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCapsuleHeader(
-    BuildContext context,
-    bool isDark,
-    RitmoColors colors,
-  ) {
-    return RitmoGlassHeader(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-              children: [
-                if (Navigator.canPop(context))
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 38,
-                      minHeight: 38,
-                    ),
-                    icon: Icon(
-                      CupertinoIcons.arrow_right,
-                      color: isDark ? Colors.white : const Color(0xFF1D2129),
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.pop(context);
-                    },
-                  )
-                else
-                  const SizedBox(width: 10),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Text(
-                        'دوره‌های آموزشی',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 17.5,
-                          letterSpacing: -0.4,
-                          color: isDark ? Colors.white : const Color(0xFF1D2129),
-                        ),
-                      ),
-                      if (_activeCourses.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: colors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Text(
-                            '${toPersianDigits(_activeCourses.length)} فعال',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              color: colors.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                _buildHeaderActionButton(
-                  icon: CupertinoIcons.sparkles,
-                  iconColor: colors.primary,
-                  isAiButton: true,
-                  isDark: isDark,
-                  tooltip: 'دستیار هوشمند دوره‌ها',
-                  onTap: _openAiAssistantSheet,
-                ),
-                _buildHeaderActionButton(
-                  icon: CupertinoIcons.doc_on_clipboard_fill,
-                  iconColor: const Color(0xFF8B5CF6),
-                  isDark: isDark,
-                  tooltip: 'ورود سرفصل AI',
-                  onTap: _openAiSyllabusSheet,
-                ),
-                _buildHeaderActionButton(
-                  icon: CupertinoIcons.plus,
-                  iconColor: isDark ? Colors.white : const Color(0xFF1D2129),
-                  isDark: isDark,
-                  tooltip: 'ایجاد دوره جدید',
-                  onTap: _openCreateCourseSheet,
-                ),
-                const SizedBox(width: 2),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildHeaderActionButton({
-    required IconData icon,
-    required Color iconColor,
-    required bool isDark,
-    required VoidCallback onTap,
-    String? tooltip,
-    bool isAiButton = false,
-  }) {
-    final button = GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: _buildHeaderActionButtonContent(
-        icon: icon,
-        iconColor: iconColor,
-        isDark: isDark,
-        isAiButton: isAiButton,
-      ),
-    );
-
-    if (tooltip != null) {
-      return Tooltip(message: tooltip, child: button);
-    }
-    return button;
-  }
-
-  Widget _buildHeaderActionButtonContent({
-    required IconData icon,
-    required Color iconColor,
-    required bool isDark,
-    bool isAiButton = false,
-  }) {
-    return Container(
-      width: 36,
-      height: 36,
-      margin: const EdgeInsets.symmetric(horizontal: 3),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isDark
-            ? (isAiButton
-                ? iconColor.withValues(alpha: 0.18)
-                : const Color(0xFF22262E))
-            : (isAiButton
-                ? iconColor.withValues(alpha: 0.12)
-                : const Color(0xFFF3F5F8)),
-        border: Border.all(
-          color: isDark
-              ? (isAiButton
-                  ? iconColor.withValues(alpha: 0.40)
-                  : Colors.white.withValues(alpha: 0.08))
-              : (isAiButton
-                  ? iconColor.withValues(alpha: 0.30)
-                  : Colors.white.withValues(alpha: 0.90)),
-          width: 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.04)
-                : Colors.white.withValues(alpha: 0.95),
-            offset: const Offset(-2, -2),
-            blurRadius: 4,
-          ),
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.55)
-                : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
-            offset: const Offset(2, 2),
-            blurRadius: 4,
-          ),
-          if (isAiButton)
-            BoxShadow(
-              color: iconColor.withValues(alpha: isDark ? 0.35 : 0.22),
-              blurRadius: 10,
-              spreadRadius: 1.0,
-            ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          icon,
-          size: 18,
-          color: isAiButton
-              ? iconColor
-              : (isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280)),
         ),
       ),
     );

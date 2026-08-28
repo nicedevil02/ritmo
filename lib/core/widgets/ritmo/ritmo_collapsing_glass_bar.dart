@@ -198,9 +198,9 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
 
     if (isOpaque) {
       bgColor = materialSpec.opaqueFallback.withValues(alpha: t);
-      border = t > 0.05
+      border = (t > 0.05 && !isDark)
           ? Border.all(
-              color: (isDark ? colors.border : colors.divider).withValues(alpha: t),
+              color: colors.divider.withValues(alpha: t),
               width: 0.8,
             )
           : null;
@@ -218,12 +218,9 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
       bgColor = colors.glassTint.withValues(
         alpha: t * glassAlpha,
       );
-      border = t > 0.05
+      border = (t > 0.05 && !isDark)
           ? Border.all(
-              color: (isDark
-                      ? colors.border
-                      : Colors.white.withValues(alpha: 0.70))
-                  .withValues(alpha: t),
+              color: Colors.white.withValues(alpha: 0.70 * t),
               width: 1.0,
             )
           : null;
@@ -281,17 +278,13 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(currentRadius),
                 border: border,
                 boxShadow: shadows,
-                gradient: isGlass && t > 0.05
+                gradient: (isGlass && t > 0.05 && !isDark)
                     ? LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.white.withValues(
-                            alpha: (isDark ? 0.14 : 0.75) * t,
-                          ),
-                          Colors.white.withValues(
-                            alpha: (isDark ? 0.04 : 0.20) * t,
-                          ),
+                          Colors.white.withValues(alpha: 0.75 * t),
+                          Colors.white.withValues(alpha: 0.20 * t),
                           Colors.white.withValues(alpha: 0.0),
                         ],
                         stops: const [0.0, 0.03, 0.45],

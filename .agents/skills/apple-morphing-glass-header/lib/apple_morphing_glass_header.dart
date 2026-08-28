@@ -177,12 +177,9 @@ class AppleMorphingGlassHeader extends StatelessWidget {
         alpha: (t * (isDark ? 0.78 : 0.86)).clamp(0.0, 0.95),
       );
 
-      border = t > 0.05
+      border = (t > 0.05 && !isDark)
           ? Border.all(
-              color: (isDark
-                      ? theme.colorScheme.outline.withValues(alpha: 0.25)
-                      : Colors.white.withValues(alpha: 0.70))
-                  .withValues(alpha: t),
+              color: Colors.white.withValues(alpha: 0.70 * t),
               width: 1.0,
             )
           : null;
@@ -204,6 +201,8 @@ class AppleMorphingGlassHeader extends StatelessWidget {
     // 6. Title, Subtitle & Action Coordinates
     // -------------------------------------------------------------
     final isRtl = Directionality.maybeOf(context) == TextDirection.rtl;
+
+    final elasticScale = 1.0 + (overscrollAmount * 0.0014).clamp(0.0, 0.12);
 
     final titleBaseTop = 50.0 + (elasticStretch * 0.35);
     const titleInlineTop = 14.0;
@@ -239,17 +238,13 @@ class AppleMorphingGlassHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(currentRadius),
               border: border,
               boxShadow: shadows,
-              gradient: t > 0.05
+              gradient: (t > 0.05 && !isDark)
                   ? LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.white.withValues(
-                          alpha: (isDark ? 0.14 : 0.75) * t,
-                        ),
-                        Colors.white.withValues(
-                          alpha: (isDark ? 0.04 : 0.20) * t,
-                        ),
+                        Colors.white.withValues(alpha: 0.75 * t),
+                        Colors.white.withValues(alpha: 0.20 * t),
                         Colors.transparent,
                       ],
                       stops: const [0.0, 0.03, 0.45],

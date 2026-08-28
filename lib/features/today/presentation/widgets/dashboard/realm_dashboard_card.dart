@@ -232,7 +232,7 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
           final maxW =
               constraints.maxWidth.isFinite ? constraints.maxWidth : 360.0;
           final dialSize =
-              math.min(maxW * 0.40, widget.height - 58).clamp(96.0, 126.0);
+              math.min(maxW * 0.40, widget.height - 62).clamp(88.0, 118.0);
 
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -240,7 +240,7 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
             child: Container(
               width: double.infinity,
               height: widget.height,
-              padding: const EdgeInsets.fromLTRB(10, 10, 14, 10),
+              padding: const EdgeInsets.fromLTRB(10, 8, 14, 8),
               decoration: BoxDecoration(
                 color: colors.surfaceElevated,
                 borderRadius: BorderRadius.circular(24),
@@ -842,7 +842,7 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
               isDarkMode: isDark,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           _buildManageButton(isDark),
         ],
       ),
@@ -1068,8 +1068,8 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
   Widget _buildManageButton(bool isDark) {
     return _NeuTapButton(
       isDark: isDark,
-      height: 32,
-      radius: 16,
+      height: 30,
+      radius: 15,
       onTap: _openManagementSheet,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8),

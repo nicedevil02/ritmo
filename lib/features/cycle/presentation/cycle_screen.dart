@@ -951,6 +951,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   : Directionality(
                       textDirection: TextDirection.rtl,
                       child: ListView(
+                        physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
                         padding: EdgeInsets.fromLTRB(
                           10,
                           topPadding + (isPregnancyActive ? 104.0 : 190.0),

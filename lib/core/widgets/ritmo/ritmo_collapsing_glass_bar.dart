@@ -1,7 +1,7 @@
 // =============================================================================
 //  ritmo_collapsing_glass_bar.dart
-//  هدر داینامیک لارج تایتل شیشه‌ای اپل با ترنزیشن فیزیکی کپسولی یکپارچه
-//  (Apple Dynamic Large Title Morphing Glass Header)
+//  هدر داینامیک لارج تایتل شیشه‌ای اپل با ترنزیشن فیزیکی کپسولی و کشسانی فنری
+//  (Apple Dynamic Large Title Morphing Glass Header with Elastic Overscroll)
 // =============================================================================
 
 import 'dart:ui';
@@ -120,14 +120,8 @@ class RitmoVibrancyActionButton extends StatelessWidget {
   }
 }
 
-/// هدر داینامیک لارج تایتل شیشه‌ای اپل با ترنزیشن فیزیکی کپسولی یکپارچه
-/// (Apple Dynamic Large Title Morphing Glass Header)
-///
-/// قابلیت‌ها:
-/// ۱. در بالای صفحه (Scroll = 0): کاملاً شفاف و باز، تیتر بزرگ ۲۷pt در پایین و تب‌ها چسبیده زیر آن.
-/// ۲. فاز اول اسکرول: تشکیل یک کپسول شیشه‌ای واحد که هم دکمه‌ها/تیتر و هم **نوار تب‌ها** درون آن قرار دارند.
-/// ۳. اسکرول بیشتر به پایین: همان کپسول شیشه‌ای به صورت نرم ارتفاعش کم شده و تب‌ها داخلش جمع می‌شوند (تک‌خطی).
-/// ۴. اسکرول معکوس به بالا در هر جای صفحه: همان کپسول دوباره باز شده و نوار تب‌ها داخل انتهای آن ظاهر می‌شود.
+/// هدر داینامیک لارج تایتل شیشه‌ای اپل با ترنزیشن فیزیکی کپسولی و کشسانی فنری
+/// (Apple Dynamic Large Title Morphing Glass Header with Elastic Overscroll)
 class RitmoAppleMorphingGlassHeader extends StatelessWidget {
   const RitmoAppleMorphingGlassHeader({
     super.key,
@@ -166,20 +160,24 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
     final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
     final topInset = MediaQuery.paddingOf(context).top;
 
-    // پیشرفت تشکیل کپسول از ۰.۰ (سکون) تا ۱.۰ (کپسول تشکیل شده)
-    final rawT = (scrollOffset / collapseDistance).clamp(0.0, 1.0);
+    // محاسبه کشسانی فنری اووراسکرول (Elastic Overscroll Rubber-Banding)
+    final isOverscrolling = scrollOffset < 0;
+    final overscrollAmount = isOverscrolling ? (-scrollOffset).clamp(0.0, 150.0) : 0.0;
+    final elasticStretch = overscrollAmount * 0.42;
+    final elasticScale = 1.0 + (overscrollAmount * 0.0012).clamp(0.0, 0.09);
+
+    // پیشرفت اسکرول رو به پایین از ۰.۰ (سکون) تا ۱.۰ (کپسول کامل)
+    final effectivePositiveOffset = scrollOffset.clamp(0.0, 500.0);
+    final rawT = (effectivePositiveOffset / collapseDistance).clamp(0.0, 1.0);
     final t = Curves.easeInOutCubic.transform(rawT);
 
     final hasTabs = tabs != null;
     final hasSubtitle = subtitle != null;
 
-    // محاسبه ارتفاع کپسول در حالات مختلف:
-    // ۱. در حالت بالای صفحه (t = 0): ارتفاع باز کامل (۱۶۴ یا ۱۱۴)
-    // ۲. در حالت کپسول با تب‌های باز (t = 1 و isTabsExpanded = true): ارتفاع ۱۰۸ پیکسل
-    // ۳. در حالت کپسول فشرده تک‌خطی (t = 1 و isTabsExpanded = false): ارتفاع ۵۴ پیکسل
+    // محاسبه ارتفاع کپسول هدر به همراه کشسانی اووراسکرول
     final double targetHeight;
     if (t < 0.99) {
-      final restingHeight = hasTabs ? (hasSubtitle ? 168.0 : 156.0) : (hasSubtitle ? 112.0 : 96.0);
+      final restingHeight = (hasTabs ? (hasSubtitle ? 168.0 : 156.0) : (hasSubtitle ? 112.0 : 96.0)) + elasticStretch;
       final activeCapsuleHeight = hasTabs ? 108.0 : 54.0;
       targetHeight = lerpDouble(restingHeight, activeCapsuleHeight, t)!;
     } else {
@@ -240,12 +238,15 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
           : null;
     }
 
-    // مختصات پیوسته ترنزیشن تیتر
+    // مختصات پیوسته ترنزیشن و کشسانی تیتر
+    final titleBaseTop = 50.0 + (elasticStretch * 0.32);
     final titleRight = lerpDouble(14.0, 52.0, t)!;
-    final titleTop = lerpDouble(50.0, 14.0, t)!;
+    final titleTop = lerpDouble(titleBaseTop, 14.0, t)!;
     final titleFontSize = lerpDouble(27.0, 16.5, t)!;
 
     final subtitleOpacity = (1.0 - (2.4 * rawT)).clamp(0.0, 1.0);
+    final subtitleTop = 86.0 + (elasticStretch * 0.55);
+
     final showTabsInCapsule = hasTabs && (t < 0.99 || isTabsExpanded);
 
     return Directionality(
@@ -264,7 +265,7 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
               sigmaY: effectiveBlur,
             ),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 260),
+              duration: isOverscrolling ? Duration.zero : const Duration(milliseconds: 260),
               curve: Curves.easeInOutCubic,
               height: targetHeight,
               width: double.infinity,
@@ -316,44 +317,48 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
                     ),
                   ),
 
-                  // ۲. ترنزیشن فیزیکی تیتر (Title Morphing)
+                  // ۲. ترنزیشن فیزیکی تیتر همراه با افکت کشسانی فنری (Title Elastic Morphing)
                   Positioned(
                     top: titleTop,
                     right: titleRight,
                     left: lerpDouble(14.0, 100.0, t),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            title,
-                            style: TextStyle(
-                              fontFamily: 'Vazirmatn',
-                              fontSize: titleFontSize,
-                              fontWeight: t > 0.4 ? FontWeight.w800 : FontWeight.w900,
-                              letterSpacing: -0.4,
-                              color: titleColor ??
-                                  (isDark ? Colors.white : const Color(0xFF0F172A)),
+                    child: Transform.scale(
+                      scale: isOverscrolling ? elasticScale : 1.0,
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              title,
+                              style: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontSize: titleFontSize,
+                                fontWeight: t > 0.4 ? FontWeight.w800 : FontWeight.w900,
+                                letterSpacing: -0.4,
+                                color: titleColor ??
+                                    (isDark ? Colors.white : const Color(0xFF0F172A)),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        if (statusBadge != null) ...[
-                          const SizedBox(width: 6),
-                          Opacity(
-                            opacity: t,
-                            child: statusBadge,
-                          ),
+                          if (statusBadge != null) ...[
+                            const SizedBox(width: 6),
+                            Opacity(
+                              opacity: t,
+                              child: statusBadge,
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
 
-                  // ۳. زیرعنوان تیتر بزرگ (محوشونده با اسکرول)
+                  // ۳. زیرعنوان تیتر بزرگ همراه با کشسانی به سمت پایین
                   if (hasSubtitle && subtitleOpacity > 0.01)
                     Positioned(
-                      top: 86,
+                      top: subtitleTop,
                       right: 14,
                       left: 14,
                       child: Opacity(
@@ -374,16 +379,16 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
                       ),
                     ),
 
-                  // ۴. نوار تب‌ها داخل انتهای همان کپسول شیشه‌ای واحد
+                  // ۴. نوار تب‌ها داخل انتهای همان کپسول با کشسانی فنری
                   if (hasTabs)
                     AnimatedPositioned(
-                      duration: const Duration(milliseconds: 260),
+                      duration: isOverscrolling ? Duration.zero : const Duration(milliseconds: 260),
                       curve: Curves.easeInOutCubic,
                       bottom: showTabsInCapsule ? 6.0 : -60.0,
                       right: 6,
                       left: 6,
                       child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 200),
+                        duration: isOverscrolling ? Duration.zero : const Duration(milliseconds: 200),
                         opacity: showTabsInCapsule ? 1.0 : 0.0,
                         child: tabs,
                       ),

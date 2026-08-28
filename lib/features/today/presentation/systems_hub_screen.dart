@@ -67,6 +67,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
 
   bool _isSearching = false;
   String _searchQuery = '';
+  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
 
   @override
   bool get wantKeepAlive => true;
@@ -278,6 +279,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
   void dispose() {
     RitmoEvents.routineChanges.removeListener(_onRoutineChanges);
     _controller.dispose();
+    _scrollOffset.dispose();
     super.dispose();
   }
 
@@ -436,6 +438,12 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     super.build(context);
     final colors = context.colors;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final contentTopPadding = topPadding + 130.0;
+    final avatarPath = _settingsMap['user_avatar_path'];
+    final userName = _settingsMap['user_name'] ?? '';
+    final hasAvatarFile =
+        _avatarFileExists && avatarPath != null && avatarPath.isNotEmpty;
 
     if (_isLoading) {
       return const Scaffold(
@@ -448,252 +456,278 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(14, 16, 14, 100),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(colors),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: _showModulesManagementSheet,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
+        body: Stack(
+          children: [
+            // ۱. محتوای اسکرول‌شونده هاب سیستم‌ها با ژست‌های کشسانی
+            Positioned.fill(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification.metrics.axis == Axis.vertical) {
+                    _scrollOffset.value = notification.metrics.pixels;
+                  }
+                  return false;
+                },
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
                   ),
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? colors.card.withValues(alpha: 0.6)
-                        : colors.surface.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: colors.primary.withValues(
-                        alpha: isDarkMode ? 0.2 : 0.15,
-                      ),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.primary.withValues(
-                          alpha: isDarkMode ? 0.08 : 0.04,
-                        ),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
+                  padding: EdgeInsets.fromLTRB(14, contentTopPadding, 14, 100),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          CupertinoIcons.square_grid_2x2,
-                          color: colors.primary,
-                          size: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'مدیریت ماژول‌ها و بخش‌ها',
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.bold,
-                                color: colors.textPrimary,
+                      if (_isSearching) ...[
+                        _buildSearchBar(colors),
+                        const SizedBox(height: 14),
+                      ],
+                      GestureDetector(
+                        onTap: _showModulesManagementSheet,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? colors.card.withValues(alpha: 0.6)
+                                : colors.surface.withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: colors.primary.withValues(
+                                alpha: isDarkMode ? 0.2 : 0.15,
                               ),
+                              width: 1,
                             ),
-                            const SizedBox(height: 1),
-                            Text(
-                              'فعال یا غیرفعال‌سازی سیستم‌های کلی زندگی ریتمو',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: colors.textSecondary,
+                            boxShadow: [
+                              BoxShadow(
+                                color: colors.primary.withValues(
+                                  alpha: isDarkMode ? 0.08 : 0.04,
+                                ),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  color: colors.primary.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  CupertinoIcons.square_grid_2x2,
+                                  color: colors.primary,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'مدیریت ماژول‌ها و بخش‌ها',
+                                      style: TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: colors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 1),
+                                    Text(
+                                      'فعال یا غیرفعال‌سازی سیستم‌های کلی زندگی ریتمو',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: colors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                color: colors.textSecondary.withValues(alpha: 0.5),
+                                size: 13,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: colors.textSecondary.withValues(alpha: 0.5),
-                        size: 13,
-                      ),
+                      const SizedBox(height: 14),
+                      _buildModulesGrid(colors, isDarkMode),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
-              _buildModulesGrid(colors, isDarkMode),
+            ),
+
+            // ۲. هدر شیشه‌ای داینامیک اپل با ترنزیشن فیزیکی و کشسانی اووراسکرول
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: AnimatedBuilder(
+                animation: _scrollOffset,
+                builder: (context, _) {
+                  return RitmoAppleMorphingGlassHeader(
+                    title: 'سیستم‌ها',
+                    subtitle: 'تمام سیستم‌های فعال و قابل مدیریت زندگی شما',
+                    scrollOffset: _scrollOffset.value,
+                    leading: _buildAvatarLeading(
+                      colors,
+                      hasAvatarFile,
+                      avatarPath,
+                      userName,
+                    ),
+                    actions: [
+                      RitmoVibrancyActionButton(
+                        icon: _isSearching ? CupertinoIcons.xmark : CupertinoIcons.search,
+                        tooltip: _isSearching ? 'بستن جستجو' : 'جستجو در سیستم‌ها',
+                        onTap: () {
+                          setState(() {
+                            _isSearching = !_isSearching;
+                            if (!_isSearching) _searchQuery = '';
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 6),
+                      RitmoVibrancyActionButton(
+                        icon: CupertinoIcons.slider_horizontal_3,
+                        tooltip: 'مدیریت ماژول‌ها',
+                        onTap: _showModulesManagementSheet,
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarLeading(
+    RitmoColors colors,
+    bool hasAvatarFile,
+    String? avatarPath,
+    String userName,
+  ) {
+    return Semantics(
+      button: true,
+      label: 'پروفایل و تنظیمات',
+      child: GestureDetector(
+        onTap: () {
+          RitmoHapticsPolicy.tap();
+          Navigator.push(
+            context,
+            CupertinoPageRoute(
+              builder: (_) => SettingsScreen(
+                onFactoryReset: widget.onLogout,
+                themeRepository: widget.themeRepository,
+                localeRepository: widget.localeRepository,
+              ),
+            ),
+          ).then((_) {
+            if (mounted) _loadAllData();
+          });
+        },
+        child: Container(
+          height: 38,
+          width: 38,
+          padding: const EdgeInsets.all(1.8),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: colors.energyGradient),
+            boxShadow: [
+              BoxShadow(
+                color: colors.energyGradient.first.withValues(
+                  alpha: 0.28,
+                ),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
             ],
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colors.bg,
+              image: hasAvatarFile && avatarPath != null
+                  ? DecorationImage(
+                      image: ResizeImage(
+                        FileImage(File(avatarPath)),
+                        width: 120,
+                        height: 120,
+                      ),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: hasAvatarFile
+                ? null
+                : Center(
+                    child: Text(
+                      userName.isNotEmpty ? userName[0] : '؟',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader(RitmoColors colors) {
-    if (_isSearching) {
-      return Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: colors.card.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colors.border.withValues(alpha: 0.5)),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
-          children: [
-            Icon(CupertinoIcons.search, color: colors.textSecondary, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                autofocus: true,
-                style: TextStyle(color: colors.textPrimary, fontSize: 13.5),
-                decoration: const InputDecoration(
-                  hintText: 'جستجو در سیستم‌ها...',
-                  hintStyle: TextStyle(color: Colors.white38, fontSize: 12),
-                  border: InputBorder.none,
-                ),
-                onChanged: (val) {
-                  setState(() {
-                    _searchQuery = val.trim();
-                  });
-                },
+  Widget _buildSearchBar(RitmoColors colors) {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.border.withValues(alpha: 0.5)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          Icon(CupertinoIcons.search, color: colors.textSecondary, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              autofocus: true,
+              style: TextStyle(color: colors.textPrimary, fontSize: 13.5),
+              decoration: const InputDecoration(
+                hintText: 'جستجو در سیستم‌ها...',
+                hintStyle: TextStyle(color: Colors.white38, fontSize: 12),
+                border: InputBorder.none,
               ),
-            ),
-            IconButton(
-              icon: Icon(
-                CupertinoIcons.xmark,
-                color: colors.textSecondary,
-                size: 18,
-              ),
-              onPressed: () {
+              onChanged: (val) {
                 setState(() {
-                  _isSearching = false;
-                  _searchQuery = '';
+                  _searchQuery = val.trim();
                 });
               },
             ),
-          ],
-        ),
-      );
-    }
-
-    final avatarPath = _settingsMap['user_avatar_path'];
-    final userName = _settingsMap['user_name'] ?? '';
-    final hasAvatarFile =
-        _avatarFileExists && avatarPath != null && avatarPath.isNotEmpty;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Semantics(
-              button: true,
-              label: 'پروفایل و تنظیمات',
-              child: GestureDetector(
-                onTap: () {
-                  RitmoHapticsPolicy.tap();
-                  Navigator.push(
-                    context,
-                    CupertinoPageRoute(
-                      builder: (_) => SettingsScreen(
-                        onFactoryReset: widget.onLogout,
-                        themeRepository: widget.themeRepository,
-                        localeRepository: widget.localeRepository,
-                      ),
-                    ),
-                  ).then((_) {
-                    if (mounted) _loadAllData();
-                  });
-                },
-                child: Container(
-                  height: 46,
-                  width: 46,
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(colors: colors.energyGradient),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.energyGradient.first.withValues(
-                          alpha: 0.28,
-                        ),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: colors.bg,
-                      image: hasAvatarFile
-                          ? DecorationImage(
-                              image: ResizeImage(
-                                FileImage(File(avatarPath)),
-                                width: 120,
-                                height: 120,
-                              ),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: hasAvatarFile
-                        ? null
-                        : Center(
-                            child: Text(
-                              userName.isNotEmpty ? userName[0] : '؟',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: colors.primary,
-                              ),
-                            ),
-                          ),
-                  ),
-                ),
-              ),
+          ),
+          IconButton(
+            icon: Icon(
+              CupertinoIcons.xmark,
+              color: colors.textSecondary,
+              size: 18,
             ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'سیستم‌ها',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                Text(
-                  'تمام سیستم‌های فعال و قابل مدیریت زندگی شما',
-                  style: TextStyle(fontSize: 11, color: colors.textSecondary),
-                ),
-              ],
-            ),
-          ],
-        ),
-        IconButton(
-          icon: Icon(CupertinoIcons.search, color: colors.textPrimary),
-          onPressed: () {
-            setState(() {
-              _isSearching = true;
-            });
-          },
-        ),
-      ],
+            onPressed: () {
+              setState(() {
+                _isSearching = false;
+                _searchQuery = '';
+              });
+            },
+          ),
+        ],
+      ),
     );
   }
 

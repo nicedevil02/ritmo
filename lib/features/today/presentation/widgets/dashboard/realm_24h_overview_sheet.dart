@@ -253,6 +253,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
 
   void _confirmDeleteRealm(RealmData realm) async {
     await HapticFeedback.heavyImpact();
+    if (!mounted) return;
     final connectedCount = _routineCounts[realm.id] ?? 0;
 
     final confirm = await showDialog<bool>(

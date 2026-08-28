@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -62,6 +61,10 @@ import 'package:ritmo/features/today/presentation/widgets/daily_reflection_sheet
 import 'package:ritmo/features/today/presentation/widgets/dashboard/ai_day_planner_launcher.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/assistant_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_header.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/features/search/presentation/global_search_screen.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/energy/presentation/widgets/quick_log_sheet.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_module_summary.dart';
@@ -155,6 +158,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
   bool _rhythmScoreHasData = false;
   List<Map<String, dynamic>> _completionsToday = [];
   List<DashboardModuleSummary> _moduleSummaries = [];
+  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
 
   @override
   void initState() {
@@ -184,6 +188,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
     _inboxSubscription?.cancel();
     _agendaSubscription?.cancel();
     RitmoEvents.routineChanges.removeListener(_onRoutineChanges);
+    _scrollOffset.dispose();
     super.dispose();
   }
 
@@ -736,49 +741,93 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
     ];
   }
 
-  /// هدر چسبان: با اسکرول به نوار شیشهای مات با خط مویی پایین تبدیل میشود.
-  Widget _buildStickyHeader(BuildContext context, bool isScrolled) {
-    final colors = context.colors;
-
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: isScrolled ? 18 : 0,
-          sigmaY: isScrolled ? 18 : 0,
-        ),
-        child: AnimatedContainer(
-          duration: RitmoMotion.effective(context, RitmoMotion.state),
-          curve: RitmoMotion.standard,
-          padding: const EdgeInsets.fromLTRB(
-            14,
-            RitmoSpacing.sm,
-            14,
-            RitmoSpacing.sm,
-          ),
+  /// آواتار با هالهٔ گرادیان انرژی در هدر کپسولی شیشه‌ای
+  Widget _buildAvatarLeading(
+    RitmoColors colors,
+    bool hasAvatarFile,
+    String? avatarPath,
+    String userName,
+  ) {
+    return Semantics(
+      button: true,
+      label: 'پروفایل و تنظیمات',
+      child: GestureDetector(
+        onTap: () {
+          RitmoHaptics.tap();
+          _showMoreSheet();
+        },
+        child: Container(
+          height: 38,
+          width: 38,
+          padding: const EdgeInsets.all(1.8),
           decoration: BoxDecoration(
-            color: isScrolled
-                ? colors.background.withValues(alpha: 0.72)
-                : Colors.transparent,
-            border: Border(
-              bottom: BorderSide(
-                color: isScrolled
-                    ? colors.border.withValues(alpha: 0.6)
-                    : Colors.transparent,
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: colors.energyGradient),
+            boxShadow: [
+              BoxShadow(
+                color: colors.energyGradient.first.withValues(alpha: 0.28),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-            ),
+            ],
           ),
-          child: DashboardHeader(
-            userName: _settingsMap['user_name'] ?? 'کاربر',
-            avatarPath: _settingsMap['user_avatar_path'],
-            avatarFileExists: _avatarFileExists,
-            unreadInboxCount: _unreadInboxCount,
-            onAvatarTap: _showMoreSheet,
-            onBellTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const InboxScreen()),
-              ).then((_) => _updateUnreadCount());
-            },
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colors.bg,
+              image: hasAvatarFile && avatarPath != null
+                  ? DecorationImage(
+                      image: ResizeImage(
+                        FileImage(File(avatarPath)),
+                        width: 120,
+                        height: 120,
+                      ),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: hasAvatarFile
+                ? null
+                : Center(
+                    child: Text(
+                      userName.isNotEmpty ? userName[0] : '؟',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// نشان زنگوله اعلان‌ها با شمارش پیام‌های خوانده‌نشده
+  Widget? _buildBellBadge(RitmoColors colors, bool isDark) {
+    if (_unreadInboxCount <= 0) return null;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+      decoration: BoxDecoration(
+        color: colors.primary,
+        borderRadius: BorderRadius.circular(RitmoRadius.pill),
+        border: Border.all(
+          color: isDark ? const Color(0xFF1E222A) : Colors.white,
+          width: 1.5,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          _unreadInboxCount > 9
+              ? '۹+'
+              : toPersianDigits(_unreadInboxCount.toString()),
+          style: TextStyle(
+            color: colors.onPrimary,
+            fontSize: 9.0,
+            height: 1.1,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),
@@ -793,7 +842,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
         textDirection: TextDirection.rtl,
         child: SingleChildScrollView(
           physics: NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(14, 16, 14, 140),
+          padding: EdgeInsets.fromLTRB(10, 16, 10, 140),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -814,21 +863,21 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                   RitmoSkeleton(width: 92, height: 46, borderRadius: 23),
                 ],
               ),
-              SizedBox(height: RitmoSpacing.xl),
+              SizedBox(height: 16),
               // کارت تمرکز اکنون
               RitmoSkeleton(
                 width: double.infinity,
                 height: 208,
                 borderRadius: 24,
               ),
-              SizedBox(height: RitmoSpacing.md),
+              SizedBox(height: 16),
               // نبض امروز
               RitmoSkeleton(
                 width: double.infinity,
                 height: 122,
                 borderRadius: 20,
               ),
-              SizedBox(height: RitmoSpacing.md),
+              SizedBox(height: 16),
               // نوار میانبرها
               Row(
                 children: [
@@ -865,16 +914,16 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                   ),
                 ],
               ),
-              SizedBox(height: RitmoSpacing.xl),
+              SizedBox(height: 16),
               // تیتر بخش + کارت مسیر امروز
               RitmoSkeleton(width: 140, height: 14, borderRadius: 4),
-              SizedBox(height: RitmoSpacing.md),
+              SizedBox(height: 16),
               RitmoSkeleton(
                 width: double.infinity,
                 height: 136,
                 borderRadius: 20,
               ),
-              SizedBox(height: RitmoSpacing.xl),
+              SizedBox(height: 16),
               // ۳ ردیف کار امروز
               RitmoSkeleton(
                 width: double.infinity,
@@ -951,44 +1000,94 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
         ),
     ];
 
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final contentTopPadding = topPadding + 130.0;
+    final locale = Localizations.localeOf(context);
+    final isFa = locale.languageCode == 'fa';
+    final l10n = AppLocalizations.of(context);
+
+    // تاریخ
+    final String dateStr;
+    if (isFa) {
+      final jalali = Jalali.now();
+      dateStr =
+          '${ShamsiWeek.nameOf(jalali.weekDay)} ${toPersianDigits(jalali.day.toString())} ${jalali.formatter.mN}';
+    } else {
+      final now = DateTime.now();
+      const weekdays = [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ];
+      const months = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ];
+      dateStr =
+          '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}';
+    }
+
+    final tg = DashboardHeader.timeGreeting(DateTime.now());
+    final userName = _settingsMap['user_name'] ?? 'کاربر';
+    final greetingLine = isFa
+        ? '${tg.greeting}، $userName ${tg.emoji}'
+        : (l10n != null ? '${l10n.welcomeUser(userName)} ${tg.emoji}' : 'Welcome, $userName ${tg.emoji}');
+    final avatarPath = _settingsMap['user_avatar_path'];
+    final hasAvatarFile =
+        _avatarFileExists && avatarPath != null && avatarPath.isNotEmpty;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Directionality(
-        textDirection: Localizations.localeOf(context).languageCode == 'fa'
-            ? TextDirection.rtl
-            : TextDirection.ltr,
-        child: RefreshIndicator(
-          onRefresh: _loadDashboardData,
-          color: colors.primary,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              // هدر چسبان — همیشه در دسترس، با شیشهٔ مات هنگام اسکرول
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _StickyHeaderDelegate(
-                  height: 76,
-                  builder: _buildStickyHeader,
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  10,
-                  RitmoSpacing.md,
-                  10,
-                  140,
-                ),
+        textDirection: isFa ? TextDirection.rtl : TextDirection.ltr,
+        child: Stack(
+          children: [
+            // ۱. محتوای اسکرول‌شونده داشبورد همراه با ژست‌های کشسانی
+            Positioned.fill(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification.metrics.axis == Axis.vertical) {
+                    _scrollOffset.value = notification.metrics.pixels;
+                  }
+                  return false;
+                },
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  slivers: [
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(
+                        10,
+                        contentTopPadding,
+                        10,
+                        140,
+                      ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // ۰. هشدارهای بحرانی — بالاتر از همه چیز
                     if (alerts.isNotEmpty) ...[
                       _enter(0, CriticalAlertsCard(alerts: alerts)),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 16),
                     ],
 
                     // ۰.۵ میانبر شبانه — فقط در پنجرهٔ پیش‌خواب دیده می‌شود
                     SleepTonightShortcut(
-                      padding: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.only(bottom: 16),
                       onOpen: () => _openModuleScreen('sleep'),
                     ),
 
@@ -1009,11 +1108,11 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
 
                     // ۲. تمرکز اکنون — تنها اقدام مهم این لحظه
                     _enter(2, HomeFocusHero(data: heroData)),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
 
                     // ۳. کارت قلمرو فعلی — بالای نبض امروز
                     _enter(
@@ -1032,7 +1131,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                         realms: _allRealms,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
 
                     // ۴. نبض امروز — وضعیت روز در یک نگاه
                     _enter(
@@ -1085,7 +1184,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
 
                     // ۵. کارت انرژی فعلی — زیر نبض امروز
                     _enter(
@@ -1100,7 +1199,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                             _showEnergyManagementSheet(isDarkMode),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
 
                     // ۶. میانبرهای سریع
                     _enter(
@@ -1109,7 +1208,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                         actions: _quickActions(colors, isDarkMode),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
 
                     // ۷. کارهای امروز (تیتر و اکشنها داخل خودش)
                     _enter(
@@ -1127,11 +1226,11 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
 
                     // ۸. کارت تجربهٔ امروز
                     _enter(8, const TodayExperienceCard()),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
 
                     // ۹. سیستمهای فعال (تیتر داخل خودش)
                     _enter(
@@ -1141,7 +1240,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                         onModuleTap: _openModuleScreen,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
 
                     // ۱۰. دستیار — فقط بریفینگ؛ ورود به گفتوگو کار داک پایین است
                     _enter(
@@ -1177,7 +1276,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
 
                     // ۱۰. جزئیات امروز — فقط وقتی چیزی برای گفتن هست
                     if (detailsChildren.isNotEmpty) ...[
-                      const SizedBox(height: RitmoSpacing.lg),
+                      const SizedBox(height: 16),
                       _enter(
                         10,
                         TodayDetailsSection(
@@ -1189,14 +1288,14 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                               i++
                             ) ...[
                               if (i > 0)
-                                const SizedBox(height: RitmoSpacing.md),
+                                const SizedBox(height: 16),
                               detailsChildren[i],
                             ],
                           ],
                         ),
                       ),
                     ],
-                    const SizedBox(height: RitmoSpacing.lg),
+                    const SizedBox(height: 16),
                     AdService.instance.getBannerAd(),
                   ]),
                 ),
@@ -1205,7 +1304,61 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
           ),
         ),
       ),
-    );
+
+      // ۲. هدر شیشه‌ای داینامیک اپل با ترنزیشن فیزیکی و کشسانی اووراسکرول
+      Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        child: AnimatedBuilder(
+          animation: _scrollOffset,
+          builder: (context, _) {
+            return RitmoAppleMorphingGlassHeader(
+              title: greetingLine,
+              subtitle: dateStr,
+              scrollOffset: _scrollOffset.value,
+              leading: _buildAvatarLeading(
+                colors,
+                hasAvatarFile,
+                avatarPath,
+                userName,
+              ),
+              actions: [
+                RitmoVibrancyActionButton(
+                  icon: CupertinoIcons.search,
+                  tooltip: 'جستجو',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const GlobalSearchScreen(),
+                      ),
+                    ).then((_) => _loadDashboardData());
+                  },
+                ),
+                const SizedBox(width: 6),
+                RitmoVibrancyActionButton(
+                  icon: CupertinoIcons.bell,
+                  tooltip: 'صندوق ورودی',
+                  badge: _buildBellBadge(colors, isDarkMode),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const InboxScreen(),
+                      ),
+                    ).then((_) => _updateUnreadCount());
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    ],
+  ),
+),
+);
   }
 
   /// G-2: عنوان خوانا برای تایمر فعال — بهجای نمایش itemId خام.
@@ -1863,36 +2016,4 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
   }
 }
 
-// ---------------------------------------------------------------------------
-// SLIVER DELEGATES
-// ---------------------------------------------------------------------------
 
-/// هدر چسبان صفحهٔ خانه با ارتفاع ثابت؛ وضعیت «اسکرولشده» را به سازنده میدهد
-/// تا بتواند شیشهٔ مات و خط جداکننده را نرم روشن/خاموش کند.
-class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
-  const _StickyHeaderDelegate({required this.height, required this.builder});
-
-  final double height;
-  final Widget Function(BuildContext context, bool isScrolled) builder;
-
-  @override
-  double get minExtent => height;
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox(
-      height: height,
-      child: builder(context, shrinkOffset > 4 || overlapsContent),
-    );
-  }
-
-  @override
-  bool shouldRebuild(covariant _StickyHeaderDelegate oldDelegate) => true;
-}

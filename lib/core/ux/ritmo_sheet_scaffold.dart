@@ -188,6 +188,7 @@ class RitmoSheetScaffold extends StatelessWidget {
 /// parallax shift) when a modal sheet is pushed on top of it.
 class AppleCardDeckHost extends StatelessWidget {
   final Widget child;
+  final Animation<double>? animation;
   final double scaleDownFactor; // 0.07 -> scale reaches 0.93
   final double topCornerRadius; // 18.0
   final double maxDimAlpha; // 0.25
@@ -195,6 +196,7 @@ class AppleCardDeckHost extends StatelessWidget {
   const AppleCardDeckHost({
     super.key,
     required this.child,
+    this.animation,
     this.scaleDownFactor = 0.07,
     this.topCornerRadius = 18.0,
     this.maxDimAlpha = 0.25,
@@ -203,16 +205,16 @@ class AppleCardDeckHost extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final route = ModalRoute.of(context);
-    final secondaryAnim = route?.secondaryAnimation;
+    final effectiveAnim = animation ?? route?.secondaryAnimation;
 
-    if (secondaryAnim == null) {
+    if (effectiveAnim == null) {
       return child;
     }
 
     return AnimatedBuilder(
-      animation: secondaryAnim,
+      animation: effectiveAnim,
       builder: (context, staticChild) {
-        final progress = secondaryAnim.value;
+        final progress = effectiveAnim.value;
         if (progress <= 0.0) {
           return staticChild!;
         }

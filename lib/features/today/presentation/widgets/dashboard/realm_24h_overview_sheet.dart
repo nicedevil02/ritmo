@@ -15,6 +15,7 @@ import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/repositories/realm_repository.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_24h_dial.dart';
 import 'package:ritmo/features/today/presentation/widgets/realm_edit_form_sheet.dart';
 
@@ -23,9 +24,9 @@ class _DayTimelineBlock {
   const _DayTimelineBlock({
     required this.startMinute,
     required this.endMinute,
-    required this.realm,
-    required this.schedule,
-    required this.isFreeTime,
+    this.realm,
+    this.schedule,
+    this.isFreeTime = false,
   });
 
   final int startMinute;
@@ -87,7 +88,8 @@ class Realm24hOverviewSheet extends StatefulWidget {
   State<Realm24hOverviewSheet> createState() => _Realm24hOverviewSheetState();
 }
 
-class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
+class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
+    with SingleTickerProviderStateMixin {
   final RealmRepository _repository = RealmRepository();
   late List<RealmData> _realms;
   late List<RealmScheduleData> _schedules;
@@ -98,6 +100,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
   bool _showSleepSuggestion = false;
   bool _isSuggestionDismissed = false;
 
+  late AnimationController _childSheetAnimController;
   Timer? _ticker;
   DateTime _now = DateTime.now();
   late int _selectedWeekday; // 1: Mon ... 7: Sun
@@ -117,6 +120,11 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
   void initState() {
     super.initState();
     _selectedWeekday = _now.weekday;
+    _childSheetAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+      reverseDuration: const Duration(milliseconds: 300),
+    );
     _realms = List.from(widget.realms);
     _schedules = List.from(widget.schedules);
     _realmState = widget.realmState;
@@ -205,6 +213,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(
         initialSchedules: initialSchedules,
         onSave: (realm, schedules) async {
@@ -225,6 +234,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(
         initialRealm: realm,
         initialSchedules: realmSchedules,
@@ -544,6 +554,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
 
   @override
   void dispose() {
+    _childSheetAnimController.dispose();
     _ticker?.cancel();
     super.dispose();
   }
@@ -926,7 +937,10 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: containerWidget,
+      child: AppleCardDeckHost(
+        animation: _childSheetAnimController,
+        child: containerWidget,
+      ),
     );
   }
 

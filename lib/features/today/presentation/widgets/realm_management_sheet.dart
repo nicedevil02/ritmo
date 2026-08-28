@@ -6,6 +6,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/repositories/realm_repository.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/today/presentation/widgets/realm_day_bar_widget.dart';
 import 'package:ritmo/features/today/presentation/widgets/realm_edit_form_sheet.dart';
 
@@ -23,7 +24,8 @@ class RealmManagementSheet extends StatefulWidget {
   State<RealmManagementSheet> createState() => _RealmManagementSheetState();
 }
 
-class _RealmManagementSheetState extends State<RealmManagementSheet> {
+class _RealmManagementSheetState extends State<RealmManagementSheet>
+    with SingleTickerProviderStateMixin {
   final RealmRepository _repository = RealmRepository();
 
   bool _isLoading = true;
@@ -37,18 +39,25 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
   bool _showSleepSuggestion = false;
   bool _isSuggestionDismissed = false;
 
+  late AnimationController _childSheetAnimController;
   int _selectedWeekday = DateTime.now().weekday; // Default to today's weekday
   Timer? _minuteTimer;
 
   @override
   void initState() {
     super.initState();
+    _childSheetAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+      reverseDuration: const Duration(milliseconds: 300),
+    );
     _loadData();
     _startMinuteTimer();
   }
 
   @override
   void dispose() {
+    _childSheetAnimController.dispose();
     _minuteTimer?.cancel();
     super.dispose();
   }
@@ -171,6 +180,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(
         initialRealm: defaultRealm,
         initialSchedules: [defaultSchedule],
@@ -200,6 +210,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(
         onSave: (realm, schedules) async {
           await _repository.saveRealm(realm, schedules);
@@ -217,6 +228,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(
         initialRealm: realm,
         initialSchedules: realmSchedules,
@@ -578,11 +590,14 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom,
+      child: AppleCardDeckHost(
+        animation: _childSheetAnimController,
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(context).bottom,
+          ),
+          child: containerWidget,
         ),
-        child: containerWidget,
       ),
     );
   }

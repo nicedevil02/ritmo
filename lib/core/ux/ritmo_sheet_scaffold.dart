@@ -184,14 +184,15 @@ class RitmoSheetScaffold extends StatelessWidget {
 }
 
 /// Wraps any screen or navigation shell to provide the authentic Apple iOS 26 Card Deck
-/// background transformation (7% scale-down, 20dp rounded top corners, upward shift,
-/// and ambient depth) when a modal sheet is pushed on top of it.
+/// background transformation (7% scale-down, 20dp rounded top corners, optical Depth-of-Field
+/// defocus, and upward parallax shift) when a modal sheet is pushed on top of it.
 class AppleCardDeckHost extends StatelessWidget {
   final Widget child;
   final Animation<double>? animation;
   final double scaleDownFactor; // 0.07 -> scale reaches 0.93
   final double topCornerRadius; // 20.0
   final double shiftUpDistance; // 18.0pt upward shift for Apple deck peeking
+  final double maxBlurSigma; // 2.5pt optical depth-of-field defocus
 
   const AppleCardDeckHost({
     super.key,
@@ -200,6 +201,7 @@ class AppleCardDeckHost extends StatelessWidget {
     this.scaleDownFactor = 0.07,
     this.topCornerRadius = 20.0,
     this.shiftUpDistance = 18.0,
+    this.maxBlurSigma = 2.5,
   });
 
   @override
@@ -222,6 +224,15 @@ class AppleCardDeckHost extends StatelessWidget {
         final scale = 1.0 - (scaleDownFactor * progress);
         final radius = topCornerRadius * progress;
         final translateY = -shiftUpDistance * progress;
+        final blur = (maxBlurSigma * progress).clamp(0.0, 10.0);
+
+        Widget filteredContent = staticChild!;
+        if (blur > 0.01) {
+          filteredContent = ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: filteredContent,
+          );
+        }
 
         return Transform.translate(
           offset: Offset(0, translateY),
@@ -230,7 +241,7 @@ class AppleCardDeckHost extends StatelessWidget {
             alignment: Alignment.topCenter,
             child: ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
-              child: staticChild,
+              child: filteredContent,
             ),
           ),
         );

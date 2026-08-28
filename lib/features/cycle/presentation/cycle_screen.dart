@@ -953,7 +953,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       child: ListView(
                         padding: EdgeInsets.fromLTRB(
                           10,
-                          topPadding + (isPregnancyActive ? 90.0 : 172.0),
+                          topPadding + (isPregnancyActive ? 104.0 : 190.0),
                           10,
                           bottomPadding + 14.0,
                         ),

@@ -193,6 +193,8 @@ class AppleCardDeckHost extends StatelessWidget {
   final double topCornerRadius; // 18.0
   final double maxDimAlpha; // 0.25
 
+  final double shiftUpDistance; // 12.0pt upward shift for deck peeking
+
   const AppleCardDeckHost({
     super.key,
     required this.child,
@@ -200,6 +202,7 @@ class AppleCardDeckHost extends StatelessWidget {
     this.scaleDownFactor = 0.07,
     this.topCornerRadius = 18.0,
     this.maxDimAlpha = 0.25,
+    this.shiftUpDistance = 12.0,
   });
 
   @override
@@ -221,7 +224,7 @@ class AppleCardDeckHost extends StatelessWidget {
 
         final scale = 1.0 - (scaleDownFactor * progress);
         final radius = topCornerRadius * progress;
-        final translateY = 10.0 * progress;
+        final translateY = -shiftUpDistance * progress;
         final dimOpacity = (maxDimAlpha * progress).clamp(0.0, 1.0);
 
         return Transform.translate(

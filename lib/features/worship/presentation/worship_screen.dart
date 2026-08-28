@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -125,17 +124,6 @@ class _WorshipScreenState extends State<WorshipScreen> {
     _loadData();
   }
 
-  Future<void> _refresh() async {
-    unawaited(HapticFeedback.mediumImpact());
-    try {
-      await WorshipEngine.instance.refreshPrayerTimes(date: _worshipDay?.date);
-      _onDataChanged();
-    } catch (e) {
-      debugPrint('Error refreshing worship screen: $e');
-    }
-  }
-
-
   void _openCityPicker(int tabIndex) {
     showModalBottomSheet(
       context: context,
@@ -211,105 +199,100 @@ class _WorshipScreenState extends State<WorshipScreen> {
             children: [
               // Layer 1: Body Content
               Positioned.fill(
-                child: RefreshIndicator(
-                  color: colors.primary,
-                  backgroundColor: colors.surface,
-                  onRefresh: _refresh,
-                  child: NotificationListener<ScrollNotification>(
-                    onNotification: (notification) {
-                      if (notification.metrics.axis == Axis.vertical) {
-                        _scrollOffset.value = notification.metrics.pixels;
-                      }
-                      return false;
-                    },
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                      padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
-                      child: Column(
-                        children: [
-                          if (_isLoading && _worshipDay == null) ...[
-                            const RitmoSkeletonCard(height: 320),
-                            const SizedBox(height: 16),
-                          ] else if (_worshipDay != null) ...[
-                            // 1. PRAYER ARC HERO
-                            PrayerArcHero(
-                              day: _worshipDay!,
-                              onPracticeToggle: (practiceId, isDone) async {
-                                final dayDate = _worshipDay!.date;
-                                String group = 'FAJR';
-                                if (practiceId.contains('dhuhr') || practiceId.contains('asr')) group = 'DHUHR_ASR';
-                                if (practiceId.contains('maghrib') || practiceId.contains('isha')) group = 'MAGHRIB_ISHA';
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification.metrics.axis == Axis.vertical) {
+                      _scrollOffset.value = notification.metrics.pixels;
+                    }
+                    return false;
+                  },
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                    padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                    child: Column(
+                      children: [
+                        if (_isLoading && _worshipDay == null) ...[
+                          const RitmoSkeletonCard(height: 320),
+                          const SizedBox(height: 16),
+                        ] else if (_worshipDay != null) ...[
+                          // 1. PRAYER ARC HERO
+                          PrayerArcHero(
+                            day: _worshipDay!,
+                            onPracticeToggle: (practiceId, isDone) async {
+                              final dayDate = _worshipDay!.date;
+                              String group = 'FAJR';
+                              if (practiceId.contains('dhuhr') || practiceId.contains('asr')) group = 'DHUHR_ASR';
+                              if (practiceId.contains('maghrib') || practiceId.contains('isha')) group = 'MAGHRIB_ISHA';
 
-                                if (isDone) {
-                                  final target = await PrayerTarget.fromGroupKey(group, dayDate);
-                                  if (!context.mounted) return;
-                                  final res = await PrayerSheet.show(context, target);
-                                  if (res == true) {
-                                    _onDataChanged();
-                                  }
-                                } else {
-                                  final target = await PrayerTarget.fromGroupKey(group, dayDate);
-                                  for (final pId in target.practiceIds) {
-                                    await WorshipEngine.instance.clearLog(practiceId: pId, date: dayDate);
-                                  }
+                              if (isDone) {
+                                final target = await PrayerTarget.fromGroupKey(group, dayDate);
+                                if (!context.mounted) return;
+                                final res = await PrayerSheet.show(context, target);
+                                if (res == true) {
                                   _onDataChanged();
                                 }
-                              },
-                              onTravellerToggle: (isTraveller) async {
-                                final currentCtx = _worshipDay?.context;
-                                final dayDate = _worshipDay?.date ?? DateTime.now();
-                                final ctx = WorshipDayContext(
-                                  date: currentCtx?.date ?? dayDate,
-                                  isTraveller: isTraveller,
-                                  prayerExempt: currentCtx?.prayerExempt ?? false,
-                                  fastingExempt: isTraveller || (currentCtx?.fastingExempt ?? false),
-                                  reason: isTraveller ? 'TRAVEL' : currentCtx?.reason,
-                                );
-                                await WorshipEngine.instance.setDayContext(ctx);
+                              } else {
+                                final target = await PrayerTarget.fromGroupKey(group, dayDate);
+                                for (final pId in target.practiceIds) {
+                                  await WorshipEngine.instance.clearLog(practiceId: pId, date: dayDate);
+                                }
                                 _onDataChanged();
-                              },
-                              onOpenCityPicker: () => _openCityPicker(0),
-                            ),
-                            const SizedBox(height: 16),
+                              }
+                            },
+                            onTravellerToggle: (isTraveller) async {
+                              final currentCtx = _worshipDay?.context;
+                              final dayDate = _worshipDay?.date ?? DateTime.now();
+                              final ctx = WorshipDayContext(
+                                date: currentCtx?.date ?? dayDate,
+                                isTraveller: isTraveller,
+                                prayerExempt: currentCtx?.prayerExempt ?? false,
+                                fastingExempt: isTraveller || (currentCtx?.fastingExempt ?? false),
+                                reason: isTraveller ? 'TRAVEL' : currentCtx?.reason,
+                              );
+                              await WorshipEngine.instance.setDayContext(ctx);
+                              _onDataChanged();
+                            },
+                            onOpenCityPicker: () => _openCityPicker(0),
+                          ),
+                          const SizedBox(height: 16),
 
-                            // 2. NIGHT PRAYER RITUAL CARD
-                            if (_isNightPrayerEnabled) ...[
-                              NightPrayerCard(
-                                day: _worshipDay!,
-                                onComplete: _onDataChanged,
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-
-                            // 3. SOLAR / LUNAR INTEGRATED CALENDAR
-                            WorshipSolarCalendar(
-                              initialJalali: Jalali.now(),
-                              hijriOffset: WorshipEngine.instance.hijriOffset,
-                              qamariNightText: _getQamariNightText(),
-                              onChanged: _onDataChanged,
-                            ),
-                            const SizedBox(height: 16),
-
-                            // 4. QURAN & DHIKR ("تلاوت و اذکار")
-                            QuranDhikrSection(
-                              onChanged: _onDataChanged,
-                            ),
-                            const SizedBox(height: 16),
-
-                            // 5. SCHEDULED MUSTAHABAT ("مستحبات برنامه‌ریزی‌شده")
-                            MustahabSection(
-                              onChanged: _onDataChanged,
-                            ),
-                            const SizedBox(height: 16),
-
-                            // 6. DEBTS ("جبران")
-                            WorshipDebtsSection(
-                              onChanged: _onDataChanged,
+                          // 2. NIGHT PRAYER RITUAL CARD
+                          if (_isNightPrayerEnabled) ...[
+                            NightPrayerCard(
+                              day: _worshipDay!,
+                              onComplete: _onDataChanged,
                             ),
                             const SizedBox(height: 16),
                           ],
+
+                          // 3. SOLAR / LUNAR INTEGRATED CALENDAR
+                          WorshipSolarCalendar(
+                            initialJalali: Jalali.now(),
+                            hijriOffset: WorshipEngine.instance.hijriOffset,
+                            qamariNightText: _getQamariNightText(),
+                            onChanged: _onDataChanged,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // 4. QURAN & DHIKR ("تلاوت و اذکار")
+                          QuranDhikrSection(
+                            onChanged: _onDataChanged,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // 5. SCHEDULED MUSTAHABAT ("مستحبات برنامه‌ریزی‌شده")
+                          MustahabSection(
+                            onChanged: _onDataChanged,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // 6. DEBTS ("جبران")
+                          WorshipDebtsSection(
+                            onChanged: _onDataChanged,
+                          ),
+                          const SizedBox(height: 16),
                         ],
-                      ),
+                      ],
                     ),
                   ),
                 ),

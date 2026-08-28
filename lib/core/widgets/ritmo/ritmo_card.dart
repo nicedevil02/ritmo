@@ -1104,6 +1104,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
                             Expanded(
                               child: _buildTactileRealmPill(
                                 isDark: isDark,
+                                colors: colors,
                                 label: activeChipLabel,
                                 icon: activeChipIcon,
                                 color: effectiveColor,
@@ -1205,7 +1206,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
   //  اجزای فیزیکی سه‌بعدی کارت (Tactile Physical Primitives)
   // ───────────────────────────────────────────────────────────────────────────
 
-  /// پیل وضعیت فعال با نقطه سه‌بعدی سبز درخشان
+  /// پیل وضعیت فعال با نقطه سه‌بعدی سبز درخشان (متصل به رنگ فعال)
   Widget _buildTactileStatusPill({
     required bool isDark,
     required String statusLabel,
@@ -1220,12 +1221,18 @@ class RitmoNeuMasterCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [const Color(0xFF0F3B32), const Color(0xFF072721)]
-              : [const Color(0xFFE8F7F3), const Color(0xFFD2F0E7)],
+              ? [
+                  Color.lerp(color, Colors.black, 0.65)!,
+                  Color.lerp(color, Colors.black, 0.82)!,
+                ]
+              : [
+                  Color.lerp(color, Colors.white, 0.88)!,
+                  Color.lerp(color, Colors.white, 0.74)!,
+                ],
         ),
         border: Border.all(
           color: isDark
-              ? const Color(0xFF10B981).withValues(alpha: 0.35)
+              ? color.withValues(alpha: 0.40)
               : Colors.white,
           width: 1.0,
         ),
@@ -1254,10 +1261,10 @@ class RitmoNeuMasterCard extends StatelessWidget {
             height: 8,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF0D9488),
+              color: color,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0D9488).withValues(alpha: 0.6),
+                  color: color.withValues(alpha: 0.6),
                   blurRadius: 4,
                   offset: const Offset(0.5, 0.5),
                 ),
@@ -1271,7 +1278,9 @@ class RitmoNeuMasterCard extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w900,
               fontFamily: 'Vazirmatn',
-              color: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0D5A4C),
+              color: isDark
+                  ? Color.lerp(color, Colors.white, 0.55)!
+                  : Color.lerp(color, Colors.black, 0.35)!,
             ),
           ),
         ],
@@ -1279,9 +1288,10 @@ class RitmoNeuMasterCard extends StatelessWidget {
     );
   }
 
-  /// پیل نام قلمروی فعال با آیکون ماه
+  /// پیل نام قلمروی فعال با آیکون ماه (هماهنگ با سطح تم)
   Widget _buildTactileRealmPill({
     required bool isDark,
+    required RitmoColors colors,
     required String label,
     required IconData icon,
     required Color color,
@@ -1295,8 +1305,14 @@ class RitmoNeuMasterCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [const Color(0xFF2B3648), const Color(0xFF1B2330)]
-              : [Colors.white, const Color(0xFFE9EDF5)],
+              ? [
+                  Color.lerp(colors.surfaceElevated, Colors.white, 0.08)!,
+                  Color.lerp(colors.surfaceElevated, Colors.black, 0.15)!,
+                ]
+              : [
+                  Colors.white,
+                  Color.lerp(colors.surfaceElevated, const Color(0xFFE2E8F0), 0.4)!,
+                ],
         ),
         border: Border.all(
           color: isDark
@@ -1327,7 +1343,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
           Icon(
             icon,
             size: 15,
-            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+            color: isDark ? colors.textSecondary : const Color(0xFF475569),
           ),
           const SizedBox(width: 6),
           Expanded(
@@ -1339,7 +1355,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
                 fontSize: 11.5,
                 fontWeight: FontWeight.w800,
                 fontFamily: 'Vazirmatn',
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                color: colors.textPrimary,
               ),
             ),
           ),
@@ -1348,7 +1364,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
     );
   }
 
-  /// پیل فیزیکی بازه زمانی با محفظه آیکون ساعت
+  /// پیل فیزیکی بازه زمانی با محفظه آیکون ساعت (هماهنگ با سطح تم)
   Widget _buildTactileTimePill({
     required bool isDark,
     required RitmoColors colors,
@@ -1363,8 +1379,14 @@ class RitmoNeuMasterCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [const Color(0xFF283244), const Color(0xFF1A222E)]
-              : [Colors.white, const Color(0xFFE9EEF6)],
+              ? [
+                  Color.lerp(colors.surfaceElevated, Colors.white, 0.08)!,
+                  Color.lerp(colors.surfaceElevated, Colors.black, 0.15)!,
+                ]
+              : [
+                  Colors.white,
+                  Color.lerp(colors.surfaceElevated, const Color(0xFFE2E8F0), 0.4)!,
+                ],
         ),
         border: Border.all(
           color: isDark
@@ -1394,7 +1416,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
           Icon(
             CupertinoIcons.clock,
             size: 15,
-            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            color: isDark ? colors.textSecondary : const Color(0xFF64748B),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -1406,7 +1428,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.5,
                 fontFamily: 'Vazirmatn',
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: colors.textPrimary,
               ),
             ),
           ),
@@ -1430,12 +1452,18 @@ class RitmoNeuMasterCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [const Color(0xFF0E382F), const Color(0xFF07241E)]
-              : [const Color(0xFFE6F7F2), const Color(0xFFD2EFE7)],
+              ? [
+                  Color.lerp(color, Colors.black, 0.68)!,
+                  Color.lerp(color, Colors.black, 0.84)!,
+                ]
+              : [
+                  Color.lerp(color, Colors.white, 0.88)!,
+                  Color.lerp(color, Colors.white, 0.74)!,
+                ],
         ),
         border: Border.all(
           color: isDark
-              ? const Color(0xFF10B981).withValues(alpha: 0.35)
+              ? color.withValues(alpha: 0.40)
               : Colors.white,
           width: 1.0,
         ),
@@ -1469,14 +1497,20 @@ class RitmoNeuMasterCard extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: isDark
-                    ? [const Color(0xFF165345), const Color(0xFF0D3B31)]
-                    : [const Color(0xFFD3EFE7), const Color(0xFFBFE7DC)],
+                    ? [
+                        Color.lerp(color, Colors.black, 0.55)!,
+                        Color.lerp(color, Colors.black, 0.75)!,
+                      ]
+                    : [
+                        Color.lerp(color, Colors.white, 0.78)!,
+                        Color.lerp(color, Colors.white, 0.60)!,
+                      ],
               ),
               boxShadow: [
                 BoxShadow(
                   color: isDark
                       ? Colors.black.withValues(alpha: 0.35)
-                      : const Color(0xFF0D9488).withValues(alpha: 0.20),
+                      : color.withValues(alpha: 0.20),
                   offset: const Offset(1, 1.5),
                   blurRadius: 3,
                 ),
@@ -1485,7 +1519,9 @@ class RitmoNeuMasterCard extends StatelessWidget {
             child: Icon(
               CupertinoIcons.hourglass,
               size: 13,
-              color: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0D5A4C),
+              color: isDark
+                  ? Color.lerp(color, Colors.white, 0.65)!
+                  : Color.lerp(color, Colors.black, 0.40)!,
             ),
           ),
           const SizedBox(width: 8),
@@ -1495,7 +1531,9 @@ class RitmoNeuMasterCard extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w700,
               fontFamily: 'Vazirmatn',
-              color: isDark ? const Color(0xFF99F6E4) : const Color(0xFF0D5A4C),
+              color: isDark
+                  ? Color.lerp(color, Colors.white, 0.70)!
+                  : Color.lerp(color, Colors.black, 0.35)!,
             ),
           ),
           const SizedBox(width: 6),
@@ -1506,7 +1544,9 @@ class RitmoNeuMasterCard extends StatelessWidget {
                 fontSize: 13.5,
                 fontWeight: FontWeight.w900,
                 fontFamily: 'Vazirmatn',
-                color: isDark ? Colors.white : const Color(0xFF042F2E),
+                color: isDark
+                    ? Colors.white
+                    : Color.lerp(color, Colors.black, 0.60)!,
               ),
             ),
           ),
@@ -1561,6 +1601,8 @@ class RitmoNeuMasterCard extends StatelessWidget {
     required bool isDark,
     required double size,
   }) {
+    final colors = context.colors;
+
     return Container(
       width: size,
       height: size,
@@ -1570,7 +1612,10 @@ class RitmoNeuMasterCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [const Color(0xFF161C26), const Color(0xFF222B3A)]
+              ? [
+                  Color.lerp(colors.surfaceElevated, Colors.black, 0.25)!,
+                  Color.lerp(colors.surfaceElevated, Colors.black, 0.05)!,
+                ]
               : [const Color(0xFFE2E7F0), Colors.white],
         ),
         boxShadow: [
@@ -1603,7 +1648,10 @@ class RitmoNeuMasterCard extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: isDark
-                    ? [const Color(0xFF2A3446), const Color(0xFF1C2432)]
+                    ? [
+                        Color.lerp(colors.surfaceElevated, Colors.white, 0.08)!,
+                        Color.lerp(colors.surfaceElevated, Colors.black, 0.15)!,
+                      ]
                     : [Colors.white, const Color(0xFFE9EDF5)],
               ),
               boxShadow: [

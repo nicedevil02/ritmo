@@ -25,16 +25,17 @@ class RealmNeu {
   static const accentDeep = Color(0xFF4F46E5);
   static const accentBright = Color(0xFF818CF8);
 
-  /// سطح پایهٔ کارت‌ها
+  /// سطح پایهٔ کارت‌ها (هماهنگ با تم تیره)
   static Color base(bool dark) =>
-      dark ? const Color(0xFF1B202B) : const Color(0xFFEFF1F5);
+      dark ? const Color(0xFF1E232D) : const Color(0xFFEFF1F5);
 
   /// لبهٔ روشن (بالا-چپ) برای گرادیان سطح
-  static Color high(bool dark) => dark ? const Color(0xFF262E3C) : Colors.white;
+  static Color high(bool dark) =>
+      dark ? const Color(0xFF282F3D) : Colors.white;
 
   /// گودی / شیار (پس‌زمینهٔ حلقه)
   static Color low(bool dark) =>
-      dark ? const Color(0xFF141921) : const Color(0xFFE2E6EE);
+      dark ? const Color(0xFF13171F) : const Color(0xFFE2E6EE);
 
   static Color shadowDark(bool dark) => dark
       ? Colors.black.withValues(alpha: 0.55)
@@ -662,7 +663,7 @@ class _NeuDialPainter extends CustomPainter {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: isDarkMode
-            ? const [Color(0xFF262E3C), Color(0xFF171C25)]
+            ? const [Color(0xFF282F3D), Color(0xFF1E232D)]
             : const [Colors.white, Color(0xFFE9ECF3)],
       ).createShader(hubRect);
     canvas.drawCircle(center, hubRadius, hubBody);

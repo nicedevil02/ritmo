@@ -221,7 +221,7 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
       border = t > 0.05
           ? Border.all(
               color: (isDark
-                      ? Colors.white.withValues(alpha: 0.10)
+                      ? colors.border
                       : Colors.white.withValues(alpha: 0.70))
                   .withValues(alpha: t),
               width: 1.0,

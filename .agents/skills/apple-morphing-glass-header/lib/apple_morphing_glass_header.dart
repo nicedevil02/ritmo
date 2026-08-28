@@ -180,7 +180,7 @@ class AppleMorphingGlassHeader extends StatelessWidget {
       border = t > 0.05
           ? Border.all(
               color: (isDark
-                      ? Colors.white.withValues(alpha: 0.10)
+                      ? theme.colorScheme.outline.withValues(alpha: 0.25)
                       : Colors.white.withValues(alpha: 0.70))
                   .withValues(alpha: t),
               width: 1.0,

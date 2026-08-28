@@ -216,7 +216,7 @@ class RitmoSheetScaffold extends StatelessWidget {
                 borderRadius: sheetRadius,
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.18)
+                      ? colors.border
                       : Colors.white.withValues(alpha: 0.70),
                   width: 1.0,
                 ),

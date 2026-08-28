@@ -152,9 +152,8 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
-    final behavior = context.behavior;
-    final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
-    final isGlassEnabled = !behavior.reduceTransparency && !highContrast;
+    final isGlassEnabled = context.isGlassEnabled;
+    final materialSpec = context.materials.regular;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final destinations = _destinations;
     final slotCount = destinations.length;
@@ -169,18 +168,26 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
         : colors.surfaceSunken;
 
     final Color shadowDarkAmbient = isDark
-        ? Colors.black.withValues(alpha: 0.55)
-        : colors.shadow.withValues(alpha: 0.35);
+        ? Colors.black.withValues(alpha: 0.50)
+        : colors.primary.withValues(alpha: 0.10);
     final Color shadowDarkDirect = isDark
-        ? Colors.black.withValues(alpha: 0.40)
-        : colors.shadow.withValues(alpha: 0.25);
+        ? Colors.black.withValues(alpha: 0.35)
+        : colors.primary.withValues(alpha: 0.05);
 
     final Color borderTop = isDark
         ? Colors.white.withValues(alpha: 0.18)
-        : Colors.white.withValues(alpha: 0.95);
+        : Colors.white.withValues(alpha: 0.70);
     final Color borderBottom = isDark
         ? Colors.white.withValues(alpha: 0.04)
-        : colors.border.withValues(alpha: 0.35);
+        : Colors.white.withValues(alpha: 0.20);
+
+    final double glassAlpha = (materialSpec.tintAlpha * (isDark ? 0.95 : 1.15)).clamp(0.35, 0.92);
+    final Color glassFillTop = colors.glassTint.withValues(
+      alpha: (glassAlpha * 0.92).clamp(0.05, 0.95),
+    );
+    final Color glassFillBottom = colors.glassTint.withValues(
+      alpha: glassAlpha,
+    );
 
     final Color inactiveColor = colors.textTertiary;
     final Color indicatorColor = colors.primary;
@@ -199,6 +206,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
 
     final navH = context.metrics.navBarHeight;
     final pillH = navH - _kBottomGap;
+    final double effectiveBlur = materialSpec.sigma.clamp(0.0, 50.0);
 
     return SizedBox(
       height: navH + bottomInset,
@@ -257,17 +265,13 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                             ),
                             child: BackdropFilter(
                               filter: ui.ImageFilter.blur(
-                                sigmaX: 32.0,
-                                sigmaY: 32.0,
+                                sigmaX: effectiveBlur,
+                                sigmaY: effectiveBlur,
                               ),
                               child: CustomPaint(
                                 painter: _NeumorphicPillPainter(
-                                  fillGradientTop: pillTop.withValues(
-                                    alpha: isDark ? 0.70 : 0.80,
-                                  ),
-                                  fillGradientBottom: pillBottom.withValues(
-                                    alpha: isDark ? 0.84 : 0.88,
-                                  ),
+                                  fillGradientTop: glassFillTop,
+                                  fillGradientBottom: glassFillBottom,
                                   borderGradientTop: borderTop,
                                   borderGradientBottom: borderBottom,
                                   moundCenterX: ncx,

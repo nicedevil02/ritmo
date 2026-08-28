@@ -16,7 +16,6 @@ import 'package:ritmo/core/ai/web_bridge/chatgpt_mini_preview.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
@@ -1641,10 +1640,12 @@ $suggestedSteps''';
                   ).viewInsets.bottom;
                   final keyboardVisible =
                       isKeyboardOpen || keyboardInset > 0 || rawViewInset > 0;
+                  final bottomInset = MediaQuery.paddingOf(context).bottom;
+                  final navH = context.metrics.navBarHeight;
                   final effectiveBottomPadding = keyboardVisible
                       ? 8.0
                       : (widget.isTab
-                            ? (RitmoShellMetrics.navBarHeight + 8.0)
+                            ? (navH + bottomInset + 16.0)
                             : 16.0);
 
                   return SafeArea(

@@ -244,106 +244,103 @@ class _CoursesScreenState extends State<CoursesScreen> {
           children: [
             // Layer 1: Body Content
             Positioned.fill(
-              child: RefreshIndicator(
-                onRefresh: _loadAllData,
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: (notification) {
-                    if (notification.metrics.axis == Axis.vertical) {
-                      _scrollOffset.value = notification.metrics.pixels;
-                    }
-                    return false;
-                  },
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                    padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Floating Timer Bar Widget (Fixes D-9 & 7.3)
-                        const FloatingTimerBar(),
-                        const SizedBox(height: 12),
-                        if (_isLoading) ...[
-                          const RitmoSkeletonCard(height: 150),
-                          const SizedBox(height: 24),
-                          const RitmoSkeletonList(itemCount: 3, itemHeight: 90),
-                        ] else if (_activeCourses.isEmpty && _completedCourses.isEmpty && _archivedCourses.isEmpty) ...[
-                          RitmoEmptyState(
-                            icon: CupertinoIcons.book,
-                            title: 'هنوز هیچ دوره‌ای ایجاد نکرده‌اید',
-                            description: 'کتاب‌ها، مهارت‌ها و اهداف یادگیری خود را در قالب دوره ثبت کنید تا روند پیشرفت مطالعه خود را ردیابی کنید.',
-                            ctaLabel: 'ایجاد اولین دوره',
-                            onCta: _openCreateCourseSheet,
-                          ),
-                        ] else ...[
-                          // 1. "What to Read Now" Single Decision Hero Card (Fixes 7.2)
-                          if (_activeCourses.isNotEmpty) ...[
-                            WhatToReadNowCard(
-                              courses: _activeCourses,
-                              sessionsMap: _courseSessionsMap,
-                              currentEnergyLevel: _currentEnergyLevel,
-                              todayStr: todayStr,
-                              onStartSession: _loadAllData,
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-
-                          // 2. Weekly aggregates card
-                          if (_engineOutput != null)
-                            CoursesWeeklyHero(
-                              weeklyDoneSessions: _engineOutput!.weeklyDoneSessions,
-                              weeklyTargetSessions: _engineOutput!.weeklyTargetSessions,
-                              weeklyStudyMinutes: _engineOutput!.weeklyStudyMinutes,
-                              studyStreakDays: _engineOutput!.studyStreakDays,
-                              estimatedMinutesIncluded: _engineOutput!.estimatedMinutesIncluded,
-                            ),
-
-                          const SizedBox(height: 16),
-
-                          // 3. Jalali Weekly Heatmap Widget (Fixes 7.5)
-                          JalaliWeeklyHeatmap(
-                            sessions: allSessions,
-                            today: DateTime.now(),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // 4. Today's Sessions Section
-                          if (_engineOutput != null)
-                            TodaySessionsSection(
-                              todaySessions: _engineOutput!.todaySessions,
-                              courses: [..._activeCourses, ..._completedCourses],
-                              currentEnergyLevel: _currentEnergyLevel,
-                              onRefresh: _loadAllData,
-                            ),
-
-                          const SizedBox(height: 24),
-
-                          // 5. Active Courses List (Fixes 7.1)
-                          ActiveCoursesSection(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification.metrics.axis == Axis.vertical) {
+                    _scrollOffset.value = notification.metrics.pixels;
+                  }
+                  return false;
+                },
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                  padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Floating Timer Bar Widget (Fixes D-9 & 7.3)
+                      const FloatingTimerBar(),
+                      const SizedBox(height: 12),
+                      if (_isLoading) ...[
+                        const RitmoSkeletonCard(height: 150),
+                        const SizedBox(height: 24),
+                        const RitmoSkeletonList(itemCount: 3, itemHeight: 90),
+                      ] else if (_activeCourses.isEmpty && _completedCourses.isEmpty && _archivedCourses.isEmpty) ...[
+                        RitmoEmptyState(
+                          icon: CupertinoIcons.book,
+                          title: 'هنوز هیچ دوره‌ای ایجاد نکرده‌اید',
+                          description: 'کتاب‌ها، مهارت‌ها و اهداف یادگیری خود را در قالب دوره ثبت کنید تا روند پیشرفت مطالعه خود را ردیابی کنید.',
+                          ctaLabel: 'ایجاد اولین دوره',
+                          onCta: _openCreateCourseSheet,
+                        ),
+                      ] else ...[
+                        // 1. "What to Read Now" Single Decision Hero Card (Fixes 7.2)
+                        if (_activeCourses.isNotEmpty) ...[
+                          WhatToReadNowCard(
                             courses: _activeCourses,
-                            courseSessionsMap: _courseSessionsMap,
-                            onCourseTap: (course) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CourseDetailScreen(course: course),
-                                ),
-                              );
-                            },
+                            sessionsMap: _courseSessionsMap,
+                            currentEnergyLevel: _currentEnergyLevel,
+                            todayStr: todayStr,
+                            onStartSession: _loadAllData,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // 2. Weekly aggregates card
+                        if (_engineOutput != null)
+                          CoursesWeeklyHero(
+                            weeklyDoneSessions: _engineOutput!.weeklyDoneSessions,
+                            weeklyTargetSessions: _engineOutput!.weeklyTargetSessions,
+                            weeklyStudyMinutes: _engineOutput!.weeklyStudyMinutes,
+                            studyStreakDays: _engineOutput!.studyStreakDays,
+                            estimatedMinutesIncluded: _engineOutput!.estimatedMinutesIncluded,
                           ),
 
-                          const SizedBox(height: 24),
+                        const SizedBox(height: 16),
 
-                          // 6. Completed and Archived Courses List (Fixes N1)
-                          CompletedCoursesSection(
-                            completedCourses: _completedCourses,
-                            archivedCourses: _archivedCourses,
-                            courseSessionsMap: _courseSessionsMap,
+                        // 3. Jalali Weekly Heatmap Widget (Fixes 7.5)
+                        JalaliWeeklyHeatmap(
+                          sessions: allSessions,
+                          today: DateTime.now(),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // 4. Today's Sessions Section
+                        if (_engineOutput != null)
+                          TodaySessionsSection(
+                            todaySessions: _engineOutput!.todaySessions,
+                            courses: [..._activeCourses, ..._completedCourses],
+                            currentEnergyLevel: _currentEnergyLevel,
                             onRefresh: _loadAllData,
                           ),
-                        ],
+
+                        const SizedBox(height: 24),
+
+                        // 5. Active Courses List (Fixes 7.1)
+                        ActiveCoursesSection(
+                          courses: _activeCourses,
+                          courseSessionsMap: _courseSessionsMap,
+                          onCourseTap: (course) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CourseDetailScreen(course: course),
+                              ),
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // 6. Completed and Archived Courses List (Fixes N1)
+                        CompletedCoursesSection(
+                          completedCourses: _completedCourses,
+                          archivedCourses: _archivedCourses,
+                          courseSessionsMap: _courseSessionsMap,
+                          onRefresh: _loadAllData,
+                        ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
               ),

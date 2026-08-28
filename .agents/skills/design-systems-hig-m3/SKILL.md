@@ -88,5 +88,27 @@ Widget buildAdaptiveSwitch({
 
 ---
 
-## 4. RTL & Typography Harmonization
+## 4. Ritmo Glass Design System (Liquid Glass & HIG Detents)
+
+### A. Modal Sheets & Windows Architecture (`RitmoGlassSheet` & `RitmoSheetScaffold`)
+All modal sheets, floating sheets, and dialogs in Ritmo MUST use `RitmoGlassSheet` or `RitmoSheetScaffold.present(...)`:
+- **Single Source of Truth**: `lib/core/widgets/ritmo/ritmo_glass_sheet.dart`
+- **Optics & Physics**:
+  1. **Ambient Glow Halo**: Multi-layered shadow with `colors.primary @ 0.20` + deep black contact shadow.
+  2. **Matte Slate Rim**: `#94A3B8 @ 0.16` (0.9px) in dark mode, frosted white 70% in light mode.
+  3. **Matte Specular Sheen**: Horizontal top gradient `#94A3B8 @ 0.10 -> 0.03 -> transparent`.
+  4. **Apple Grabber & Detents**: Standard `36x4` pill handle, `0.60 ↔ 0.94` snap detents, and Card-Deck transform (`AppleCardDeckHost`).
+
+```dart
+// Usage in any new window or sheet:
+RitmoGlassSheet(
+  borderRadius: BorderRadius.vertical(top: Radius.circular(RitmoRadius.card)),
+  child: myContent,
+)
+```
+
+---
+
+## 5. RTL & Typography Harmonization
 - Ensure typography scales smoothly with Persian fonts (e.g. Vazirmatn, Shabnam) while respecting standard M3 / HIG body and headline proportion scales.
+

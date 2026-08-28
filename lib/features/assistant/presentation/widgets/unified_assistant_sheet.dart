@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1079,8 +1078,6 @@ class _AssistantSheetState extends State<AssistantSheet> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
-    final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
     final content = Column(
@@ -1490,100 +1487,13 @@ class _AssistantSheetState extends State<AssistantSheet> {
       child: content,
     );
 
-    if (!isGlass) {
-      return Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: colors.surfaceElevated,
-            borderRadius: sheetRadius,
-            border: Border.all(
-              color: isDark ? colors.border : colors.divider,
-              width: 1.0,
-            ),
-          ),
-          child: wrappedContent,
-        ),
-      );
-    }
-
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.viewInsetsOf(context).bottom,
       ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: sheetRadius,
-          boxShadow: isDark
-              ? [
-                  BoxShadow(
-                    color: colors.primary.withValues(alpha: 0.20),
-                    offset: const Offset(0, -4),
-                    blurRadius: 18,
-                    spreadRadius: 0.5,
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.45),
-                    offset: const Offset(0, -2),
-                    blurRadius: 8,
-                    spreadRadius: -1,
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: colors.primary.withValues(alpha: 0.08),
-                    offset: const Offset(0, -3),
-                    blurRadius: 16,
-                  ),
-                ],
-        ),
-        child: ClipRRect(
-          borderRadius: sheetRadius,
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.glassTint,
-                borderRadius: sheetRadius,
-                border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF94A3B8).withValues(alpha: 0.16)
-                      : Colors.white.withValues(alpha: 0.70),
-                  width: isDark ? 0.9 : 1.0,
-                ),
-              ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: sheetRadius,
-                  gradient: isDark
-                      ? LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            const Color(0xFF94A3B8).withValues(alpha: 0.10),
-                            const Color(0xFF64748B).withValues(alpha: 0.03),
-                            Colors.transparent,
-                          ],
-                          stops: const [0.0, 0.04, 0.40],
-                        )
-                      : LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.75),
-                            Colors.white.withValues(alpha: 0.20),
-                            Colors.white.withValues(alpha: 0.0),
-                          ],
-                          stops: const [0.0, 0.03, 0.45],
-                        ),
-                ),
-                child: wrappedContent,
-              ),
-            ),
-          ),
-        ),
+      child: RitmoGlassSheet(
+        borderRadius: sheetRadius,
+        child: wrappedContent,
       ),
     );
   }

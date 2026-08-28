@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -88,8 +87,6 @@ class RitmoSheetScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDarkMode = context.isDark;
-    final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     final media = MediaQuery.of(context);
     const sheetRadius = BorderRadius.vertical(top: Radius.circular(24));
 
@@ -124,101 +121,16 @@ class RitmoSheetScaffold extends StatelessWidget {
       child: content,
     );
 
-    Widget containerWidget;
-    if (!isGlass) {
-      containerWidget = Container(
-        decoration: BoxDecoration(
-          color: colors.surfaceElevated,
-          borderRadius: sheetRadius,
-          border: Border.all(
-            color: isDarkMode ? colors.border : colors.divider,
-            width: 1.0,
-          ),
-        ),
-        child: sheetBody,
-      );
-    } else {
-      containerWidget = DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: sheetRadius,
-          boxShadow: isDarkMode
-              ? [
-                  BoxShadow(
-                    color: colors.primary.withValues(alpha: 0.20),
-                    offset: const Offset(0, -4),
-                    blurRadius: 18,
-                    spreadRadius: 0.5,
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.45),
-                    offset: const Offset(0, -2),
-                    blurRadius: 8,
-                    spreadRadius: -1,
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: colors.primary.withValues(alpha: 0.08),
-                    offset: const Offset(0, -3),
-                    blurRadius: 16,
-                  ),
-                ],
-        ),
-        child: ClipRRect(
-          borderRadius: sheetRadius,
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.glassTint,
-                borderRadius: sheetRadius,
-                border: Border.all(
-                  color: isDarkMode
-                      ? const Color(0xFF94A3B8).withValues(alpha: 0.16)
-                      : Colors.white.withValues(alpha: 0.70),
-                  width: isDarkMode ? 0.9 : 1.0,
-                ),
-              ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: sheetRadius,
-                  gradient: isDarkMode
-                      ? LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            const Color(0xFF94A3B8).withValues(alpha: 0.10),
-                            const Color(0xFF64748B).withValues(alpha: 0.03),
-                            Colors.transparent,
-                          ],
-                          stops: const [0.0, 0.04, 0.40],
-                        )
-                      : LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.75),
-                            Colors.white.withValues(alpha: 0.20),
-                            Colors.white.withValues(alpha: 0.0),
-                          ],
-                          stops: const [0.0, 0.03, 0.45],
-                        ),
-                ),
-                child: sheetBody,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: AnimatedPadding(
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOutCubic,
         padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
-        child: containerWidget,
+        child: RitmoGlassSheet(
+          borderRadius: sheetRadius,
+          child: sheetBody,
+        ),
       ),
     );
   }

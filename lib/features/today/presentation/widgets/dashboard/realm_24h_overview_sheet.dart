@@ -5,7 +5,6 @@
 
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -752,7 +751,6 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
     final colors = context.colors;
     final isDark = context.isDark;
     final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     final activeNowMinute = _now.hour * 60 + _now.minute;
     final inspectMinute = _scrubbedMinute ?? activeNowMinute;
     final inspectStatus = _resolveMinuteStatus(inspectMinute);
@@ -859,87 +857,19 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
       ],
     );
 
-    Widget containerWidget;
-    if (!isGlass) {
-      containerWidget = Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.90,
-        ),
-        decoration: BoxDecoration(
-          color: colors.surfaceElevated,
-          borderRadius: sheetRadius,
-          border: Border.all(
-            color: isDark ? colors.border : colors.divider,
-            width: 1.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.55 : 0.18),
-              blurRadius: 28,
-              offset: const Offset(0, -6),
-            ),
-          ],
-        ),
-        child: sheetContent,
-      );
-    } else {
-      containerWidget = Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.90,
-        ),
-        decoration: BoxDecoration(
-          borderRadius: sheetRadius,
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.35)
-                  : colors.primary.withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: sheetRadius,
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.glassTint,
-                borderRadius: sheetRadius,
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.18)
-                      : Colors.white.withValues(alpha: 0.70),
-                  width: 1.0,
-                ),
-              ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: sheetRadius,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(alpha: isDark ? 0.09 : 0.22),
-                      Colors.white.withValues(alpha: 0.0),
-                    ],
-                    stops: const [0.0, 0.40],
-                  ),
-                ),
-                child: sheetContent,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: AppleCardDeckHost(
         animation: _childSheetAnimController,
-        child: containerWidget,
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.90,
+          ),
+          child: RitmoGlassSheet(
+            borderRadius: sheetRadius,
+            child: sheetContent,
+          ),
+        ),
       ),
     );
   }

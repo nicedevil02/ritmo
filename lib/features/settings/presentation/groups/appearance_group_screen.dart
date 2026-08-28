@@ -10,6 +10,7 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
+import 'package:ritmo/features/settings/presentation/cards_showcase_screen.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_section.dart';
 
 class AppearanceGroupScreen extends StatefulWidget {
@@ -188,6 +189,41 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                   title: 'اندازهٔ متن و المان‌ها',
                   children: [
                     _buildLivePreview(context, colors, prefs),
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: m.spaceLg,
+                        vertical: m.spaceXs,
+                      ),
+                      child: RitmoCardTile(
+                        leading: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: Icon(
+                            CupertinoIcons.square_stack_3d_up_fill,
+                            size: 17,
+                            color: colors.primary,
+                          ),
+                        ),
+                        title: 'ویترین سیستم مرجع کارت‌ها',
+                        subtitle: 'مشاهده و تست استایل‌ها و فیزیک کارت‌های ریتمو',
+                        trailing: Icon(
+                          CupertinoIcons.chevron_left,
+                          size: 14,
+                          color: colors.textTertiary,
+                        ),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (_) => const CardsShowcaseScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: m.spaceLg,

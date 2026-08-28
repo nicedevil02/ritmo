@@ -37,6 +37,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
   String _cityName = 'تهران';
   Timer? _debounceTimer;
   StreamSubscription<dynamic>? _eventSub;
+  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
 
   @override
   void initState() {
@@ -61,6 +62,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
   void dispose() {
     _debounceTimer?.cancel();
     _eventSub?.cancel();
+    _scrollOffset.dispose();
     super.dispose();
   }
 
@@ -197,7 +199,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.paddingOf(context).top;
-    final contentTopPadding = topPadding + 76.0;
+    final contentTopPadding = topPadding + 130.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -213,289 +215,150 @@ class _WorshipScreenState extends State<WorshipScreen> {
                   color: colors.primary,
                   backgroundColor: colors.surface,
                   onRefresh: _refresh,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
-                    child: Column(
-                      children: [
-                        if (_isLoading && _worshipDay == null) ...[
-                          const RitmoSkeletonCard(height: 320),
-                          const SizedBox(height: 16),
-                        ] else if (_worshipDay != null) ...[
-                          // 1. PRAYER ARC HERO
-                          PrayerArcHero(
-                            day: _worshipDay!,
-                            onPracticeToggle: (practiceId, isDone) async {
-                              final dayDate = _worshipDay!.date;
-                              String group = 'FAJR';
-                              if (practiceId.contains('dhuhr') || practiceId.contains('asr')) group = 'DHUHR_ASR';
-                              if (practiceId.contains('maghrib') || practiceId.contains('isha')) group = 'MAGHRIB_ISHA';
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (notification) {
+                      if (notification.metrics.axis == Axis.vertical) {
+                        _scrollOffset.value = notification.metrics.pixels;
+                      }
+                      return false;
+                    },
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                      child: Column(
+                        children: [
+                          if (_isLoading && _worshipDay == null) ...[
+                            const RitmoSkeletonCard(height: 320),
+                            const SizedBox(height: 16),
+                          ] else if (_worshipDay != null) ...[
+                            // 1. PRAYER ARC HERO
+                            PrayerArcHero(
+                              day: _worshipDay!,
+                              onPracticeToggle: (practiceId, isDone) async {
+                                final dayDate = _worshipDay!.date;
+                                String group = 'FAJR';
+                                if (practiceId.contains('dhuhr') || practiceId.contains('asr')) group = 'DHUHR_ASR';
+                                if (practiceId.contains('maghrib') || practiceId.contains('isha')) group = 'MAGHRIB_ISHA';
 
-                              if (isDone) {
-                                final target = await PrayerTarget.fromGroupKey(group, dayDate);
-                                if (!context.mounted) return;
-                                final res = await PrayerSheet.show(context, target);
-                                if (res == true) {
+                                if (isDone) {
+                                  final target = await PrayerTarget.fromGroupKey(group, dayDate);
+                                  if (!context.mounted) return;
+                                  final res = await PrayerSheet.show(context, target);
+                                  if (res == true) {
+                                    _onDataChanged();
+                                  }
+                                } else {
+                                  final target = await PrayerTarget.fromGroupKey(group, dayDate);
+                                  for (final pId in target.practiceIds) {
+                                    await WorshipEngine.instance.clearLog(practiceId: pId, date: dayDate);
+                                  }
                                   _onDataChanged();
                                 }
-                              } else {
-                                final target = await PrayerTarget.fromGroupKey(group, dayDate);
-                                for (final pId in target.practiceIds) {
-                                  await WorshipEngine.instance.clearLog(practiceId: pId, date: dayDate);
-                                }
+                              },
+                              onTravellerToggle: (isTraveller) async {
+                                final currentCtx = _worshipDay?.context;
+                                final dayDate = _worshipDay?.date ?? DateTime.now();
+                                final ctx = WorshipDayContext(
+                                  date: currentCtx?.date ?? dayDate,
+                                  isTraveller: isTraveller,
+                                  prayerExempt: currentCtx?.prayerExempt ?? false,
+                                  fastingExempt: isTraveller || (currentCtx?.fastingExempt ?? false),
+                                  reason: isTraveller ? 'TRAVEL' : currentCtx?.reason,
+                                );
+                                await WorshipEngine.instance.setDayContext(ctx);
                                 _onDataChanged();
-                              }
-                            },
-                            onTravellerToggle: (isTraveller) async {
-                              final currentCtx = _worshipDay?.context;
-                              final dayDate = _worshipDay?.date ?? DateTime.now();
-                              final ctx = WorshipDayContext(
-                                date: currentCtx?.date ?? dayDate,
-                                isTraveller: isTraveller,
-                                prayerExempt: currentCtx?.prayerExempt ?? false,
-                                fastingExempt: isTraveller || (currentCtx?.fastingExempt ?? false),
-                                reason: isTraveller ? 'TRAVEL' : currentCtx?.reason,
-                              );
-                              await WorshipEngine.instance.setDayContext(ctx);
-                              _onDataChanged();
-                            },
-                            onOpenCityPicker: () => _openCityPicker(0),
-                          ),
-                          const SizedBox(height: 16),
+                              },
+                              onOpenCityPicker: () => _openCityPicker(0),
+                            ),
+                            const SizedBox(height: 16),
 
-                          // 2. NIGHT PRAYER RITUAL CARD
-                          if (_isNightPrayerEnabled) ...[
-                            NightPrayerCard(
-                              day: _worshipDay!,
-                              onComplete: _onDataChanged,
+                            // 2. NIGHT PRAYER RITUAL CARD
+                            if (_isNightPrayerEnabled) ...[
+                              NightPrayerCard(
+                                day: _worshipDay!,
+                                onComplete: _onDataChanged,
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+
+                            // 3. SOLAR / LUNAR INTEGRATED CALENDAR
+                            WorshipSolarCalendar(
+                              initialJalali: Jalali.now(),
+                              hijriOffset: WorshipEngine.instance.hijriOffset,
+                              qamariNightText: _getQamariNightText(),
+                              onChanged: _onDataChanged,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // 4. QURAN & DHIKR ("تلاوت و اذکار")
+                            QuranDhikrSection(
+                              onChanged: _onDataChanged,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // 5. SCHEDULED MUSTAHABAT ("مستحبات برنامه‌ریزی‌شده")
+                            MustahabSection(
+                              onChanged: _onDataChanged,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // 6. DEBTS ("جبران")
+                            WorshipDebtsSection(
+                              onChanged: _onDataChanged,
                             ),
                             const SizedBox(height: 16),
                           ],
-
-                          // 3. SOLAR / LUNAR INTEGRATED CALENDAR
-                          WorshipSolarCalendar(
-                            initialJalali: Jalali.now(),
-                            hijriOffset: WorshipEngine.instance.hijriOffset,
-                            qamariNightText: _getQamariNightText(),
-                            onChanged: _onDataChanged,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // 4. QURAN & DHIKR ("تلاوت و اذکار")
-                          QuranDhikrSection(
-                            onChanged: _onDataChanged,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // 5. SCHEDULED MUSTAHABAT ("مستحبات برنامه‌ریزی‌شده")
-                          MustahabSection(
-                            onChanged: _onDataChanged,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // 6. DEBTS ("جبران")
-                          WorshipDebtsSection(
-                            onChanged: _onDataChanged,
-                          ),
-                          const SizedBox(height: 16),
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
 
-              // Layer 2: Floating Capsule Header Island
+              // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
               Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-                    child: _buildCapsuleHeader(context, isDark, colors),
-                  ),
+                child: AnimatedBuilder(
+                  animation: _scrollOffset,
+                  builder: (context, _) {
+                    return RitmoAppleMorphingGlassHeader(
+                      title: 'عبادت و معنویت',
+                      subtitle: _worshipDay != null ? '$_cityName • ${_worshipDay!.hijri.formatted}' : 'اوقات شرعی، تقویم شمسی و قمری و اذکار',
+                      scrollOffset: _scrollOffset.value,
+                      collapseDistance: 55.0,
+                      onBack: () => Navigator.maybePop(context),
+                      actions: [
+                        RitmoVibrancyActionButton(
+                          icon: CupertinoIcons.sparkles,
+                          iconColor: colors.primary,
+                          isAiButton: true,
+                          accentColor: colors.primary,
+                          tooltip: 'دستیار معنوی هوشمند',
+                          onTap: _openAiAssistantSheet,
+                        ),
+                        const SizedBox(width: 8),
+                        RitmoVibrancyActionButton(
+                          icon: CupertinoIcons.compass,
+                          iconColor: colors.accent,
+                          tooltip: 'قبله‌نما',
+                          onTap: _openQiblaCompass,
+                        ),
+                        const SizedBox(width: 8),
+                        RitmoVibrancyActionButton(
+                          icon: CupertinoIcons.settings,
+                          iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                          tooltip: 'تنظیمات عبادات',
+                          onTap: _openWorshipSettings,
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCapsuleHeader(
-    BuildContext context,
-    bool isDark,
-    RitmoColors colors,
-  ) {
-    return RitmoGlassHeader(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-              children: [
-                if (Navigator.canPop(context))
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 38,
-                      minHeight: 38,
-                    ),
-                    icon: Icon(
-                      CupertinoIcons.arrow_right,
-                      color: isDark ? Colors.white : const Color(0xFF1D2129),
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.pop(context);
-                    },
-                  )
-                else
-                  const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'عبادت و معنویت',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16.5,
-                          letterSpacing: -0.4,
-                          color: isDark ? Colors.white : const Color(0xFF1D2129),
-                        ),
-                      ),
-                      if (_worshipDay != null)
-                        Text(
-                          '$_cityName • ${_worshipDay!.hijri.formatted}',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            color: isDark ? const Color(0xFF8E95A3) : const Color(0xFF6B7280),
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                    ],
-                  ),
-                ),
-                _buildHeaderActionButton(
-                  icon: CupertinoIcons.sparkles,
-                  iconColor: colors.primary,
-                  isAiButton: true,
-                  isDark: isDark,
-                  tooltip: 'دستیار معنوی هوشمند',
-                  onTap: _openAiAssistantSheet,
-                ),
-                _buildHeaderActionButton(
-                  icon: CupertinoIcons.compass,
-                  iconColor: colors.accent,
-                  isDark: isDark,
-                  tooltip: 'قبله‌نما',
-                  onTap: _openQiblaCompass,
-                ),
-                _buildHeaderActionButton(
-                  icon: CupertinoIcons.settings,
-                  iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                  isDark: isDark,
-                  tooltip: 'تنظیمات عبادات',
-                  onTap: _openWorshipSettings,
-                ),
-                const SizedBox(width: 2),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildHeaderActionButton({
-    required IconData icon,
-    required Color iconColor,
-    required bool isDark,
-    required VoidCallback onTap,
-    String? tooltip,
-    bool isAiButton = false,
-  }) {
-    final button = GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: _buildHeaderActionButtonContent(
-        icon: icon,
-        iconColor: iconColor,
-        isDark: isDark,
-        isAiButton: isAiButton,
-      ),
-    );
-
-    if (tooltip != null) {
-      return Tooltip(message: tooltip, child: button);
-    }
-    return button;
-  }
-
-  Widget _buildHeaderActionButtonContent({
-    required IconData icon,
-    required Color iconColor,
-    required bool isDark,
-    bool isAiButton = false,
-  }) {
-    return Container(
-      width: 36,
-      height: 36,
-      margin: const EdgeInsets.symmetric(horizontal: 3),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isDark
-            ? (isAiButton
-                ? iconColor.withValues(alpha: 0.18)
-                : const Color(0xFF22262E))
-            : (isAiButton
-                ? iconColor.withValues(alpha: 0.12)
-                : const Color(0xFFF3F5F8)),
-        border: Border.all(
-          color: isDark
-              ? (isAiButton
-                  ? iconColor.withValues(alpha: 0.40)
-                  : Colors.white.withValues(alpha: 0.08))
-              : (isAiButton
-                  ? iconColor.withValues(alpha: 0.30)
-                  : Colors.white.withValues(alpha: 0.90)),
-          width: 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.04)
-                : Colors.white.withValues(alpha: 0.95),
-            offset: const Offset(-2, -2),
-            blurRadius: 4,
-          ),
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.55)
-                : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
-            offset: const Offset(2, 2),
-            blurRadius: 4,
-          ),
-          if (isAiButton)
-            BoxShadow(
-              color: iconColor.withValues(alpha: isDark ? 0.35 : 0.22),
-              blurRadius: 10,
-              spreadRadius: 1.0,
-            ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          icon,
-          size: 18,
-          color: isAiButton
-              ? iconColor
-              : (isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280)),
         ),
       ),
     );

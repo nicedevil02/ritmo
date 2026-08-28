@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'dart:async';
@@ -725,50 +724,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     bool isDark,
     RitmoColors colors,
   ) {
-    final capsuleBgColor = isDark
-        ? const Color(0xFF1E222A).withValues(alpha: 0.86)
-        : Colors.white.withValues(alpha: 0.88);
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : Colors.white.withValues(alpha: 0.90);
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.50)
-                : const Color(0xFFCBD5E1).withValues(alpha: 0.65),
-            offset: const Offset(0, 5),
-            blurRadius: 14,
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.white.withValues(alpha: 0.90),
-            offset: const Offset(0, -1),
-            blurRadius: 3,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-            decoration: BoxDecoration(
-              color: capsuleBgColor,
-              borderRadius: BorderRadius.circular(26),
-              border: Border.all(
-                color: borderColor,
-                width: 1.0,
-              ),
-            ),
-            child: Column(
+    return RitmoGlassHeader(
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+      child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Top Row: Back Button, Title, AI, Quick Checkin, Sleep Sheet
@@ -872,9 +830,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 ),
               ],
             ),
-          ),
-        ),
-      ),
     );
   }
 

@@ -17,7 +17,10 @@ import 'package:ritmo/core/analytics/energy_analytics_engine.dart';
 import 'package:ritmo/core/analytics/insight_generation_engine.dart';
 import 'package:ritmo/core/analytics/life_balance_engine.dart';
 import 'package:ritmo/core/analytics/milestone_engine.dart';
+import 'package:ritmo/core/analytics/sleep_engine.dart';
+import 'package:ritmo/features/sleep/models/sleep_models.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/engines/engine_enums.dart';
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/core/domain/models/inbox_item.dart';
@@ -91,24 +94,17 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
   // Private Data Excluded Check
   bool _isCycleModuleEnabled = false;
-  bool _isFemale = false;
+  bool _isCycleDataVisible = false;
+  static bool _aiMigrationCompleted = false;
 
-  final Map<String, Color> _domainColors = {
-    'RELIGION': const Color(0xffFBBF24), // amber
-    'HEALTH': const Color(0xffEF4444),   // red
-    'LEARNING': const Color(0xff3B82F6), // blue
-    'WORK': const Color(0xff8B5CF6),     // purple
-    'PERSONAL': const Color(0xffEC4899), // pink
-    'FREE': const Color(0xff10B981),     // green
-  };
-
-  final Map<String, String> _domainNamesFarsi = {
-    'RELIGION': 'عبادی و معنوی',
-    'HEALTH': 'ورزش و سلامتی',
-    'LEARNING': 'آموزش و یادگیری',
-    'WORK': 'کار و پروژه‌ها',
-    'PERSONAL': 'شخصی و خانوادگی',
-    'FREE': 'تفریح و استراحت',
+  Map<String, Color> _getDomainColors(RitmoColors colors) => {
+    'RELIGION': colors.modules.worship,
+    'HEALTH': colors.modules.health,
+    'LEARNING': colors.modules.study,
+    'WORK': colors.modules.routines,
+    'PERSONAL': colors.accent,
+    'FREE': colors.modules.sports,
+    'CUSTOM': colors.primary,
   };
 
   @override
@@ -123,7 +119,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
   @override
   void dispose() {
-    AdService.instance.showInterstitialAd();
     super.dispose();
   }
 
@@ -214,7 +209,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       final unlockedMap = {for (final m in unlockedDB) m['id'] as String: m['unlockedAt'] as int};
 
       _isCycleModuleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
-      _isFemale = CyclePrivacyGuard.isVisible(settingsMap);
+      _isCycleDataVisible = CyclePrivacyGuard.isVisible(settingsMap);
       _currentStreak = int.tryParse(settingsMap['current_streak'] ?? '0') ?? 0;
       _longestStreak = int.tryParse(settingsMap['longest_streak'] ?? '0') ?? 0;
 
@@ -330,23 +325,92 @@ class _InsightsScreenState extends State<InsightsScreen> {
           ),
         );
 
-        // Run Insights Engine via Engine Bus
-        _insights = await bus.execute<InsightGenerationEngineInput, List<InsightResult>>(
-          InsightGenerationEngine,
-          InsightGenerationEngineInput(
-            now: loadedAt,
-            windowDays: _selectedWindow.days,
-            routineCompletions: completions,
-            routines: routines,
-            peakPerformanceWindow: _peakPerformanceWindow,
-            mostProductiveWeekday: _mostProductiveWeekday,
-            mostFatiguedWindow: _mostFatiguedWindow,
-            daysOfData: _daysOfData,
-            dailyRhythm: rhythms,
-            isMenstruating: _isFemale && _isCycleModuleEnabled,
-          ),
-        );
-        unawaited(_pushInsightsToInbox(_insights));
+        // IN-08 / F-07: Query real CyclePhase from CycleEngine instead of equating to gender/visibility
+        bool isCurrentlyMenstruating = false;
+        if (_isCycleModuleEnabled && _isCycleDataVisible) {
+          try {
+            final cycleOutput = await bus.execute<CycleEngineInput, CycleEngineOutput>(
+              CycleEngine,
+              CycleEngineInput(
+                db: db,
+                appSettings: settingsMap,
+                now: loadedAt,
+              ),
+            );
+            isCurrentlyMenstruating = cycleOutput.currentPhase == CyclePhase.menstrual;
+          } catch (e) {
+            RitmoLogger.warning('[Insights] CycleEngine not available, defaulting to false: $e');
+          }
+        }
+
+        // IN-21 / F-10: Check premium status before running heavy advanced insight engines
+        final hasAdvanced = PremiumService.instance.has(PremiumFeature.advancedInsights);
+        if (DataMaturityEngine.hasEnoughDataForWeeklyTrend(_daysOfData) && hasAdvanced) {
+          // IN-10 / F-08: Query SleepEngine correlations
+          double? sleepEnergyCorr;
+          double? sleepMoodCorr;
+          try {
+            final sleepRaw = await db.query(
+              'sleep_logs',
+              where: 'date >= ?',
+              whereArgs: [windowStartDay],
+            );
+            final sleepLogs = sleepRaw.map((r) => SleepLog.fromMap(r)).toList();
+
+            final moodRaw = await db.query(
+              'mood_logs',
+              where: 'loggedAt >= ?',
+              whereArgs: [windowStartMs],
+            );
+            final moodLogs = moodRaw.map(Map<String, dynamic>.from).toList();
+
+            final sleepTarget = SleepTarget(
+              bedtime: settingsMap['sleep_target_bedtime'] ?? '23:30',
+              wake: settingsMap['sleep_target_wake'] ?? '07:00',
+              durationMinutes: int.tryParse(settingsMap['sleep_target_duration_minutes'] ?? '450') ?? 450,
+            );
+
+            if (sleepLogs.isNotEmpty) {
+              final sleepOutput = await bus.execute<SleepEngineInput, SleepEngineOutput>(
+                SleepEngine,
+                SleepEngineInput(
+                  sleepLogs: sleepLogs,
+                  target: sleepTarget,
+                  energyLogs: energy,
+                  moodLogs: moodLogs,
+                  today: loadedAt,
+                  horizonDays: _selectedWindow.days,
+                ),
+              );
+              sleepEnergyCorr = sleepOutput.sleepEnergyCorrelation;
+              sleepMoodCorr = sleepOutput.sleepMoodCorrelation;
+            }
+          } catch (e) {
+            RitmoLogger.warning('[Insights] SleepEngine calculation failed: $e');
+          }
+
+          // Run Insights Engine via Engine Bus
+          _insights = await bus.execute<InsightGenerationEngineInput, List<InsightResult>>(
+            InsightGenerationEngine,
+            InsightGenerationEngineInput(
+              now: loadedAt,
+              windowDays: _selectedWindow.days,
+              routineCompletions: completions,
+              routines: routines,
+              peakPerformanceWindow: _peakPerformanceWindow,
+              mostProductiveWeekday: _mostProductiveWeekday,
+              mostFatiguedWindow: _mostFatiguedWindow,
+              daysOfData: _daysOfData,
+              dailyRhythm: rhythms,
+              sleepEnergyCorrelation: sleepEnergyCorr,
+              sleepMoodCorrelation: sleepMoodCorr,
+              isMenstruating: isCurrentlyMenstruating,
+            ),
+          );
+          unawaited(_pushInsightsToInbox(_insights));
+        } else {
+          _insights = [];
+        }
       }
     } catch (e, st) {
       RitmoLogger.error('[Insights] analytics load failed: $e', error: e, stack: st);
@@ -370,7 +434,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     try {
       final b = await AiBriefingService.instance.getCached();
       var cachedDeepAnalysis = await SecureKeyStore.getKey('ai_deep_analysis_result_v1');
-      if (cachedDeepAnalysis == null) {
+      if (cachedDeepAnalysis == null && !_aiMigrationCompleted) {
         final prefs = await SharedPreferences.getInstance();
         final legacyDeep = prefs.getString('ai_deep_analysis_result_v1');
         if (legacyDeep != null && legacyDeep.isNotEmpty) {
@@ -378,6 +442,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
           await SecureKeyStore.setKey('ai_deep_analysis_result_v1', legacyDeep);
           await prefs.remove('ai_deep_analysis_result_v1');
         }
+        _aiMigrationCompleted = true;
+      } else {
+        _aiMigrationCompleted = true;
       }
       if (generation == _loadGeneration && mounted) {
         setState(() {
@@ -398,8 +465,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
     final todayStr = DateTime.now().toIso8601String().substring(0, 10);
 
     for (final insight in insights) {
-      final typeName = insight.type.name.toLowerCase();
-      if (typeName.contains('cycle') || typeName.contains('hormone') || typeName.contains('period')) {
+      // IN-26 / F-08: Structured privacy check instead of string matching
+      if (insight.isPrivate) {
         continue;
       }
 
@@ -426,8 +493,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
           title = l10n.gatheringDataInsightTitle;
           message = l10n.gatheringDataInsightMessage;
         default:
-          title = insight.params['title'] as String? ?? 'تحلیل جدید';
-          message = insight.params['message'] as String? ?? 'تحلیل رفتار جدیدی برای شما آماده شده است.';
+          // IN-11 / F-08: Never send generic/fake placeholder messages to inbox
+          RitmoLogger.warning('[Insights] No dedicated inbox copy for ${insight.type.name}; skipping inbox push');
+          continue;
       }
 
       if (title.isNotEmpty && message.isNotEmpty) {
@@ -599,7 +667,7 @@ ${jsonEncode(digest.json)}
               Text(
                 _briefing!.headline,
                 style: RitmoTextStyles.label(
-                  Colors.cyanAccent,
+                  colors.primary,
                 ).copyWith(fontWeight: FontWeight.bold),
                 textDirection: TextDirection.rtl,
               ),
@@ -619,7 +687,7 @@ ${jsonEncode(digest.json)}
                Center(
                 child: Column(
                   children: [
-                    const CircularProgressIndicator(color: Color(0xff06B6D4)),
+                    CircularProgressIndicator(color: colors.primary),
                     SizedBox(height: m.spaceMd),
                     Text(
                       'در حال تحلیل عمیق الگوهای رفتاری شما... لطفاً صبور باشید 🧐',
@@ -634,7 +702,7 @@ ${jsonEncode(digest.json)}
               Text(
                 'گزارش تحلیل عمیق:',
                 style: RitmoTextStyles.caption(
-                  Colors.cyanAccent,
+                  colors.primary,
                 ).copyWith(fontWeight: FontWeight.bold),
                 textDirection: TextDirection.rtl,
               ),
@@ -790,50 +858,9 @@ ${jsonEncode(digest.json)}
     bool isDark,
     RitmoColors colors,
   ) {
-    final capsuleBgColor = isDark
-        ? const Color(0xFF1E222A).withValues(alpha: 0.86)
-        : Colors.white.withValues(alpha: 0.88);
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : Colors.white.withValues(alpha: 0.90);
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.50)
-                : const Color(0xFFCBD5E1).withValues(alpha: 0.65),
-            offset: const Offset(0, 5),
-            blurRadius: 14,
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.white.withValues(alpha: 0.90),
-            offset: const Offset(0, -1),
-            blurRadius: 3,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: BoxDecoration(
-              color: capsuleBgColor,
-              borderRadius: BorderRadius.circular(26),
-              border: Border.all(
-                color: borderColor,
-                width: 1.0,
-              ),
-            ),
-            child: Column(
+    return RitmoGlassHeader(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Top Row (52 height)
@@ -909,9 +936,6 @@ ${jsonEncode(digest.json)}
                 ),
               ],
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -1454,7 +1478,7 @@ ${jsonEncode(digest.json)}
         Icon(isUp ? CupertinoIcons.arrow_up_right : CupertinoIcons.arrow_down_right, color: trendColor, size: 12),
         const SizedBox(width: 3),
         Text(
-          '$value٪ $label',
+          '${toPersianDigits(value)}٪ $label',
           style: RitmoTextStyles.badge(trendColor).copyWith(fontWeight: FontWeight.bold),
         ),
       ],
@@ -1564,7 +1588,7 @@ ${jsonEncode(digest.json)}
                                           ),
                                           const SizedBox(width: 12),
                                           Text(
-                                            '$score٪',
+                                            toPersianDigits('$score٪'),
                                             style: RitmoTextStyles.label(
                                               score >= 80 ? colors.success : (score >= 50 ? colors.primary : colors.medicalRed),
                                             ).copyWith(fontWeight: FontWeight.bold),
@@ -1591,6 +1615,7 @@ ${jsonEncode(digest.json)}
   Widget _buildLifeBalanceCard(RitmoColors colors, bool isDarkMode) {
     // Generate active categories (real activity percentage > 0)
     final activeEntries = _categoryDistribution.entries.where((e) => e.value > 0).toList();
+    final domainColors = _getDomainColors(colors);
 
     if (activeEntries.isEmpty) {
       return RitmoTheme.glassCardLight(
@@ -1616,15 +1641,19 @@ ${jsonEncode(digest.json)}
           children: [
             Row(
               children: [
-                // Radial Pie/Donut custom painter
+                // Radial Pie/Donut custom painter (IN-28, IN-32)
                 RepaintBoundary(
-                  child: SizedBox(
-                    width: 90,
-                    height: 90,
-                    child: CustomPaint(
-                      painter: DonutChartPainter(
-                        distribution: _categoryDistribution,
-                        colors: _domainColors,
+                  child: Semantics(
+                    label: 'نمودار توزیع ابعاد زندگی. شاخص تعادل کل: ${toPersianDigits('$_lifeBalanceScore٪')}',
+                    child: SizedBox(
+                      width: 90,
+                      height: 90,
+                      child: CustomPaint(
+                        painter: DonutChartPainter(
+                          distribution: _categoryDistribution,
+                          colors: domainColors,
+                          trackColor: colors.border.withValues(alpha: isDarkMode ? 0.15 : 0.35),
+                        ),
                       ),
                     ),
                   ),
@@ -1640,7 +1669,7 @@ ${jsonEncode(digest.json)}
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '$_lifeBalanceScore٪',
+                        toPersianDigits('$_lifeBalanceScore٪'),
                         style: RitmoTextStyles.pageTitle(colors.primary).copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -1649,14 +1678,14 @@ ${jsonEncode(digest.json)}
               ],
             ),
             const SizedBox(height: 20),
-            const Divider(color: Colors.white10),
+            Divider(color: colors.divider),
             const SizedBox(height: 10),
             // Show only dynamic categories with real completions
             ...activeEntries.map((e) {
               final domain = e.key;
               final percent = e.value;
-              final name = _domainNamesFarsi[domain] ?? domain;
-              final color = _domainColors[domain] ?? colors.primary;
+              final name = LifeBalanceEngine.domainNamesFarsi[domain] ?? domain;
+              final color = domainColors[domain] ?? colors.primary;
 
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
@@ -1783,14 +1812,16 @@ ${jsonEncode(digest.json)}
       );
     }
 
+    final domainColors = _getDomainColors(colors);
+
     return RitmoAdaptiveGrid(
       minTileWidth: 140,
       spacing: 12,
       maxColumns: 2,
       children: activeEntries.map((e) {
         final domain = e.key;
-        final name = _domainNamesFarsi[domain] ?? domain;
-        final color = _domainColors[domain] ?? colors.primary;
+        final name = LifeBalanceEngine.domainNamesFarsi[domain] ?? domain;
+        final color = domainColors[domain] ?? colors.primary;
 
         return RitmoTheme.glassCardLight(
           child: Padding(
@@ -2297,8 +2328,8 @@ ${jsonEncode(digest.json)}
     if (activeEntries.isNotEmpty) {
       activeEntries.sort((a, b) => b.value.compareTo(a.value));
       final topDomain = activeEntries.first.key;
-      final topDomainName = _domainNamesFarsi[topDomain] ?? topDomain;
-      summary = 'در این ماه بیشترین رشد شما در حوزه «$topDomainName» بوده است و شاخص تعادل کل شما روی مقدار $_lifeBalanceScore٪ قرار دارد.';
+      final topDomainName = LifeBalanceEngine.domainNamesFarsi[topDomain] ?? topDomain;
+      summary = 'در این ماه بیشترین رشد شما در حوزه «$topDomainName» بوده است و شاخص تعادل کل شما روی مقدار ${toPersianDigits('$_lifeBalanceScore٪')} قرار دارد.';
     }
 
     return RitmoTheme.glassCardLight(
@@ -2306,7 +2337,7 @@ ${jsonEncode(digest.json)}
         padding: const EdgeInsets.all(20),
         child: Row(
           children: [
-            const Icon(CupertinoIcons.quote_bubble_fill, color: Color(0xff5B8AF5), size: 24),
+            Icon(CupertinoIcons.quote_bubble_fill, color: colors.primary, size: 24),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
@@ -2463,9 +2494,14 @@ ${jsonEncode(digest.json)}
 // Donut Chart CustomPainter with Rounded Caps
 class DonutChartPainter extends CustomPainter {
 
-  DonutChartPainter({required this.distribution, required this.colors});
+  DonutChartPainter({
+    required this.distribution,
+    required this.colors,
+    this.trackColor,
+  });
   final Map<String, double> distribution;
   final Map<String, Color> colors;
+  final Color? trackColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -2473,9 +2509,9 @@ class DonutChartPainter extends CustomPainter {
     final rect = Rect.fromCircle(center: Offset(radius, radius), radius: radius - 10);
     const strokeWidth = 10.0;
 
-    // Track Background
+    // Track Background (IN-28)
     final trackPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.04)
+      ..color = trackColor ?? Colors.grey.withValues(alpha: 0.15)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
     canvas.drawCircle(Offset(radius, radius), radius - 10, trackPaint);
@@ -2496,12 +2532,20 @@ class DonutChartPainter extends CustomPainter {
         ..strokeWidth = strokeWidth
         ..strokeCap = StrokeCap.round;
 
-      // Draw active segment with slight padding
-      canvas.drawArc(rect, startAngle + 0.04, sweepAngle - 0.08, false, paint);
+      // IN-33: Prevent negative sweepAngle when percentage is tiny (< 1.27%)
+      if (sweepAngle > 0.08) {
+        canvas.drawArc(rect, startAngle + 0.04, sweepAngle - 0.08, false, paint);
+      } else if (sweepAngle > 0) {
+        canvas.drawArc(rect, startAngle, math.max(0.02, sweepAngle), false, paint);
+      }
       startAngle += sweepAngle;
     }
   }
 
   @override
-  bool shouldRepaint(covariant DonutChartPainter oldDelegate) => true;
+  bool shouldRepaint(covariant DonutChartPainter oldDelegate) {
+    return oldDelegate.distribution != distribution ||
+        oldDelegate.colors != colors ||
+        oldDelegate.trackColor != trackColor;
+  }
 }

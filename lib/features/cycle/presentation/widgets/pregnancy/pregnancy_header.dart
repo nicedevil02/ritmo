@@ -68,21 +68,10 @@ class PregnancyHeader extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final ga = GestationalAge(currentWeek, currentDayInWeek);
 
-    return Container(
+    return RitmoGlassHeader(
       margin: const EdgeInsets.fromLTRB(14, 6, 14, 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colors.surfaceElevated,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.border, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: colors.primary.withValues(alpha: isDark ? 0.12 : 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      borderRadius: BorderRadius.circular(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -1,5 +1,7 @@
 // lib/core/widgets/ritmo_module_app_bar.dart
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
@@ -59,96 +61,142 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
     final m = context.metrics;
     final effectiveHeight = preferredHeight ?? (m.rowHeight + m.spaceSm); // 60/64/72/78
     final bool shouldShowBack = showBackButton ?? Navigator.canPop(context);
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: SafeArea(
-        bottom: false,
-        child: Container(
-          height: effectiveHeight,
-          padding: EdgeInsets.symmetric(horizontal: m.spaceLg),
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            border: Border(
-              bottom: BorderSide(
-                color: colors.border.withValues(alpha: 0.08),
-                width: 1,
-              ),
-            ),
-          ),
-          child: Row(
-            children: [
-              if (shouldShowBack) ...[
-                // Back Button (Min touchTarget)
-                Semantics(
-                  button: true,
-                  label: 'بازگشت',
-                  child: InkWell(
-                    onTap: onBack ?? () => Navigator.maybePop(context),
-                    borderRadius: BorderRadius.circular(m.touchTarget / 2),
-                    child: Container(
-                      width: m.touchTarget,
-                      height: m.touchTarget,
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.arrow_back_rounded,
-                        size: m.iconLg,
-                        color: colors.textPrimary,
-                      ),
+    final barContent = SafeArea(
+      bottom: false,
+      child: Container(
+        height: effectiveHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Row(
+          children: [
+            if (shouldShowBack) ...[
+              // Back Button (Min touchTarget)
+              Semantics(
+                button: true,
+                label: 'بازگشت',
+                child: InkWell(
+                  onTap: onBack ?? () => Navigator.maybePop(context),
+                  borderRadius: BorderRadius.circular(m.touchTarget / 2),
+                  child: Container(
+                    width: m.touchTarget,
+                    height: m.touchTarget,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.arrow_back_rounded,
+                      size: m.iconLg,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
-                SizedBox(width: m.spaceSm),
-              ],
+              ),
+              SizedBox(width: m.spaceSm),
+            ],
 
-              // Title and Subtitle / Status Badge
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            title,
-                            style: RitmoTextStyles.titleMedium(
-                              colors.textPrimary,
-                            ).copyWith(fontWeight: FontWeight.bold),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (statusBadge != null) ...[
-                          SizedBox(width: m.spaceSm),
-                          statusBadge!,
-                        ],
-                      ],
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 1),
+            // Title and Subtitle / Status Badge
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
                       Flexible(
                         child: Text(
-                          subtitle!,
-                          style: RitmoTextStyles.badge(
-                            colors.textSecondary.withValues(alpha: 0.7),
-                          ),
+                          title,
+                          style: RitmoTextStyles.titleMedium(
+                            colors.textPrimary,
+                          ).copyWith(fontWeight: FontWeight.bold),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if (statusBadge != null) ...[
+                        SizedBox(width: m.spaceSm),
+                        statusBadge!,
+                      ],
                     ],
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 1),
+                    Flexible(
+                      child: Text(
+                        subtitle!,
+                        style: RitmoTextStyles.badge(
+                          colors.textSecondary.withValues(alpha: 0.7),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
+                ],
+              ),
+            ),
+
+            // Action Buttons
+            ...?actions,
+          ],
+        ),
+      ),
+    );
+
+    if (!isGlass || highContrast) {
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.surfaceElevated,
+            border: Border(
+              bottom: BorderSide(
+                color: highContrast
+                    ? colors.textPrimary
+                    : (isDark ? colors.border : colors.divider),
+                width: highContrast ? 2.0 : 0.8,
+              ),
+            ),
+          ),
+          child: barContent,
+        ),
+      );
+    }
+
+    final effectiveBlur = context.glassBlurSigma.clamp(0.0, 50.0);
+    final tintColor = colors.glassTint;
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: effectiveBlur, sigmaY: effectiveBlur),
+          child: Container(
+            decoration: BoxDecoration(
+              color: tintColor,
+              border: Border(
+                bottom: BorderSide(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.12)
+                      : colors.border.withValues(alpha: 0.35),
+                  width: 0.8,
                 ),
               ),
-
-              // Action Buttons
-              ...?actions,
-            ],
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: isDark ? 0.06 : 0.18),
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.40],
+              ),
+            ),
+            child: barContent,
           ),
         ),
       ),

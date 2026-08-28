@@ -1,7 +1,6 @@
 // C-41, C-42, C-43, C-44, C-45: CycleScreen coordinator shell
 // Decomposed into clean modular components, theme tokens, and < 800 lines.
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -48,7 +47,6 @@ import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_overview_tab.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_personal_forecast_card.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:ritmo/features/cycle/presentation/widgets/cycle_prediction_confidence_card.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_prediction_detail_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_pregnancy_mode.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_lock_gate.dart';
@@ -841,50 +839,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     RitmoColors colors,
     bool isPregnancyActive,
   ) {
-    final capsuleBgColor = isDark
-        ? const Color(0xFF1E222A).withValues(alpha: 0.86)
-        : Colors.white.withValues(alpha: 0.88);
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : Colors.white.withValues(alpha: 0.90);
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.50)
-                : const Color(0xFFCBD5E1).withValues(alpha: 0.65),
-            offset: const Offset(0, 5),
-            blurRadius: 14,
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.white.withValues(alpha: 0.90),
-            offset: const Offset(0, -1),
-            blurRadius: 3,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-            decoration: BoxDecoration(
-              color: capsuleBgColor,
-              borderRadius: BorderRadius.circular(26),
-              border: Border.all(
-                color: borderColor,
-                width: 1.0,
-              ),
-            ),
-            child: Column(
+    return RitmoGlassHeader(
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+      child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(
@@ -972,9 +929,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   ),
               ],
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -1161,32 +1115,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                         ),
                         children: [
                           if (_activeTab == 0) ...[
-                            if (_predictionConfidence != null &&
-                                _dataQualityReport != null)
-                              CyclePredictionConfidenceCard(
-                                confidence: _predictionConfidence!,
-                                dataQuality: _dataQualityReport!,
-                              ),
-                            const SizedBox(height: 16),
-                            if (_burdenScore != null && _adaptiveAdvice != null)
-                              CycleBurdenCard(
-                                burden: _burdenScore!,
-                                advice: _adaptiveAdvice!,
-                              ),
-                            const SizedBox(height: 16),
-                            if (_personalForecasts.isNotEmpty)
-                              CyclePersonalForecastCard(
-                                forecasts: _personalForecasts,
-                              ),
-                            const SizedBox(height: 16),
-                            if (_engineOutput != null)
-                              CycleSosSection(
-                                engineOutput: _engineOutput,
-                                dayLogs: _dayLogs,
-                                settings: _settings,
-                                phase: _engineOutput!.currentPhase,
-                              ),
-                            const SizedBox(height: 16),
                             CycleOverviewTab(
                               engineOutput: _engineOutput,
                               periods: _periods,
@@ -1232,6 +1160,32 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                 phase: _engineOutput?.currentPhase ??
                                     CyclePhase.follicular,
                               ),
+                              predictionConfidence: _predictionConfidence,
+                              dataQualityReport: _dataQualityReport,
+                              onOpenDataTab: () =>
+                                  setState(() => _activeTab = 1),
+                              insightCards: [
+                                if (_burdenScore != null && _adaptiveAdvice != null)
+                                  CycleBurdenCard(
+                                    burden: _burdenScore!,
+                                    advice: _adaptiveAdvice!,
+                                    phase: _engineOutput?.currentPhase ??
+                                        CyclePhase.follicular,
+                                    onOpenGuide: _engineOutput != null
+                                        ? () => CycleSosSection.showSosModal(
+                                              context,
+                                              engineOutput: _engineOutput,
+                                              dayLogs: _dayLogs,
+                                              settings: _settings,
+                                              phase: _engineOutput!.currentPhase,
+                                            )
+                                        : null,
+                                  ),
+                                if (_personalForecasts.isNotEmpty)
+                                  CyclePersonalForecastCard(
+                                    forecasts: _personalForecasts,
+                                  ),
+                              ],
                             ),
                             const SizedBox(height: 16),
                             CycleCalendarView(

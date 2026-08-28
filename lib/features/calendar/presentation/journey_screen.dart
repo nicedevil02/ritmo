@@ -679,7 +679,7 @@ class _JourneyScreenState extends State<JourneyScreen>
         return 'نمای برنامه';
       case JourneyScale.day:
         final jalali = Jalali.fromDateTime(date);
-        return 'روز ${ShamsiWeek.nameOf(jalali.weekDay)}';
+        return ShamsiWeek.nameOf(jalali.weekDay);
       case JourneyScale.week:
         final sat = ShamsiWeek.saturdayOf(date);
         final fri = DateKey.addDays(sat, 6);
@@ -720,28 +720,15 @@ class _JourneyScreenState extends State<JourneyScreen>
             body: Column(
               children: [
                 // ─── Command Deck Header Surface (4 Controls) ───
-                Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF141822)
-                        : const Color(0xFFEFF2F6),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white.withValues(alpha: 0.04)
-                            : const Color(0xFFDDE3EA),
-                        width: 0.8,
-                      ),
+                RitmoGlassHeader(
+                  borderRadius: BorderRadius.zero,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: context.isDark
+                          ? Colors.white.withValues(alpha: 0.12)
+                          : colors.border.withValues(alpha: 0.35),
+                      width: 0.8,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.black.withValues(alpha: 0.25)
-                            : const Color(0xFFCCD4DF).withValues(alpha: 0.4),
-                        offset: const Offset(0, 2),
-                        blurRadius: 6,
-                      ),
-                    ],
                   ),
                   padding: EdgeInsets.only(
                     left: RitmoSpacing.md,
@@ -965,8 +952,8 @@ class _JourneyScreenState extends State<JourneyScreen>
                           );
                           final fullSubTitle = occasion != null
                               ? (subTitle.isNotEmpty
-                                    ? '$subTitle - ${occasion.title}${occasion.isHoliday ? ' (تعطیل)' : ''}'
-                                    : (occasion.isHoliday
+                                    ? '$subTitle - ${occasion.title}${occasion.isHoliday && !occasion.title.contains('تعطیل') ? ' (تعطیل)' : ''}'
+                                    : (occasion.isHoliday && !occasion.title.contains('تعطیل')
                                           ? '${occasion.title} (تعطیل)'
                                           : occasion.title))
                               : subTitle;

@@ -12,7 +12,6 @@ import 'package:ritmo/core/ai/chat/chat_repository.dart';
 import 'package:ritmo/core/ai/chat/streaming_chat_service.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
 import 'package:ritmo/core/ai/memory/memory_models.dart';
-import 'package:ritmo/core/ai/web_bridge/chatgpt_mini_preview.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -55,6 +54,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
 
   StreamSubscription<StreamingChatEvent>? _sub;
   String? _streamingId;
@@ -632,6 +632,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     );
     _textController.dispose();
     _scrollController.dispose();
+    _scrollOffset.dispose();
     super.dispose();
   }
 
@@ -1350,7 +1351,7 @@ $suggestedSteps''';
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final topPadding = MediaQuery.paddingOf(context).top;
-    final contentTopPadding = topPadding + 76.0;
+    final contentTopPadding = topPadding + 130.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -1413,7 +1414,7 @@ $suggestedSteps''';
                     : _messages.isEmpty
                     ? Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(32),
+                          padding: EdgeInsets.fromLTRB(32, contentTopPadding + 32, 32, 32),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -1464,12 +1465,22 @@ $suggestedSteps''';
                           ),
                         ),
                       )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
+                    : NotificationListener<ScrollNotification>(
+                        onNotification: (notification) {
+                          if (notification.metrics.axis == Axis.vertical) {
+                            _scrollOffset.value = notification.metrics.pixels;
+                          }
+                          return false;
+                        },
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                          padding: EdgeInsets.fromLTRB(
+                            16,
+                            contentTopPadding + 8,
+                            16,
+                            8,
+                          ),
                         itemCount: _messages.length,
                         itemBuilder: (context, index) {
                           final msg = _messages[index];
@@ -1558,6 +1569,7 @@ $suggestedSteps''';
                           );
                         },
                       ),
+                    ),
               ),
 
               if (_currentQuickReplies.isNotEmpty)
@@ -1836,17 +1848,83 @@ $suggestedSteps''';
           ),
         ),
 
-        // Layer 2: Floating Capsule Header Island
+        // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
         Positioned(
           top: 0,
           left: 0,
           right: 0,
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-              child: _buildCapsuleHeader(context, isDark, colors),
-            ),
+          child: AnimatedBuilder(
+            animation: _scrollOffset,
+            builder: (context, _) {
+              return RitmoAppleMorphingGlassHeader(
+                title: 'دستیار هوشمند',
+                subtitle: 'دستیار هوش مصنوعی، برنامه‌ریزی روزانه و ممیزی رویدادها',
+                scrollOffset: _scrollOffset.value,
+                collapseDistance: 55.0,
+                onBack: (!widget.isTab && Navigator.canPop(context)) ? () => Navigator.maybePop(context) : null,
+                statusBadge: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        CupertinoIcons.sparkles,
+                        size: 11,
+                        color: colors.primary,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Pro',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: colors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  const BridgeStatusChip(),
+                  const SizedBox(width: 6),
+                  RitmoVibrancyActionButton(
+                    icon: CupertinoIcons.clock,
+                    iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                    tooltip: 'تغییرات و ممیزی دستیار',
+                    onTap: () => _showAuditLogSheet(context),
+                  ),
+                  const SizedBox(width: 6),
+                  RitmoVibrancyActionButton(
+                    icon: CupertinoIcons.chat_bubble_2_fill,
+                    iconColor: colors.primary,
+                    tooltip: 'تاریخچه گفتگوها',
+                    onTap: () {
+                      Navigator.push<String>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ChatSessionListScreen(),
+                        ),
+                      ).then((selectedId) {
+                        if (selectedId != null) {
+                          setState(() {
+                            _sessionId = selectedId;
+                          });
+                          _loadMessages();
+                        }
+                      });
+                    },
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ],
@@ -1855,214 +1933,6 @@ $suggestedSteps''';
 ),
 );
 }
-
-  Widget _buildCapsuleHeader(
-    BuildContext context,
-    bool isDark,
-    RitmoColors colors,
-  ) {
-    return RitmoGlassHeader(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-              children: [
-                if (!widget.isTab && Navigator.canPop(context))
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 38,
-                      minHeight: 38,
-                    ),
-                    icon: Icon(
-                      CupertinoIcons.arrow_right,
-                      color: isDark ? Colors.white : const Color(0xFF1D2129),
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.pop(context);
-                    },
-                  )
-                else
-                  const SizedBox(width: 10),
-                Expanded(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onLongPress: () {
-                      HapticFeedback.mediumImpact();
-                      ChatGptMiniPreview.show(context);
-                    },
-                    child: Row(
-                      children: [
-                        Text(
-                          'دستیار هوشمند',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 17.5,
-                            letterSpacing: -0.4,
-                            color: isDark ? Colors.white : const Color(0xFF1D2129),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: colors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                CupertinoIcons.sparkles,
-                                size: 11,
-                                color: colors.primary,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                'Pro',
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  color: colors.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const BridgeStatusChip(),
-                _buildHeaderActionButton(
-                  icon: CupertinoIcons.clock,
-                  iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                  isDark: isDark,
-                  tooltip: 'تغییرات و ممیزی دستیار',
-                  onTap: () => _showAuditLogSheet(context),
-                ),
-                _buildHeaderActionButton(
-                  icon: CupertinoIcons.chat_bubble_2_fill,
-                  iconColor: colors.primary,
-                  isDark: isDark,
-                  tooltip: 'تاریخچه گفتگوها',
-                  onTap: () {
-                    Navigator.push<String>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ChatSessionListScreen(),
-                      ),
-                    ).then((selectedId) {
-                      if (selectedId != null) {
-                        setState(() {
-                          _sessionId = selectedId;
-                        });
-                        _loadMessages();
-                      }
-                    });
-                  },
-                ),
-                const SizedBox(width: 2),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildHeaderActionButton({
-    required IconData icon,
-    required Color iconColor,
-    required bool isDark,
-    required VoidCallback onTap,
-    String? tooltip,
-    bool isAiButton = false,
-  }) {
-    final button = GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: _buildHeaderActionButtonContent(
-        icon: icon,
-        iconColor: iconColor,
-        isDark: isDark,
-        isAiButton: isAiButton,
-      ),
-    );
-
-    if (tooltip != null) {
-      return Tooltip(message: tooltip, child: button);
-    }
-    return button;
-  }
-
-  Widget _buildHeaderActionButtonContent({
-    required IconData icon,
-    required Color iconColor,
-    required bool isDark,
-    bool isAiButton = false,
-  }) {
-    return Container(
-      width: 36,
-      height: 36,
-      margin: const EdgeInsets.symmetric(horizontal: 3),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isDark
-            ? (isAiButton
-                ? iconColor.withValues(alpha: 0.18)
-                : const Color(0xFF22262E))
-            : (isAiButton
-                ? iconColor.withValues(alpha: 0.12)
-                : const Color(0xFFF3F5F8)),
-        border: Border.all(
-          color: isDark
-              ? (isAiButton
-                  ? iconColor.withValues(alpha: 0.40)
-                  : Colors.white.withValues(alpha: 0.08))
-              : (isAiButton
-                  ? iconColor.withValues(alpha: 0.30)
-                  : Colors.white.withValues(alpha: 0.90)),
-          width: 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.04)
-                : Colors.white.withValues(alpha: 0.95),
-            offset: const Offset(-2, -2),
-            blurRadius: 4,
-          ),
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.55)
-                : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
-            offset: const Offset(2, 2),
-            blurRadius: 4,
-          ),
-          if (isAiButton)
-            BoxShadow(
-              color: iconColor.withValues(alpha: isDark ? 0.35 : 0.22),
-              blurRadius: 10,
-              spreadRadius: 1.0,
-            ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          icon,
-          size: 18,
-          color: isAiButton
-              ? iconColor
-              : (isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280)),
-        ),
-      ),
-    );
-  }
 
   Widget _buildDayPlanningLoadingState(RitmoColors colors) {
     final stepMsg =

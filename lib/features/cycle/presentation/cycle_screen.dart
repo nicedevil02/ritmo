@@ -937,31 +937,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       child: ListView(
                         padding: EdgeInsets.fromLTRB(
                           10,
-                          topPadding + 52.0,
+                          topPadding + (isPregnancyActive ? 90.0 : 172.0),
                           10,
                           bottomPadding + 14.0,
                         ),
                         children: [
-                          if (!isPregnancyActive) ...[
-                            RitmoLargeTitleHero(
-                              title: 'چرخه بدن',
-                              subtitle: _engineOutput != null
-                                  ? '${_getPhaseTitle(_engineOutput!.currentPhase)} • روز ${RitmoNumber.toFa(_engineOutput!.dayOfCycle)} چرخه'
-                                  : 'ردیاب هوشمند سلامت و الگوهای هورمونی',
-                              titleColor: isDark ? Colors.white : const Color(0xFF0F172A),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),
-                              child: CycleSegmentedTabs(
-                                activeTab: _activeTab,
-                                onTabChanged: (index) =>
-                                    setState(() => _activeTab = index),
-                                settings: _settings,
-                                activeThemeColor:
-                                    _getActivePhaseColor(context),
-                              ),
-                            ),
-                          ],
                           if (_activeTab == 0) ...[
                             CycleOverviewTab(
                               engineOutput: _engineOutput,
@@ -1123,7 +1103,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             ),
           ),
 
-          // 3. Apple Dynamic Large Title Collapsing Glass Top Bar
+          // 3. Apple Dynamic Large Title Morphing Glass Header
           Positioned(
             top: 0,
             left: 0,
@@ -1131,10 +1111,15 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             child: ValueListenableBuilder<double>(
               valueListenable: _scrollOffset,
               builder: (context, offset, _) {
-                return RitmoDynamicGlassAppBar(
+                return RitmoAppleMorphingGlassHeader(
                   title: isPregnancyActive ? 'دوران بارداری' : 'چرخه بدن',
+                  subtitle: isPregnancyActive
+                      ? null
+                      : (_engineOutput != null
+                          ? '${_getPhaseTitle(_engineOutput!.currentPhase)} • روز ${RitmoNumber.toFa(_engineOutput!.dayOfCycle)} چرخه'
+                          : 'ردیاب هوشمند سلامت و الگوهای هورمونی'),
                   scrollOffset: offset,
-                  collapseDistance: 50.0,
+                  collapseDistance: 70.0,
                   onBack: () => Navigator.pop(context),
                   actions: [
                     RitmoVibrancyActionButton(
@@ -1153,6 +1138,16 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       onTap: _openSettingsSheet,
                     ),
                   ],
+                  tabs: isPregnancyActive
+                      ? null
+                      : CycleSegmentedTabs(
+                          activeTab: _activeTab,
+                          onTabChanged: (index) =>
+                              setState(() => _activeTab = index),
+                          settings: _settings,
+                          activeThemeColor:
+                              _getActivePhaseColor(context),
+                        ),
                 );
               },
             ),

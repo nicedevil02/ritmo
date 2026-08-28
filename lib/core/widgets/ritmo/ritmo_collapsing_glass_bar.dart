@@ -1,6 +1,7 @@
 // =============================================================================
 //  ritmo_collapsing_glass_bar.dart
-//  هدر داینامیک لارج تایتل شیشه‌ای اپل (Apple Dynamic Large Title Collapsing Glass Bar)
+//  هدر داینامیک لارج تایتل شیشه‌ای اپل با ترنزیشن فیزیکی کپسولی
+//  (Apple Dynamic Large Title Morphing Glass Header)
 // =============================================================================
 
 import 'dart:ui';
@@ -119,31 +120,40 @@ class RitmoVibrancyActionButton extends StatelessWidget {
   }
 }
 
-/// نوار شیشه‌ای داینامیک بالای صفحه (Apple Top Glass Navbar)
+/// هدر داینامیک لارج تایتل شیشه‌ای اپل با ترنزیشن فیزیکی کپسولی
+/// (Apple Dynamic Large Title Morphing Glass Header)
 ///
-/// قابلیت‌ها:
-/// - در بالای صفحه: کاملاً شفاف و بدون بلور.
-/// - هنگام اسکرول: ظهور تدریجی شیشه مات، بلور و تیتر فشرده با محو شدن تیتر بزرگ.
-class RitmoDynamicGlassAppBar extends StatelessWidget {
-  const RitmoDynamicGlassAppBar({
+/// رفتارها:
+/// ۱. در حالت بالای صفحه (t = 0): کاملاً شفاف، تیتر درشت ۲۸pt در پایین و تب‌ها چسبیده زیر آن.
+/// ۲. هنگام اسکرول (t -> 1): خود تیتر به نرمی کوچک شده (۱۷pt) و به ردیف بالا منتقل می‌شود.
+/// ۳. نوار تب‌ها و زیرعنوان به نرمی جمع و محو می‌شوند.
+/// ۴. هدر به تدریج تبدیل به یک کپسول شیشه‌ای معلق شناور با بلور و گوشه‌های گرد می‌شود.
+class RitmoAppleMorphingGlassHeader extends StatelessWidget {
+  const RitmoAppleMorphingGlassHeader({
     super.key,
     required this.title,
     required this.scrollOffset,
+    this.subtitle,
+    this.tabs,
     this.actions,
     this.leading,
     this.onBack,
-    this.collapseDistance = 50.0,
+    this.collapseDistance = 65.0,
     this.titleColor,
+    this.accentColor,
     this.statusBadge,
   });
 
   final String title;
   final double scrollOffset;
+  final String? subtitle;
+  final Widget? tabs;
   final List<Widget>? actions;
   final Widget? leading;
   final VoidCallback? onBack;
   final double collapseDistance;
   final Color? titleColor;
+  final Color? accentColor;
   final Widget? statusBadge;
 
   @override
@@ -152,11 +162,25 @@ class RitmoDynamicGlassAppBar extends StatelessWidget {
     final isDark = context.isDark;
     final isGlass = context.isGlassEnabled;
     final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
+    final topInset = MediaQuery.paddingOf(context).top;
 
-    // پیشرفت اسکرول از ۰.۰ (بالای صفحه) تا ۱.۰ (اسکرول شده)
-    final progress = (scrollOffset / collapseDistance).clamp(0.0, 1.0);
+    // پیشرفت اسکرول از ۰.۰ (سکون) تا ۱.۰ (کاملاً فشرده)
+    final rawT = (scrollOffset / collapseDistance).clamp(0.0, 1.0);
+    final t = Curves.easeInOutCubic.transform(rawT);
 
-    final effectiveBlur = progress * context.glassBlurSigma.clamp(0.0, 50.0);
+    final hasTabs = tabs != null;
+    final hasSubtitle = subtitle != null;
+
+    // ارتفاع اولیه در حالت باز و ارتفاع نهایی در حالت کپسول فشرده
+    final expandedHeight = hasTabs ? (hasSubtitle ? 168.0 : 156.0) : (hasSubtitle ? 112.0 : 96.0);
+    const collapsedHeight = 54.0;
+
+    final currentHeight = lerpDouble(expandedHeight, collapsedHeight, t)!;
+    final currentMarginH = lerpDouble(0.0, 10.0, t)!;
+    final currentMarginTop = topInset + lerpDouble(2.0, 6.0, t)!;
+    final currentRadius = lerpDouble(0.0, 27.0, t)!;
+
+    final effectiveBlur = isGlass ? (t * context.glassBlurSigma.clamp(0.0, 50.0)) : 0.0;
     final isOpaque = !isGlass || highContrast;
 
     final Color bgColor;
@@ -164,99 +188,128 @@ class RitmoDynamicGlassAppBar extends StatelessWidget {
     final List<BoxShadow>? shadows;
 
     if (isOpaque) {
-      bgColor = colors.surfaceElevated.withValues(alpha: progress);
-      border = Border(
-        bottom: BorderSide(
-          color: (isDark ? colors.border : colors.divider).withValues(alpha: progress),
-          width: 0.8,
-        ),
-      );
-      shadows = progress > 0.5
+      bgColor = colors.surfaceElevated.withValues(alpha: t);
+      border = t > 0.05
+          ? Border.all(
+              color: (isDark ? colors.border : colors.divider).withValues(alpha: t),
+              width: 0.8,
+            )
+          : null;
+      shadows = t > 0.2
           ? [
               BoxShadow(
-                color: Colors.black.withValues(alpha: progress * 0.15),
-                offset: const Offset(0, 2),
-                blurRadius: 6,
+                color: Colors.black.withValues(alpha: t * 0.15),
+                offset: Offset(0, 2 * t),
+                blurRadius: 6 * t,
               ),
             ]
           : null;
     } else {
-      bgColor = colors.glassTint.withValues(alpha: progress * (context.glassOpacityPercent / 100.0).clamp(0.1, 0.9));
-      border = Border(
-        bottom: BorderSide(
-          color: (isDark
-                  ? Colors.white.withValues(alpha: 0.12)
-                  : colors.border.withValues(alpha: 0.35))
-              .withValues(alpha: progress),
-          width: 0.8,
-        ),
+      bgColor = colors.glassTint.withValues(
+        alpha: t * (context.glassOpacityPercent / 100.0).clamp(0.1, 0.9),
       );
-      shadows = progress > 0.3
+      border = t > 0.05
+          ? Border.all(
+              color: (isDark
+                      ? Colors.white.withValues(alpha: 0.14)
+                      : colors.border.withValues(alpha: 0.35))
+                  .withValues(alpha: t),
+              width: 0.8,
+            )
+          : null;
+      shadows = t > 0.15
           ? [
               BoxShadow(
                 color: isDark
-                    ? Colors.black.withValues(alpha: progress * 0.40)
-                    : const Color(0xFFCBD5E1).withValues(alpha: progress * 0.50),
-                offset: const Offset(0, 3),
-                blurRadius: 8,
+                    ? Colors.black.withValues(alpha: t * 0.40)
+                    : const Color(0xFF94A3B8).withValues(alpha: t * 0.35),
+                offset: Offset(0, 3 * t),
+                blurRadius: 8 * t,
               ),
             ]
           : null;
     }
 
-    final topInset = MediaQuery.paddingOf(context).top;
+    // مختصات پیوسته ترنزیشن تیتر (Spatial Morphing)
+    // در RTL: موقعیت اولیه سمت راست (زیر دکمه بک)، موقعیت نهایی داخل ردیف بالا (سمت چپ دکمه بک)
+    final titleRight = lerpDouble(14.0, 52.0, t)!;
+    final titleTop = lerpDouble(50.0, 14.0, t)!;
+    final titleFontSize = lerpDouble(27.0, 16.5, t)!;
+
+    final subtitleOpacity = (1.0 - (2.4 * rawT)).clamp(0.0, 1.0);
+    final tabsOpacity = (1.0 - (1.8 * rawT)).clamp(0.0, 1.0);
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: effectiveBlur,
-            sigmaY: effectiveBlur,
-          ),
-          child: Container(
-            padding: EdgeInsets.only(
-              top: topInset + 4,
-              bottom: 8,
-              left: 12,
-              right: 12,
+      child: Padding(
+        padding: EdgeInsets.only(
+          top: currentMarginTop,
+          left: currentMarginH,
+          right: currentMarginH,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(currentRadius),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: effectiveBlur,
+              sigmaY: effectiveBlur,
             ),
-            decoration: BoxDecoration(
-              color: bgColor,
-              border: border,
-              boxShadow: shadows,
-              gradient: isGlass && progress > 0.1
-                  ? LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withValues(alpha: (isDark ? 0.08 : 0.20) * progress),
-                        Colors.white.withValues(alpha: 0.0),
+            child: Container(
+              height: currentHeight,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(currentRadius),
+                border: border,
+                boxShadow: shadows,
+                gradient: isGlass && t > 0.1
+                    ? LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: (isDark ? 0.09 : 0.25) * t),
+                          Colors.white.withValues(alpha: 0.0),
+                        ],
+                        stops: const [0.0, 0.45],
+                      )
+                    : null,
+              ),
+              child: Stack(
+                clipBehavior: Clip.hardEdge,
+                children: [
+                  // ۱. ردیف دکمه‌های اکشن بالا (Back & Action Buttons)
+                  Positioned(
+                    top: 6,
+                    left: 8,
+                    right: 8,
+                    height: 42,
+                    child: Row(
+                      children: [
+                        // دکمه بازگشت (سمت راست در RTL)
+                        if (leading != null)
+                          leading!
+                        else if (Navigator.canPop(context))
+                          RitmoVibrancyActionButton(
+                            icon: CupertinoIcons.arrow_right,
+                            tooltip: 'بازگشت',
+                            onTap: onBack ?? () => Navigator.maybePop(context),
+                          )
+                        else
+                          const SizedBox(width: 8),
+
+                        const Spacer(),
+
+                        // دکمه‌های اکشن (سمت چپ در RTL)
+                        ...?actions,
                       ],
-                      stops: const [0.0, 0.45],
-                    )
-                  : null,
-            ),
-            child: Row(
-              children: [
-                // دکمه بازگشت یا دکمه Leading
-                if (leading != null)
-                  leading!
-                else if (Navigator.canPop(context))
-                  RitmoVibrancyActionButton(
-                    icon: CupertinoIcons.arrow_right,
-                    tooltip: 'بازگشت',
-                    onTap: onBack ?? () => Navigator.maybePop(context),
-                  )
-                else
-                  const SizedBox(width: 8),
+                    ),
+                  ),
 
-                const SizedBox(width: 10),
-
-                // تیتر فشرده میانی (ظاهر شونده با ترنزیشن نرم)
-                Expanded(
-                  child: Opacity(
-                    opacity: progress,
+                  // ۲. ترنزیشن فیزیکی تیتر (Title Morphing)
+                  Positioned(
+                    top: titleTop,
+                    right: titleRight,
+                    left: lerpDouble(14.0, 100.0, t),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -265,9 +318,11 @@ class RitmoDynamicGlassAppBar extends StatelessWidget {
                             title,
                             style: TextStyle(
                               fontFamily: 'Vazirmatn',
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: titleColor ?? (isDark ? Colors.white : const Color(0xFF0F172A)),
+                              fontSize: titleFontSize,
+                              fontWeight: t > 0.4 ? FontWeight.w800 : FontWeight.w900,
+                              letterSpacing: -0.4,
+                              color: titleColor ??
+                                  (isDark ? Colors.white : const Color(0xFF0F172A)),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -275,84 +330,54 @@ class RitmoDynamicGlassAppBar extends StatelessWidget {
                         ),
                         if (statusBadge != null) ...[
                           const SizedBox(width: 6),
-                          statusBadge!,
+                          Opacity(
+                            opacity: t,
+                            child: statusBadge,
+                          ),
                         ],
                       ],
                     ),
                   ),
-                ),
 
-                // دکمه‌های اکشن بالا (Action Buttons)
-                ...?actions,
-              ],
+                  // ۳. زیرعنوان تیتر بزرگ (محوشونده با اسکرول)
+                  if (hasSubtitle && subtitleOpacity > 0.01)
+                    Positioned(
+                      top: 86,
+                      right: 14,
+                      left: 14,
+                      child: Opacity(
+                        opacity: subtitleOpacity,
+                        child: Text(
+                          subtitle!,
+                          style: TextStyle(
+                            fontFamily: 'Vazirmatn',
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF64748B),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+
+                  // ۴. نوار تب‌های چسبیده به هدر (چسبیده زیر تیتر و محوشونده با اسکرول)
+                  if (hasTabs && tabsOpacity > 0.01)
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      left: 8,
+                      child: Opacity(
+                        opacity: tabsOpacity,
+                        child: tabs,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// بخش هیرو تیتر بزرگ اپل (Apple Large Title Hero Section)
-///
-/// در بالای محتوای اسکرول‌شونده قرار می‌گیرد و با اسکرول محو می‌شود.
-class RitmoLargeTitleHero extends StatelessWidget {
-  const RitmoLargeTitleHero({
-    super.key,
-    required this.title,
-    this.subtitle,
-    this.badge,
-    this.titleColor,
-    this.accentColor,
-  });
-
-  final String title;
-  final String? subtitle;
-  final Widget? badge;
-  final Color? titleColor;
-  final Color? accentColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = context.isDark;
-
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontSize: 30,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                      color: titleColor ?? (isDark ? Colors.white : const Color(0xFF0F172A)),
-                    ),
-                  ),
-                ),
-                ?badge,
-              ],
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 2),
-              Text(
-                subtitle!,
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                ),
-              ),
-            ],
-          ],
         ),
       ),
     );

@@ -189,7 +189,7 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
     final currentRadius = lerpDouble(0.0, 27.0, t)!;
 
     final materialSpec = context.materials.regular;
-    final effectiveBlur = isGlass ? (t * materialSpec.sigma) : 0.0;
+    final effectiveBlur = isGlass ? (t * materialSpec.sigma).clamp(0.0, 50.0) : 0.0;
     final isOpaque = !isGlass || highContrast;
 
     final Color bgColor;

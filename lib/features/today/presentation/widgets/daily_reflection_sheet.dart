@@ -221,58 +221,32 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     final dateStr = DailyReflectionSheet._formatHeaderDate(widget.date);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(24));
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+    final sheetContent = Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.88,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Minimal Grabber Bar
+          Center(
             child: Container(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.88,
-              ),
+              margin: const EdgeInsets.only(top: 8, bottom: 4),
+              width: 36,
+              height: 4,
               decoration: BoxDecoration(
-                color: isDark
-                    ? colors.surfaceElevated.withValues(alpha: 0.86)
-                    : colors.surface.withValues(alpha: 0.92),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(24),
-                ),
-                border: Border.all(
-                  color: colors.border.withValues(alpha: isDark ? 0.35 : 0.55),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.shadow.withValues(alpha: isDark ? 0.35 : 0.1),
-                    blurRadius: 28,
-                    offset: const Offset(0, -6),
-                  ),
-                ],
+                color: colors.textTertiary.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Minimal Grabber Bar
-                  Center(
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 8, bottom: 4),
-                      width: 36,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: colors.textTertiary.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
+            ),
+          ),
 
                   // Compact, Low-Profile Header
                   Padding(
@@ -686,9 +660,78 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
                   ),
                 ],
               ),
+            );
+
+    final Widget containerWidget;
+    if (!isGlass) {
+      containerWidget = Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: sheetRadius,
+          border: Border.all(
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
+          ),
+        ),
+        child: sheetContent,
+      );
+    } else {
+      containerWidget = DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: sheetRadius,
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.35)
+                  : colors.primary.withValues(alpha: 0.08),
+              offset: const Offset(0, -3),
+              blurRadius: 16,
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.glassTint,
+                borderRadius: sheetRadius,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
+                ),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.45],
+                  ),
+                ),
+                child: sheetContent,
+              ),
             ),
           ),
         ),
+      );
+    }
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: containerWidget,
       ),
     );
   }

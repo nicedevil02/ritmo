@@ -92,9 +92,6 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
   late List<RealmData> _realms;
   late List<RealmScheduleData> _schedules;
   late ActiveRealmState _realmState;
-  late Color _activeZoneColor;
-  late String _activeZoneName;
-  late String? _activeZoneIcon;
   Map<String, int> _routineCounts = {};
   String? _suggestedBedtime;
   String? _suggestedWake;
@@ -108,7 +105,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
 
   static const List<({String label, String fullLabel, int weekday})> _weekdays = [
     (label: 'ش', fullLabel: 'شنبه', weekday: 6),
-    (label: 'ی', fullLabel: 'یکشنبه', weekday: 7),
+    (label: 'ی', fullLabel: 'یک‌شنبه', weekday: 7),
     (label: 'د', fullLabel: 'دوشنبه', weekday: 1),
     (label: 'س', fullLabel: 'سه‌شنبه', weekday: 2),
     (label: 'چ', fullLabel: 'چهارشنبه', weekday: 3),
@@ -123,9 +120,6 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
     _realms = List.from(widget.realms);
     _schedules = List.from(widget.schedules);
     _realmState = widget.realmState;
-    _activeZoneColor = widget.activeZoneColor;
-    _activeZoneName = widget.activeZoneName;
-    _activeZoneIcon = widget.activeZoneIcon;
     _loadData();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
@@ -179,16 +173,6 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
           _suggestedBedtime = bedtime;
           _suggestedWake = wake;
           _showSleepSuggestion = showSuggestion;
-          final activeRealm = activeState.realmOrNull;
-          if (activeRealm != null) {
-            _activeZoneName = activeRealm.name;
-            _activeZoneColor = activeRealm.parseColor();
-            _activeZoneIcon = activeRealm.icon;
-          } else {
-            _activeZoneName = 'زمان آزاد و شناور';
-            _activeZoneColor = const Color(0xFF94A3B8);
-            _activeZoneIcon = '✨';
-          }
         });
       }
     } catch (_) {}
@@ -468,7 +452,11 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
   }
 
   Widget _buildSleepSuggestionCard(bool isDark, RitmoColors colors) {
-    if (!_showSleepSuggestion) return const SizedBox.shrink();
+    if (!_showSleepSuggestion || _suggestedBedtime == null || _suggestedWake == null) {
+      return const SizedBox.shrink();
+    }
+    final bedtime = _suggestedBedtime!;
+    final wake = _suggestedWake!;
     final accentColor = colors.primary;
 
     return Container(
@@ -511,7 +499,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
                       ),
                     ),
                     Text(
-                      'بر اساس برنامه خواب (${toPersianDigits(_suggestedBedtime!)} تا ${toPersianDigits(_suggestedWake!)})',
+                      'بر اساس برنامه خواب (${toPersianDigits(bedtime)} تا ${toPersianDigits(wake)})',
                       style: TextStyle(
                         fontSize: 11,
                         color: colors.textSecondary,
@@ -890,9 +878,11 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
           borderRadius: sheetRadius,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.65 : 0.20),
-              blurRadius: 32,
-              offset: const Offset(0, -8),
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.35)
+                  : colors.primary.withValues(alpha: 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, -3),
             ),
           ],
         ),

@@ -12,6 +12,7 @@ import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/assistant/presentation/assistant_screen.dart';
 import 'package:ritmo/features/calendar/presentation/calendar_screen.dart';
 import 'package:ritmo/features/profile/presentation/profile_screen.dart';
@@ -236,10 +237,11 @@ class _HomeNavigationShellState extends State<HomeNavigationShell> {
               await SystemNavigator.pop();
             }
           },
-          child: Scaffold(
-            resizeToAvoidBottomInset: false,
-            extendBody: true,
-            body: Stack(
+          child: AppleCardDeckHost(
+            child: Scaffold(
+              resizeToAvoidBottomInset: false,
+              extendBody: true,
+              body: Stack(
               children: [
                 // Background Gradient
                 Positioned.fill(
@@ -342,8 +344,9 @@ class _HomeNavigationShellState extends State<HomeNavigationShell> {
               ],
             ),
           ),
-        );
-      },
-    );
+        ),
+      );
+    },
+  );
   }
 }

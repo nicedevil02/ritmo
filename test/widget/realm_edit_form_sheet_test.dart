@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/today/presentation/widgets/realm_edit_form_sheet.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 
@@ -140,6 +141,55 @@ void main() {
 
       // Verify sheet animated to 0.95
       expect(controller.size, closeTo(0.95, 0.01));
+    });
+
+    testWidgets('Renders iOS 26 RTL Header with Cancel and Save buttons', (tester) async {
+      var saved = false;
+      await tester.pumpWidget(
+        _buildWrapper(
+          width: 360,
+          child: RealmEditFormSheet(
+            onSave: (realm, schedules) async {
+              saved = true;
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Find 'انصراف' (Cancel on Leading/Right)
+      expect(find.text('انصراف'), findsOneWidget);
+
+      // Find Title
+      expect(find.text('ساخت قلمرو جدید'), findsOneWidget);
+
+      // Find 'ایجاد' in header and 'ایجاد قلمرو' in bottom CTA
+      expect(find.text('ایجاد'), findsOneWidget);
+      expect(find.text('ایجاد قلمرو'), findsOneWidget);
+
+      // Enter valid name and tap header 'ایجاد'
+      await tester.enterText(find.byType(TextField), 'تست قلمرو');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('ایجاد'));
+      await tester.pumpAndSettle();
+
+      expect(saved, isTrue);
+    });
+
+    testWidgets('AppleCardDeckHost renders child and handles route secondary animation safely', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: AppleCardDeckHost(
+              child: Text('صفحه زیرین'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('صفحه زیرین'), findsOneWidget);
     });
   });
 }

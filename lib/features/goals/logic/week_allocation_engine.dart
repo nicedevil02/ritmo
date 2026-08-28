@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'capacity_models.dart';
 import 'commitment_scorer.dart';
 import 'personalization_gate.dart';
@@ -60,6 +62,8 @@ class WeekAllocationEngine {
     required String todayKey,
     Map<String, int>? daysToDeadlines,
     Map<String, double>? paceGaps,
+    Map<String, int>? daysSinceLastProgress,
+    Set<String>? workedOnYesterdayCommitmentIds,
     int energySamples = 0,
   }) {
     const scorer = CommitmentScorer();
@@ -82,13 +86,17 @@ class WeekAllocationEngine {
         c: a,
         todayKey: todayKey,
         daysToDeadline: daysToDeadlines?[a.id],
-        goalPaceGap01: paceGaps?[a.goalId],
+        goalPaceGap01: paceGaps?[a.id] ?? (a.goalId != null && paceGaps != null ? paceGaps[a.goalId!] : null),
+        daysSinceLastProgress: daysSinceLastProgress?[a.id],
+        workedOnYesterday: workedOnYesterdayCommitmentIds?.contains(a.id) ?? false,
       );
       final scoreB = scorer.score(
         c: b,
         todayKey: todayKey,
         daysToDeadline: daysToDeadlines?[b.id],
-        goalPaceGap01: paceGaps?[b.goalId],
+        goalPaceGap01: paceGaps?[b.id] ?? (b.goalId != null && paceGaps != null ? paceGaps[b.goalId!] : null),
+        daysSinceLastProgress: daysSinceLastProgress?[b.id],
+        workedOnYesterday: workedOnYesterdayCommitmentIds?.contains(b.id) ?? false,
       );
 
       if ((scoreA.total - scoreB.total).abs() > 0.001) {
@@ -122,10 +130,15 @@ class WeekAllocationEngine {
       var placedForC = 0;
 
       final validDays = capacities.where((cap) {
+        if (cap.dayKey.compareTo(todayKey) < 0) return false;
         if (c.earliestDayKey != null && cap.dayKey.compareTo(c.earliestDayKey!) < 0) return false;
         if (c.latestDayKey != null && cap.dayKey.compareTo(c.latestDayKey!) > 0) return false;
         return true;
       }).toList();
+
+      if (c.isUserLocked && c.earliestDayKey != null) {
+        validDays.retainWhere((cap) => cap.dayKey == c.earliestDayKey);
+      }
 
       if (validDays.isEmpty) {
         unplaced.add(UnplacedCommitment(
@@ -136,10 +149,9 @@ class WeekAllocationEngine {
         continue;
       }
 
-      // Check FIXED constraint
-      if (c.flexibility == CommitmentFlexibility.fixed &&
-          c.earliestDayKey != null &&
-          c.earliestDayKey == c.latestDayKey) {
+      // Check FIXED / Locked constraint
+      if ((c.flexibility == CommitmentFlexibility.fixed || c.isUserLocked) &&
+          c.earliestDayKey != null) {
         final targetDay = c.earliestDayKey!;
         final rem = remainingCap[targetDay] ?? 0;
         if (rem < needed) {
@@ -177,12 +189,10 @@ class WeekAllocationEngine {
 
         if (effectiveCap < antiFragmentationThresholdMinutes) continue;
 
-        // Block sizing rules
+        // Block sizing rules: preserve whole block if capacity permits
         var blockSize = needed;
-        if (needed >= 120) {
-          blockSize = 60;
-        } else if (needed > 60) {
-          blockSize = 60;
+        if (needed > effectiveCap) {
+          blockSize = effectiveCap >= 60 ? 60 : effectiveCap;
         }
 
         if (c.workKind == WorkKind.deep && blockSize < minDeepBlockMinutes) {
@@ -206,7 +216,9 @@ class WeekAllocationEngine {
           c: c,
           todayKey: todayKey,
           daysToDeadline: daysToDeadlines?[c.id],
-          goalPaceGap01: paceGaps?[c.goalId],
+          goalPaceGap01: paceGaps?[c.id] ?? (c.goalId != null && paceGaps != null ? paceGaps[c.goalId!] : null),
+          daysSinceLastProgress: daysSinceLastProgress?[c.id],
+          workedOnYesterday: workedOnYesterdayCommitmentIds?.contains(c.id) ?? false,
         );
 
         var reasonFa = scoreBreakdown.toReasonFa();
@@ -214,11 +226,42 @@ class WeekAllocationEngine {
           reasonFa += ' (بر اساس الگوی انرژی‌ات با $energySamples داده)';
         }
 
+        String? windowStart;
+        String? windowEnd;
+        if (c.preferredDayPartsJson != null && c.preferredDayPartsJson!.isNotEmpty) {
+          try {
+            final parts = jsonDecode(c.preferredDayPartsJson!);
+            if (parts is List && parts.isNotEmpty) {
+              final firstPart = parts.first.toString().toLowerCase();
+              switch (firstPart) {
+                case 'morning':
+                  windowStart = '08:00';
+                  windowEnd = '12:00';
+                  break;
+                case 'afternoon':
+                  windowStart = '13:00';
+                  windowEnd = '17:00';
+                  break;
+                case 'evening':
+                  windowStart = '18:00';
+                  windowEnd = '22:00';
+                  break;
+                case 'night':
+                  windowStart = '22:00';
+                  windowEnd = '24:00';
+                  break;
+              }
+            }
+          } catch (_) {}
+        }
+
         final alloc = PlanningAllocation(
           id: allocId,
           commitmentId: c.id,
           dayKey: dKey,
           plannedMinutes: blockSize,
+          timeWindowStart: windowStart,
+          timeWindowEnd: windowEnd,
           status: AllocationStatus.planned,
           idempotencyKey: idempotencyKey,
           createdAt: DateTime.now().millisecondsSinceEpoch,
@@ -267,6 +310,10 @@ class WeekAllocationEngine {
   String _getPrevDayKey(String currentKey, List<DayCapacity> caps) {
     final idx = caps.indexWhere((c) => c.dayKey == currentKey);
     if (idx > 0) return caps[idx - 1].dayKey;
+    final dt = DateTime.tryParse(currentKey);
+    if (dt != null) {
+      return DayKey.from(dt.subtract(const Duration(days: 1))).value;
+    }
     return '';
   }
 }

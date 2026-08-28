@@ -182,3 +182,71 @@ class RitmoSheetScaffold extends StatelessWidget {
     );
   }
 }
+
+/// Wraps any screen or navigation shell to provide the authentic Apple iOS 26 Card Deck
+/// background transformation (7% scale-down, 18dp rounded top corners, dimming overlay,
+/// parallax shift) when a modal sheet is pushed on top of it.
+class AppleCardDeckHost extends StatelessWidget {
+  final Widget child;
+  final double scaleDownFactor; // 0.07 -> scale reaches 0.93
+  final double topCornerRadius; // 18.0
+  final double maxDimAlpha; // 0.25
+
+  const AppleCardDeckHost({
+    super.key,
+    required this.child,
+    this.scaleDownFactor = 0.07,
+    this.topCornerRadius = 18.0,
+    this.maxDimAlpha = 0.25,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final route = ModalRoute.of(context);
+    final secondaryAnim = route?.secondaryAnimation;
+
+    if (secondaryAnim == null) {
+      return child;
+    }
+
+    return AnimatedBuilder(
+      animation: secondaryAnim,
+      builder: (context, staticChild) {
+        final progress = secondaryAnim.value;
+        if (progress <= 0.0) {
+          return staticChild!;
+        }
+
+        final scale = 1.0 - (scaleDownFactor * progress);
+        final radius = topCornerRadius * progress;
+        final translateY = 10.0 * progress;
+        final dimOpacity = (maxDimAlpha * progress).clamp(0.0, 1.0);
+
+        return Transform.translate(
+          offset: Offset(0, translateY),
+          child: Transform.scale(
+            scale: scale,
+            alignment: Alignment.topCenter,
+            child: ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
+              child: Stack(
+                children: [
+                  staticChild!,
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      ignoring: true,
+                      child: ColoredBox(
+                        color: Colors.black.withValues(alpha: dimOpacity),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+}

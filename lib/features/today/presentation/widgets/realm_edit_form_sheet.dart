@@ -802,15 +802,28 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
         return DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: sheetRadius,
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.35)
-                    : colors.primary.withValues(alpha: 0.08),
-                offset: const Offset(0, -3),
-                blurRadius: 16,
-              ),
-            ],
+            boxShadow: isDark
+                ? [
+                    BoxShadow(
+                      color: colors.primary.withValues(alpha: 0.20),
+                      offset: const Offset(0, -4),
+                      blurRadius: 18,
+                      spreadRadius: 0.5,
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      offset: const Offset(0, -2),
+                      blurRadius: 8,
+                      spreadRadius: -1,
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: colors.primary.withValues(alpha: 0.08),
+                      offset: const Offset(0, -3),
+                      blurRadius: 16,
+                    ),
+                  ],
           ),
           child: ClipRRect(
             borderRadius: sheetRadius,
@@ -822,9 +835,9 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                   borderRadius: sheetRadius,
                   border: Border.all(
                     color: isDark
-                        ? Colors.white.withValues(alpha: 0.10)
+                        ? const Color(0xFF94A3B8).withValues(alpha: 0.16)
                         : Colors.white.withValues(alpha: 0.70),
-                    width: 1.0,
+                    width: isDark ? 0.9 : 1.0,
                   ),
                 ),
                 child: DecoratedBox(
@@ -835,11 +848,11 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.white.withValues(alpha: 0.14),
-                              Colors.white.withValues(alpha: 0.04),
-                              Colors.white.withValues(alpha: 0.0),
+                              const Color(0xFF94A3B8).withValues(alpha: 0.10),
+                              const Color(0xFF64748B).withValues(alpha: 0.03),
+                              Colors.transparent,
                             ],
-                            stops: const [0.0, 0.03, 0.45],
+                            stops: const [0.0, 0.04, 0.40],
                           )
                         : LinearGradient(
                             begin: Alignment.topCenter,

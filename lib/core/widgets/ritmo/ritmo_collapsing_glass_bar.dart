@@ -162,9 +162,9 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
 
     // محاسبه کشسانی فنری اووراسکرول (Elastic Overscroll Rubber-Banding)
     final isOverscrolling = scrollOffset < 0;
-    final overscrollAmount = isOverscrolling ? (-scrollOffset).clamp(0.0, 150.0) : 0.0;
-    final elasticStretch = overscrollAmount * 0.42;
-    final elasticScale = 1.0 + (overscrollAmount * 0.0012).clamp(0.0, 0.09);
+    final overscrollAmount = isOverscrolling ? (-scrollOffset).clamp(0.0, 200.0) : 0.0;
+    final elasticStretch = overscrollAmount * 0.48;
+    final elasticScale = 1.0 + (overscrollAmount * 0.0014).clamp(0.0, 0.12);
 
     // پیشرفت اسکرول رو به پایین از ۰.۰ (سکون) تا ۱.۰ (کپسول کامل)
     final effectivePositiveOffset = scrollOffset.clamp(0.0, 500.0);
@@ -239,13 +239,13 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
     }
 
     // مختصات پیوسته ترنزیشن و کشسانی تیتر
-    final titleBaseTop = 50.0 + (elasticStretch * 0.32);
+    final titleBaseTop = 50.0 + (elasticStretch * 0.35);
     final titleRight = lerpDouble(14.0, 52.0, t)!;
     final titleTop = lerpDouble(titleBaseTop, 14.0, t)!;
     final titleFontSize = lerpDouble(27.0, 16.5, t)!;
 
     final subtitleOpacity = (1.0 - (2.4 * rawT)).clamp(0.0, 1.0);
-    final subtitleTop = 86.0 + (elasticStretch * 0.55);
+    final subtitleTop = 86.0 + (elasticStretch * 0.58);
 
     final showTabsInCapsule = hasTabs && (t < 0.99 || isTabsExpanded);
 
@@ -265,7 +265,7 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
               sigmaY: effectiveBlur,
             ),
             child: AnimatedContainer(
-              duration: isOverscrolling ? Duration.zero : const Duration(milliseconds: 260),
+              duration: (isOverscrolling || t < 0.99) ? Duration.zero : const Duration(milliseconds: 260),
               curve: Curves.easeInOutCubic,
               height: targetHeight,
               width: double.infinity,

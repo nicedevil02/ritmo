@@ -6,7 +6,6 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/analytics/energy_analytics_engine.dart';
 import 'package:ritmo/core/analytics/life_balance_engine.dart';
@@ -82,7 +81,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   bool _isDirty = false;
   int _loadToken = 0;
   int _selectedHorizonDays = 14;
-  bool _isTabsVisible = true;
+  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
+  final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
   Timer? _reloadDebounce;
 
   late TabController _tabController;
@@ -157,6 +157,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
   @override
   void dispose() {
+    _scrollOffset.dispose();
+    _isTabsExpanded.dispose();
     _reloadDebounce?.cancel();
     _loadToken++;
     RitmoEvents.routineChanges.removeListener(_requestReload);
@@ -643,7 +645,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
@@ -656,7 +657,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.paddingOf(context).top;
-    final contentTopPadding = topPadding + 142.0;
+    final contentTopPadding = topPadding + 190.0;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -667,18 +668,17 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             child: NotificationListener<ScrollNotification>(
               onNotification: (notification) {
                 if (notification.metrics.axis == Axis.vertical) {
+                  _scrollOffset.value = notification.metrics.pixels;
                   if (notification.metrics.pixels <= 15) {
-                    if (!_isTabsVisible) {
-                      setState(() => _isTabsVisible = true);
-                    }
+                    if (!_isTabsExpanded.value) _isTabsExpanded.value = true;
                   } else if (notification is UserScrollNotification) {
                     if (notification.direction == ScrollDirection.reverse) {
-                      if (_isTabsVisible) {
-                        setState(() => _isTabsVisible = false);
+                      if (notification.metrics.pixels > 75 && _isTabsExpanded.value) {
+                        _isTabsExpanded.value = false;
                       }
                     } else if (notification.direction == ScrollDirection.forward) {
-                      if (!_isTabsVisible) {
-                        setState(() => _isTabsVisible = true);
+                      if (!_isTabsExpanded.value) {
+                        _isTabsExpanded.value = true;
                       }
                     }
                   }
@@ -690,7 +690,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 color: colors.primary,
                 child: TabBarView(
                   controller: _tabController,
-                  physics: const BouncingScrollPhysics(),
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   children: [
                     _WellbeingTabKeepAlive(child: _buildTodayTab(context, contentTopPadding)),
                     _WellbeingTabKeepAlive(child: _buildSleepTab(context, contentTopPadding)),
@@ -701,373 +701,91 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             ),
           ),
 
-          // Layer 2: Floating Capsule Header Island
+          // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-                child: _buildCapsuleHeader(context, isDark, colors),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCapsuleHeader(
-    BuildContext context,
-    bool isDark,
-    RitmoColors colors,
-  ) {
-    return RitmoGlassHeader(
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-      child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Top Row: Back Button, Title, AI, Quick Checkin, Sleep Sheet
-                SizedBox(
-                  height: 48,
-                  child: Row(
-                    children: [
-                      if (Navigator.canPop(context))
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 38,
-                            minHeight: 38,
-                          ),
-                          icon: Icon(
-                            CupertinoIcons.arrow_right,
-                            color: isDark ? Colors.white : const Color(0xFF1D2129),
-                            size: 20,
-                          ),
-                          onPressed: () {
-                            HapticFeedback.lightImpact();
-                            Navigator.pop(context);
-                          },
-                        )
-                      else
-                        const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'حال و تعادل',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 17.5,
-                            letterSpacing: -0.4,
-                            color: isDark ? Colors.white : const Color(0xFF1D2129),
-                          ),
-                        ),
-                      ),
-                      _buildHeaderActionButton(
-                        icon: CupertinoIcons.sparkles,
-                        iconColor: colors.primary,
-                        isAiButton: true,
-                        isDark: isDark,
-                        tooltip: 'دستیار هوشمند حال و تعادل',
-                        onTap: _openAssistant,
-                      ),
-                      _buildHeaderActionButton(
-                        icon: CupertinoIcons.smiley,
-                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                        isDark: isDark,
-                        tooltip: 'ثبت حس و حال',
-                        onTap: () {
-                          RitmoSheetScaffold.present(
-                            context: context,
-                            title: 'ثبت حال روحی و انرژی',
-                            builder: (_) => QuickLogSheet(onSaved: _requestReload),
-                          );
-                        },
-                      ),
-                      _buildHeaderActionButton(
-                        icon: CupertinoIcons.moon_zzz_fill,
-                        iconColor: const Color(0xFF8B5CF6),
-                        isDark: isDark,
-                        tooltip: 'ثبت و پایش خواب',
-                        onTap: () {
-                          RitmoSheetScaffold.present(
-                            context: context,
-                            title: 'ثبت گزارش خواب',
-                            builder: (_) => SleepLogSheet(
-                              onSaved: _requestReload,
-                              target: _sleepTarget,
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 2),
-                    ],
-                  ),
-                ),
-
-                // Bottom Collapsible 3-Tier Segmented Tabs
-                ClipRect(
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 260),
-                    curve: Curves.easeInOutCubic,
-                    height: _isTabsVisible ? 54.0 : 0.0,
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: _isTabsVisible ? 1.0 : 0.0,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
-                        child: Align(
-                          alignment: Alignment.center,
-                          child: Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: _buildSegmentedTabs(colors, isDark),
-                          ),
-                        ),
-                      ),
+            child: AnimatedBuilder(
+              animation: Listenable.merge([_scrollOffset, _isTabsExpanded]),
+              builder: (context, _) {
+                return RitmoAppleMorphingGlassHeader(
+                  title: 'حال و تعادل',
+                  subtitle: 'شاخص سرزندگی، پایش خواب و توازن انرژی روزانه',
+                  scrollOffset: _scrollOffset.value,
+                  isTabsExpanded: _isTabsExpanded.value,
+                  collapseDistance: 55.0,
+                  onBack: () => Navigator.maybePop(context),
+                  actions: [
+                    RitmoVibrancyActionButton(
+                      icon: CupertinoIcons.sparkles,
+                      iconColor: colors.primary,
+                      isAiButton: true,
+                      accentColor: colors.primary,
+                      tooltip: 'دستیار هوشمند حال و تعادل',
+                      onTap: _openAssistant,
                     ),
-                  ),
-                ),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildSegmentedTabs(
-    RitmoColors colors,
-    bool isDark,
-  ) {
-    final trackBgColor = isDark ? const Color(0xFF16191E) : const Color(0xFFEFF2F6);
-    final pillBgColor = isDark
-        ? const Color(0xFF22262F)
-        : Color.lerp(Colors.white, colors.primary, 0.12)!;
-    final activeIndex = _tabController.index.clamp(0, 2);
-
-    const tabs = [
-      (title: 'امروز و تعادل', icon: CupertinoIcons.sparkles),
-      (title: 'خواب و استراحت', icon: CupertinoIcons.moon_fill),
-      (title: 'انرژی و خلق', icon: CupertinoIcons.bolt_fill),
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final totalWidth = constraints.maxWidth;
-        const outerPadding = 4.0;
-        final availableWidth = totalWidth - (outerPadding * 2);
-        final tabWidth = availableWidth / 3;
-        const trackHeight = 44.0;
-        const pillHeight = trackHeight - (outerPadding * 2);
-
-        return Container(
-          height: trackHeight,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: trackBgColor,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.white.withValues(alpha: 0.90),
-              width: 1.0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.70)
-                    : const Color(0xFFB8C2CE).withValues(alpha: 0.55),
-                offset: const Offset(2, 2),
-                blurRadius: 4,
-              ),
-              BoxShadow(
-                color: isDark
-                    ? const Color(0xFF222630)
-                    : Colors.white.withValues(alpha: 0.95),
-                offset: const Offset(-2, -2),
-                blurRadius: 4,
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              // Sliding Pill Indicator
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeInOutCubic,
-                right: outerPadding + (activeIndex * tabWidth),
-                top: outerPadding,
-                width: tabWidth,
-                height: pillHeight,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: pillBgColor,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: colors.primary.withValues(alpha: isDark ? 0.40 : 0.28),
-                      width: 1.0,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isDark
-                            ? Colors.black.withValues(alpha: 0.60)
-                            : const Color(0xFFB2BDCB).withValues(alpha: 0.65),
-                        offset: const Offset(2, 2),
-                        blurRadius: 4,
-                      ),
-                      BoxShadow(
-                        color: isDark ? const Color(0xFF2E3440) : Colors.white,
-                        offset: const Offset(-2, -2),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Tab Buttons
-              Row(
-                children: List.generate(3, (index) {
-                  final item = tabs[index];
-                  final isSelected = activeIndex == index;
-
-                  return Expanded(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
+                    const SizedBox(width: 8),
+                    RitmoVibrancyActionButton(
+                      icon: CupertinoIcons.smiley,
+                      iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                      tooltip: 'ثبت حس و حال',
                       onTap: () {
-                        HapticFeedback.lightImpact();
-                        _tabController.animateTo(index);
-                        setState(() {});
+                        RitmoSheetScaffold.present(
+                          context: context,
+                          title: 'ثبت حال روحی و انرژی',
+                          builder: (_) => QuickLogSheet(onSaved: _requestReload),
+                        );
                       },
-                      child: Center(
-                        child: AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 200),
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                            color: isSelected
-                                ? colors.primary
-                                : (isDark
-                                    ? const Color(0xFF8A93A4)
-                                    : const Color(0xFF6B7280)),
-                          ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  item.icon,
-                                  size: 13,
-                                  color: isSelected
-                                      ? colors.primary
-                                      : (isDark
-                                          ? const Color(0xFF8A93A4)
-                                          : const Color(0xFF6B7280)),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(item.title),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
                     ),
-                  );
-                }),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildHeaderActionButton({
-    required IconData icon,
-    required Color iconColor,
-    required bool isDark,
-    required VoidCallback onTap,
-    String? tooltip,
-    bool isAiButton = false,
-  }) {
-    final button = GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: _buildHeaderActionButtonContent(
-        icon: icon,
-        iconColor: iconColor,
-        isDark: isDark,
-        isAiButton: isAiButton,
-      ),
-    );
-
-    if (tooltip != null) {
-      return Tooltip(message: tooltip, child: button);
-    }
-    return button;
-  }
-
-  Widget _buildHeaderActionButtonContent({
-    required IconData icon,
-    required Color iconColor,
-    required bool isDark,
-    bool isAiButton = false,
-  }) {
-    return Container(
-      width: 36,
-      height: 36,
-      margin: const EdgeInsets.symmetric(horizontal: 3),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isDark
-            ? (isAiButton
-                ? iconColor.withValues(alpha: 0.18)
-                : const Color(0xFF22262E))
-            : (isAiButton
-                ? iconColor.withValues(alpha: 0.12)
-                : const Color(0xFFF3F5F8)),
-        border: Border.all(
-          color: isDark
-              ? (isAiButton
-                  ? iconColor.withValues(alpha: 0.40)
-                  : Colors.white.withValues(alpha: 0.08))
-              : (isAiButton
-                  ? iconColor.withValues(alpha: 0.30)
-                  : Colors.white.withValues(alpha: 0.90)),
-          width: 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.04)
-                : Colors.white.withValues(alpha: 0.95),
-            offset: const Offset(-2, -2),
-            blurRadius: 4,
-          ),
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.55)
-                : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
-            offset: const Offset(2, 2),
-            blurRadius: 4,
-          ),
-          if (isAiButton)
-            BoxShadow(
-              color: iconColor.withValues(alpha: isDark ? 0.35 : 0.22),
-              blurRadius: 10,
-              spreadRadius: 1.0,
+                    const SizedBox(width: 8),
+                    RitmoVibrancyActionButton(
+                      icon: CupertinoIcons.moon_zzz_fill,
+                      iconColor: const Color(0xFF8B5CF6),
+                      tooltip: 'ثبت و پایش خواب',
+                      onTap: () {
+                        RitmoSheetScaffold.present(
+                          context: context,
+                          title: 'ثبت گزارش خواب',
+                          builder: (_) => SleepLogSheet(
+                            onSaved: _requestReload,
+                            target: _sleepTarget,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                  tabs: RitmoGlassSegmentedControl<int>(
+                    items: const [
+                      RitmoTabItem(
+                        title: 'امروز و تعادل',
+                        icon: CupertinoIcons.sparkles,
+                        value: 0,
+                      ),
+                      RitmoTabItem(
+                        title: 'خواب و استراحت',
+                        icon: CupertinoIcons.moon_fill,
+                        value: 1,
+                      ),
+                      RitmoTabItem(
+                        title: 'انرژی و خلق',
+                        icon: CupertinoIcons.bolt_fill,
+                        value: 2,
+                      ),
+                    ],
+                    selectedIndex: _tabController.index.clamp(0, 2),
+                    onTabChanged: (index) {
+                      _tabController.animateTo(index);
+                      setState(() {});
+                    },
+                    accentColor: colors.primary,
+                    height: 46.0,
+                  ),
+                );
+              },
             ),
+          ),
         ],
-      ),
-      child: Center(
-        child: Icon(
-          icon,
-          size: 18,
-          color: isAiButton
-              ? iconColor
-              : (isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280)),
-        ),
       ),
     );
   }

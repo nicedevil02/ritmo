@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
@@ -36,11 +35,18 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
   StudyRecommendation? _topRecommendation;
   bool _isLoading = true;
   String? _errorMessage;
+  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
 
   @override
   void initState() {
     super.initState();
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _scrollOffset.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -201,7 +207,7 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.paddingOf(context).top;
-    final contentTopPadding = topPadding + 76.0;
+    final contentTopPadding = topPadding + 130.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -236,60 +242,127 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
                         )
                       : RefreshIndicator(
                           onRefresh: _loadData,
-                          child: SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                if (_topRecommendation != null) _buildNextUpCard(_topRecommendation!),
-                                const SizedBox(height: 16),
-                                _buildTodayProgressCard(todayMinutes, targetMinutes),
-                                const SizedBox(height: 16),
-                                StudyDeadlinesSection(
-                                  deadlines: _upcomingDeadlines,
-                                  subjects: _subjects,
-                                  onChanged: _loadData,
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('دروس من', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                                    TextButton.icon(
-                                      onPressed: _addSubject,
-                                      icon: const Icon(Icons.add, size: 18),
-                                      label: const Text('درس جدید', style: TextStyle(fontSize: 12)),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                if (_subjects.isEmpty)
-                                  _buildEmptyState()
-                                else
-                                  ..._subjects.map((subject) {
-                                    final stats = _subjectStats[subject.id];
-                                    return _buildSubjectCard(subject, stats);
-                                  }),
-                                const SizedBox(height: 16),
-                                StudyWeekHeatmap(sessionsByDate: _weeklyHeatmapData),
-                              ],
+                          child: NotificationListener<ScrollNotification>(
+                            onNotification: (notification) {
+                              if (notification.metrics.axis == Axis.vertical) {
+                                _scrollOffset.value = notification.metrics.pixels;
+                              }
+                              return false;
+                            },
+                            child: SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                              padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  if (_topRecommendation != null) _buildNextUpCard(_topRecommendation!),
+                                  const SizedBox(height: 16),
+                                  _buildTodayProgressCard(todayMinutes, targetMinutes),
+                                  const SizedBox(height: 16),
+                                  StudyDeadlinesSection(
+                                    deadlines: _upcomingDeadlines,
+                                    subjects: _subjects,
+                                    onChanged: _loadData,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('دروس من', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                                      TextButton.icon(
+                                        onPressed: _addSubject,
+                                        icon: const Icon(Icons.add, size: 18),
+                                        label: const Text('درس جدید', style: TextStyle(fontSize: 12)),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  if (_subjects.isEmpty)
+                                    _buildEmptyState()
+                                  else
+                                    ..._subjects.map((subject) {
+                                      final stats = _subjectStats[subject.id];
+                                      return _buildSubjectCard(subject, stats);
+                                    }),
+                                  const SizedBox(height: 16),
+                                  StudyWeekHeatmap(sessionsByDate: _weeklyHeatmapData),
+                                ],
+                              ),
                             ),
                           ),
                         ),
             ),
 
-            // Layer 2: Floating Capsule Header Island
+            // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
             Positioned(
               top: 0,
               left: 0,
               right: 0,
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-                  child: _buildCapsuleHeader(context, isDark, colors),
-                ),
+              child: AnimatedBuilder(
+                animation: _scrollOffset,
+                builder: (context, _) {
+                  return RitmoAppleMorphingGlassHeader(
+                    title: 'درس و مطالعه',
+                    subtitle: 'برنامه‌ریزی هوشمند، مرور لایتنر و تمرکز مطالعاتی',
+                    scrollOffset: _scrollOffset.value,
+                    collapseDistance: 55.0,
+                    onBack: () => Navigator.maybePop(context),
+                    statusBadge: _subjects.isNotEmpty
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: colors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Text(
+                              '${RitmoNumber.toFa(_subjects.length)} درس',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: colors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          )
+                        : null,
+                    actions: [
+                      RitmoVibrancyActionButton(
+                        icon: Icons.school_outlined,
+                        iconColor: const Color(0xFF8B5CF6),
+                        tooltip: 'تغییر به حالت کنکور',
+                        onTap: () async {
+                          await StudyModuleEntry.switchMode(context, konkur: true);
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      RitmoVibrancyActionButton(
+                        icon: CupertinoIcons.settings,
+                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                        tooltip: 'تنظیمات مطالعه',
+                        onTap: () async {
+                          if (_settings != null) {
+                            final newKonkur = await StudySettingsSheet.show(context, settings: _settings!);
+                            if (newKonkur != null && newKonkur != _settings!.konkurMode && context.mounted) {
+                              await StudyModuleEntry.switchMode(context, konkur: newKonkur);
+                            } else {
+                              await _loadData();
+                            }
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      RitmoVibrancyActionButton(
+                        icon: CupertinoIcons.plus,
+                        iconColor: isDark ? Colors.white : const Color(0xFF1D2129),
+                        tooltip: 'درس جدید',
+                        onTap: _addSubject,
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -312,201 +385,6 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
           backgroundColor: colors.primary,
           icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
           label: const Text('شروع مطالعه', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCapsuleHeader(
-    BuildContext context,
-    bool isDark,
-    RitmoColors colors,
-  ) {
-    return RitmoGlassHeader(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-              children: [
-                if (Navigator.canPop(context))
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 38,
-                      minHeight: 38,
-                    ),
-                    icon: Icon(
-                      CupertinoIcons.arrow_right,
-                      color: isDark ? Colors.white : const Color(0xFF1D2129),
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.pop(context);
-                    },
-                  )
-                else
-                  const SizedBox(width: 10),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Text(
-                        'درس و مطالعه',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 17.5,
-                          letterSpacing: -0.4,
-                          color: isDark ? Colors.white : const Color(0xFF1D2129),
-                        ),
-                      ),
-                      if (_subjects.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: colors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Text(
-                            '${RitmoNumber.toFa(_subjects.length)} درس',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              color: colors.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                _buildHeaderActionButton(
-                  icon: Icons.school_outlined,
-                  iconColor: const Color(0xFF8B5CF6),
-                  isDark: isDark,
-                  tooltip: 'تغییر به حالت کنکور',
-                  onTap: () async {
-                    await StudyModuleEntry.switchMode(context, konkur: true);
-                  },
-                ),
-                _buildHeaderActionButton(
-                  icon: CupertinoIcons.settings,
-                  iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                  isDark: isDark,
-                  tooltip: 'تنظیمات مطالعه',
-                  onTap: () async {
-                    if (_settings != null) {
-                      final newKonkur = await StudySettingsSheet.show(context, settings: _settings!);
-                      if (newKonkur != null && newKonkur != _settings!.konkurMode && context.mounted) {
-                        await StudyModuleEntry.switchMode(context, konkur: newKonkur);
-                      } else {
-                        await _loadData();
-                      }
-                    }
-                  },
-                ),
-                _buildHeaderActionButton(
-                  icon: CupertinoIcons.plus,
-                  iconColor: isDark ? Colors.white : const Color(0xFF1D2129),
-                  isDark: isDark,
-                  tooltip: 'درس جدید',
-                  onTap: _addSubject,
-                ),
-                const SizedBox(width: 2),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildHeaderActionButton({
-    required IconData icon,
-    required Color iconColor,
-    required bool isDark,
-    required VoidCallback onTap,
-    String? tooltip,
-    bool isAiButton = false,
-  }) {
-    final button = GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: _buildHeaderActionButtonContent(
-        icon: icon,
-        iconColor: iconColor,
-        isDark: isDark,
-        isAiButton: isAiButton,
-      ),
-    );
-
-    if (tooltip != null) {
-      return Tooltip(message: tooltip, child: button);
-    }
-    return button;
-  }
-
-  Widget _buildHeaderActionButtonContent({
-    required IconData icon,
-    required Color iconColor,
-    required bool isDark,
-    bool isAiButton = false,
-  }) {
-    return Container(
-      width: 36,
-      height: 36,
-      margin: const EdgeInsets.symmetric(horizontal: 3),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isDark
-            ? (isAiButton
-                ? iconColor.withValues(alpha: 0.18)
-                : const Color(0xFF22262E))
-            : (isAiButton
-                ? iconColor.withValues(alpha: 0.12)
-                : const Color(0xFFF3F5F8)),
-        border: Border.all(
-          color: isDark
-              ? (isAiButton
-                  ? iconColor.withValues(alpha: 0.40)
-                  : Colors.white.withValues(alpha: 0.08))
-              : (isAiButton
-                  ? iconColor.withValues(alpha: 0.30)
-                  : Colors.white.withValues(alpha: 0.90)),
-          width: 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.04)
-                : Colors.white.withValues(alpha: 0.95),
-            offset: const Offset(-2, -2),
-            blurRadius: 4,
-          ),
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.55)
-                : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
-            offset: const Offset(2, 2),
-            blurRadius: 4,
-          ),
-          if (isAiButton)
-            BoxShadow(
-              color: iconColor.withValues(alpha: isDark ? 0.35 : 0.22),
-              blurRadius: 10,
-              spreadRadius: 1.0,
-            ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          icon,
-          size: 18,
-          color: isAiButton
-              ? iconColor
-              : (isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280)),
         ),
       ),
     );

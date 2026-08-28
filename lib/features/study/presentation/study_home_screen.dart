@@ -240,54 +240,51 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
                             ),
                           ),
                         )
-                      : RefreshIndicator(
-                          onRefresh: _loadData,
-                          child: NotificationListener<ScrollNotification>(
-                            onNotification: (notification) {
-                              if (notification.metrics.axis == Axis.vertical) {
-                                _scrollOffset.value = notification.metrics.pixels;
-                              }
-                              return false;
-                            },
-                            child: SingleChildScrollView(
-                              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                              padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  if (_topRecommendation != null) _buildNextUpCard(_topRecommendation!),
-                                  const SizedBox(height: 16),
-                                  _buildTodayProgressCard(todayMinutes, targetMinutes),
-                                  const SizedBox(height: 16),
-                                  StudyDeadlinesSection(
-                                    deadlines: _upcomingDeadlines,
-                                    subjects: _subjects,
-                                    onChanged: _loadData,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('دروس من', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                                      TextButton.icon(
-                                        onPressed: _addSubject,
-                                        icon: const Icon(Icons.add, size: 18),
-                                        label: const Text('درس جدید', style: TextStyle(fontSize: 12)),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (_subjects.isEmpty)
-                                    _buildEmptyState()
-                                  else
-                                    ..._subjects.map((subject) {
-                                      final stats = _subjectStats[subject.id];
-                                      return _buildSubjectCard(subject, stats);
-                                    }),
-                                  const SizedBox(height: 16),
-                                  StudyWeekHeatmap(sessionsByDate: _weeklyHeatmapData),
-                                ],
-                              ),
+                      : NotificationListener<ScrollNotification>(
+                          onNotification: (notification) {
+                            if (notification.metrics.axis == Axis.vertical) {
+                              _scrollOffset.value = notification.metrics.pixels;
+                            }
+                            return false;
+                          },
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                            padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                if (_topRecommendation != null) _buildNextUpCard(_topRecommendation!),
+                                const SizedBox(height: 16),
+                                _buildTodayProgressCard(todayMinutes, targetMinutes),
+                                const SizedBox(height: 16),
+                                StudyDeadlinesSection(
+                                  deadlines: _upcomingDeadlines,
+                                  subjects: _subjects,
+                                  onChanged: _loadData,
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('دروس من', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                                    TextButton.icon(
+                                      onPressed: _addSubject,
+                                      icon: const Icon(Icons.add, size: 18),
+                                      label: const Text('درس جدید', style: TextStyle(fontSize: 12)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                if (_subjects.isEmpty)
+                                  _buildEmptyState()
+                                else
+                                  ..._subjects.map((subject) {
+                                    final stats = _subjectStats[subject.id];
+                                    return _buildSubjectCard(subject, stats);
+                                  }),
+                                const SizedBox(height: 16),
+                                StudyWeekHeatmap(sessionsByDate: _weeklyHeatmapData),
+                              ],
                             ),
                           ),
                         ),

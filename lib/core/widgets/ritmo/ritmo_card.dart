@@ -6,6 +6,7 @@
 // =============================================================================
 
 import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
@@ -1027,13 +1028,15 @@ class RitmoNeuSurface extends StatelessWidget {
 
 /// کارت مرجع شاهکار نئومورفیک (Ritmo Master Reference Hero Card)
 /// شامل چیدمان دو ستونه: گیج ۲۴ ساعته + دکمه تعاملی + چیپ‌های نئومورفیک + تایمر شمارش معکوس
+/// کارت مرجع شاهکار نئومورفیک (Ritmo Master Reference Hero Card)
+/// با دکمه‌ها و پیل‌های برجسته کامپکت و فیزیکی (Tactile Physical 3D Buttons & Pills)
 class RitmoNeuMasterCard extends StatelessWidget {
   const RitmoNeuMasterCard({
     super.key,
     required this.title,
     required this.subtitle,
     required this.activeChipLabel,
-    this.activeChipIcon = Icons.nightlight_round,
+    this.activeChipIcon = CupertinoIcons.moon_fill,
     this.statusLabel = 'قلمرو فعال',
     required this.timeRange,
     required this.remainingTime,
@@ -1042,7 +1045,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
     this.actionButtonText = 'مدیریت قلمرو',
     this.onActionTap,
     this.onTap,
-    this.height = 176,
+    this.height = 224,
   });
 
   final String title;
@@ -1069,248 +1072,122 @@ class RitmoNeuMasterCard extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final maxW = constraints.maxWidth.isFinite ? constraints.maxWidth : 360.0;
-          final dialColWidth = (maxW * 0.30).clamp(88.0, 100.0);
+          final maxW = constraints.maxWidth.isFinite ? constraints.maxWidth : 380.0;
+          final dialColWidth = (maxW * 0.34).clamp(112.0, 134.0);
 
           return RitmoCard.neumorphic(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(28),
-            padding: const EdgeInsets.fromLTRB(10, 8, 12, 8),
+            borderRadius: BorderRadius.circular(34),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             child: SizedBox(
-              height: height - 16,
+              height: height - 28,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ── ستون راست (RTL): اطلاعات، چیپ‌ها و پیل‌های نئومورفیک ──
+                  // ── ستون راست (RTL): اطلاعات، چیپ‌ها و پیل‌های نئومورفیک فیزیکی ──
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // ردیف هدر چیپ‌ها — چیپ وضعیت فعال روشن و درخشان
+                        // ردیف هدر چیپ‌های فیزیکی برجسته
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // چیپ وضعیت فعال با نقطه پالس سبز و پس‌زمینه روشن نئومورفیک
-                            RitmoNeuSurface(
-                              height: 24,
-                              radius: 12,
-                              tint: isDark
-                                  ? const Color(0xFF065F46).withValues(alpha: 0.35)
-                                  : const Color(0xFFD1FAE5),
-                              glowColor: const Color(0xFF10B981),
-                              blur: 6,
-                              distance: 1.5,
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: const Color(0xFF10B981),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFF10B981).withValues(alpha: 0.8),
-                                          blurRadius: 4,
-                                          spreadRadius: 0.5,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4.5),
-                                  Text(
-                                    statusLabel,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                      color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF047857),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            // چیپ وضعیت فعال با نقطه سه‌بعدی سبز زمردی
+                            _buildTactileStatusPill(
+                              isDark: isDark,
+                              statusLabel: statusLabel,
+                              color: effectiveColor,
                             ),
-                            const SizedBox(width: 4),
-                            // چیپ نام قلمروی فعال
-                            Flexible(
-                              child: RitmoNeuSurface(
-                                height: 24,
-                                radius: 12,
-                                tint: isDark
-                                    ? effectiveColor.withValues(alpha: 0.35)
-                                    : effectiveColor.withValues(alpha: 0.18),
-                                glowColor: effectiveColor,
-                                blur: 6,
-                                distance: 1.5,
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        activeChipLabel,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 10.5,
-                                          fontWeight: FontWeight.w800,
-                                          color: isDark ? Colors.white : effectiveColor,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 3.5),
-                                    Icon(activeChipIcon, size: 11.5, color: isDark ? Colors.white : effectiveColor),
-                                  ],
-                                ),
+                            const SizedBox(width: 8),
+                            // چیپ نام قلمروی فعال با آیکون ماه
+                            Expanded(
+                              child: _buildTactileRealmPill(
+                                isDark: isDark,
+                                label: activeChipLabel,
+                                icon: activeChipIcon,
+                                color: effectiveColor,
                               ),
                             ),
                           ],
                         ),
 
                         // عنوان اصلی و زیرعنوان
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.3,
-                                color: colors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 1.5),
-                            Text(
-                              subtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w500,
-                                color: colors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        // پیل بازه زمانی
-                        RitmoNeuSurface(
-                          height: 29,
-                          radius: 14.5,
-                          blur: 6,
-                          distance: 1.5,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Row(
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.access_time_filled_rounded, size: 13, color: colors.textSecondary),
-                              const SizedBox(width: 5),
-                              Expanded(
-                                child: Text(
-                                  timeRange,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: colors.textPrimary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // پیل شمارش معکوس با هاله نئومورفیک
-                        RitmoNeuSurface(
-                          height: 29,
-                          radius: 14.5,
-                          tint: isDark
-                              ? effectiveColor.withValues(alpha: 0.35)
-                              : effectiveColor.withValues(alpha: 0.15),
-                          glowColor: effectiveColor,
-                          blur: 7,
-                          distance: 1.5,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Row(
-                            children: [
-                              Icon(Icons.hourglass_top_rounded, size: 13, color: isDark ? Colors.white : effectiveColor),
-                              const SizedBox(width: 5),
                               Text(
-                                'باقی‌مانده:',
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white70 : effectiveColor,
+                                  fontSize: 19.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.4,
+                                  fontFamily: 'Vazirmatn',
+                                  color: colors.textPrimary,
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  remainingTime,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w900,
-                                    color: isDark ? Colors.white : effectiveColor,
-                                  ),
+                              const SizedBox(height: 2),
+                              Text(
+                                subtitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Vazirmatn',
+                                  color: colors.textSecondary,
                                 ),
                               ),
                             ],
                           ),
+                        ),
+
+                        // پیل فیزیکی بازه زمانی
+                        _buildTactileTimePill(
+                          isDark: isDark,
+                          colors: colors,
+                          timeRange: timeRange,
+                        ),
+
+                        // پیل فیزیکی تایمر شمارش معکوس با هاله پالت
+                        _buildTactileCountdownPill(
+                          isDark: isDark,
+                          remainingTime: remainingTime,
+                          color: effectiveColor,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 14),
 
-                  // ── ستون چپ: گیج نئومورفیک و دکمه مدیریت ──
+                  // ── ستون چپ: گیج نئومورفیک سه‌بعدی و دکمه مدیریت فیزیکی ──
                   SizedBox(
                     width: dialColWidth,
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if (gaugeWidget != null)
-                          gaugeWidget!
-                        else
-                          _buildDefaultSampleGauge(context, effectiveColor, isDark, dialColWidth - 4),
-                        const SizedBox(height: 4),
-                        RitmoNeuButton(
-                          height: 30,
-                          radius: 15,
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                          onTap: onActionTap ?? () {},
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  actionButtonText,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: colors.textPrimary,
-                                  ),
+                        Expanded(
+                          child: Center(
+                            child: gaugeWidget ??
+                                _build3dClockGauge(
+                                  context: context,
+                                  color: effectiveColor,
+                                  isDark: isDark,
+                                  size: (dialColWidth - 4).clamp(100.0, 126.0),
                                 ),
-                              ),
-                              const SizedBox(width: 3),
-                              Icon(
-                                Icons.chevron_left_rounded,
-                                size: 12,
-                                color: colors.textSecondary,
-                              ),
-                            ],
                           ),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildTactileManageButton(
+                          isDark: isDark,
+                          colors: colors,
+                          text: actionButtonText,
+                          onTap: onActionTap,
                         ),
                       ],
                     ),
@@ -1324,36 +1201,442 @@ class RitmoNeuMasterCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDefaultSampleGauge(BuildContext context, Color color, bool isDark, [double size = 96]) {
+  // ───────────────────────────────────────────────────────────────────────────
+  //  اجزای فیزیکی سه‌بعدی کارت (Tactile Physical Primitives)
+  // ───────────────────────────────────────────────────────────────────────────
+
+  /// پیل وضعیت فعال با نقطه سه‌بعدی سبز درخشان
+  Widget _buildTactileStatusPill({
+    required bool isDark,
+    required String statusLabel,
+    required Color color,
+  }) {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF0F3B32), const Color(0xFF072721)]
+              : [const Color(0xFFE8F7F3), const Color(0xFFD2F0E7)],
+        ),
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFF10B981).withValues(alpha: 0.35)
+              : Colors.white,
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.45)
+                : const Color(0xFFB8C8D8).withValues(alpha: 0.65),
+            offset: const Offset(3, 3.5),
+            blurRadius: 7,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.white.withValues(alpha: 0.95),
+            offset: const Offset(-2.5, -2.5),
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF0D9488),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0D9488).withValues(alpha: 0.6),
+                  blurRadius: 4,
+                  offset: const Offset(0.5, 0.5),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            statusLabel,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Vazirmatn',
+              color: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0D5A4C),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// پیل نام قلمروی فعال با آیکون ماه
+  Widget _buildTactileRealmPill({
+    required bool isDark,
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF2B3648), const Color(0xFF1B2330)]
+              : [Colors.white, const Color(0xFFE9EDF5)],
+        ),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.white,
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.45)
+                : const Color(0xFFBAC7D7).withValues(alpha: 0.65),
+            offset: const Offset(3, 3.5),
+            blurRadius: 7,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.white.withValues(alpha: 0.95),
+            offset: const Offset(-2.5, -2.5),
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 15,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Vazirmatn',
+                color: isDark ? Colors.white : const Color(0xFF1E293B),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// پیل فیزیکی بازه زمانی با محفظه آیکون ساعت
+  Widget _buildTactileTimePill({
+    required bool isDark,
+    required RitmoColors colors,
+    required String timeRange,
+  }) {
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(19),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF283244), const Color(0xFF1A222E)]
+              : [Colors.white, const Color(0xFFE9EEF6)],
+        ),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.07)
+              : Colors.white,
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.45)
+                : const Color(0xFFBAC7D7).withValues(alpha: 0.65),
+            offset: const Offset(3.5, 4),
+            blurRadius: 8,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.white.withValues(alpha: 0.95),
+            offset: const Offset(-2.5, -2.5),
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(
+            CupertinoIcons.clock,
+            size: 15,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              timeRange,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+                fontFamily: 'Vazirmatn',
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// پیل فیزیکی تایمر شمارش معکوس با گرادیان نرم نعنایی/پالت و بج آیکون ساعت شنی
+  Widget _buildTactileCountdownPill({
+    required bool isDark,
+    required String remainingTime,
+    required Color color,
+  }) {
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(19),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF0E382F), const Color(0xFF07241E)]
+              : [const Color(0xFFE6F7F2), const Color(0xFFD2EFE7)],
+        ),
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFF10B981).withValues(alpha: 0.35)
+              : Colors.white,
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.45)
+                : const Color(0xFFB5C6D6).withValues(alpha: 0.65),
+            offset: const Offset(3.5, 4),
+            blurRadius: 8,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.white.withValues(alpha: 0.95),
+            offset: const Offset(-2.5, -2.5),
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // بج مربع گوشه‌گرد سه‌بعدی ساعت شنی
+          Container(
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [const Color(0xFF165345), const Color(0xFF0D3B31)]
+                    : [const Color(0xFFD3EFE7), const Color(0xFFBFE7DC)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.35)
+                      : const Color(0xFF0D9488).withValues(alpha: 0.20),
+                  offset: const Offset(1, 1.5),
+                  blurRadius: 3,
+                ),
+              ],
+            ),
+            child: Icon(
+              CupertinoIcons.hourglass,
+              size: 13,
+              color: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0D5A4C),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'باقی‌مانده:',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Vazirmatn',
+              color: isDark ? const Color(0xFF99F6E4) : const Color(0xFF0D5A4C),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              remainingTime,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Vazirmatn',
+                color: isDark ? Colors.white : const Color(0xFF042F2E),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// دکمه برجسته فیزیکی «مدیریت قلمرو >» با عمق لمس
+  Widget _buildTactileManageButton({
+    required bool isDark,
+    required RitmoColors colors,
+    required String text,
+    required VoidCallback? onTap,
+  }) {
+    return RitmoNeuButton(
+      height: 36,
+      radius: 18,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      onTap: onTap ?? () {},
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Vazirmatn',
+                color: isDark ? Colors.white : const Color(0xFF1E293B),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            CupertinoIcons.chevron_left,
+            size: 11,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ساعت و گیج سه‌بعدی با شیار فرورفته، کمان شیشه‌ای و ماه طلایی
+  Widget _build3dClockGauge({
+    required BuildContext context,
+    required Color color,
+    required bool isDark,
+    required double size,
+  }) {
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RitmoNeu.sunkenGradient(context.colors.surfaceSunken, isDark),
-        boxShadow: RitmoNeu.sunkenShadows(isDark, blur: 7, distance: 2.5),
-      ),
-      child: Center(
-        child: Container(
-          width: size * 0.66,
-          height: size * 0.66,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RitmoNeu.raisedGradient(context.colors.surfaceElevated, isDark),
-            boxShadow: RitmoNeu.raisedShadows(isDark, blur: 5, distance: 1.8),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF161C26), const Color(0xFF222B3A)]
+              : [const Color(0xFFE2E7F0), Colors.white],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.6)
+                : const Color(0xFFB8C5D6).withValues(alpha: 0.8),
+            offset: const Offset(-3, -3),
+            blurRadius: 7,
           ),
-          child: Center(
-            child: Icon(
-              activeChipIcon,
-              size: size * 0.28,
-              color: isDark ? Colors.amberAccent : color,
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.white,
+            offset: const Offset(3, 3),
+            blurRadius: 7,
+          ),
+        ],
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // دیسک مرکزی برآمده ساعت
+          Container(
+            width: size * 0.70,
+            height: size * 0.70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [const Color(0xFF2A3446), const Color(0xFF1C2432)]
+                    : [Colors.white, const Color(0xFFE9EDF5)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.50)
+                      : const Color(0xFFBAC7D7).withValues(alpha: 0.70),
+                  offset: const Offset(3, 3.5),
+                  blurRadius: 6,
+                ),
+                BoxShadow(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.white,
+                  offset: const Offset(-2.5, -2.5),
+                  blurRadius: 5,
+                ),
+              ],
+            ),
+            child: Center(
+              child: Icon(
+                CupertinoIcons.moon_fill,
+                size: size * 0.28,
+                color: const Color(0xFFFBBF24), // ماه طلایی روشن
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
+
 
 
 

@@ -441,15 +441,16 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
 
     return RitmoNeuMasterCard(
       title: 'خواب و ریکاوری',
-      subtitle: 'ذهنی آرام‌تر، فردایی بهتر',
+      subtitle: 'ذهنی آرام‌تر، عملکردی بهتر',
       activeChipLabel: 'خواب و ریکاوری',
       activeChipIcon: CupertinoIcons.moon_fill,
       statusLabel: 'قلمرو فعال',
-      timeRange: '${toPersianDigits("۰۵:۳۰")}  ➔  ${toPersianDigits("۲۲:۳۰")}',
+      timeRange: '${toPersianDigits("۲۲:۳۰")}   ➔   ${toPersianDigits("۰۵:۳۰")}',
       remainingTime: toPersianDigits('۰۵:۵۶:۱۶'),
       activeColor: activeColor,
+      height: 224,
       gaugeWidget: Realm24hDial(
-        size: 96,
+        size: 114,
         activeZoneId: 'sleep',
         activeZoneColor: activeColor,
         activeZoneIcon: '🌙',

@@ -394,46 +394,53 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
                       child: cardContent,
                     ),
                   )
-                : ClipRRect(
-                    borderRadius: cardRadius,
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: colors.glassTint,
-                          borderRadius: cardRadius,
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.18)
-                                : Colors.white.withValues(alpha: 0.70),
-                            width: 1.0,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: colors.shadow.withValues(alpha: 0.15),
-                              blurRadius: 16,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                : DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: cardRadius,
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark
+                              ? Colors.black.withValues(alpha: 0.35)
+                              : colors.primary.withValues(alpha: 0.08),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
                         ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: cardRadius,
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
                         child: DecoratedBox(
                           decoration: BoxDecoration(
+                            color: colors.glassTint,
                             borderRadius: cardRadius,
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.white.withValues(
-                                  alpha: isDark ? 0.08 : 0.20,
-                                ),
-                                Colors.white.withValues(alpha: 0.0),
-                              ],
-                              stops: const [0.0, 0.45],
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.18)
+                                  : Colors.white.withValues(alpha: 0.70),
+                              width: 1.0,
                             ),
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(RitmoRadius.card - 1),
-                            child: cardContent,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: cardRadius,
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.white.withValues(
+                                    alpha: isDark ? 0.08 : 0.20,
+                                  ),
+                                  Colors.white.withValues(alpha: 0.0),
+                                ],
+                                stops: const [0.0, 0.45],
+                              ),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(RitmoRadius.card - 1),
+                              child: cardContent,
+                            ),
                           ),
                         ),
                       ),

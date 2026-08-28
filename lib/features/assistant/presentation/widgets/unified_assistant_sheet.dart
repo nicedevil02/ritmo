@@ -1513,37 +1513,51 @@ class _AssistantSheetState extends State<AssistantSheet> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.viewInsetsOf(context).bottom,
       ),
-      child: ClipRRect(
-        borderRadius: sheetRadius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.glassTint,
-              borderRadius: sheetRadius,
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.18)
-                    : Colors.white.withValues(alpha: 0.70),
-                width: 1.0,
-              ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: sheetRadius,
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.35)
+                  : colors.primary.withValues(alpha: 0.08),
+              offset: const Offset(0, -3),
+              blurRadius: 16,
             ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
             child: DecoratedBox(
               decoration: BoxDecoration(
+                color: colors.glassTint,
                 borderRadius: sheetRadius,
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withValues(
-                      alpha: isDark ? 0.08 : 0.20,
-                    ),
-                    Colors.white.withValues(alpha: 0.0),
-                  ],
-                  stops: const [0.0, 0.45],
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
                 ),
               ),
-              child: wrappedContent,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(
+                        alpha: isDark ? 0.08 : 0.20,
+                      ),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.45],
+                  ),
+                ),
+                child: wrappedContent,
+              ),
             ),
           ),
         ),

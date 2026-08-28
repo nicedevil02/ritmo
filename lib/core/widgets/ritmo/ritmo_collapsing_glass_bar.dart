@@ -238,9 +238,14 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
           : null;
     }
 
-    // مختصات پیوسته ترنزیشن و کشسانی تیتر
+    final canPop = Navigator.canPop(context);
+    final bool showBack = (onBack != null && canPop) || (leading == null && onBack == null && canPop);
+    final bool hasLeading = leading != null || showBack;
+
+    // مختصات پیوسته ترنزیشن و کشسانی تیتر (تراز هوشمند بدون جای خالی در صورت نبود دکمه بازگشت)
     final titleBaseTop = 50.0 + (elasticStretch * 0.35);
-    final titleRight = lerpDouble(14.0, 52.0, t)!;
+    final collapsedTitleRight = hasLeading ? 52.0 : 14.0;
+    final titleRight = lerpDouble(14.0, collapsedTitleRight, t)!;
     final titleTop = lerpDouble(titleBaseTop, 14.0, t)!;
     final titleFontSize = lerpDouble(27.0, 16.5, t)!;
 
@@ -297,17 +302,17 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
                     height: 42,
                     child: Row(
                       children: [
-                        // دکمه بازگشت (سمت راست در RTL)
+                        // دکمه بازگشت یا آواتار (سمت راست در RTL)
                         if (leading != null)
                           leading!
-                        else if (Navigator.canPop(context))
+                        else if (showBack)
                           RitmoVibrancyActionButton(
                             icon: CupertinoIcons.arrow_right,
                             tooltip: 'بازگشت',
                             onTap: onBack ?? () => Navigator.maybePop(context),
                           )
                         else
-                          const SizedBox(width: 8),
+                          const SizedBox.shrink(),
 
                         const Spacer(),
 

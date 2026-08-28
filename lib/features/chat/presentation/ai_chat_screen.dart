@@ -1907,36 +1907,6 @@ $suggestedSteps''';
                 scrollOffset: _scrollOffset.value,
                 collapseDistance: 55.0,
                 onBack: (!widget.isTab && Navigator.canPop(context)) ? () => Navigator.maybePop(context) : null,
-                statusBadge: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: colors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        CupertinoIcons.sparkles,
-                        size: 11,
-                        color: colors.primary,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        'Pro',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          color: colors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
                 actions: [
                   const BridgeStatusChip(),
                   const SizedBox(width: 6),

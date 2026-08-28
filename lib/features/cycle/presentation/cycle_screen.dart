@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
@@ -89,6 +90,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   Jalali _calendarMonth = Jalali.fromDateTime(CycleClock.now);
   final GlobalKey _calendarKey = GlobalKey();
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
+  final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
 
   @override
   void initState() {
@@ -102,6 +104,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   void dispose() {
     CycleStateNotifier.instance.removeListener(_onStateNotifierChanged);
     _scrollOffset.dispose();
+    _isTabsExpanded.dispose();
     super.dispose();
   }
 
@@ -835,6 +838,19 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               onNotification: (notification) {
                 if (notification.metrics.axis == Axis.vertical) {
                   _scrollOffset.value = notification.metrics.pixels;
+                  if (notification.metrics.pixels <= 15) {
+                    if (!_isTabsExpanded.value) _isTabsExpanded.value = true;
+                  } else if (notification is UserScrollNotification) {
+                    if (notification.direction == ScrollDirection.reverse) {
+                      if (notification.metrics.pixels > 75 && _isTabsExpanded.value) {
+                        _isTabsExpanded.value = false;
+                      }
+                    } else if (notification.direction == ScrollDirection.forward) {
+                      if (!_isTabsExpanded.value) {
+                        _isTabsExpanded.value = true;
+                      }
+                    }
+                  }
                 }
                 return false;
               },
@@ -1103,14 +1119,14 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             ),
           ),
 
-          // 3. Apple Dynamic Large Title Morphing Glass Header
+          // 3. Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: ValueListenableBuilder<double>(
-              valueListenable: _scrollOffset,
-              builder: (context, offset, _) {
+            child: AnimatedBuilder(
+              animation: Listenable.merge([_scrollOffset, _isTabsExpanded]),
+              builder: (context, _) {
                 return RitmoAppleMorphingGlassHeader(
                   title: isPregnancyActive ? 'دوران بارداری' : 'چرخه بدن',
                   subtitle: isPregnancyActive
@@ -1118,8 +1134,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       : (_engineOutput != null
                           ? '${_getPhaseTitle(_engineOutput!.currentPhase)} • روز ${RitmoNumber.toFa(_engineOutput!.dayOfCycle)} چرخه'
                           : 'ردیاب هوشمند سلامت و الگوهای هورمونی'),
-                  scrollOffset: offset,
-                  collapseDistance: 70.0,
+                  scrollOffset: _scrollOffset.value,
+                  isTabsExpanded: _isTabsExpanded.value,
+                  collapseDistance: 55.0,
                   onBack: () => Navigator.pop(context),
                   actions: [
                     RitmoVibrancyActionButton(

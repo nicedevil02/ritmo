@@ -1,6 +1,6 @@
 // =============================================================================
 //  ritmo_collapsing_glass_bar.dart
-//  هدر داینامیک لارج تایتل شیشه‌ای اپل با ترنزیشن فیزیکی کپسولی
+//  هدر داینامیک لارج تایتل شیشه‌ای اپل با ترنزیشن فیزیکی کپسولی یکپارچه
 //  (Apple Dynamic Large Title Morphing Glass Header)
 // =============================================================================
 
@@ -120,14 +120,14 @@ class RitmoVibrancyActionButton extends StatelessWidget {
   }
 }
 
-/// هدر داینامیک لارج تایتل شیشه‌ای اپل با ترنزیشن فیزیکی کپسولی
+/// هدر داینامیک لارج تایتل شیشه‌ای اپل با ترنزیشن فیزیکی کپسولی یکپارچه
 /// (Apple Dynamic Large Title Morphing Glass Header)
 ///
-/// رفتارها:
-/// ۱. در حالت بالای صفحه (t = 0): کاملاً شفاف، تیتر درشت ۲۸pt در پایین و تب‌ها چسبیده زیر آن.
-/// ۲. هنگام اسکرول (t -> 1): خود تیتر به نرمی کوچک شده (۱۷pt) و به ردیف بالا منتقل می‌شود.
-/// ۳. نوار تب‌ها و زیرعنوان به نرمی جمع و محو می‌شوند.
-/// ۴. هدر به تدریج تبدیل به یک کپسول شیشه‌ای معلق شناور با بلور و گوشه‌های گرد می‌شود.
+/// قابلیت‌ها:
+/// ۱. در بالای صفحه (Scroll = 0): کاملاً شفاف و باز، تیتر بزرگ ۲۷pt در پایین و تب‌ها چسبیده زیر آن.
+/// ۲. فاز اول اسکرول: تشکیل یک کپسول شیشه‌ای واحد که هم دکمه‌ها/تیتر و هم **نوار تب‌ها** درون آن قرار دارند.
+/// ۳. اسکرول بیشتر به پایین: همان کپسول شیشه‌ای به صورت نرم ارتفاعش کم شده و تب‌ها داخلش جمع می‌شوند (تک‌خطی).
+/// ۴. اسکرول معکوس به بالا در هر جای صفحه: همان کپسول دوباره باز شده و نوار تب‌ها داخل انتهای آن ظاهر می‌شود.
 class RitmoAppleMorphingGlassHeader extends StatelessWidget {
   const RitmoAppleMorphingGlassHeader({
     super.key,
@@ -135,10 +135,11 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
     required this.scrollOffset,
     this.subtitle,
     this.tabs,
+    this.isTabsExpanded = true,
     this.actions,
     this.leading,
     this.onBack,
-    this.collapseDistance = 65.0,
+    this.collapseDistance = 55.0,
     this.titleColor,
     this.accentColor,
     this.statusBadge,
@@ -148,6 +149,7 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
   final double scrollOffset;
   final String? subtitle;
   final Widget? tabs;
+  final bool isTabsExpanded;
   final List<Widget>? actions;
   final Widget? leading;
   final VoidCallback? onBack;
@@ -164,18 +166,26 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
     final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
     final topInset = MediaQuery.paddingOf(context).top;
 
-    // پیشرفت اسکرول از ۰.۰ (سکون) تا ۱.۰ (کاملاً فشرده)
+    // پیشرفت تشکیل کپسول از ۰.۰ (سکون) تا ۱.۰ (کپسول تشکیل شده)
     final rawT = (scrollOffset / collapseDistance).clamp(0.0, 1.0);
     final t = Curves.easeInOutCubic.transform(rawT);
 
     final hasTabs = tabs != null;
     final hasSubtitle = subtitle != null;
 
-    // ارتفاع اولیه در حالت باز و ارتفاع نهایی در حالت کپسول فشرده
-    final expandedHeight = hasTabs ? (hasSubtitle ? 168.0 : 156.0) : (hasSubtitle ? 112.0 : 96.0);
-    const collapsedHeight = 54.0;
+    // محاسبه ارتفاع کپسول در حالات مختلف:
+    // ۱. در حالت بالای صفحه (t = 0): ارتفاع باز کامل (۱۶۴ یا ۱۱۴)
+    // ۲. در حالت کپسول با تب‌های باز (t = 1 و isTabsExpanded = true): ارتفاع ۱۰۸ پیکسل
+    // ۳. در حالت کپسول فشرده تک‌خطی (t = 1 و isTabsExpanded = false): ارتفاع ۵۴ پیکسل
+    final double targetHeight;
+    if (t < 0.99) {
+      final restingHeight = hasTabs ? (hasSubtitle ? 168.0 : 156.0) : (hasSubtitle ? 112.0 : 96.0);
+      final activeCapsuleHeight = hasTabs ? 108.0 : 54.0;
+      targetHeight = lerpDouble(restingHeight, activeCapsuleHeight, t)!;
+    } else {
+      targetHeight = (hasTabs && isTabsExpanded) ? 108.0 : 54.0;
+    }
 
-    final currentHeight = lerpDouble(expandedHeight, collapsedHeight, t)!;
     final currentMarginH = lerpDouble(0.0, 10.0, t)!;
     final currentMarginTop = topInset + lerpDouble(2.0, 6.0, t)!;
     final currentRadius = lerpDouble(0.0, 27.0, t)!;
@@ -230,14 +240,13 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
           : null;
     }
 
-    // مختصات پیوسته ترنزیشن تیتر (Spatial Morphing)
-    // در RTL: موقعیت اولیه سمت راست (زیر دکمه بک)، موقعیت نهایی داخل ردیف بالا (سمت چپ دکمه بک)
+    // مختصات پیوسته ترنزیشن تیتر
     final titleRight = lerpDouble(14.0, 52.0, t)!;
     final titleTop = lerpDouble(50.0, 14.0, t)!;
     final titleFontSize = lerpDouble(27.0, 16.5, t)!;
 
     final subtitleOpacity = (1.0 - (2.4 * rawT)).clamp(0.0, 1.0);
-    final tabsOpacity = (1.0 - (1.8 * rawT)).clamp(0.0, 1.0);
+    final showTabsInCapsule = hasTabs && (t < 0.99 || isTabsExpanded);
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -254,8 +263,10 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
               sigmaX: effectiveBlur,
               sigmaY: effectiveBlur,
             ),
-            child: Container(
-              height: currentHeight,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeInOutCubic,
+              height: targetHeight,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: bgColor,
@@ -363,14 +374,17 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
                       ),
                     ),
 
-                  // ۴. نوار تب‌های چسبیده به هدر (چسبیده زیر تیتر و محوشونده با اسکرول)
-                  if (hasTabs && tabsOpacity > 0.01)
-                    Positioned(
-                      bottom: 8,
-                      right: 8,
-                      left: 8,
-                      child: Opacity(
-                        opacity: tabsOpacity,
+                  // ۴. نوار تب‌ها داخل انتهای همان کپسول شیشه‌ای واحد
+                  if (hasTabs)
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 260),
+                      curve: Curves.easeInOutCubic,
+                      bottom: showTabsInCapsule ? 6.0 : -60.0,
+                      right: 6,
+                      left: 6,
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 200),
+                        opacity: showTabsInCapsule ? 1.0 : 0.0,
                         child: tabs,
                       ),
                     ),

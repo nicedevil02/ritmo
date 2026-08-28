@@ -795,15 +795,6 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
               color: isDark ? colors.border : colors.divider,
               width: 1.0,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.50)
-                    : Colors.black.withValues(alpha: 0.16),
-                offset: const Offset(0, -6),
-                blurRadius: 28,
-              ),
-            ],
           ),
           child: sheetContent,
         );
@@ -814,17 +805,10 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
             boxShadow: [
               BoxShadow(
                 color: isDark
-                    ? Colors.black.withValues(alpha: 0.50)
-                    : Colors.black.withValues(alpha: 0.15),
-                offset: const Offset(0, -6),
-                blurRadius: 28,
-              ),
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.25)
+                    ? Colors.black.withValues(alpha: 0.35)
                     : colors.primary.withValues(alpha: 0.08),
-                offset: const Offset(0, -2),
-                blurRadius: 10,
+                offset: const Offset(0, -3),
+                blurRadius: 16,
               ),
             ],
           ),
@@ -838,27 +822,12 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                   borderRadius: sheetRadius,
                   border: Border.all(
                     color: isDark
-                        ? Colors.white.withValues(alpha: 0.18)
-                        : Colors.white.withValues(alpha: 0.70),
+                        ? Colors.white.withValues(alpha: 0.10)
+                        : Colors.white.withValues(alpha: 0.40),
                     width: 1.0,
                   ),
                 ),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: sheetRadius,
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withValues(alpha: isDark ? 0.35 : 0.75),
-                        Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                        Colors.white.withValues(alpha: 0.0),
-                      ],
-                      stops: const [0.0, 0.03, 0.45],
-                    ),
-                  ),
-                  child: sheetContent,
-                ),
+                child: sheetContent,
               ),
             ),
           ),

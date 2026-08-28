@@ -228,6 +228,30 @@ class AppleCardDeckHost extends StatelessWidget {
         final radius = topCornerRadius * progress;
         final translateY = -shiftUpDistance * progress;
 
+        // Option 3: Silver Frost Sheen (Clean Apple Frost with +10% intensity)
+        final frostGradient = isDark
+            ? LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: (0.45 * progress).clamp(0.0, 1.0)),
+                  const Color(0xFF0F172A).withValues(alpha: (0.30 * progress).clamp(0.0, 1.0)),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.15, 0.50],
+              )
+            : LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: (0.52 * progress).clamp(0.0, 1.0)),
+                  const Color(0xFFF1F5F9).withValues(alpha: (0.35 * progress).clamp(0.0, 1.0)),
+                  const Color(0xFFE2E8F0).withValues(alpha: (0.18 * progress).clamp(0.0, 1.0)),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.12, 0.35, 0.65],
+              );
+
         return Transform.translate(
           offset: Offset(0, translateY),
           child: Transform.scale(
@@ -235,7 +259,21 @@ class AppleCardDeckHost extends StatelessWidget {
             alignment: Alignment.topCenter,
             child: ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
-              child: staticChild!,
+              child: Stack(
+                children: [
+                  staticChild!,
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      ignoring: true,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: frostGradient,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

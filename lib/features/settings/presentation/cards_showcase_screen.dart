@@ -449,7 +449,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
       remainingTime: toPersianDigits('۰۵:۵۶:۱۶'),
       activeColor: activeColor,
       gaugeWidget: Realm24hDial(
-        size: 104,
+        size: 96,
         activeZoneId: 'sleep',
         activeZoneColor: activeColor,
         activeZoneIcon: '🌙',

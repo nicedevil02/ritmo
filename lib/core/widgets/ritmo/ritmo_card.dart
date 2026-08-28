@@ -1067,246 +1067,285 @@ class RitmoNeuMasterCard extends StatelessWidget {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoCard.neumorphic(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
-        padding: const EdgeInsets.fromLTRB(10, 8, 14, 8),
-        child: SizedBox(
-          height: height - 16,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── ستون راست (RTL): اطلاعات، چیپ‌ها و پیل‌های نئومورفیک ──
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // ردیف هدر چیپ‌ها
-                    Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxW = constraints.maxWidth.isFinite ? constraints.maxWidth : 360.0;
+          final dialColWidth = (maxW * 0.30).clamp(88.0, 100.0);
+
+          return RitmoCard.neumorphic(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(28),
+            padding: const EdgeInsets.fromLTRB(10, 8, 12, 8),
+            child: SizedBox(
+              height: height - 16,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── ستون راست (RTL): اطلاعات، چیپ‌ها و پیل‌های نئومورفیک ──
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Flexible(
-                          child: RitmoNeuSurface(
-                            sunken: true,
-                            radius: 14,
-                            blur: 6,
-                            distance: 2,
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            child: Text(
-                              statusLabel,
+                        // ردیف هدر چیپ‌ها — چیپ وضعیت فعال روشن و درخشان
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // چیپ وضعیت فعال با نقطه پالس سبز و پس‌زمینه روشن نئومورفیک
+                            RitmoNeuSurface(
+                              height: 24,
+                              radius: 12,
+                              tint: isDark
+                                  ? const Color(0xFF065F46).withValues(alpha: 0.35)
+                                  : const Color(0xFFD1FAE5),
+                              glowColor: const Color(0xFF10B981),
+                              blur: 6,
+                              distance: 1.5,
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: const Color(0xFF10B981),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF10B981).withValues(alpha: 0.8),
+                                          blurRadius: 4,
+                                          spreadRadius: 0.5,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4.5),
+                                  Text(
+                                    statusLabel,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF047857),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            // چیپ نام قلمروی فعال
+                            Flexible(
+                              child: RitmoNeuSurface(
+                                height: 24,
+                                radius: 12,
+                                tint: isDark
+                                    ? effectiveColor.withValues(alpha: 0.35)
+                                    : effectiveColor.withValues(alpha: 0.18),
+                                glowColor: effectiveColor,
+                                blur: 6,
+                                distance: 1.5,
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        activeChipLabel,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: isDark ? Colors.white : effectiveColor,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 3.5),
+                                    Icon(activeChipIcon, size: 11.5, color: isDark ? Colors.white : effectiveColor),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // عنوان اصلی و زیرعنوان
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.3,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 1.5),
+                            Text(
+                              subtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w500,
                                 color: colors.textSecondary,
                               ),
                             ),
+                          ],
+                        ),
+
+                        // پیل بازه زمانی
+                        RitmoNeuSurface(
+                          height: 29,
+                          radius: 14.5,
+                          blur: 6,
+                          distance: 1.5,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.access_time_filled_rounded, size: 13, color: colors.textSecondary),
+                              const SizedBox(width: 5),
+                              Expanded(
+                                child: Text(
+                                  timeRange,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: RitmoNeuSurface(
-                            tint: isDark
-                                ? effectiveColor.withValues(alpha: 0.35)
-                                : effectiveColor.withValues(alpha: 0.15),
-                            glowColor: effectiveColor,
-                            radius: 14,
-                            blur: 7,
-                            distance: 2,
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  activeChipLabel,
+
+                        // پیل شمارش معکوس با هاله نئومورفیک
+                        RitmoNeuSurface(
+                          height: 29,
+                          radius: 14.5,
+                          tint: isDark
+                              ? effectiveColor.withValues(alpha: 0.35)
+                              : effectiveColor.withValues(alpha: 0.15),
+                          glowColor: effectiveColor,
+                          blur: 7,
+                          distance: 1.5,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.hourglass_top_rounded, size: 13, color: isDark ? Colors.white : effectiveColor),
+                              const SizedBox(width: 5),
+                              Text(
+                                'باقی‌مانده:',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? Colors.white70 : effectiveColor,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  remainingTime,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: isDark ? Colors.white : effectiveColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // ── ستون چپ: گیج نئومورفیک و دکمه مدیریت ──
+                  SizedBox(
+                    width: dialColWidth,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        if (gaugeWidget != null)
+                          gaugeWidget!
+                        else
+                          _buildDefaultSampleGauge(context, effectiveColor, isDark, dialColWidth - 4),
+                        const SizedBox(height: 4),
+                        RitmoNeuButton(
+                          height: 30,
+                          radius: 15,
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          onTap: onActionTap ?? () {},
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  actionButtonText,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.w800,
-                                    color: isDark ? Colors.white : effectiveColor,
+                                    color: colors.textPrimary,
                                   ),
                                 ),
-                                const SizedBox(width: 4),
-                                Icon(activeChipIcon, size: 12, color: isDark ? Colors.white : effectiveColor),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(width: 3),
+                              Icon(
+                                Icons.chevron_left_rounded,
+                                size: 12,
+                                color: colors.textSecondary,
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-
-                    // عنوان اصلی و زیرعنوان
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 17.5,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.3,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // پیل بازه زمانی
-                    RitmoNeuSurface(
-                      height: 30,
-                      radius: 15,
-                      blur: 7,
-                      distance: 2,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Row(
-                        children: [
-                          Icon(Icons.access_time_filled_rounded, size: 14, color: colors.textSecondary),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              timeRange,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w800,
-                                color: colors.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // پیل شمارش معکوس با هاله نئومورفیک
-                    RitmoNeuSurface(
-                      height: 30,
-                      radius: 15,
-                      tint: isDark
-                          ? effectiveColor.withValues(alpha: 0.35)
-                          : effectiveColor.withValues(alpha: 0.15),
-                      glowColor: effectiveColor,
-                      blur: 8,
-                      distance: 2,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Row(
-                        children: [
-                          Icon(Icons.hourglass_top_rounded, size: 14, color: isDark ? Colors.white : effectiveColor),
-                          const SizedBox(width: 6),
-                          Text(
-                            'باقی‌مانده:',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white70 : effectiveColor,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              remainingTime,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                                color: isDark ? Colors.white : effectiveColor,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-
-              // ── ستون چپ: گیج نئومورفیک و دکمه مدیریت ──
-              SizedBox(
-                width: 110,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (gaugeWidget != null)
-                      gaugeWidget!
-                    else
-                      _buildDefaultSampleGauge(context, effectiveColor, isDark),
-                    const SizedBox(height: 4),
-                    RitmoNeuButton(
-                      height: 30,
-                      radius: 15,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      onTap: onActionTap ?? () {},
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              actionButtonText,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: colors.textPrimary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.chevron_left_rounded,
-                            size: 13,
-                            color: colors.textSecondary,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildDefaultSampleGauge(BuildContext context, Color color, bool isDark) {
+  Widget _buildDefaultSampleGauge(BuildContext context, Color color, bool isDark, [double size = 96]) {
     return Container(
-      width: 102,
-      height: 102,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RitmoNeu.sunkenGradient(context.colors.surfaceSunken, isDark),
-        boxShadow: RitmoNeu.sunkenShadows(isDark, blur: 8, distance: 3.0),
+        boxShadow: RitmoNeu.sunkenShadows(isDark, blur: 7, distance: 2.5),
       ),
       child: Center(
         child: Container(
-          width: 68,
-          height: 68,
+          width: size * 0.66,
+          height: size * 0.66,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: RitmoNeu.raisedGradient(context.colors.surfaceElevated, isDark),
-            boxShadow: RitmoNeu.raisedShadows(isDark, blur: 6, distance: 2.0),
+            boxShadow: RitmoNeu.raisedShadows(isDark, blur: 5, distance: 1.8),
           ),
           child: Center(
             child: Icon(
               activeChipIcon,
-              size: 26,
+              size: size * 0.28,
               color: isDark ? Colors.amberAccent : color,
             ),
           ),

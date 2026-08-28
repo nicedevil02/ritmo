@@ -12,6 +12,7 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_color.dart';
 
@@ -139,6 +140,9 @@ class Realm24hDial extends StatelessWidget {
     this.showHourLabels = true,
     this.usePersianDigits = true,
     this.now,
+    this.surfaceColor,
+    this.surfaceSunkenColor,
+    this.textColor,
   });
 
   final double size;
@@ -158,6 +162,15 @@ class Realm24hDial extends StatelessWidget {
 
   /// اگر والد تیکر زنده دارد، همان زمان را پاس بدهید تا دو ساعت مجزا نداشته باشیم
   final DateTime? now;
+
+  /// رنگ پس‌زمینه سطح کارت (برای همگام‌سازی کامل با ۱۲ تم رنگی)
+  final Color? surfaceColor;
+
+  /// رنگ فرورفتگی شیار (برای همگام‌سازی کامل با ۱۲ تم رنگی)
+  final Color? surfaceSunkenColor;
+
+  /// رنگ متون و نشانگرهای ساعت
+  final Color? textColor;
 
   static int _timeStrToMinutes(String timeStr) {
     try {
@@ -295,6 +308,10 @@ class Realm24hDial extends StatelessWidget {
   Widget build(BuildContext context) {
     final current = now ?? DateTime.now();
     final segments = _mergeMidnight(_buildSegments(current));
+    final colors = context.colors;
+    final effectiveSurface = surfaceColor ?? colors.surfaceElevated;
+    final effectiveSunken = surfaceSunkenColor ?? colors.surfaceSunken;
+    final effectiveText = textColor ?? colors.textPrimary;
 
     return SizedBox(
       width: size,
@@ -311,6 +328,9 @@ class Realm24hDial extends StatelessWidget {
           isDarkMode: isDarkMode,
           showHourLabels: showHourLabels && size >= 110,
           usePersianDigits: usePersianDigits,
+          surfaceColor: effectiveSurface,
+          surfaceSunkenColor: effectiveSunken,
+          textColor: effectiveText,
         ),
       ),
     );
@@ -334,6 +354,9 @@ class _NeuDialPainter extends CustomPainter {
     required this.isDarkMode,
     required this.showHourLabels,
     required this.usePersianDigits,
+    this.surfaceColor,
+    this.surfaceSunkenColor,
+    this.textColor,
   });
 
   final List<RealmDialSegment> segments;
@@ -344,6 +367,9 @@ class _NeuDialPainter extends CustomPainter {
   final bool isDarkMode;
   final bool showHourLabels;
   final bool usePersianDigits;
+  final Color? surfaceColor;
+  final Color? surfaceSunkenColor;
+  final Color? textColor;
 
   /// دقیقهٔ ۰ (۰۰:۰۰) دقیقاً بالای دایره است
   static double _minuteToAngle(double minute) =>
@@ -407,7 +433,7 @@ class _NeuDialPainter extends CustomPainter {
     }
   }
 
-  /// شیار فرورفتهٔ زیر کمان‌ها
+  /// شیار فرورفتهٔ زیر کمان‌ها (هماهنگ با تم تیره)
   void _paintTrack(
     Canvas canvas,
     Offset center,
@@ -415,17 +441,21 @@ class _NeuDialPainter extends CustomPainter {
     double stroke,
     double k,
   ) {
+    final baseSunken = surfaceSunkenColor ??
+        (isDarkMode
+            ? Color.lerp(surfaceColor ?? const Color(0xFF1E232D), Colors.black, 0.40)!
+            : const Color(0xFFE2E6EE));
+
     final groove = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke + 2 * k
-      ..color = RealmNeu.low(isDarkMode);
+      ..color = baseSunken;
     canvas.drawCircle(center, radius, groove);
 
     final grooveShade = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke * 0.55
-      ..color = RealmNeu.shadowDark(isDarkMode)
-          .withValues(alpha: isDarkMode ? 0.35 : 0.25)
+      ..color = Colors.black.withValues(alpha: isDarkMode ? 0.35 : 0.20)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 * k);
     canvas.drawCircle(
       center.translate(0, 1.2 * k),
@@ -473,6 +503,7 @@ class _NeuDialPainter extends CustomPainter {
       light,
     );
 
+    final baseSurface = surfaceColor ?? (isDarkMode ? const Color(0xFF1E232D) : const Color(0xFFEFF1F5));
     final body = Paint()
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -481,8 +512,11 @@ class _NeuDialPainter extends CustomPainter {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: isDarkMode
-            ? const [Color(0xFF2B3342), Color(0xFF1E2430)]
-            : const [Colors.white, Color(0xFFE6E9F0)],
+            ? [
+                Color.lerp(baseSurface, Colors.white, 0.08)!,
+                Color.lerp(baseSurface, Colors.black, 0.12)!,
+              ]
+            : [Colors.white, Color.lerp(baseSurface, const Color(0xFFE6E9F0), 0.4)!],
       ).createShader(ring);
     canvas.drawArc(ring, g.start, g.sweep, false, body);
 
@@ -520,7 +554,7 @@ class _NeuDialPainter extends CustomPainter {
     }
   }
 
-  /// کمان فعال (گرادیان چرخشی رنگ قلمرو + هاله)
+  /// کمان فعال (رنگ پالت + هاله + نقطهٔ پایان)
   void _paintActiveSegment(
     Canvas canvas,
     Rect ring,
@@ -530,86 +564,47 @@ class _NeuDialPainter extends CustomPainter {
     double k,
     double capAngle,
   ) {
-    final startColor = Color.lerp(seg.color, Colors.white, isDarkMode ? 0.25 : 0.15)!;
-    final endColor = seg.color;
+    final segColor = seg.color;
 
+    // ۱. هالهٔ نئونی زیر کمان فعال
     final glow = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.butt
-      ..strokeWidth = stroke * 1.05
-      ..color = seg.color.withValues(alpha: isDarkMode ? 0.45 : 0.32)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10 * k);
-    canvas.drawArc(
-      ring.shift(Offset(0.8 * k, 2.4 * k)),
-      g.start,
-      g.sweep,
-      false,
-      glow,
-    );
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = stroke + 10 * k
+      ..color = segColor.withValues(alpha: isDarkMode ? 0.38 : 0.28)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 12 * k);
+    canvas.drawArc(ring, g.start, g.sweep, false, glow);
 
+    // ۲. بدنهٔ گرادیانی کمان فعال
+    final bright = Color.lerp(segColor, Colors.white, isDarkMode ? 0.22 : 0.40)!;
     final body = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.butt
+      ..strokeCap = StrokeCap.round
       ..strokeWidth = stroke
       ..shader = SweepGradient(
-        startAngle: 0.0,
-        endAngle: g.sweep,
-        tileMode: TileMode.clamp,
-        colors: [
-          startColor,
-          seg.color,
-          endColor,
-        ],
-        transform: GradientRotation(g.start),
+        startAngle: g.start,
+        endAngle: g.start + g.sweep,
+        colors: [segColor, bright],
       ).createShader(ring);
     canvas.drawArc(ring, g.start, g.sweep, false, body);
 
-    // Rounded caps with matching start/end colors (eliminating dark seam artifact)
-    final radius = ring.width / 2;
-    final startCapCenter = ring.center + Offset(math.cos(g.start), math.sin(g.start)) * radius;
-    final startCapPaint = Paint()
-      ..color = startColor
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(startCapCenter, stroke / 2, startCapPaint);
-
-    final endCapCenter = ring.center + Offset(math.cos(g.start + g.sweep), math.sin(g.start + g.sweep)) * radius;
-    final endCapPaint = Paint()
-      ..color = endColor
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(endCapCenter, stroke / 2, endCapPaint);
-
-    final innerShineSweep = g.sweep - capAngle * 0.8;
-    if (innerShineSweep > 0.02) {
-      final innerShine = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = stroke * 0.28
-        ..color = Colors.white.withValues(alpha: 0.30);
-      canvas.drawArc(
-        ring.shift(Offset(-0.4 * k, -0.9 * k)),
-        g.start + capAngle * 0.4,
-        innerShineSweep,
-        false,
-        innerShine,
-      );
-    }
-
-    final icon = seg.icon;
-    if (icon != null && g.sweep * ring.width / 2 > stroke * 1.2) {
-      final mid = g.start + g.sweep / 2;
-      final pos =
-          ring.center + Offset(math.cos(mid), math.sin(mid)) * (ring.width / 2);
-      _drawIcon(
-        canvas,
-        icon,
-        pos,
-        (stroke * 0.56).clamp(9.0, 24.0),
-        Colors.white.withValues(alpha: 0.95),
-      );
-    }
+    // ۳. های‌لایت شیشه‌ای بالای لوله (Specular tube reflection)
+    final spec = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = stroke * 0.32
+      ..color = Colors.white.withValues(alpha: isDarkMode ? 0.75 : 0.90);
+    final specRect = ring.deflate(stroke * 0.22);
+    canvas.drawArc(
+      specRect,
+      g.start + capAngle * 0.4,
+      math.max(0.01, g.sweep - capAngle * 0.8),
+      false,
+      spec,
+    );
   }
 
-  /// نقطهٔ زندهٔ «الان» روی حلقه
+  /// نقطهٔ زمان جاری (سفید شفاف با هاله)
   void _paintNowDot(
     Canvas canvas,
     Offset center,
@@ -617,26 +612,20 @@ class _NeuDialPainter extends CustomPainter {
     double stroke,
     double k,
   ) {
-    final minutes = now.hour * 60 + now.minute + now.second / 60.0;
-    final angle = _minuteToAngle(minutes);
-    final pos = center + Offset(math.cos(angle), math.sin(angle)) * radius;
+    final nowMinute = now.hour * 60.0 + now.minute + now.second / 60.0;
+    final nowAngle = _minuteToAngle(nowMinute);
+    final dotCenter = center + Offset(math.cos(nowAngle), math.sin(nowAngle)) * radius;
 
-    final halo = Paint()
-      ..color = Colors.white.withValues(alpha: isDarkMode ? 0.35 : 0.55)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 5 * k);
-    canvas.drawCircle(pos, (stroke * 0.30).clamp(4.0, 12.0), halo);
+    final dotGlow = Paint()
+      ..color = Colors.white.withValues(alpha: 0.6)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 * k);
+    canvas.drawCircle(dotCenter, stroke * 0.26, dotGlow);
 
     final dot = Paint()..color = Colors.white;
-    canvas.drawCircle(pos, (stroke * 0.17).clamp(2.5, 7.0), dot);
-
-    final ringPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2 * k
-      ..color = activeColor.withValues(alpha: 0.55);
-    canvas.drawCircle(pos, (stroke * 0.17).clamp(2.5, 7.0), ringPaint);
+    canvas.drawCircle(dotCenter, stroke * 0.18, dot);
   }
 
-  /// هاب مرکزی برجسته با ایموجی و نام قلمرو
+  /// هاب مرکزی برجسته با ایموجی و نام قلمرو (هماهنگ با رنگ پس‌زمینه کارت)
   void _paintHub(
     Canvas canvas,
     Offset center,
@@ -648,27 +637,40 @@ class _NeuDialPainter extends CustomPainter {
     if (hubRadius <= 8) return;
 
     final darkShadow = Paint()
-      ..color = RealmNeu.shadowDark(isDarkMode)
+      ..color = Colors.black.withValues(alpha: isDarkMode ? 0.50 : 0.25)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8 * k);
-    canvas.drawCircle(center + Offset(3 * k, 4.5 * k), hubRadius, darkShadow);
+    canvas.drawCircle(center + Offset(2.5 * k, 3.5 * k), hubRadius, darkShadow);
 
     final lightShadow = Paint()
-      ..color = RealmNeu.shadowLight(isDarkMode)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8 * k);
-    canvas.drawCircle(center - Offset(2.5 * k, 3.5 * k), hubRadius, lightShadow);
+      ..color = (isDarkMode ? Colors.white.withValues(alpha: 0.04) : Colors.white)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 6 * k);
+    canvas.drawCircle(center - Offset(2.0 * k, 2.5 * k), hubRadius, lightShadow);
 
     final hubRect = Rect.fromCircle(center: center, radius: hubRadius);
+    final baseSurface = surfaceColor ?? (isDarkMode ? const Color(0xFF1E232D) : const Color(0xFFEFF1F5));
+
     final hubBody = Paint()
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: isDarkMode
-            ? const [Color(0xFF282F3D), Color(0xFF1E232D)]
-            : const [Colors.white, Color(0xFFE9ECF3)],
+            ? [
+                Color.lerp(baseSurface, Colors.white, 0.08)!,
+                Color.lerp(baseSurface, Colors.black, 0.15)!,
+              ]
+            : [Colors.white, Color.lerp(baseSurface, const Color(0xFFE9ECF3), 0.4)!],
       ).createShader(hubRect);
     canvas.drawCircle(center, hubRadius, hubBody);
 
+    // لبه باریک ریم
+    final rimPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0 * k
+      ..color = isDarkMode ? Colors.white.withValues(alpha: 0.06) : Colors.white;
+    canvas.drawCircle(center, hubRadius, rimPaint);
+
     // ۲۴ نشانگر ظریف ساعت دور دایره داخلی (استایل ساعت مچی لوکس ۲۴ ساعته)
+    final markColor = textColor ?? (isDarkMode ? Colors.white : const Color(0xFF1E293B));
     for (var hour = 0; hour < 24; hour++) {
       final hourAngle = (hour / 24.0) * (2 * math.pi) - (math.pi / 2);
       final isCardinal = hour % 6 == 0; // 00:00 (بالا)، 06:00 (راست)، 12:00 (پایین)، 18:00 (چپ)
@@ -680,17 +682,13 @@ class _NeuDialPainter extends CustomPainter {
               ? (hubRadius * 0.10).clamp(2.2, 4.2)
               : (hubRadius * 0.065).clamp(1.4, 2.8));
 
-      final tickColor = isCardinal
-          ? (isDarkMode
-              ? Colors.white.withValues(alpha: 0.55)
-              : const Color(0xFF64748B).withValues(alpha: 0.70))
-          : (isMajor
-              ? (isDarkMode
-                  ? Colors.white.withValues(alpha: 0.30)
-                  : const Color(0xFF94A3B8).withValues(alpha: 0.48))
-              : (isDarkMode
-                  ? Colors.white.withValues(alpha: 0.15)
-                  : const Color(0xFFCBD5E1).withValues(alpha: 0.36)));
+      final tickColor = markColor.withValues(
+        alpha: isCardinal
+            ? (isDarkMode ? 0.70 : 0.65)
+            : (isMajor
+                ? (isDarkMode ? 0.40 : 0.35)
+                : (isDarkMode ? 0.18 : 0.15)),
+      );
 
       final tickStrokeWidth =
           isCardinal ? (1.3 * k).clamp(1.0, 1.8) : (0.85 * k).clamp(0.65, 1.2);

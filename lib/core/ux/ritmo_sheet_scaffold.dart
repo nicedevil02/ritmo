@@ -184,15 +184,16 @@ class RitmoSheetScaffold extends StatelessWidget {
 }
 
 /// Wraps any screen or navigation shell to provide the authentic Apple iOS 26 Card Deck
-/// background transformation (7% scale-down, 20dp rounded top corners, optical Depth-of-Field
-/// defocus, and upward parallax shift) when a modal sheet is pushed on top of it.
+/// background transformation (7% scale-down, 18dp rounded top corners, dimming overlay,
+/// parallax shift) when a modal sheet is pushed on top of it.
 class AppleCardDeckHost extends StatelessWidget {
   final Widget child;
   final Animation<double>? animation;
   final double scaleDownFactor; // 0.07 -> scale reaches 0.93
-  final double topCornerRadius; // 20.0
+  final double topCornerRadius; // 18.0
+  final double maxDimAlpha; // 0.25
+
   final double shiftUpDistance; // 18.0pt upward shift for Apple deck peeking
-  final double maxBlurSigma; // 2.5pt optical depth-of-field defocus
 
   const AppleCardDeckHost({
     super.key,
@@ -200,8 +201,8 @@ class AppleCardDeckHost extends StatelessWidget {
     this.animation,
     this.scaleDownFactor = 0.07,
     this.topCornerRadius = 20.0,
+    this.maxDimAlpha = 0.25,
     this.shiftUpDistance = 18.0,
-    this.maxBlurSigma = 2.5,
   });
 
   @override
@@ -212,6 +213,8 @@ class AppleCardDeckHost extends StatelessWidget {
     if (effectiveAnim == null) {
       return child;
     }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AnimatedBuilder(
       animation: effectiveAnim,
@@ -224,15 +227,30 @@ class AppleCardDeckHost extends StatelessWidget {
         final scale = 1.0 - (scaleDownFactor * progress);
         final radius = topCornerRadius * progress;
         final translateY = -shiftUpDistance * progress;
-        final blur = (maxBlurSigma * progress).clamp(0.0, 10.0);
 
-        Widget filteredContent = staticChild!;
-        if (blur > 0.01) {
-          filteredContent = ImageFiltered(
-            imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-            child: filteredContent,
-          );
-        }
+        // Option 3: Silver Frost Sheen (Clean Apple Frost instead of muddy black)
+        final frostGradient = isDark
+            ? LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: (0.35 * progress).clamp(0.0, 1.0)),
+                  const Color(0xFF0F172A).withValues(alpha: (0.20 * progress).clamp(0.0, 1.0)),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.15, 0.50],
+              )
+            : LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: (0.40 * progress).clamp(0.0, 1.0)),
+                  const Color(0xFFF1F5F9).withValues(alpha: (0.25 * progress).clamp(0.0, 1.0)),
+                  const Color(0xFFE2E8F0).withValues(alpha: (0.10 * progress).clamp(0.0, 1.0)),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.12, 0.35, 0.65],
+              );
 
         return Transform.translate(
           offset: Offset(0, translateY),
@@ -241,7 +259,21 @@ class AppleCardDeckHost extends StatelessWidget {
             alignment: Alignment.topCenter,
             child: ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
-              child: filteredContent,
+              child: Stack(
+                children: [
+                  staticChild!,
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      ignoring: true,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: frostGradient,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

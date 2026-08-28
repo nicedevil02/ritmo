@@ -188,7 +188,8 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
     final currentMarginTop = topInset + lerpDouble(2.0, 6.0, t)!;
     final currentRadius = lerpDouble(0.0, 27.0, t)!;
 
-    final effectiveBlur = isGlass ? (t * context.glassBlurSigma.clamp(0.0, 50.0)) : 0.0;
+    final materialSpec = context.materials.regular;
+    final effectiveBlur = isGlass ? (t * materialSpec.sigma) : 0.0;
     final isOpaque = !isGlass || highContrast;
 
     final Color bgColor;
@@ -196,7 +197,7 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
     final List<BoxShadow>? shadows;
 
     if (isOpaque) {
-      bgColor = colors.surfaceElevated.withValues(alpha: t);
+      bgColor = materialSpec.opaqueFallback.withValues(alpha: t);
       border = t > 0.05
           ? Border.all(
               color: (isDark ? colors.border : colors.divider).withValues(alpha: t),
@@ -214,13 +215,13 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
           : null;
     } else {
       bgColor = colors.glassTint.withValues(
-        alpha: t * (context.glassOpacityPercent / 100.0).clamp(0.1, 0.9),
+        alpha: t * materialSpec.tintAlpha,
       );
       border = t > 0.05
           ? Border.all(
               color: (isDark
                       ? Colors.white.withValues(alpha: 0.14)
-                      : colors.border.withValues(alpha: 0.35))
+                      : colors.border.withValues(alpha: 0.25))
                   .withValues(alpha: t),
               width: 0.8,
             )
@@ -279,15 +280,15 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(currentRadius),
                 border: border,
                 boxShadow: shadows,
-                gradient: isGlass && t > 0.1
+                gradient: isGlass && t > 0.05
                     ? LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.white.withValues(alpha: (isDark ? 0.09 : 0.25) * t),
+                          Colors.white.withValues(alpha: t * materialSpec.highlightAlpha),
                           Colors.white.withValues(alpha: 0.0),
                         ],
-                        stops: const [0.0, 0.45],
+                        stops: const [0.0, 0.35],
                       )
                     : null,
               ),

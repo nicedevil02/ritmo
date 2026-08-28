@@ -115,5 +115,31 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('Focusing text field expands sheet to large detent (0.95)', (tester) async {
+      await tester.pumpWidget(
+        _buildWrapper(
+          width: 360,
+          child: RealmEditFormSheet(
+            onSave: (realm, schedules) async {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final sheetFinder = find.byType(DraggableScrollableSheet);
+      final sheetWidget = tester.widget<DraggableScrollableSheet>(sheetFinder);
+      final controller = sheetWidget.controller;
+      expect(controller, isNotNull);
+      expect(controller!.size, closeTo(0.60, 0.01));
+
+      // Tap on TextField to request focus
+      final textFieldFinder = find.byType(TextField);
+      await tester.tap(textFieldFinder);
+      await tester.pumpAndSettle();
+
+      // Verify sheet animated to 0.95
+      expect(controller.size, closeTo(0.95, 0.01));
+    });
   });
 }

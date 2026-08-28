@@ -89,6 +89,8 @@ class RealmEditFormSheet extends StatefulWidget {
 
 class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
   late TextEditingController _nameController;
+  late FocusNode _nameFocusNode;
+  late DraggableScrollableController _sheetController;
   late String _selectedIcon;
   late String _selectedColorHex;
   late RealmMode _selectedMode;
@@ -112,6 +114,15 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
         : null;
 
     _nameController = TextEditingController(text: r?.name ?? '');
+    _nameFocusNode = FocusNode();
+    _sheetController = DraggableScrollableController();
+
+    _nameFocusNode.addListener(() {
+      if (_nameFocusNode.hasFocus) {
+        _expandSheetToMax();
+      }
+    });
+
     _selectedIcon = r?.icon ?? '🎯';
     _selectedColorHex = r?.colorHex ?? '#6366F1';
     _selectedMode = r?.mode ?? RealmMode.focus;
@@ -124,8 +135,20 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
 
   @override
   void dispose() {
+    _nameFocusNode.dispose();
+    _sheetController.dispose();
     _nameController.dispose();
     super.dispose();
+  }
+
+  void _expandSheetToMax() {
+    if (_sheetController.isAttached && _sheetController.size < 0.95) {
+      _sheetController.animateTo(
+        0.95,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   TimeOfDay _parseTimeOfDay(String timeStr) {
@@ -338,6 +361,8 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                       Expanded(
                         child: TextField(
                           controller: _nameController,
+                          focusNode: _nameFocusNode,
+                          onTap: _expandSheetToMax,
                           style: TextStyle(fontSize: 14, color: colors.textPrimary),
                           decoration: InputDecoration(
                             hintText: 'مثلاً: کار عمیق، مطالعات شبانه...',
@@ -656,9 +681,16 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
       }
     }
 
+    if (MediaQuery.of(context).viewInsets.bottom > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _expandSheetToMax();
+      });
+    }
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: DraggableScrollableSheet(
+        controller: _sheetController,
         initialChildSize: 0.60,
         minChildSize: 0.35,
         maxChildSize: 0.95,

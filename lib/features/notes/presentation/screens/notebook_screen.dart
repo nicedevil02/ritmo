@@ -474,8 +474,8 @@ class _NotebookScreenState extends State<NotebookScreen>
 
     return CustomScrollView(
       controller: _scrollController,
-      physics: const AlwaysScrollableScrollPhysics(
-        parent: BouncingScrollPhysics(),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
       ),
       slivers: [
         // Search Bar & Filter Chips Header
@@ -813,99 +813,96 @@ class _NotebookScreenState extends State<NotebookScreen>
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadExperiences,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
-        slivers: [
-          // Category Selector Chips
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 8),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  children: [
-                    RitmoChip(
-                      label:
-                          'همه (${PersianDigits.convert(_experiences.length.toString())})',
-                      isSelected: _selectedCategory == null,
-                      color: insightsColor,
-                      onTap: () {
-                        setState(() => _selectedCategory = null);
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    ...ExperienceCategory.values.map((cat) {
-                      final count = _experiences
-                          .where((e) => e.category == cat)
-                          .length;
-                      return Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: RitmoChip(
-                          label:
-                              '${cat.emoji} ${cat.labelFa} (${PersianDigits.convert(count.toString())})',
-                          isSelected: _selectedCategory == cat,
-                          color: insightsColor,
-                          onTap: () {
-                            setState(() => _selectedCategory = cat);
-                          },
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Featured Wisdom Banner
-          if (_selectedCategory == null && featuredExp != null)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
-                child: _buildFeaturedHeroCard(context, featuredExp, isDark),
-              ),
-            ),
-
-          // Header for all lessons
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
+      slivers: [
+        // Category Selector Chips
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
               child: Row(
                 children: [
-                  Icon(CupertinoIcons.sparkles, size: 14, color: insightsColor),
-                  const SizedBox(width: 6),
-                  Text(
-                    'همه آموزه‌ها (${PersianDigits.convert(filtered.length.toString())})',
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
+                  RitmoChip(
+                    label:
+                        'همه (${PersianDigits.convert(_experiences.length.toString())})',
+                    isSelected: _selectedCategory == null,
+                    color: insightsColor,
+                    onTap: () {
+                      setState(() => _selectedCategory = null);
+                    },
                   ),
+                  const SizedBox(width: 8),
+                  ...ExperienceCategory.values.map((cat) {
+                    final count = _experiences
+                        .where((e) => e.category == cat)
+                        .length;
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: RitmoChip(
+                        label:
+                            '${cat.emoji} ${cat.labelFa} (${PersianDigits.convert(count.toString())})',
+                        isSelected: _selectedCategory == cat,
+                        color: insightsColor,
+                        onTap: () {
+                          setState(() => _selectedCategory = cat);
+                        },
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
           ),
+        ),
 
-          // Wisdom Cards List
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(10, 16, 10, 80),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (ctx, i) => _buildWisdomCard(context, filtered[i], isDark),
-                childCount: filtered.length,
-              ),
+        // Featured Wisdom Banner
+        if (_selectedCategory == null && featuredExp != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+              child: _buildFeaturedHeroCard(context, featuredExp, isDark),
             ),
           ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 90)),
-        ],
-      ),
+        // Header for all lessons
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            child: Row(
+              children: [
+                Icon(CupertinoIcons.sparkles, size: 14, color: insightsColor),
+                const SizedBox(width: 6),
+                Text(
+                  'همه آموزه‌ها (${PersianDigits.convert(filtered.length.toString())})',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Wisdom Cards List
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(10, 16, 10, 80),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (ctx, i) => _buildWisdomCard(context, filtered[i], isDark),
+              childCount: filtered.length,
+            ),
+          ),
+        ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 90)),
+      ],
     );
   }
 
@@ -925,28 +922,25 @@ class _NotebookScreenState extends State<NotebookScreen>
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadReviewStats,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
-        padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 80),
-        children: [
-          // 1. Spaced Repetition (SRS) Flashcards Hero Card
-          _buildSrsHeroCard(context, colors, isDark),
-
-          const SizedBox(height: 16),
-
-          // 2. Weekly Review Card
-          _buildWeeklyReviewCard(context, colors, isDark),
-
-          const SizedBox(height: 16),
-
-          // 3. Archive & Trash Hub
-          _buildArchiveAndTrashSection(context, colors, isDark),
-        ],
+    return ListView(
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
       ),
+      padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 80),
+      children: [
+        // 1. Spaced Repetition (SRS) Flashcards Hero Card
+        _buildSrsHeroCard(context, colors, isDark),
+
+        const SizedBox(height: 16),
+
+        // 2. Weekly Review Card
+        _buildWeeklyReviewCard(context, colors, isDark),
+
+        const SizedBox(height: 16),
+
+        // 3. Archive & Trash Hub
+        _buildArchiveAndTrashSection(context, colors, isDark),
+      ],
     );
   }
 

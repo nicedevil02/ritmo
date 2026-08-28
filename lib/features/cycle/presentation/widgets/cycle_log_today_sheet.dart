@@ -45,9 +45,9 @@ class CycleLogTodaySheet extends StatefulWidget {
       builder: (ctx) => DraggableScrollableSheet(
         initialChildSize: 0.60,
         minChildSize: 0.40,
-        maxChildSize: 0.94,
+        maxChildSize: 0.95,
         snap: true,
-        snapSizes: const [0.60, 0.94],
+        snapSizes: const [0.60, 0.95],
         expand: false,
         builder: (context, scrollController) => CycleLogTodaySheet(
           todayStr: todayStr,
@@ -193,34 +193,43 @@ class _CycleLogTodaySheetState extends State<CycleLogTodaySheet> {
               children: [
                 Center(
                   child: Container(
-                    width: 36,
-                    height: 4,
+                    width: 38,
+                    height: 4.5,
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: colors.textSecondary.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(2),
+                      color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
+                      borderRadius: BorderRadius.circular(3),
                     ),
                   ),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        'انصراف',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ),
                     Text(
                       'ثبت علائم و احوال امروز',
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         color: colors.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(
-                        CupertinoIcons.xmark,
-                        color: colors.textSecondary,
-                        size: 20,
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                    ),
+                    const SizedBox(width: 48), // Balancing spacer
                   ],
                 ),
                 const SizedBox(height: 16),

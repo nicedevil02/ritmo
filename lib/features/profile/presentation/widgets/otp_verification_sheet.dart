@@ -199,11 +199,11 @@ class _OtpVerificationSheetState extends State<OtpVerificationSheet> {
         children: [
           Center(
             child: Container(
-              width: 48,
-              height: 5,
+              width: 38,
+              height: 4.5,
               decoration: BoxDecoration(
-                color: colors.divider,
-                borderRadius: BorderRadius.circular(2.5),
+                color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
+                borderRadius: BorderRadius.circular(3),
               ),
             ),
           ),
@@ -412,7 +412,7 @@ class _OtpVerificationSheetState extends State<OtpVerificationSheet> {
             borderRadius: sheetRadius,
             border: Border.all(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.18)
+                  ? Colors.white.withValues(alpha: 0.10)
                   : Colors.white.withValues(alpha: 0.70),
               width: 1.0,
             ),
@@ -420,15 +420,27 @@ class _OtpVerificationSheetState extends State<OtpVerificationSheet> {
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: sheetRadius,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                  Colors.white.withValues(alpha: 0.0),
-                ],
-                stops: const [0.0, 0.45],
-              ),
+              gradient: isDark
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.14),
+                        Colors.white.withValues(alpha: 0.04),
+                        Colors.white.withValues(alpha: 0.0),
+                      ],
+                      stops: const [0.0, 0.03, 0.45],
+                    )
+                  : LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.75),
+                        Colors.white.withValues(alpha: 0.20),
+                        Colors.white.withValues(alpha: 0.0),
+                      ],
+                      stops: const [0.0, 0.03, 0.45],
+                    ),
             ),
             child: sheetBody,
           ),

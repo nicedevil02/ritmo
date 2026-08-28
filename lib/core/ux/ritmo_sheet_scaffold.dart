@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
@@ -22,16 +23,29 @@ class RitmoSheetScaffold extends StatelessWidget {
     this.scrollController,
   });
 
-  /// Present a bottom sheet using RitmoSheetScaffold with Apple Detents (60% -> 94%).
+  /// Present a bottom sheet using RitmoSheetScaffold with Apple Detents (60% -> 95%).
   static Future<T?> present<T>({
     required BuildContext context,
     required String semanticsLabel,
     required WidgetBuilder builder,
     bool isDismissible = true,
     double initialHeightFactor = 0.60,
-    double maxHeightFactor = 0.94,
+    double maxHeightFactor = 0.95,
+    AnimationController? transitionAnimationController,
   }) {
     RitmoHaptics.sheetOpen();
+    final controller = DraggableScrollableController();
+    double lastSize = initialHeightFactor;
+
+    controller.addListener(() {
+      if (!controller.isAttached) return;
+      final cur = controller.size;
+      if ((lastSize < 0.77 && cur >= 0.77) || (lastSize > 0.77 && cur <= 0.77)) {
+        HapticFeedback.selectionClick();
+      }
+      lastSize = cur;
+    });
+
     return showModalBottomSheet<T>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -39,7 +53,9 @@ class RitmoSheetScaffold extends StatelessWidget {
       useSafeArea: true,
       enableDrag: true,
       isDismissible: isDismissible,
+      transitionAnimationController: transitionAnimationController,
       builder: (ctx) => DraggableScrollableSheet(
+        controller: controller,
         initialChildSize: initialHeightFactor.clamp(0.2, 1.0),
         minChildSize: 0.35,
         maxChildSize: maxHeightFactor.clamp(0.5, 0.96),
@@ -75,7 +91,7 @@ class RitmoSheetScaffold extends StatelessWidget {
     final isGlass = context.isGlassEnabled;
     final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     final media = MediaQuery.of(context);
-    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(24));
 
     final content = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -91,7 +107,7 @@ class RitmoSheetScaffold extends StatelessWidget {
                 height: 4.5,
                 width: 38,
                 decoration: BoxDecoration(
-                  color: colors.textPrimary.withValues(alpha: 0.18),
+                  color: colors.textPrimary.withValues(alpha: isDarkMode ? 0.18 : 0.22),
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),
@@ -128,7 +144,7 @@ class RitmoSheetScaffold extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: isDarkMode
-                  ? Colors.black.withValues(alpha: 0.35)
+                  ? Colors.black.withValues(alpha: 0.40)
                   : colors.primary.withValues(alpha: 0.08),
               offset: const Offset(0, -3),
               blurRadius: 16,
@@ -145,7 +161,7 @@ class RitmoSheetScaffold extends StatelessWidget {
                 borderRadius: sheetRadius,
                 border: Border.all(
                   color: isDarkMode
-                      ? Colors.white.withValues(alpha: 0.18)
+                      ? Colors.white.withValues(alpha: 0.10)
                       : Colors.white.withValues(alpha: 0.70),
                   width: 1.0,
                 ),
@@ -153,15 +169,27 @@ class RitmoSheetScaffold extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: sheetRadius,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(alpha: isDarkMode ? 0.08 : 0.20),
-                      Colors.white.withValues(alpha: 0.0),
-                    ],
-                    stops: const [0.0, 0.45],
-                  ),
+                  gradient: isDarkMode
+                      ? LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.14),
+                            Colors.white.withValues(alpha: 0.04),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.03, 0.45],
+                        )
+                      : LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.75),
+                            Colors.white.withValues(alpha: 0.20),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.03, 0.45],
+                        ),
                 ),
                 child: sheetBody,
               ),

@@ -627,11 +627,12 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: DraggableScrollableSheet(
-          initialChildSize: 0.90,
-          maxChildSize: 0.96,
-          minChildSize: 0.6,
+          initialChildSize: 0.60,
+          maxChildSize: 0.95,
+          minChildSize: 0.40,
           expand: false,
           snap: true,
+          snapSizes: const [0.60, 0.95],
           builder: (ctx, scrollController) => RitmoTheme.glassCardLight(
             child: _isLoading
                 ? Center(child: CircularProgressIndicator(color: colors.primary))
@@ -644,25 +645,46 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                           // Handle bar
                           Center(
                             child: Container(
-                              width: 40,
-                              height: 5,
+                              width: 38,
+                              height: 4.5,
                               decoration: BoxDecoration(
-                                color: colors.border,
+                                color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
                                 borderRadius: BorderRadius.circular(3),
                               ),
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Text(
-                            _isEdit ? 'ویرایش داروی تخصصی' : 'ثبت داروی جدید',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
-                            ),
-                            textAlign: TextAlign.center,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(
+                                  'انصراف',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                _isEdit ? 'ویرایش داروی تخصصی' : 'ثبت داروی جدید',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: colors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(width: 48), // Balancing spacer
+                            ],
                           ),
-                          const SizedBox(height: 20),
+                          const Divider(height: 24),
 
                           // Drug name
                           TextFormField(

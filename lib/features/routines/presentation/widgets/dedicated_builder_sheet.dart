@@ -28,17 +28,27 @@ class DedicatedBuilderSheet extends StatelessWidget {
     required PlannerController controller,
     required Widget formWidget,
     required VoidCallback onSaved,
+    AnimationController? transitionAnimationController,
   }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => DedicatedBuilderSheet(
-        title: title,
-        subtitle: subtitle,
-        controller: controller,
-        formWidget: formWidget,
-        onSaved: onSaved,
+      transitionAnimationController: transitionAnimationController,
+      builder: (sheetCtx) => DraggableScrollableSheet(
+        initialChildSize: 0.60,
+        minChildSize: 0.40,
+        maxChildSize: 0.95,
+        snap: true,
+        snapSizes: const [0.60, 0.95],
+        expand: false,
+        builder: (context, scrollController) => DedicatedBuilderSheet(
+          title: title,
+          subtitle: subtitle,
+          controller: controller,
+          formWidget: formWidget,
+          onSaved: onSaved,
+        ),
       ),
     );
   }
@@ -46,84 +56,135 @@ class DedicatedBuilderSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final viewInsetsBottom = MediaQuery.viewInsetsOf(context).bottom;
     final hasKeyboard = viewInsetsBottom > 0;
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(24));
 
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
         return Padding(
           padding: EdgeInsets.only(bottom: viewInsetsBottom),
-          child: Container(
-            constraints: BoxConstraints(
-              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
-            ),
+          child: DecoratedBox(
             decoration: BoxDecoration(
-              color: colors.surfaceElevated.withValues(alpha: 0.96),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-              border: Border.all(
-                color: colors.border,
-              ),
+              borderRadius: sheetRadius,
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.40)
+                      : colors.primary.withValues(alpha: 0.08),
+                  offset: const Offset(0, -3),
+                  blurRadius: 16,
+                ),
+              ],
             ),
             child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              borderRadius: sheetRadius,
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Header
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
-                          child: Row(
-                            children: [
-                              GestureDetector(
-                                onTap: () => Navigator.pop(context),
-                                child: Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: colors.card.withValues(alpha: 0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.close_rounded,
-                                    size: 18,
-                                    color: colors.textPrimary,
-                                  ),
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: colors.glassTint,
+                    borderRadius: sheetRadius,
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.10)
+                          : Colors.white.withValues(alpha: 0.70),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: sheetRadius,
+                      gradient: isDark
+                          ? LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.14),
+                                Colors.white.withValues(alpha: 0.04),
+                                Colors.white.withValues(alpha: 0.0),
+                              ],
+                              stops: const [0.0, 0.03, 0.45],
+                            )
+                          : LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.75),
+                                Colors.white.withValues(alpha: 0.20),
+                                Colors.white.withValues(alpha: 0.0),
+                              ],
+                              stops: const [0.0, 0.03, 0.45],
+                            ),
+                    ),
+                    child: Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Apple Grabber
+                            Center(
+                              child: Container(
+                                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                                width: 38,
+                                height: 4.5,
+                                decoration: BoxDecoration(
+                                  color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
+                                  borderRadius: BorderRadius.circular(3),
                                 ),
                               ),
-                              Expanded(
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      title,
+                            ),
+
+                            // Header
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text(
+                                      'انصراف',
                                       style: TextStyle(
-                                        fontSize: 14.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: colors.textPrimary,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: colors.textSecondary,
                                       ),
                                     ),
-                                    const SizedBox(height: 1),
-                                    Text(
-                                      subtitle,
-                                      style: TextStyle(
-                                        fontSize: 10.5,
-                                        color: colors.textSecondary
-                                            .withValues(alpha: 0.65),
+                                  ),
+                                  Column(
+                                    children: [
+                                      Text(
+                                        title,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: colors.textPrimary,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        subtitle,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: colors.textSecondary.withValues(alpha: 0.75),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 48), // Balancing spacer
+                                ],
                               ),
-                              const SizedBox(width: 36),
-                            ],
-                          ),
-                        ),
+                            ),
                         const Divider(height: 1),
 
                         // Form Body
@@ -204,8 +265,10 @@ class DedicatedBuilderSheet extends StatelessWidget {
               ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
+  },
+);
   }
 }

@@ -385,31 +385,65 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
             // Handle bar
             Center(
               child: Container(
-                width: 36,
-                height: 4,
+                width: 38,
+                height: 4.5,
                 decoration: BoxDecoration(
-                  color: colors.textSecondary.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+                  color: colors.textPrimary.withValues(alpha: isDarkMode ? 0.18 : 0.22),
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
             ),
             const SizedBox(height: 12),
 
-            // Header Title
+            // Header Title with iOS 26 RTL standard
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'انصراف',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ),
                 Text(
-                  isEditing ? 'ویرایش دوره آموزشی' : 'ایجاد دوره آموزشی جدید',
+                  isEditing ? 'ویرایش دوره آموزشی' : 'ایجاد دوره جدید',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
                   ),
                 ),
-                IconButton(
-                  icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5)),
-                  onPressed: () => Navigator.pop(context),
+                TextButton(
+                  onPressed: _isSaving ? null : _saveCourse,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          isEditing ? 'ذخیره' : 'ایجاد',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: colors.primary,
+                          ),
+                        ),
                 ),
               ],
             ),
@@ -867,7 +901,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
             borderRadius: sheetRadius,
             border: Border.all(
               color: isDarkMode
-                  ? Colors.white.withValues(alpha: 0.18)
+                  ? Colors.white.withValues(alpha: 0.10)
                   : Colors.white.withValues(alpha: 0.70),
               width: 1.0,
             ),
@@ -875,15 +909,27 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: sheetRadius,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withValues(alpha: isDarkMode ? 0.08 : 0.20),
-                  Colors.white.withValues(alpha: 0.0),
-                ],
-                stops: const [0.0, 0.45],
-              ),
+              gradient: isDarkMode
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.14),
+                        Colors.white.withValues(alpha: 0.04),
+                        Colors.white.withValues(alpha: 0.0),
+                      ],
+                      stops: const [0.0, 0.03, 0.45],
+                    )
+                  : LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.75),
+                        Colors.white.withValues(alpha: 0.20),
+                        Colors.white.withValues(alpha: 0.0),
+                      ],
+                      stops: const [0.0, 0.03, 0.45],
+                    ),
             ),
             child: sheetBody,
           ),

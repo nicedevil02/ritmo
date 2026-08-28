@@ -47,9 +47,9 @@ class DayReviewSheet extends StatelessWidget {
       builder: (ctx) => DraggableScrollableSheet(
         initialChildSize: 0.60,
         minChildSize: 0.40,
-        maxChildSize: 0.94,
+        maxChildSize: 0.95,
         snap: true,
-        snapSizes: const [0.60, 0.94],
+        snapSizes: const [0.60, 0.95],
         expand: false,
         builder: (context, scrollController) => DayReviewSheet(
           dateStr: dateStr,
@@ -110,28 +110,60 @@ class DayReviewSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Center(
+              child: Container(
+                width: 38,
+                height: 4.5,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
             // 1. Header: Date + Rhythm Score
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
                   children: [
-                    Text(
-                      'مرور روز',
-                      style: TextStyle(
-                        fontSize: 15.0,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        'انصراف',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textSecondary,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _fullJalaliDateStr,
-                      style: TextStyle(
-                        fontSize: 12.0,
-                        color: colors.textSecondary,
-                      ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'مرور روز',
+                          style: TextStyle(
+                            fontSize: 15.0,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _fullJalaliDateStr,
+                          style: TextStyle(
+                            fontSize: 12.0,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -357,7 +389,7 @@ class DayReviewSheet extends StatelessWidget {
               borderRadius: sheetRadius,
               border: Border.all(
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.18)
+                    ? Colors.white.withValues(alpha: 0.10)
                     : Colors.white.withValues(alpha: 0.70),
                 width: 1.0,
               ),
@@ -365,15 +397,27 @@ class DayReviewSheet extends StatelessWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: sheetRadius,
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                    Colors.white.withValues(alpha: 0.0),
-                  ],
-                  stops: const [0.0, 0.45],
-                ),
+                gradient: isDark
+                    ? LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.14),
+                          Colors.white.withValues(alpha: 0.04),
+                          Colors.white.withValues(alpha: 0.0),
+                        ],
+                        stops: const [0.0, 0.03, 0.45],
+                      )
+                    : LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.75),
+                          Colors.white.withValues(alpha: 0.20),
+                          Colors.white.withValues(alpha: 0.0),
+                        ],
+                        stops: const [0.0, 0.03, 0.45],
+                      ),
               ),
               child: sheetBody,
             ),

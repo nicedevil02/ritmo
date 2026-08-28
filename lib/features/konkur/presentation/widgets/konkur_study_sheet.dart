@@ -340,7 +340,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
               left: 20,
               right: 20,
               bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              top: 20,
+              top: 12,
             ),
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -348,24 +348,48 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '⏱ ثبت فعالیت و تایمر مطالعه',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+                  Center(
+                    child: Container(
+                      width: 38,
+                      height: 4.5,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: colors.textPrimary.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.22),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          'انصراف',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '⏱ ثبت فعالیت و تایمر مطالعه',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 48), // Balancing spacer
+                    ],
+                  ),
+                  const SizedBox(height: 16),
           // Mode Toggle
           Row(
             children: [

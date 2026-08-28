@@ -2,11 +2,15 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/goals/logic/capacity_models.dart';
+import 'package:ritmo/features/goals/logic/execution_factor.dart';
 import 'package:ritmo/features/goals/logic/goals_repository.dart';
 import 'package:ritmo/features/goals/logic/planning_repository.dart';
 import 'package:ritmo/features/goals/logic/planning_week.dart';
@@ -33,9 +37,9 @@ class WeekPlannerSheet extends StatefulWidget {
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.60,
         minChildSize: 0.40,
-        maxChildSize: 0.94,
+        maxChildSize: 0.95,
         snap: true,
-        snapSizes: const [0.60, 0.94],
+        snapSizes: const [0.60, 0.95],
         expand: false,
         builder: (context, scrollController) =>
             WeekPlannerSheet(onSaved: onSaved),
@@ -47,6 +51,28 @@ class WeekPlannerSheet extends StatefulWidget {
   State<WeekPlannerSheet> createState() => _WeekPlannerSheetState();
 }
 
+enum CandidateSource {
+  activeGoalSteps,
+  overdueTasks,
+  routines,
+  monthFocus,
+}
+
+extension CandidateSourceExt on CandidateSource {
+  String get titleFa {
+    switch (this) {
+      case CandidateSource.activeGoalSteps:
+        return 'گام‌های هدف‌های فعال';
+      case CandidateSource.overdueTasks:
+        return 'کارهای معوق هفته';
+      case CandidateSource.routines:
+        return 'روتین‌های روزانه';
+      case CandidateSource.monthFocus:
+        return 'تمرکزهای ماه';
+    }
+  }
+}
+
 class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
   ReserveProfile _selectedProfile = ReserveProfile.balanced;
   bool _isBuilding = false;
@@ -55,12 +81,21 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
   // Marked light days
   final Set<String> _markedLightDays = {};
 
-  final Map<String, bool> _candidateSelection = {
-    'گام‌های هدف‌های فعال': true,
-    'کارهای معوق هفته': true,
-    'روتین‌های روزانه': true,
-    'تمرکزهای ماه': true,
+  final Map<CandidateSource, bool> _candidateSelection = {
+    CandidateSource.activeGoalSteps: true,
+    CandidateSource.overdueTasks: true,
+    CandidateSource.routines: true,
+    CandidateSource.monthFocus: true,
   };
+
+  Map<String, DayAgenda> _cachedAgendaMap = {};
+  double _executionFactorValue = 1.0;
+  int _wakingMinutes = 960;
+
+  final Map<String, int> _daysToDeadlines = {};
+  final Map<String, double> _paceGaps = {};
+  final Map<String, int> _daysSinceLastProgress = {};
+  int _energySamples = 0;
 
   List<PlanningCommitment> _loadedCandidates = [];
   AllocationPlanResult? _previewResult;
@@ -74,61 +109,210 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
   Future<void> _loadCandidates() async {
     final now = DateTime.now();
     final nowMs = now.millisecondsSinceEpoch;
+    final todayKey = DayKey.from(now).value;
     final candidates = <PlanningCommitment>[];
 
     try {
-      // 1. Fetch active goals steps
+      final savedLightDays = await PlanningRepository.instance.getLightDays();
+      _markedLightDays.addAll(savedLightDays);
+
+      final weekKeys = PlanningWeek.dayKeysOfWeekContaining(now);
+      final startDate = (weekKeys.isNotEmpty ? DateTime.tryParse(weekKeys.first) : null) ?? now;
+      final endDate = (weekKeys.isNotEmpty ? DateTime.tryParse(weekKeys.last) : null) ?? now.add(const Duration(days: 6));
+
+      if (DatabaseHelper.rawDatabase != null) {
+        try {
+          _cachedAgendaMap = await DayAgendaService.instance.agendaForRange(
+            startDate,
+            endDate,
+            options: const AgendaQueryOptions(
+              excludeDomains: {AgendaDomain.commitment},
+            ),
+          );
+        } catch (_) {}
+
+        try {
+          final ef = await ExecutionFactor.computeForPastDays(daysHistory: 21);
+          _executionFactorValue = ef.value;
+        } catch (_) {}
+
+        try {
+          final sRows = await DatabaseHelper.rawDatabase!.query(
+            'app_settings',
+            where: "key = 'sleep_target_duration_minutes'",
+            limit: 1,
+          );
+          if (sRows.isNotEmpty) {
+            final dur = int.tryParse(sRows.first['value']?.toString() ?? '');
+            if (dur != null && dur > 0) {
+              _wakingMinutes = (1440 - dur).clamp(720, 1140);
+            }
+          }
+        } catch (_) {}
+      }
+
       final goals = await GoalsRepository.instance.getGoals();
+      final goalById = {for (final g in goals) g.id: g};
       final activeGoals = goals.where((g) => g.status == 'ACTIVE').toList();
       final stepsMap = await GoalsRepository.instance.getGoalSteps();
 
-      for (final g in activeGoals) {
-        final steps = stepsMap[g.id] ?? [];
-        for (final step in steps) {
-          if (!step.isCompleted) {
-            candidates.add(
-              PlanningCommitment(
-                id: 'commit_step_${step.id}_$nowMs',
-                cycleId: '',
-                title: step.title,
-                sourceType: CommitmentSourceType.goalStep,
-                sourceId: step.id,
-                goalId: g.id,
-                importance: (g.weight >= 1.5 || g.goalType == GoalLevel.daily)
-                    ? CommitmentImportance.must
-                    : CommitmentImportance.should,
-                effortMinutes: (step.estimatedMinutes ?? 30).clamp(15, 180),
-                workKind: WorkKind.deep,
-                createdAt: nowMs,
-                updatedAt: nowMs,
-              ),
-            );
+      _daysToDeadlines.clear();
+      _paceGaps.clear();
+      _daysSinceLastProgress.clear();
+
+      for (final g in goals) {
+        final createdAtDt = DateTime.fromMillisecondsSinceEpoch(g.createdAt);
+        final targetDt = g.targetDate != null ? DateTime.tryParse(g.targetDate!) : null;
+        double expected = 0.5;
+        if (targetDt != null && targetDt.isAfter(createdAtDt)) {
+          final totalDuration = targetDt.difference(createdAtDt).inSeconds;
+          final elapsed = now.difference(createdAtDt).inSeconds;
+          if (totalDuration > 0) {
+            expected = (elapsed / totalDuration).clamp(0.0, 1.0);
+          }
+        }
+        final actual = g.progressCache;
+        final gap = (expected - actual).clamp(0.0, 1.0);
+        _paceGaps[g.id] = gap;
+      }
+
+      // 1. Fetch active goals steps
+      if (_candidateSelection[CandidateSource.activeGoalSteps] == true) {
+        for (final g in activeGoals) {
+          final steps = stepsMap[g.id] ?? [];
+          for (final step in steps) {
+            if (!step.isCompleted) {
+              final estMin = (step.estimatedMinutes ?? 30).clamp(15, 180);
+              final workKind = (estMin >= 45 && (g.weight >= 1.5 || g.goalType == GoalLevel.daily))
+                  ? WorkKind.deep
+                  : WorkKind.light;
+              candidates.add(
+                PlanningCommitment(
+                  id: 'commit_step_${step.id}_$nowMs',
+                  cycleId: '',
+                  title: step.title,
+                  sourceType: CommitmentSourceType.goalStep,
+                  sourceId: step.id,
+                  goalId: g.id,
+                  importance: (g.weight >= 1.5 || g.goalType == GoalLevel.daily)
+                      ? CommitmentImportance.must
+                      : CommitmentImportance.should,
+                  effortMinutes: estMin,
+                  workKind: workKind,
+                  createdAt: nowMs,
+                  updatedAt: nowMs,
+                ),
+              );
+            }
           }
         }
       }
 
       // 2. Fetch month cycle commitments if active
-      final todayKey = DayKey.from(now).value;
-      final monthCycle = await PlanningRepository.instance.activeCycle(PlanningHorizon.month, todayKey);
-      if (monthCycle != null) {
-        final monthCommits = await PlanningRepository.instance.commitmentsOf(monthCycle.id);
-        for (final mc in monthCommits) {
-          if (mc.status != CommitmentStatus.done && mc.status != CommitmentStatus.dropped) {
-            candidates.add(
-              PlanningCommitment(
-                id: 'commit_month_${mc.id}_$nowMs',
-                cycleId: '',
-                title: mc.title,
-                sourceType: CommitmentSourceType.manual,
-                importance: mc.importance,
-                effortMinutes: (mc.effortMinutes / 4).round().clamp(15, 180),
-                workKind: mc.workKind,
-                createdAt: nowMs,
-                updatedAt: nowMs,
-              ),
-            );
+      if (_candidateSelection[CandidateSource.monthFocus] == true) {
+        final monthCycle = await PlanningRepository.instance.activeCycle(PlanningHorizon.month, todayKey);
+        if (monthCycle != null) {
+          final monthCommits = await PlanningRepository.instance.commitmentsOf(monthCycle.id);
+          for (final mc in monthCommits) {
+            if (mc.status != CommitmentStatus.done && mc.status != CommitmentStatus.dropped) {
+              candidates.add(
+                PlanningCommitment(
+                  id: 'commit_month_${mc.id}_$nowMs',
+                  cycleId: '',
+                  title: mc.title,
+                  sourceType: CommitmentSourceType.manual,
+                  importance: mc.importance,
+                  effortMinutes: (mc.effortMinutes / 4).round().clamp(15, 180),
+                  workKind: mc.workKind,
+                  createdAt: nowMs,
+                  updatedAt: nowMs,
+                ),
+              );
+            }
           }
         }
+      }
+
+      // 3. Fetch overdue tasks if selected
+      if (_candidateSelection[CandidateSource.overdueTasks] == true && DatabaseHelper.rawDatabase != null) {
+        final taskRows = await DatabaseHelper.rawDatabase!.query(
+          'simple_tasks',
+          where: 'isDone = 0 AND dueDate IS NOT NULL AND dueDate < ?',
+          whereArgs: [todayKey],
+          limit: 10,
+        );
+        for (final tr in taskRows) {
+          final taskId = tr['id'] as String;
+          final title = tr['title'] as String;
+          candidates.add(
+            PlanningCommitment(
+              id: 'commit_task_${taskId}_$nowMs',
+              cycleId: '',
+              title: title,
+              sourceType: CommitmentSourceType.task,
+              sourceId: taskId,
+              importance: CommitmentImportance.should,
+              effortMinutes: 30,
+              workKind: WorkKind.light,
+              createdAt: nowMs,
+              updatedAt: nowMs,
+            ),
+          );
+        }
+      }
+
+      // 4. Fetch routines if selected
+      if (_candidateSelection[CandidateSource.routines] == true && DatabaseHelper.rawDatabase != null) {
+        final rRows = await DatabaseHelper.rawDatabase!.query(
+          'routines',
+          where: 'isArchived = 0 AND routineType = ?',
+          whereArgs: ['flexible'],
+          limit: 5,
+        );
+        for (final rr in rRows) {
+          final rid = rr['id'] as String;
+          final title = rr['title'] as String;
+          final targetDuration = (rr['targetDurationMinutes'] as num?)?.toInt() ?? 30;
+          candidates.add(
+            PlanningCommitment(
+              id: 'commit_routine_${rid}_$nowMs',
+              cycleId: '',
+              title: title,
+              sourceType: CommitmentSourceType.routine,
+              sourceId: rid,
+              importance: CommitmentImportance.could,
+              effortMinutes: targetDuration.clamp(15, 90),
+              workKind: WorkKind.light,
+              createdAt: nowMs,
+              updatedAt: nowMs,
+            ),
+          );
+        }
+      }
+
+      for (final c in candidates) {
+        final g = c.goalId == null ? null : goalById[c.goalId];
+        if (g != null) {
+          if (g.targetDate != null) {
+            final parsedTarget = DateTime.tryParse(g.targetDate!);
+            if (parsedTarget != null) {
+              _daysToDeadlines[c.id] = parsedTarget.difference(now).inDays;
+            }
+          }
+          if (_paceGaps[g.id] != null) {
+            _paceGaps[c.id] = _paceGaps[g.id]!;
+          }
+          if (g.lastActivityAt != null && g.lastActivityAt! > 0) {
+            _daysSinceLastProgress[c.id] = now.difference(DateTime.fromMillisecondsSinceEpoch(g.lastActivityAt!)).inDays;
+          }
+        }
+      }
+
+      if (DatabaseHelper.rawDatabase != null) {
+        try {
+          final energyLogs = await DatabaseHelper.rawDatabase!.query('energy_logs');
+          _energySamples = energyLogs.length;
+        } catch (_) {}
       }
     } catch (e) {
       debugPrint('[WeekPlannerSheet] loadCandidates error: $e');
@@ -177,20 +361,26 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
 
     const calc = WeekCapacityCalculator();
     final dayLoads = weekKeys.map((k) {
+      final dayAgenda = _cachedAgendaMap[k];
+      final items = (dayAgenda?.items as List?) ?? [];
+      final occupiedMin = items.fold<int>(0, (acc, item) => acc + ((item.durationMinutes as int?) ?? 30));
+      final fixedCount = items.where((i) => i.itemType == AgendaItemType.fixed || i.timeOfDay != null).length;
+      final deepCount = items.where((i) => ((i.durationMinutes as int?) ?? 0) >= 45).length;
+
       return DayLoad(
         dayKey: k,
-        occupiedMinutes: 120,
-        fixedCount: 1,
-        deepCount: 0,
+        occupiedMinutes: occupiedMin,
+        fixedCount: fixedCount,
+        deepCount: deepCount,
         userMarkedLight: _markedLightDays.contains(k),
       );
     }).toList();
 
     final capacities = calc.computeWeek(
       loads: dayLoads,
-      wakingMinutes: 960,
+      wakingMinutes: _wakingMinutes,
       profile: _selectedProfile,
-      executionFactor: 1.0,
+      executionFactor: _executionFactorValue,
     );
 
     const engine = WeekAllocationEngine();
@@ -199,6 +389,10 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
       capacities: capacities,
       dayLoads: dayLoads,
       todayKey: todayKey,
+      daysToDeadlines: _daysToDeadlines,
+      paceGaps: _paceGaps,
+      daysSinceLastProgress: _daysSinceLastProgress,
+      energySamples: _energySamples,
     );
   }
 
@@ -229,9 +423,14 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
       final activeCycle = await repo.activate(draft, nowMs: nowMs);
 
       for (final c in _loadedCandidates) {
+        final expl = allocResult.placed
+            .where((a) => a.commitmentId == c.id)
+            .map((a) => allocResult.explanations[a.id])
+            .firstOrNull;
         final cycleCommitment = c.copyWith(
           cycleId: activeCycle.id,
           status: CommitmentStatus.accepted,
+          planningReason: expl,
           updatedAt: nowMs,
         );
         await repo.upsertCommitment(cycleCommitment);
@@ -268,12 +467,12 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
         // Handle
         Center(
           child: Container(
-            width: 40,
-            height: 4,
+            width: 38,
+            height: 4.5,
             margin: const EdgeInsets.only(top: 12, bottom: 8),
             decoration: BoxDecoration(
-              color: colors.textSecondary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(2),
+              color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
+              borderRadius: BorderRadius.circular(3),
             ),
           ),
         ),
@@ -378,7 +577,7 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
                 borderRadius: sheetRadius,
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.18)
+                      ? Colors.white.withValues(alpha: 0.10)
                       : Colors.white.withValues(alpha: 0.70),
                   width: 1.0,
                 ),
@@ -386,15 +585,27 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: sheetRadius,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                      Colors.white.withValues(alpha: 0.0),
-                    ],
-                    stops: const [0.0, 0.45],
-                  ),
+                  gradient: isDark
+                      ? LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.14),
+                            Colors.white.withValues(alpha: 0.04),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.03, 0.45],
+                        )
+                      : LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.75),
+                            Colors.white.withValues(alpha: 0.20),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.03, 0.45],
+                        ),
                 ),
                 child: sheetBody,
               ),
@@ -467,8 +678,8 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
         ),
         const SizedBox(height: 10),
 
-        ..._candidateSelection.keys.map((title) {
-          final isChecked = _candidateSelection[title] ?? true;
+        ..._candidateSelection.keys.map((source) {
+          final isChecked = _candidateSelection[source] ?? true;
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
             child: Material(
@@ -479,7 +690,7 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
                 value: isChecked,
                 activeColor: colors.primary,
                 title: Text(
-                  title,
+                  source.titleFa,
                   style: TextStyle(
                     fontSize: 13,
                     color: colors.textPrimary,
@@ -487,8 +698,9 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
                 ),
                 onChanged: (val) {
                   setState(() {
-                    _candidateSelection[title] = val ?? true;
+                    _candidateSelection[source] = val ?? true;
                   });
+                  _loadCandidates();
                 },
               ),
             ),
@@ -524,14 +736,41 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
                   ),
                 ),
                 if (_previewResult!.unplaced.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Text(
-                    '! ${PersianDigits.toPersian(_previewResult!.unplaced.length.toString())} تعهد در ظرفیت جا نشد.',
+                    '! ${PersianDigits.toPersian(_previewResult!.unplaced.length.toString())} تعهد در ظرفیت جا نشد:',
                     style: TextStyle(
                       fontSize: 12,
+                      fontWeight: FontWeight.bold,
                       color: colors.error,
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  ..._previewResult!.unplaced.map((unp) => Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '• ${unp.commitment.title}: ',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                unp.detailFa,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colors.error,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
                 ],
               ],
             ),
@@ -548,7 +787,7 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'شخصی‌سازی دقیق هفته (ویزارد ۴ مرحله‌ای)',
+          'شخصی‌سازی دقیق هفته (۲ مرحله)',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,

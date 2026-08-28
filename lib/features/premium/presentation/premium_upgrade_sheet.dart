@@ -191,13 +191,16 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          // Pull handle
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: colors.textSecondary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(2),
+          // Drag handle
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 38,
+              height: 4.5,
+              decoration: BoxDecoration(
+                color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
+                borderRadius: BorderRadius.circular(3),
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -378,7 +381,7 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
                 borderRadius: sheetRadius,
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.18)
+                      ? Colors.white.withValues(alpha: 0.10)
                       : Colors.white.withValues(alpha: 0.70),
                   width: 1.0,
                 ),
@@ -386,15 +389,27 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: sheetRadius,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                      Colors.white.withValues(alpha: 0.0),
-                    ],
-                    stops: const [0.0, 0.45],
-                  ),
+                  gradient: isDark
+                      ? LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.14),
+                            Colors.white.withValues(alpha: 0.04),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.03, 0.45],
+                        )
+                      : LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.75),
+                            Colors.white.withValues(alpha: 0.20),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.03, 0.45],
+                        ),
                 ),
                 child: sheetBody,
               ),

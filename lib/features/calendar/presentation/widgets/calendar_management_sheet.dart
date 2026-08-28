@@ -57,9 +57,9 @@ class CalendarManagementSheet extends StatefulWidget {
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.60,
         minChildSize: 0.40,
-        maxChildSize: 0.94,
+        maxChildSize: 0.95,
         snap: true,
-        snapSizes: const [0.60, 0.94],
+        snapSizes: const [0.60, 0.95],
         expand: false,
         builder: (context, scrollController) => CalendarManagementSheet(
           selectedDate: selectedDate,
@@ -180,11 +180,11 @@ class _CalendarManagementSheetState extends State<CalendarManagementSheet> {
                 top: RitmoSpacing.md,
                 bottom: RitmoSpacing.sm,
               ),
-              width: 36,
-              height: 4,
+              width: 38,
+              height: 4.5,
               decoration: BoxDecoration(
-                color: colors.textSecondary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
+                color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
+                borderRadius: BorderRadius.circular(3),
               ),
             ),
           ),
@@ -405,7 +405,7 @@ class _CalendarManagementSheetState extends State<CalendarManagementSheet> {
                 borderRadius: sheetRadius,
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.18)
+                      ? Colors.white.withValues(alpha: 0.10)
                       : Colors.white.withValues(alpha: 0.70),
                   width: 1.0,
                 ),
@@ -413,15 +413,27 @@ class _CalendarManagementSheetState extends State<CalendarManagementSheet> {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: sheetRadius,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                      Colors.white.withValues(alpha: 0.0),
-                    ],
-                    stops: const [0.0, 0.45],
-                  ),
+                  gradient: isDark
+                      ? LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.14),
+                            Colors.white.withValues(alpha: 0.04),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.03, 0.45],
+                        )
+                      : LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.75),
+                            Colors.white.withValues(alpha: 0.20),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.03, 0.45],
+                        ),
                 ),
                 child: sheetBody,
               ),

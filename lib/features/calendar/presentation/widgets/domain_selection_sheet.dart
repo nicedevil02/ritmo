@@ -61,53 +61,60 @@ class DomainSelectionSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4.5,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: colors.textPrimary.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.22),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(RitmoSpacing.sm),
-                    decoration: BoxDecoration(
-                      color: colors.primaryContainer.withValues(alpha: 0.4),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.add_task_rounded,
-                      color: colors.primary,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: RitmoSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'افزودن برنامه جدید',
-                          style: RitmoTextStyles.cardTitle(colors.textPrimary),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Text(
-                              'زمان انتخابی: ',
-                              style: RitmoTextStyles.caption(
-                                colors.textSecondary,
-                              ),
-                            ),
-                            RitmoTimeRange(
-                              startMinutes: totalMinutes,
-                              style: RitmoTextStyles.caption(colors.primary),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.close_rounded,
-                      color: colors.textSecondary,
-                    ),
+                  TextButton(
                     onPressed: () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'انصراف',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'افزودن برنامه جدید',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 48), // Balancing spacer
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'زمان انتخابی: ',
+                    style: RitmoTextStyles.caption(
+                      colors.textSecondary,
+                    ),
+                  ),
+                  RitmoTimeRange(
+                    startMinutes: totalMinutes,
+                    style: RitmoTextStyles.caption(colors.primary),
                   ),
                 ],
               ),

@@ -1536,7 +1536,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
                 borderRadius: sheetRadius,
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.18)
+                      ? colors.border
                       : Colors.white.withValues(alpha: 0.70),
                   width: 1.0,
                 ),
@@ -1544,17 +1544,27 @@ class _AssistantSheetState extends State<AssistantSheet> {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: sheetRadius,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(
-                        alpha: isDark ? 0.08 : 0.20,
-                      ),
-                      Colors.white.withValues(alpha: 0.0),
-                    ],
-                    stops: const [0.0, 0.45],
-                  ),
+                  gradient: isDark
+                      ? LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.14),
+                            Colors.white.withValues(alpha: 0.04),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.03, 0.45],
+                        )
+                      : LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.75),
+                            Colors.white.withValues(alpha: 0.20),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.03, 0.45],
+                        ),
                 ),
                 child: wrappedContent,
               ),

@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/courses/presentation/widgets/create_course_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/create_goal_sheet.dart';
 import 'package:ritmo/features/health/presentation/widgets/medication_form_sheet.dart';
@@ -68,13 +69,18 @@ class UniversalPlannerSheet extends StatefulWidget {
   State<UniversalPlannerSheet> createState() => _UniversalPlannerSheetState();
 }
 
-class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
+class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with SingleTickerProviderStateMixin {
   late PlannerController _controller;
   final PageController _pageController = PageController();
+  late AnimationController _childSheetAnimController;
 
   @override
   void initState() {
     super.initState();
+    _childSheetAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
     _controller = PlannerController(
       routineToEdit: widget.routineToEdit,
       onSaved: widget.onSaved ?? () {},
@@ -188,6 +194,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
         subtitle: 'تنظیمات زمان و مشخصات رویداد در مسیر زندگی',
         controller: _controller,
         formWidget: GenericStep2Form(controller: _controller),
+        transitionAnimationController: _childSheetAnimController,
         onSaved: () {
           widget.onSaved?.call();
           if (mounted) Navigator.of(context).pop();
@@ -203,6 +210,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
         subtitle: 'تنظیم زمان و یادآوری هشدار ساده',
         controller: _controller,
         formWidget: SimpleReminderForm(controller: _controller),
+        transitionAnimationController: _childSheetAnimController,
         onSaved: () {
           widget.onSaved?.call();
           if (mounted) Navigator.of(context).pop();
@@ -239,6 +247,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
         subtitle: 'برنامه‌ریزی، زمان‌بندی و تکرار روتین جدید',
         controller: _controller,
         formWidget: GenericStep2Form(controller: _controller),
+        transitionAnimationController: _childSheetAnimController,
         onSaved: () {
           widget.onSaved?.call();
           if (mounted) Navigator.of(context).pop();
@@ -260,6 +269,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
 
   @override
   void dispose() {
+    _childSheetAnimController.dispose();
     _pageController.dispose();
     _controller.dispose();
     super.dispose();
@@ -321,32 +331,34 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
           child: Scaffold(
             resizeToAvoidBottomInset: false,
             backgroundColor: Colors.transparent,
-            body: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.45),
-                alignment: Alignment.bottomCenter,
-                child: GestureDetector(
-                  onTap: () {}, // Prevent dismissal when tapping inside the sheet
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      bottom: MediaQuery.viewInsetsOf(context).bottom,
-                    ),
-                    child: Container(
-                      constraints: BoxConstraints(
-                        maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+            body: AppleCardDeckHost(
+              animation: _childSheetAnimController,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  alignment: Alignment.bottomCenter,
+                  child: GestureDetector(
+                    onTap: () {}, // Prevent dismissal when tapping inside the sheet
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.viewInsetsOf(context).bottom,
                       ),
-                      decoration: BoxDecoration(
-                        color: colors.surfaceElevated.withValues(alpha: 0.94),
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                        border: Border.all(
-                          color: colors.border,
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
                         ),
-                      ),
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                        decoration: BoxDecoration(
+                          color: colors.surfaceElevated.withValues(alpha: 0.94),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                          border: Border.all(
+                            color: colors.border,
+                          ),
+                        ),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                         child: Material(
                           color: Colors.transparent,
                           child: Stack(
@@ -472,10 +484,11 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
               ),
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildEditHeaderCard(BuildContext context) {
     final colors = context.colors;

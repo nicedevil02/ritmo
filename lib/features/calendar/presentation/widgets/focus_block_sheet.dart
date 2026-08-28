@@ -40,9 +40,9 @@ class FocusBlockSheet extends StatefulWidget {
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.60,
         minChildSize: 0.40,
-        maxChildSize: 0.94,
+        maxChildSize: 0.95,
         snap: true,
-        snapSizes: const [0.60, 0.94],
+        snapSizes: const [0.60, 0.95],
         expand: false,
         builder: (context, scrollController) =>
             FocusBlockSheet(item: item, onComplete: onComplete),
@@ -177,58 +177,58 @@ class _FocusBlockSheetState extends State<FocusBlockSheet> {
             // Drag Handle
             Center(
               child: Container(
-                width: 36,
-                height: 4,
+                width: 38,
+                height: 4.5,
                 decoration: BoxDecoration(
-                  color: colors.borderSubtle,
-                  borderRadius: BorderRadius.circular(2),
+                  color: colors.textPrimary.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.22),
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
             ),
-            const SizedBox(height: RitmoSpacing.lg),
+            const SizedBox(height: RitmoSpacing.md),
 
-            // Header: Item Title & Domain
+            // Header: Cancel + Item Title & Domain
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: accent,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: RitmoSpacing.sm),
-                Expanded(
-                  child: Text(
-                    widget.item.title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: Text(
-                    'حالت تمرکز',
+                    'انصراف',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: accent,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),
+                Row(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: accent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: RitmoSpacing.sm),
+                    Text(
+                      widget.item.title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 48), // Balancing spacer
               ],
             ),
             const SizedBox(height: RitmoSpacing.xxl),

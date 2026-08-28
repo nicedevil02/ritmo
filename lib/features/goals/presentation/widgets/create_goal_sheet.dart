@@ -539,22 +539,25 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
+      initialChildSize: 0.90,
+      minChildSize: 0.50,
+      maxChildSize: 0.96,
       expand: false,
       snap: true,
-      snapSizes: const [0.85, 1.0],
+      snapSizes: const [0.90, 0.96],
       builder: (context, scrollController) {
         final content = Column(
           children: [
             // Drag handle
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 38,
+                height: 4.5,
+                decoration: BoxDecoration(
+                  color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
+                  borderRadius: BorderRadius.circular(3),
+                ),
               ),
             ),
 
@@ -637,7 +640,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                 borderRadius: sheetRadius,
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.18)
+                      ? Colors.white.withValues(alpha: 0.10)
                       : Colors.white.withValues(alpha: 0.70),
                   width: 1.0,
                 ),
@@ -645,15 +648,27 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: sheetRadius,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                      Colors.white.withValues(alpha: 0.0),
-                    ],
-                    stops: const [0.0, 0.45],
-                  ),
+                  gradient: isDark
+                      ? LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.14),
+                            Colors.white.withValues(alpha: 0.04),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.03, 0.45],
+                        )
+                      : LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.75),
+                            Colors.white.withValues(alpha: 0.20),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.03, 0.45],
+                        ),
                 ),
                 child: sheetBody,
               ),
@@ -1381,11 +1396,23 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
 
   // --- FOOTER CONTROLS ---
   Widget _buildWizardFooter(RitmoColors colors) {
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: Colors.black12,
-        border: Border(top: BorderSide(color: Colors.white10)),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        color: isGlass
+            ? (isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.white.withValues(alpha: 0.45))
+            : colors.surfaceElevated,
+        border: Border(
+          top: BorderSide(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.10)
+                : colors.border.withValues(alpha: 0.6),
+          ),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1395,9 +1422,17 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             ElevatedButton(
               onPressed: _prevStep,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.05),
+                backgroundColor: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : colors.surface,
                 foregroundColor: colors.textPrimary,
                 elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(
+                    color: isDark ? Colors.white12 : colors.border,
+                  ),
+                ),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
               child: const Text('مرحله قبل', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -1405,7 +1440,13 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
           else
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+              child: Text(
+                'انصراف',
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
 
           // Next / Save button
@@ -1413,8 +1454,11 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             onPressed: _currentStep == 2 ? _saveGoal : _nextStep,
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: colors.onPrimary,
               elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             child: _isLoading

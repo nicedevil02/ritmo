@@ -234,9 +234,12 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
                 // Drag handle
                 Center(
                   child: Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(color: colors.border, borderRadius: BorderRadius.circular(3)),
+                    width: 38,
+                    height: 4.5,
+                    decoration: BoxDecoration(
+                      color: colors.textPrimary.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.22),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),

@@ -80,7 +80,7 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
         child: Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            top: 24,
+            top: 12,
             left: 14,
             right: 14,
           ),
@@ -88,27 +88,47 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4.5,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'انصراف',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ),
                   Text(
                     widget.period != null
                         ? 'ویرایش تاریخ‌های دوره قاعدگی'
                         : 'افزودن دوره قاعدگی جدید',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 16,
                       color: colors.textPrimary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(
-                      CupertinoIcons.xmark,
-                      color: colors.textSecondary,
-                      size: 20,
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+                  const SizedBox(width: 48), // Balancing spacer
                 ],
               ),
               const SizedBox(height: 16),

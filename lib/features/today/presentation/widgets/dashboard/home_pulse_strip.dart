@@ -72,26 +72,27 @@ class HomePulseStrip extends StatelessWidget {
         boxShadow: isDark
             ? [
                 BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.08),
+                  color: Colors.black.withValues(alpha: 0.45),
                   offset: const Offset(0, 4),
                   blurRadius: 16,
+                  spreadRadius: -2,
                 ),
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.35),
+                  color: Colors.black.withValues(alpha: 0.30),
                   offset: const Offset(0, 2),
-                  blurRadius: 8,
+                  blurRadius: 6,
                 ),
               ]
             : [
                 BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.05),
+                  color: const Color(0xFF64748B).withValues(alpha: 0.10),
                   offset: const Offset(0, 4),
                   blurRadius: 16,
                 ),
                 BoxShadow(
-                  color: const Color(0xFF64748B).withValues(alpha: 0.08),
+                  color: const Color(0xFF64748B).withValues(alpha: 0.06),
                   offset: const Offset(0, 2),
-                  blurRadius: 8,
+                  blurRadius: 6,
                 ),
               ],
       ),

@@ -193,16 +193,16 @@ class AppleCardDeckHost extends StatelessWidget {
   final double topCornerRadius; // 18.0
   final double maxDimAlpha; // 0.25
 
-  final double shiftUpDistance; // 12.0pt upward shift for deck peeking
+  final double shiftUpDistance; // 24.0pt upward shift for prominent Apple deck peeking
 
   const AppleCardDeckHost({
     super.key,
     required this.child,
     this.animation,
     this.scaleDownFactor = 0.07,
-    this.topCornerRadius = 18.0,
+    this.topCornerRadius = 20.0,
     this.maxDimAlpha = 0.25,
-    this.shiftUpDistance = 12.0,
+    this.shiftUpDistance = 24.0,
   });
 
   @override

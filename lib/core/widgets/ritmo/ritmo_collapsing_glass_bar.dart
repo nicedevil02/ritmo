@@ -214,17 +214,10 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
             ]
           : null;
     } else {
-      if (isDark) {
-        final darkGlassBase = Color.lerp(colors.glassTint, colors.surfaceElevated, 0.40)!;
-        bgColor = darkGlassBase.withValues(
-          alpha: (t * (colors.glassTint.a * 1.35)).clamp(0.0, 0.90),
-        );
-      } else {
-        final glassAlpha = colors.glassTint.a;
-        bgColor = colors.glassTint.withValues(
-          alpha: t * glassAlpha,
-        );
-      }
+      final glassAlpha = colors.glassTint.a;
+      bgColor = colors.glassTint.withValues(
+        alpha: t * glassAlpha,
+      );
       border = (t > 0.05 && !isDark)
           ? Border.all(
               color: Colors.white.withValues(alpha: 0.70 * t),
@@ -232,22 +225,28 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
             )
           : null;
       shadows = t > 0.15
-          ? [
-              BoxShadow(
-                color: (isDark
-                    ? colors.primary.withValues(alpha: t * 0.22)
-                    : colors.primary.withValues(alpha: t * 0.08)),
-                offset: Offset(0, 4 * t),
-                blurRadius: 20 * t,
-                spreadRadius: isDark ? (1.5 * t) : 0.0,
-              ),
-              if (isDark)
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: t * 0.50),
-                  offset: Offset(0, 2 * t),
-                  blurRadius: 8 * t,
-                ),
-            ]
+          ? (isDark
+              ? [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: t * 0.20),
+                    offset: Offset(0, 4 * t),
+                    blurRadius: 18 * t,
+                    spreadRadius: 0.5 * t,
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: t * 0.45),
+                    offset: Offset(0, 2 * t),
+                    blurRadius: 8 * t,
+                    spreadRadius: -1 * t,
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: t * 0.08),
+                    offset: Offset(0, 3 * t),
+                    blurRadius: 10 * t,
+                  ),
+                ])
           : null;
     }
 
@@ -292,24 +291,16 @@ class RitmoAppleMorphingGlassHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(currentRadius),
                 border: border,
                 boxShadow: shadows,
-                gradient: (isGlass && t > 0.05)
+                gradient: (isGlass && t > 0.05 && !isDark)
                     ? LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: isDark
-                            ? [
-                                Colors.white.withValues(alpha: 0.06 * t),
-                                Colors.white.withValues(alpha: 0.01 * t),
-                                Colors.transparent,
-                              ]
-                            : [
-                                Colors.white.withValues(alpha: 0.75 * t),
-                                Colors.white.withValues(alpha: 0.20 * t),
-                                Colors.white.withValues(alpha: 0.0),
-                              ],
-                        stops: isDark
-                            ? const [0.0, 0.04, 0.35]
-                            : const [0.0, 0.03, 0.45],
+                        colors: [
+                          Colors.white.withValues(alpha: 0.75 * t),
+                          Colors.white.withValues(alpha: 0.20 * t),
+                          Colors.white.withValues(alpha: 0.0),
+                        ],
+                        stops: const [0.0, 0.03, 0.45],
                       )
                     : null,
               ),

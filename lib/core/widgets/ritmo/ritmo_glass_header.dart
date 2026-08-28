@@ -111,21 +111,21 @@ class RitmoGlassHeader extends StatelessWidget {
     final defaultShadows = isDark
         ? [
             BoxShadow(
-              color: colors.primary.withValues(alpha: 0.22),
+              color: colors.primary.withValues(alpha: 0.20),
               offset: const Offset(0, 4),
-              blurRadius: 20,
-              spreadRadius: 1.5,
+              blurRadius: 18,
+              spreadRadius: 0.5,
             ),
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.50),
               offset: const Offset(0, 2),
               blurRadius: 8,
-              spreadRadius: 0,
+              spreadRadius: -1,
             ),
           ]
         : [
             BoxShadow(
-              color: colors.primary.withValues(alpha: 0.08),
+              color: const Color(0xFFCBD5E1).withValues(alpha: 0.65),
               offset: const Offset(0, 5),
               blurRadius: 14,
               spreadRadius: 0,

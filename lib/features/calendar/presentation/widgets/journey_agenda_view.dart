@@ -242,22 +242,22 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
             bucket == AgendaBucket.nextWeek ||
             bucket == AgendaBucket.later;
 
-        if (needsSubGroups) {
-          slivers.add(
-            _BucketHeaderSliver(
-              bucket: bucket,
-              countText: toPersianDigits(items.length),
-              isOverdue: isOverdueBucket,
-              isCollapsible: isOverdueBucket,
-              isCollapsed: isCollapsed,
-              onToggleCollapse: isOverdueBucket
-                  ? () =>
-                        setState(() => _isOverdueCollapsed = !_isOverdueCollapsed)
-                  : null,
-            ),
-          );
+        slivers.add(
+          _BucketHeaderSliver(
+            bucket: bucket,
+            countText: toPersianDigits(items.length),
+            isOverdue: isOverdueBucket,
+            isCollapsible: isOverdueBucket,
+            isCollapsed: isCollapsed,
+            onToggleCollapse: isOverdueBucket
+                ? () =>
+                      setState(() => _isOverdueCollapsed = !_isOverdueCollapsed)
+                : null,
+          ),
+        );
 
-          if (!isCollapsed) {
+        if (!isCollapsed) {
+          if (needsSubGroups) {
             final grouped = groupByDate(items);
             final sortedDates = grouped.keys.toList()..sort();
             for (final dateStr in sortedDates) {
@@ -272,19 +272,19 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
                 ),
               );
             }
+          } else {
+            final sorted = _sortItems(items);
+            slivers.add(
+              _ItemsSliver(
+                title: '',
+                isOverdue: isOverdueBucket,
+                items: sorted,
+                onItemTap: widget.onItemTap,
+                onPostponeItem: widget.onPostponeItem,
+                onDoneItem: widget.onDoneItem,
+              ),
+            );
           }
-        } else {
-          final sorted = _sortItems(items);
-          slivers.add(
-            _ItemsSliver(
-              title: bucketLabelFa(bucket),
-              isOverdue: isOverdueBucket,
-              items: sorted,
-              onItemTap: widget.onItemTap,
-              onPostponeItem: widget.onPostponeItem,
-              onDoneItem: widget.onDoneItem,
-            ),
-          );
         }
       }
 
@@ -502,39 +502,66 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final labelColor = isOverdue ? colors.warning : colors.textPrimary;
     final accentColor = isOverdue ? colors.warning : colors.primary;
+    final isPinned = shrinkOffset > 0;
 
     return Material(
       color: colors.background,
+      elevation: isPinned ? (isDark ? 2.0 : 1.0) : 0,
+      shadowColor: isDark
+          ? Colors.black.withValues(alpha: 0.5)
+          : Colors.black.withValues(alpha: 0.08),
       child: InkWell(
         onTap: isCollapsible ? onToggleCollapse : null,
         child: Container(
           alignment: AlignmentDirectional.centerStart,
           padding: const EdgeInsets.symmetric(
-            horizontal: RitmoSpacing.xl,
+            horizontal: RitmoSpacing.md + 4,
             vertical: RitmoSpacing.xs,
+          ),
+          decoration: BoxDecoration(
+            color: colors.background,
+            border: isPinned
+                ? Border(
+                    bottom: BorderSide(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.06),
+                      width: 0.8,
+                    ),
+                  )
+                : null,
           ),
           child: Row(
             children: [
               Text(
                 bucketLabelFa(bucket),
-                style: RitmoTextStyles.caption(
-                  labelColor,
-                ).copyWith(fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Vazirmatn',
+                  color: labelColor,
+                ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.12),
+                  color: accentColor.withValues(alpha: isDark ? 0.20 : 0.12),
                   borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: isDark ? 0.35 : 0.22),
+                    width: 0.8,
+                  ),
                 ),
                 child: Text(
                   countText,
                   style: TextStyle(
                     fontSize: 11.0,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Vazirmatn',
                     color: accentColor,
                   ),
                 ),
@@ -543,12 +570,16 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
+                    horizontal: 10,
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.08),
+                    color: accentColor.withValues(alpha: isDark ? 0.15 : 0.08),
                     borderRadius: BorderRadius.circular(RitmoRadius.chip),
+                    border: Border.all(
+                      color: accentColor.withValues(alpha: 0.2),
+                      width: 0.8,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -557,7 +588,8 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
                         isCollapsed ? 'نمایش' : 'جمع‌کردن',
                         style: TextStyle(
                           fontSize: 11.0,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Vazirmatn',
                           color: accentColor,
                         ),
                       ),
@@ -1001,45 +1033,47 @@ class _DayGroupCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // هدر روز نئومورفیک با شمارنده
-            Row(
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Vazirmatn',
-                    color: isOverdue ? colors.error : colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: (isOverdue ? colors.error : colors.primary)
-                        .withValues(alpha: isDark ? 0.18 : 0.10),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: (isOverdue ? colors.error : colors.primary)
-                          .withValues(alpha: isDark ? 0.35 : 0.22),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Text(
-                    toPersianDigits('$count'),
+            if (title.isNotEmpty) ...[
+              // هدر روز نئومورفیک با شمارنده
+              Row(
+                children: [
+                  Text(
+                    title,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 14,
                       fontWeight: FontWeight.w800,
                       fontFamily: 'Vazirmatn',
-                      color: isOverdue ? colors.error : colors.primary,
+                      color: isOverdue ? colors.error : colors.textPrimary,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            const RitmoCardDivider(margin: EdgeInsets.symmetric(vertical: 4)),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: (isOverdue ? colors.error : colors.primary)
+                          .withValues(alpha: isDark ? 0.18 : 0.10),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: (isOverdue ? colors.error : colors.primary)
+                            .withValues(alpha: isDark ? 0.35 : 0.22),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Text(
+                      toPersianDigits('$count'),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Vazirmatn',
+                        color: isOverdue ? colors.error : colors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              const RitmoCardDivider(margin: EdgeInsets.symmetric(vertical: 4)),
+            ],
             // لیست ردیف‌های کارهای روز
             ListView.separated(
               shrinkWrap: true,

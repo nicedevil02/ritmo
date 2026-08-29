@@ -617,16 +617,21 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Vazirmatn',
-                        color: colors.textPrimary,
+                    Flexible(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Vazirmatn',
+                          color: colors.textPrimary,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -650,6 +655,8 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 11,
                     fontFamily: 'Vazirmatn',
@@ -659,6 +666,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
               ],
             ),
           ),
+          const SizedBox(width: 6),
           Icon(
             CupertinoIcons.chevron_left,
             size: 14,

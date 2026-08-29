@@ -2256,11 +2256,12 @@ class RitmoNeuEmptyCard extends StatelessWidget {
       margin: margin,
       borderRadius: BorderRadius.circular(28),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: SizedBox(
-        height: height - 32,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: (height - 32).clamp(100.0, 500.0)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // شیار دایره‌ای نئومورفیک با آیکون نرم
             Container(

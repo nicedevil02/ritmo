@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
@@ -32,6 +31,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
   int _selectedTabIndex = 0;
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
   final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
+  double _accumulatedUpScroll = 0.0;
   String? _heroAnimationAsset;
 
   @override
@@ -318,19 +318,29 @@ class _MvHubScreenState extends State<MvHubScreen> {
             child: NotificationListener<ScrollNotification>(
               onNotification: (notification) {
                 if (notification.metrics.axis == Axis.vertical) {
-                  _scrollOffset.value = notification.metrics.pixels;
-                  if (notification.metrics.pixels <= 15) {
+                  final pixels = notification.metrics.pixels;
+                  _scrollOffset.value = pixels;
+
+                  if (pixels <= 20) {
+                    _accumulatedUpScroll = 0.0;
                     if (!_isTabsExpanded.value) _isTabsExpanded.value = true;
-                  } else if (notification is UserScrollNotification) {
-                    if (notification.direction == ScrollDirection.reverse) {
-                      if (notification.metrics.pixels > 75 && _isTabsExpanded.value) {
+                  } else if (notification is ScrollUpdateNotification) {
+                    final delta = notification.scrollDelta ?? 0.0;
+                    if (delta > 1.0) {
+                      // اسکرول پیوسته و بدون وقفه به سمت پایین
+                      _accumulatedUpScroll = 0.0;
+                      if (pixels > 75 && _isTabsExpanded.value) {
                         _isTabsExpanded.value = false;
                       }
-                    } else if (notification.direction == ScrollDirection.forward) {
-                      if (!_isTabsExpanded.value) {
+                    } else if (delta < -1.0) {
+                      // اسکرول رو به بالا با آستانه هوشمند برای حذف لرزش دست
+                      _accumulatedUpScroll += -delta;
+                      if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
                         _isTabsExpanded.value = true;
                       }
                     }
+                  } else if (notification is ScrollEndNotification) {
+                    _accumulatedUpScroll = 0.0;
                   }
                 }
                 return false;

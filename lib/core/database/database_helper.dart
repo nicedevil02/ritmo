@@ -23,7 +23,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _dbVersion = 1;
+  static const int _dbVersion = 2;
   static int get dbVersionForTest => _dbVersion;
 
   static bool _isClosing = false;

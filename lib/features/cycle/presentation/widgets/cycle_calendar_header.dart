@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 
@@ -41,26 +42,6 @@ class CycleCalendarHeader extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
 
-    // توکن‌های نئومورفیک دکمه‌های ناوبری (Neumorphic Raised Soft Control)
-    final navButtonBg = isDark ? const Color(0xFF1F2430) : Colors.white;
-    final navButtonBorder = isDark
-        ? Colors.white.withValues(alpha: 0.10)
-        : colors.border.withValues(alpha: 0.45);
-    final navButtonShadows = [
-      BoxShadow(
-        offset: const Offset(-2, -2),
-        blurRadius: 6,
-        color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
-      ),
-      BoxShadow(
-        offset: const Offset(3, 4),
-        blurRadius: 8,
-        color: isDark
-            ? Colors.black.withValues(alpha: 0.55)
-            : const Color(0xFFCBD2DD).withValues(alpha: 0.60),
-      ),
-    ];
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -68,29 +49,22 @@ class CycleCalendarHeader extends StatelessWidget {
         Semantics(
           label: 'ماه قبل',
           button: true,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
+          child: RitmoNeuSurface(
+            radius: 14,
+            width: 38,
+            height: 38,
+            padding: EdgeInsets.zero,
             onTap: () {
               RitmoHapticsPolicy.selection();
               onPreviousMonth();
             },
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: navButtonBg,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: navButtonBorder, width: 0.8),
-                boxShadow: navButtonShadows,
-              ),
-              child: Center(
-                child: Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: Icon(
-                    CupertinoIcons.chevron_right,
-                    color: colors.textPrimary,
-                    size: 16,
-                  ),
+            child: Center(
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: Icon(
+                  CupertinoIcons.chevron_right,
+                  color: colors.textPrimary,
+                  size: 16,
                 ),
               ),
             ),
@@ -133,101 +107,69 @@ class CycleCalendarHeader extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (!isCurrentMonth)
-                    InkWell(
-                      borderRadius: BorderRadius.circular(20),
+                    RitmoNeuSurface(
+                      radius: 20,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      tint: activePhaseColor.withValues(alpha: isDark ? 0.15 : 0.08),
                       onTap: () {
                         RitmoHapticsPolicy.tap();
                         onGoToCurrentMonth();
                       },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 3.5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF222834) : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: activePhaseColor.withValues(alpha: 0.45),
-                            width: 0.8,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            CupertinoIcons.calendar_today,
+                            size: 11,
+                            color: activePhaseColor,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              offset: const Offset(0, 2),
-                              blurRadius: 6,
-                              color: activePhaseColor.withValues(alpha: 0.16),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              CupertinoIcons.calendar_today,
-                              size: 11,
+                          const SizedBox(width: 4),
+                          Text(
+                            l10n?.cycleCurrentMonth ?? 'امروز',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
                               color: activePhaseColor,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              l10n?.cycleCurrentMonth ?? 'امروز',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: activePhaseColor,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   if (!isCurrentMonth && canJumpToNext)
                     const SizedBox(width: 6),
                   if (canJumpToNext)
-                    InkWell(
-                      borderRadius: BorderRadius.circular(20),
+                    RitmoNeuSurface(
+                      radius: 20,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      tint: colors.error.withValues(alpha: isDark ? 0.15 : 0.08),
                       onTap: () {
                         RitmoHapticsPolicy.tap();
                         onJumpToNextPeriod();
                       },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 3.5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF2B2024) : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: colors.error.withValues(alpha: 0.45),
-                            width: 0.8,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            CupertinoIcons.arrow_right_circle,
+                            size: 11,
+                            color: colors.error,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              offset: const Offset(0, 2),
-                              blurRadius: 6,
-                              color: colors.error.withValues(alpha: 0.16),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              CupertinoIcons.arrow_right_circle,
-                              size: 11,
+                          const SizedBox(width: 4),
+                          Text(
+                            l10n?.cycleJumpToNext ?? 'پرش به دوره بعد',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
                               color: colors.error,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              l10n?.cycleJumpToNext ?? 'پرش به دوره بعد',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: colors.error,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                 ],
@@ -240,29 +182,22 @@ class CycleCalendarHeader extends StatelessWidget {
         Semantics(
           label: 'ماه بعد',
           button: true,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
+          child: RitmoNeuSurface(
+            radius: 14,
+            width: 38,
+            height: 38,
+            padding: EdgeInsets.zero,
             onTap: () {
               RitmoHapticsPolicy.selection();
               onNextMonth();
             },
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: navButtonBg,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: navButtonBorder, width: 0.8),
-                boxShadow: navButtonShadows,
-              ),
-              child: Center(
-                child: Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: Icon(
-                    CupertinoIcons.chevron_left,
-                    color: colors.textPrimary,
-                    size: 16,
-                  ),
+            child: Center(
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: Icon(
+                  CupertinoIcons.chevron_left,
+                  color: colors.textPrimary,
+                  size: 16,
                 ),
               ),
             ),

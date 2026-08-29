@@ -4,6 +4,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 
@@ -162,36 +163,51 @@ class _CycleMoodChartSectionState extends State<CycleMoodChartSection> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_loading) {
-      return RitmoTheme.glassCardLight(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: CircularProgressIndicator(color: colors.primary),
-          ),
+      return RitmoCard.neumorphic(
+        borderRadius: BorderRadius.circular(24),
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: CircularProgressIndicator(color: colors.primary),
         ),
       );
     }
 
     if (_logs.length < 5) {
-      return RitmoTheme.glassCardLight(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+      return RitmoNeuSurface(
+        sunken: true,
+        radius: 24,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+        child: Center(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                CupertinoIcons.heart_circle,
-                color: colors.primary,
-                size: 36,
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colors.primary.withValues(alpha: isDark ? 0.18 : 0.12),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: 0.35),
+                    width: 0.8,
+                  ),
+                ),
+                child: Icon(
+                  CupertinoIcons.heart_circle,
+                  color: colors.primary,
+                  size: 26,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Text(
                 'هنوز در حالِ یادگیریِ الگوی احساست هستم 🌸',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
                   color: colors.textPrimary,
                 ),
               ),
@@ -199,7 +215,11 @@ class _CycleMoodChartSectionState extends State<CycleMoodChartSection> {
               Text(
                 'با ثبتِ روزانه احوال، نمودار دقیق‌تر می‌شود.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colors.textSecondary,
+                  height: 1.4,
+                ),
               ),
             ],
           ),
@@ -207,33 +227,24 @@ class _CycleMoodChartSectionState extends State<CycleMoodChartSection> {
       );
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return RitmoTheme.glassCardLight(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'روند تغییرات خلق‌وخو در طول چرخه بدنی',
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'این نمودار نوسانات خلق‌وخوی شما را در روزهای چرخه نشان می‌دهد (محور افقی روزهای دوره و محور عمودی سطح احوال است).',
-              style: TextStyle(
-                fontSize: 11.5,
-                color: colors.textSecondary,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 20),
-            RepaintBoundary(
+    return RitmoCard.neumorphic(
+      borderRadius: BorderRadius.circular(24),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const RitmoCardHeader(
+            title: 'روند تغییرات خلق‌وخو در طول چرخه بدنی',
+            subtitle: 'نمودار نوسانات احساسی نسبت به روزهای چرخه',
+            icon: CupertinoIcons.heart_circle_fill,
+          ),
+          const SizedBox(height: 14),
+          RitmoNeuSurface(
+            sunken: true,
+            radius: 16,
+            padding: const EdgeInsets.fromLTRB(8, 14, 8, 8),
+            child: RepaintBoundary(
               child: SizedBox(
                 height: 160,
                 child: CustomPaint(
@@ -253,36 +264,36 @@ class _CycleMoodChartSectionState extends State<CycleMoodChartSection> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              alignment: WrapAlignment.center,
-              children: [
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              _buildLegendDot(
+                colors.primary,
+                'میانگین خلق‌وخو',
+                isDark,
+                colors,
+              ),
+              if (_maxAnxietyDay != -1)
                 _buildLegendDot(
-                  colors.primary,
-                  'میانگین خلق‌وخو (عالی تا کلافه)',
+                  colors.error,
+                  'اوج اضطراب (روز ${PersianDigits.toFa(_maxAnxietyDay.toString())})',
                   isDark,
                   colors,
                 ),
-                if (_maxAnxietyDay != -1)
-                  _buildLegendDot(
-                    colors.error,
-                    'نقطه اوج اضطراب/بی‌حوصلگی (روز ${PersianDigits.toFa(_maxAnxietyDay.toString())})',
-                    isDark,
-                    colors,
-                  ),
-                if (_maxEnergyDay != -1)
-                  _buildLegendDot(
-                    colors.success,
-                    'نقطه اوج انرژی بالا (روز ${PersianDigits.toFa(_maxEnergyDay.toString())})',
-                    isDark,
-                    colors,
-                  ),
-              ],
-            ),
-          ],
-        ),
+              if (_maxEnergyDay != -1)
+                _buildLegendDot(
+                  colors.success,
+                  'اوج انرژی (روز ${PersianDigits.toFa(_maxEnergyDay.toString())})',
+                  isDark,
+                  colors,
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

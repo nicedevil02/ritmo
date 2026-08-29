@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 
 class CycleBurdenCard extends StatelessWidget {
@@ -82,152 +82,105 @@ class CycleBurdenCard extends StatelessWidget {
         ? 'بار بدنی بالا'
         : (burden.level == 'MODERATE' ? 'بار بدنی متوسط' : 'بار بدنی متوازن');
 
-    return RitmoTheme.glassCardLight(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onOpenGuide,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ۱. هدر: آیکون کپسولی فاز + عنوان هوشمند فاز + نشان بار بدنی
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: phaseColor.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: phaseColor.withValues(alpha: 0.35),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Text(
-                      emoji,
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      phaseTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3.5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: badgeColor.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: badgeColor.withValues(alpha: 0.35),
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Text(
-                      badgeTitleFa,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: badgeColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
+    return RitmoCard.neumorphic(
+      onTap: onOpenGuide,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ۱. هدر استاندارد سیستم مرجع کارت
+          RitmoCardHeader(
+            title: '$emoji $phaseTitle',
+            subtitle: 'تنظیم فشار کاری و خودمراقبتی هوشمند',
+            icon: CupertinoIcons.sparkles,
+            iconColor: phaseColor,
+            trailing: RitmoCardBadge(
+              label: badgeTitleFa,
+              color: badgeColor,
+            ),
+          ),
+          const SizedBox(height: 12),
 
-              // ۲. توصیه‌ها و وضعیت تحلیلی بار بدنی
-              ...(advice.recommendationsFa ??
-                      advice.recommendationCodes.map(_translateRecommendation))
-                  .map(
-                    (rec) => Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '• ',
-                            style: TextStyle(
-                              color: badgeColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              rec,
+          // ۲. محفظه فرورفته توصیه‌ها و وضعیت تحلیلی بار بدنی
+          RitmoNeuSurface(
+            sunken: true,
+            radius: 14,
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ...(advice.recommendationsFa ??
+                        advice.recommendationCodes.map(_translateRecommendation))
+                    .map(
+                      (rec) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '• ',
                               style: TextStyle(
-                                fontSize: 12,
-                                color: colors.textPrimary,
-                                height: 1.35,
+                                color: badgeColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-              // ۳. نوار تعاملی فوتر برای باز کردن راهنما و شیت کامل
-              if (onOpenGuide != null) ...[
-                const SizedBox(height: 8),
-                Divider(
-                  color: colors.border.withValues(alpha: 0.6),
-                  height: 16,
-                ),
-                Row(
-                  children: [
-                    Icon(
-                      CupertinoIcons.sparkles,
-                      size: 15,
-                      color: phaseColor,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        actionText,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: colors.textPrimary,
+                            Expanded(
+                              child: Text(
+                                rec,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colors.textPrimary,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    Text(
-                      'مشاهده راهنما',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.bold,
-                        color: colors.primary,
-                      ),
+              ],
+            ),
+          ),
+
+          // ۳. نوار تعاملی فوتر برای باز کردن راهنما و شیت کامل
+          if (onOpenGuide != null) ...[
+            const RitmoCardDivider(),
+            Row(
+              children: [
+                Icon(
+                  CupertinoIcons.sparkles,
+                  size: 15,
+                  color: phaseColor,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    actionText,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      CupertinoIcons.chevron_left,
-                      size: 13,
-                      color: colors.primary,
-                    ),
-                  ],
+                  ),
+                ),
+                Text(
+                  'مشاهده راهنما',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                    color: colors.primary,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  CupertinoIcons.chevron_left,
+                  size: 13,
+                  color: colors.primary,
                 ),
               ],
-            ],
-          ),
-        ),
+            ),
+          ],
+        ],
       ),
     );
   }

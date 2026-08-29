@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/supplementary_sports/application/mv_finish_session_use_case.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/player/templates/mv_distance_template.dart';
@@ -152,7 +153,6 @@ class CycleWorkoutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     var title = '';
     var description = '';
@@ -253,229 +253,173 @@ class CycleWorkoutCard extends StatelessWidget {
             mode: MvSessionMode.distance,
           );
 
-    return RitmoTheme.glassCardLight(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ۱. هدر: آیکون گرد فاز + عنوان ورزش + بج شدت فاز
-            Row(
+    return RitmoCard.neumorphic(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ۱. هدر استاندارد سیستم مرجع کارت با نشان شدت فاز
+          RitmoCardHeader(
+            title: title,
+            subtitle: 'سازگار با ریتم و هورمون‌های فاز جاری',
+            icon: icon,
+            iconColor: phaseColor,
+            trailing: RitmoCardBadge(
+              label: intensityLabel,
+              color: phaseColor,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ۲. محفظه فرورفته ساعت طلایی و توضیحات علمی
+          RitmoNeuSurface(
+            sunken: true,
+            radius: 14,
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: phaseColor.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: phaseColor.withValues(alpha: 0.35),
-                      width: 1.2,
-                    ),
-                  ),
-                  child: Icon(icon, color: phaseColor, size: 20),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3.5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: phaseColor.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: phaseColor.withValues(alpha: 0.35),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Text(
-                    intensityLabel,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+                Row(
+                  children: [
+                    Icon(
+                      CupertinoIcons.clock,
+                      size: 13.5,
                       color: phaseColor,
                     ),
-                  ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'ساعت بهینه:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        goldenWindow,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // ۲. ساعت طلایی تمرین
-            Row(
-              children: [
-                Icon(
-                  CupertinoIcons.clock,
-                  size: 13.5,
-                  color: colors.textSecondary,
-                ),
-                const SizedBox(width: 6),
+                const SizedBox(height: 6),
                 Text(
-                  'ساعت بهینه:',
+                  description,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
                     color: colors.textSecondary,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    goldenWindow,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
+                    height: 1.45,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+          ),
+          const SizedBox(height: 12),
 
-            // ۳. توضیحات علمی و هورمونی
-            Text(
-              description,
-              style: TextStyle(
-                fontSize: 12,
-                color: colors.textSecondary,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // ۴. چیپ‌های تمرینات پیشنهادی (لمس هر کدام مستقیماً پلیر همان ورزش را باز می‌کند)
-            Row(
-              children: [
-                for (int i = 0; i < options.length; i++) ...[
-                  if (i > 0) const SizedBox(width: 8),
-                  Expanded(
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => _startSpecificWorkout(context, options[i]),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 7),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.06)
-                              : colors.surfaceElevated,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.white12
-                                : colors.border.withValues(alpha: 0.7),
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Text(
-                          '${options[i].label} ${options[i].emoji}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-
-            // ۵. نوار فوتر: شروع مستقیم تمرین شاخص + لینک به ماژول کامل
-            const SizedBox(height: 8),
-            Divider(
-              color: colors.border.withValues(alpha: 0.6),
-              height: 16,
-            ),
-            Row(
-              children: [
+          // ۳. دکمه‌های نئومورفیک ۳ بعدی تمرینات پیشنهادی
+          Row(
+            children: [
+              for (int i = 0; i < options.length; i++) ...[
+                if (i > 0) const SizedBox(width: 8),
                 Expanded(
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(10),
-                    onTap: () => _startSpecificWorkout(context, primaryOption),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            CupertinoIcons.play_circle_fill,
-                            size: 18,
-                            color: phaseColor,
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              'شروع ${primaryOption.label} (${primaryOption.emoji})',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.bold,
-                                color: colors.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
+                  child: RitmoNeuButton(
+                    onTap: () => _startSpecificWorkout(context, options[i]),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Center(
+                      child: Text(
+                        '${options[i].label} ${options[i].emoji}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
                       ),
                     ),
                   ),
                 ),
-                InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => _openWorkoutHub(context),
+              ],
+            ],
+          ),
+
+          // ۴. خط جداکننده نئومورفیک و فوتر
+          const RitmoCardDivider(),
+
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => _startSpecificWorkout(context, primaryOption),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          'ماژول ورزش',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: colors.primary,
-                          ),
-                        ),
-                        const SizedBox(width: 2),
                         Icon(
-                          CupertinoIcons.chevron_left,
-                          size: 13,
-                          color: colors.primary,
+                          CupertinoIcons.play_circle_fill,
+                          size: 19,
+                          color: phaseColor,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'شروع ${primaryOption.label} (${primaryOption.emoji})',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => _openWorkoutHub(context),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 4,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'ماژول ورزش',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: colors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        CupertinoIcons.chevron_left,
+                        size: 13,
+                        color: colors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

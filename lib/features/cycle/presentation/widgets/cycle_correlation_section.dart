@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 
@@ -90,6 +91,19 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
     }
   }
 
+  IconData _getMetricIcon(String metric) {
+    switch (metric.toLowerCase()) {
+      case 'energy':
+        return CupertinoIcons.bolt_fill;
+      case 'sleep':
+        return CupertinoIcons.moon_fill;
+      case 'routines':
+        return CupertinoIcons.checkmark_seal_fill;
+      default:
+        return CupertinoIcons.chart_bar_square_fill;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -99,43 +113,93 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
       return Center(child: CircularProgressIndicator(color: colors.primary));
     }
 
+    if (_correlations.isEmpty) {
+      return RitmoCard.neumorphic(
+        borderRadius: BorderRadius.circular(24),
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RitmoNeuSurface(
+                sunken: true,
+                radius: 24,
+                padding: const EdgeInsets.all(16),
+                child: Icon(
+                  CupertinoIcons.chart_pie,
+                  color: colors.primary,
+                  size: 36,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'هنوز داده‌های کافی برای تحلیل همبستگی ثبت نشده است',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'حداقل به ثبت ۱۴ روز لاگ روزانه نیاز است.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: colors.textSecondary),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Disclaimer Card
-        RitmoTheme.glassCardLight(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                const Icon(
-                  CupertinoIcons.info_circle_fill,
-                  color: Colors.blueAccent,
-                  size: 18,
+        // Disclaimer Banner
+        RitmoNeuSurface(
+          sunken: true,
+          radius: 18,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          tint: colors.warning.withValues(alpha: isDark ? 0.08 : 0.05),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colors.warning.withValues(alpha: isDark ? 0.22 : 0.15),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'توجه: همبستگی‌های نمایش داده شده صرفاً آماری بوده و به معنی رابطه علّی و معلولی قطعی نیست.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colors.textSecondary,
-                      height: 1.4,
-                    ),
+                child: Icon(
+                  CupertinoIcons.info,
+                  color: colors.warning,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'توجه: همبستگی‌های نمایش داده شده صرفاً آماری بوده و به معنی رابطه علّی و معلولی قطعی نیست.',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: colors.textSecondary,
+                    height: 1.45,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 12),
 
         // List of correlations
         ..._correlations.map((corr) {
           final coeff = corr.coefficient;
           final hasCoeff = coeff != null;
 
-          Color indicatorColor = Colors.grey;
+          Color indicatorColor = colors.textSecondary;
           var strengthText = 'داده کافی نیست';
           if (hasCoeff) {
             if (coeff.abs() > 0.6) {
@@ -144,95 +208,86 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
                   ? 'همبستگی مستقیم قوی'
                   : 'همبستگی معکوس قوی';
             } else if (coeff.abs() > 0.3) {
-              indicatorColor = Colors.amber;
+              indicatorColor = colors.warning;
               strengthText = coeff > 0
                   ? 'همبستگی مستقیم ملایم'
                   : 'همبستگی معکوس ملایم';
             } else {
-              indicatorColor = Colors.green;
+              indicatorColor = colors.success;
               strengthText = 'بدون نوسان همبسته';
             }
           }
 
           return Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: RitmoTheme.glassCardLight(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _translateMetric(corr.metric),
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : colors.textPrimary,
+            padding: const EdgeInsets.only(bottom: 12),
+            child: RitmoCard.neumorphic(
+              borderRadius: BorderRadius.circular(20),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _getMetricIcon(corr.metric),
+                            color: colors.primary,
+                            size: 18,
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: indicatorColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: indicatorColor.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Text(
-                            strengthText,
+                          const SizedBox(width: 8),
+                          Text(
+                            _translateMetric(corr.metric),
                             style: TextStyle(
-                              fontSize: 14,
-                              color: indicatorColor,
+                              fontSize: 14.5,
                               fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                      RitmoCardBadge(
+                        label: strengthText,
+                        color: indicatorColor,
+                      ),
+                    ],
+                  ),
 
-                    const SizedBox(height: 8),
-                    if (hasCoeff)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          children: [
-                            Text(
-                              'ضریب پیرسون: ',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: colors.textSecondary,
-                              ),
+                  const SizedBox(height: 10),
+                  if (hasCoeff)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            'ضریب پیرسون: ',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: colors.textSecondary,
                             ),
-                            Text(
-                              _toPersianDigits(coeff.toStringAsFixed(2)),
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? Colors.white
-                                    : colors.textPrimary,
-                              ),
+                          ),
+                          Text(
+                            _toPersianDigits(coeff.toStringAsFixed(2)),
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
                             ),
-                          ],
-                        ),
-                      ),
-                    Text(
-                      _translateInsight(corr.insight),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? Colors.white70 : colors.textSecondary,
-                        height: 1.5,
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  Text(
+                    _translateInsight(corr.insight),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colors.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
               ),
             ),
           );

@@ -7,6 +7,7 @@ import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_mood_chart.dart';
@@ -83,19 +84,38 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
     final trendPoints = widget.engineOutput.trendPoints;
 
     if (trendPoints.length < 2) {
-      return RitmoTheme.glassCardLight(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+      return RitmoNeuSurface(
+        sunken: true,
+        radius: 24,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+        child: Center(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(CupertinoIcons.sparkles, color: colors.primary, size: 36),
-              const SizedBox(height: 12),
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colors.primary.withValues(alpha: isDark ? 0.18 : 0.12),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: 0.35),
+                    width: 0.8,
+                  ),
+                ),
+                child: Icon(
+                  CupertinoIcons.sparkles,
+                  color: colors.primary,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(height: 16),
               Text(
                 'هنوز در حالِ یادگیریِ الگوی بدنتم 🌸',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
                   color: colors.textPrimary,
                 ),
               ),
@@ -103,7 +123,11 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
               Text(
                 'برای مشاهده نمودارهای روند و نظم چرخه، باید حداقل اطلاعات ۲ دوره قبلی را ثبت کرده باشید.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colors.textSecondary,
+                  height: 1.5,
+                ),
               ),
             ],
           ),
@@ -127,118 +151,92 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
             widget.engineOutput.isProjected)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: RitmoTheme.glassCardLight(
-              color: colors.warning.withValues(alpha: isDark ? 0.12 : 0.06),
-              border: Border.all(color: colors.warning.withValues(alpha: 0.2)),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Icon(
-                      CupertinoIcons.info_circle_fill,
-                      color: colors.warning,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        widget.engineOutput.isProjected
-                            ? 'پیش‌بینی‌ها بر مبنای تنظیمات اولیه است.'
-                            : '${PersianDigits.toFa(widget.engineOutput.discardedOutliers.toString())} دوره غیرمعمول برای دقت بیشتر از محاسبات آماری کنار گذاشته شدند.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.textSecondary,
-                          height: 1.4,
-                        ),
+            child: RitmoNeuSurface(
+              sunken: true,
+              radius: 16,
+              tint: colors.warning.withValues(alpha: isDark ? 0.14 : 0.08),
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.info_circle_fill,
+                    color: colors.warning,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.engineOutput.isProjected
+                          ? 'پیش‌بینی‌ها بر مبنای تنظیمات اولیه است.'
+                          : '${PersianDigits.toFa(widget.engineOutput.discardedOutliers.toString())} دوره غیرمعمول برای دقت بیشتر از محاسبات آماری کنار گذاشته شدند.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.textSecondary,
+                        height: 1.4,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
 
         // 1. Regularity Score Card
-        RitmoTheme.glassCardLight(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'وضعیت نظم چرخه بدنی',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        widget.engineOutput.regularityLevel ==
-                                RegularityLevel.irregular
-                            ? 'بر اساس تحلیل داده‌های شما، طول چرخه‌ها دارای پراکندگی است. این یک تشخیص پزشکی نیست، اما روتین منظم‌تر به پایداری ریتم بدنی کمک می‌کند.'
-                            : widget.engineOutput.regularityLevel ==
-                                      RegularityLevel.moderate ||
-                                  widget.engineOutput.regularityLevel ==
-                                      RegularityLevel.regular
-                            ? 'بر اساس تحلیل داده‌های شما، طول چرخه‌های اخیر به هم نزدیک بوده و ریتم بدنی منظم است 🌸'
-                            : 'برای محاسبه وضعیت نظم چرخه، نیاز به ثبت دوره‌های بیشتری است.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colors.textSecondary,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
+        RitmoCard.neumorphic(
+          borderRadius: BorderRadius.circular(24),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RitmoCardHeader(
+                title: 'وضعیت نظم چرخه بدنی',
+                subtitle: 'سنجش آماری ثبات طول دوره‌ها',
+                icon: CupertinoIcons.chart_bar_alt_fill,
+                trailing: RitmoCardBadge(
+                  label: regularityLabelFa,
+                  color: colors.primary,
                 ),
-                const SizedBox(width: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colors.primary, width: 1.2),
-                    color: colors.primary.withValues(alpha: 0.1),
-                  ),
-                  child: Text(
-                    regularityLabelFa,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: colors.primary,
-                    ),
-                  ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                widget.engineOutput.regularityLevel ==
+                        RegularityLevel.irregular
+                    ? 'بر اساس تحلیل داده‌های شما، طول چرخه‌ها دارای پراکندگی است. این یک تشخیص پزشکی نیست، اما روتین منظم‌تر به پایداری ریتم بدنی کمک می‌کند.'
+                    : widget.engineOutput.regularityLevel ==
+                              RegularityLevel.moderate ||
+                          widget.engineOutput.regularityLevel ==
+                              RegularityLevel.regular
+                    ? 'بر اساس تحلیل داده‌های شما، طول چرخه‌های اخیر به هم نزدیک بوده و ریتم بدنی منظم است 🌸'
+                    : 'برای محاسبه وضعیت نظم چرخه، نیاز به ثبت دوره‌های بیشتری است.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colors.textSecondary,
+                  height: 1.5,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 14),
 
         // 2. Trend Line Chart Card
-        RitmoTheme.glassCardLight(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'نمودار روند طول چرخه‌های اخیر',
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
+        RitmoCard.neumorphic(
+          borderRadius: BorderRadius.circular(24),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const RitmoCardHeader(
+                title: 'نمودار روند طول چرخه‌های اخیر',
+                subtitle: 'مقایسه طول دوره با طول کل چرخه',
+                icon: CupertinoIcons.waveform_path_ecg,
+              ),
+              const SizedBox(height: 14),
+              RitmoNeuSurface(
+                sunken: true,
+                radius: 16,
+                padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+                child: SizedBox(
                   height: 150,
                   child: CustomPaint(
                     painter: _CycleTrendPainter(
@@ -252,143 +250,117 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
                     child: Container(),
                   ),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildLegendDot(
-                      colors.primary,
-                      'طول چرخه بدنی (روز)',
-                      colors,
-                    ),
-                    const SizedBox(width: 24),
-                    _buildLegendDot(colors.error, 'طول دوره (روز)', colors),
-                  ],
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildLegendDot(
+                    colors.primary,
+                    'طول چرخه بدنی (روز)',
+                    colors,
+                  ),
+                  const SizedBox(width: 24),
+                  _buildLegendDot(colors.error, 'طول دوره (روز)', colors),
+                ],
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 14),
 
         CycleMoodChartSection(
           averageCycleLength: widget.engineOutput.stats.avgCycleLength.round(),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 14),
 
         // 3. Symptom Stats Card
-        RitmoTheme.glassCardLight(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'بیشترین علائم فیزیکی گزارش‌شده',
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                if (_loading)
-                  Center(
-                    child: CircularProgressIndicator(color: colors.primary),
-                  )
-                else
-                  _symptomStats.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            child: Text(
-                              'علائمی ثبت نشده است.',
-                              style: TextStyle(
-                                color: colors.textSecondary,
-                                fontSize: 13,
-                              ),
+        RitmoCard.neumorphic(
+          borderRadius: BorderRadius.circular(24),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const RitmoCardHeader(
+                title: 'بیشترین علائم فیزیکی گزارش‌شده',
+                subtitle: 'تکرار شایع‌ترین نشانه‌ها در روزهای چرخه',
+                icon: CupertinoIcons.heart_fill,
+              ),
+              const SizedBox(height: 14),
+              if (_loading)
+                Center(
+                  child: CircularProgressIndicator(color: colors.primary),
+                )
+              else
+                _symptomStats.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Text(
+                            'علائمی ثبت نشده است.',
+                            style: TextStyle(
+                              color: colors.textSecondary,
+                              fontSize: 13,
                             ),
                           ),
-                        )
-                      : ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _symptomStats.take(5).length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            final maxCount = _symptomStats.first.count;
-                            final item = _symptomStats[index];
-                            final pct = maxCount > 0
-                                ? (item.count / maxCount)
-                                : 0.0;
-
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    // Left: Symptom Name
-                                    Text(
-                                      _translateSymptom(item.key),
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: colors.textPrimary,
-                                      ),
-                                    ),
-                                    // Right: Badge / stats
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 3,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: colors.primary.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: colors.primary.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                          width: 0.5,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        PersianDigits.toFa(
-                                          'روزِ شایع: ${item.typicalCycleDay} · ${item.count} بار',
-                                        ),
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: colors.primary,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                // Visual relative frequency bar
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: LinearProgressIndicator(
-                                    value: pct,
-                                    backgroundColor: colors.surface,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      colors.primary,
-                                    ),
-                                    minHeight: 6,
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
                         ),
-              ],
-            ),
+                      )
+                    : ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _symptomStats.take(5).length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final maxCount = _symptomStats.first.count;
+                          final item = _symptomStats[index];
+                          final pct = maxCount > 0
+                              ? (item.count / maxCount)
+                              : 0.0;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    _translateSymptom(item.key),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: colors.textPrimary,
+                                    ),
+                                  ),
+                                  RitmoCardBadge(
+                                    label: PersianDigits.toFa(
+                                      'روزِ شایع: ${item.typicalCycleDay} · ${item.count} بار',
+                                    ),
+                                    color: colors.primary,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              // Visual relative frequency bar
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: pct,
+                                  backgroundColor: isDark
+                                      ? Colors.white.withValues(alpha: 0.06)
+                                      : Colors.black.withValues(alpha: 0.05),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    colors.primary,
+                                  ),
+                                  minHeight: 6,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+            ],
           ),
         ),
       ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 
 class CyclePersonalForecastCard extends StatelessWidget {
@@ -40,46 +41,33 @@ class CyclePersonalForecastCard extends StatelessWidget {
 
     final colors = context.colors;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.border),
-      ),
+    return RitmoCard.neumorphic(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.psychology_outlined, size: 18, color: colors.primary),
-              const SizedBox(width: 8),
-              Text(
-                'پیش‌بینی الگوهای شخصی',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
-              ),
-            ],
+          RitmoCardHeader(
+            title: 'پیش‌بینی الگوهای شخصی',
+            subtitle: 'بر اساس علائم و تجربیات ثبت‌شده شما',
+            icon: Icons.psychology_outlined,
+            iconColor: colors.primary,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           ...forecasts.map(
             (f) => Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: 6),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.auto_awesome, size: 14, color: colors.primary),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       f.insightFa ??
                           'احتمال بروز ${_translateSymptom(f.symptomKey)} در این بازه',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 12.5,
                         color: colors.textSecondary,
+                        height: 1.4,
                       ),
                     ),
                   ),

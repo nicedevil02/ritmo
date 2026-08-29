@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 
 class CycleOrbCard extends StatefulWidget {
   const CycleOrbCard({
@@ -125,40 +126,20 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
         : 0.1;
     final m = context.metrics;
 
-    final cardBgColor = isDark ? const Color(0xFF1E2127) : const Color(0xFFF1F3F6);
-    final cardLightShadow = isDark
-        ? const Color(0xFF2B3039)
-        : Colors.white;
-    final cardDarkShadow = isDark
-        ? Colors.black.withValues(alpha: 0.65)
-        : const Color(0xFFBAC4D0).withValues(alpha: 0.70);
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 340;
         final cardHeight = isCompact ? 188.0 : 194.0 * m.densityFactor;
 
-        return Container(
+        return SizedBox(
           width: double.infinity,
           height: cardHeight,
-          decoration: BoxDecoration(
-            color: cardBgColor,
+          child: RitmoCard.neumorphic(
+            padding: EdgeInsets.zero,
             borderRadius: BorderRadius.circular(34),
-            boxShadow: [
-              BoxShadow(
-                color: cardLightShadow,
-                offset: const Offset(-8, -8),
-                blurRadius: 18,
-              ),
-              BoxShadow(
-                color: cardDarkShadow,
-                offset: const Offset(8, 8),
-                blurRadius: 20,
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
+            enableSpring: false,
+            child: Stack(
+              children: [
               PageView(
                 controller: _pageController,
                 onPageChanged: (index) {
@@ -212,10 +193,11 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
               ),
             ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   // ---------------------------------------------------------------------------
   // اسلاید ۱: وضعیت لحظه‌ای (کلیک -> ثبت علائم)
@@ -505,29 +487,12 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     bool isCurrentPhase = false,
   }) {
     return Expanded(
-      child: Container(
+      child: RitmoNeuSurface(
+        sunken: !isCurrentPhase,
+        radius: 14,
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 3),
-        decoration: BoxDecoration(
-          color: isCurrentPhase
-              ? color.withValues(alpha: isDark ? 0.28 : 0.18)
-              : color.withValues(alpha: isDark ? 0.18 : 0.10),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isCurrentPhase
-                ? color.withValues(alpha: isDark ? 0.70 : 0.60)
-                : color.withValues(alpha: isDark ? 0.35 : 0.22),
-            width: isCurrentPhase ? 1.4 : 0.9,
-          ),
-          boxShadow: isCurrentPhase
-              ? [
-                  BoxShadow(
-                    color: color.withValues(alpha: isDark ? 0.30 : 0.20),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
+        tint: isCurrentPhase ? color.withValues(alpha: isDark ? 0.22 : 0.14) : null,
+        glowColor: isCurrentPhase ? color.withValues(alpha: 0.35) : null,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -809,16 +774,9 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     required bool isDark,
     required Color phaseColor,
   }) {
-    return Container(
+    return RitmoNeuSurface(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF191B20) : Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
-          width: 0.8,
-        ),
-      ),
+      radius: 14,
       child: Row(
         children: [
           Container(

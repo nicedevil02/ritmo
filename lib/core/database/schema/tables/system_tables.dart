@@ -140,12 +140,15 @@ class SystemTables {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS calendar_exceptions (
           date TEXT PRIMARY KEY,
-          exceptionType TEXT NOT NULL,
+          id TEXT,
+          exceptionType TEXT NOT NULL DEFAULT 'SYSTEM',
           behavior TEXT NOT NULL DEFAULT 'NORMAL',
+          reason TEXT,
           title TEXT,
           isAutoGrace INTEGER NOT NULL DEFAULT 0,
           isUserDefined INTEGER NOT NULL DEFAULT 0,
-          createdAt INTEGER NOT NULL
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER
       );
     ''');
     await db.execute('CREATE INDEX IF NOT EXISTS index_calendar_exceptions_exceptionType ON calendar_exceptions(exceptionType);');
@@ -537,5 +540,8 @@ class SystemTables {
     await SchemaManager.safeAddColumn(db, 'pending_reminders', 'body', 'TEXT');
     await SchemaManager.safeAddColumn(db, 'pending_reminders', 'channel', "TEXT DEFAULT 'routine'");
     await SchemaManager.safeAddColumn(db, 'pending_reminders', 'privacy', "TEXT DEFAULT 'none'");
+    await SchemaManager.safeAddColumn(db, 'calendar_exceptions', 'id', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'calendar_exceptions', 'reason', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'calendar_exceptions', 'updatedAt', 'INTEGER');
   }
 }

@@ -1,11 +1,16 @@
 import 'package:ritmo/core/database/migration/migration_interface.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v2_planning_schema.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:sqflite/sqflite.dart';
 
 class MigrationRunner {
   /// لیست مهاجرت‌های دیتابیس (نسخه پایه: ۱)
   /// در آینده برای اضافه کردن تغییرات اسکیما، مهاجرت‌ها از نسخه ۲ به بعد در این لیست ثبت می‌شوند.
-  static final List<Migration> _migrations = <Migration>[];
+  static final List<Migration> _migrations = <Migration>[
+    MigrationV2PlanningSchema(),
+  ];
+
+  static List<Migration> get debugMigrations => List.unmodifiable(_migrations);
 
   static Future<void> _ensureSchemaMigrationsTable(Database db) async {
     await db.execute('''

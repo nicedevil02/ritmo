@@ -36,8 +36,9 @@ class PlanningRepository {
       );
       if (res.isEmpty) return null;
       return PlanningCycle.fromMap(res.first);
-    } catch (_) {
-      return null;
+    } catch (e, st) {
+      RitmoLogger.error('PlanningRepository.activeCycle error: $e', error: e, stack: st);
+      rethrow;
     }
   }
 
@@ -165,8 +166,9 @@ class PlanningRepository {
         whereArgs: [cycleId],
       );
       return res.map(PlanningCommitment.fromMap).toList();
-    } catch (_) {
-      return [];
+    } catch (e, st) {
+      RitmoLogger.error('PlanningRepository.commitmentsOf error: $e', error: e, stack: st);
+      rethrow;
     }
   }
 
@@ -255,7 +257,7 @@ class PlanningRepository {
       return res.map(PlanningAllocation.fromMap).toList();
     } catch (e, st) {
       RitmoLogger.error('PlanningRepository.allocationsOf error: $e', error: e, stack: st);
-      return [];
+      rethrow;
     }
   }
 
@@ -270,7 +272,7 @@ class PlanningRepository {
       return res.map(PlanningAllocation.fromMap).toList();
     } catch (e, st) {
       RitmoLogger.error('PlanningRepository.allocationsForDay error: $e', error: e, stack: st);
-      return [];
+      rethrow;
     }
   }
 
@@ -365,19 +367,35 @@ class PlanningRepository {
     final db = await _db;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     if (isLight) {
-      await UpsertHelper.upsert(
-        db,
+      final existing = await db.query(
         'calendar_exceptions',
-        {
-          'id': 'ce_$dayKey',
-          'date': dayKey,
-          'behavior': 'ESSENTIAL_ONLY',
-          'reason': 'LIGHT_DAY',
-          'createdAt': nowMs,
-          'updatedAt': nowMs,
-        },
-        conflictColumns: const ['id'],
+        where: 'date = ?',
+        whereArgs: [dayKey],
       );
+      if (existing.isNotEmpty) {
+        await db.update(
+          'calendar_exceptions',
+          {
+            'behavior': 'ESSENTIAL_ONLY',
+            'reason': 'LIGHT_DAY',
+            'updatedAt': nowMs,
+          },
+          where: 'date = ?',
+          whereArgs: [dayKey],
+        );
+      } else {
+        await db.insert(
+          'calendar_exceptions',
+          {
+            'id': 'ce_$dayKey',
+            'date': dayKey,
+            'behavior': 'ESSENTIAL_ONLY',
+            'reason': 'LIGHT_DAY',
+            'createdAt': nowMs,
+            'updatedAt': nowMs,
+          },
+        );
+      }
     } else {
       await db.delete(
         'calendar_exceptions',
@@ -401,7 +419,7 @@ class PlanningRepository {
           .toSet();
     } catch (e, st) {
       RitmoLogger.error('PlanningRepository.getLightDays error: $e', error: e, stack: st);
-      return {};
+      rethrow;
     }
   }
 }

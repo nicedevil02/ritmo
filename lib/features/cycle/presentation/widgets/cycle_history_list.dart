@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -41,34 +42,8 @@ class CycleHistoryList extends StatelessWidget {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // توکن‌های جزیره نئومورفیک (منطبق با جزیره تقویم)
-    final cardBg = isDark ? const Color(0xFF1B202B) : const Color(0xFFF0F3F7);
-    final cardBorder = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.white.withValues(alpha: 0.90);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: cardBorder, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            offset: const Offset(-4, -4),
-            blurRadius: 14,
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.035)
-                : Colors.white,
-          ),
-          BoxShadow(
-            offset: const Offset(6, 8),
-            blurRadius: 18,
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.55)
-                : const Color(0xFFCBD2DD).withValues(alpha: 0.70),
-          ),
-        ],
-      ),
+    return RitmoCard.neumorphic(
+      borderRadius: BorderRadius.circular(24),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,73 +83,43 @@ class CycleHistoryList extends StatelessWidget {
                   ),
                   if (periods.isNotEmpty) ...[
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : Colors.black.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '${PersianDigits.toFa(periods.length.toString())} دوره',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: colors.textSecondary,
-                        ),
-                      ),
+                    RitmoCardBadge(
+                      label: '${PersianDigits.toFa(periods.length.toString())} دوره',
+                      color: colors.primary,
                     ),
                   ],
                 ],
               ),
-              // دکمه کپسولی افزودن دوره
+              // دکمه کپسولی نئومورفیک افزودن دوره
               Semantics(
                 button: true,
                 label: 'افزودن دوره قبلی',
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: () {
-                    RitmoHaptics.selection();
-                    onAddNewPeriod();
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(
-                        alpha: isDark ? 0.18 : 0.12,
+                child: RitmoNeuButton(
+                  height: 32,
+                  radius: 14,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  onTap: onAddNewPeriod,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        CupertinoIcons.plus,
+                        size: 13,
+                        color: colors.primary,
                       ),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: colors.primary.withValues(alpha: 0.38),
-                        width: 1.0,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          CupertinoIcons.plus,
-                          size: 13,
+                      const SizedBox(width: 4),
+                      Text(
+                        'افزودن دوره',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
                           color: colors.primary,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'افزودن دوره',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: colors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -186,44 +131,47 @@ class CycleHistoryList extends StatelessWidget {
           // محتوای جزیره: تایم‌لاین عمودی دوره‌ها یا استیت خالی
           if (periods.isEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-              child: Center(
-                child: Column(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.04)
-                            : Colors.black.withValues(alpha: 0.03),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: RitmoNeuSurface(
+                sunken: true,
+                radius: 16,
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: colors.primary.withValues(alpha: 0.12),
+                        ),
+                        child: Icon(
+                          CupertinoIcons.calendar_badge_plus,
+                          size: 22,
+                          color: colors.primary,
+                        ),
                       ),
-                      child: Icon(
-                        CupertinoIcons.calendar_badge_plus,
-                        size: 22,
-                        color: colors.textSecondary.withValues(alpha: 0.6),
+                      const SizedBox(height: 8),
+                      Text(
+                        'هنوز دوره‌ای ثبت نشده است',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'هنوز دوره‌ای ثبت نشده است',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: colors.textPrimary,
+                      const SizedBox(height: 4),
+                      Text(
+                        'برای دقت بالاتر پیش‌بینی‌ها، دوره‌های قبلی خود را ثبت کنید.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: colors.textSecondary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'برای دقت بالاتر پیش‌بینی‌ها، دوره‌های قبلی خود را ثبت کنید.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: colors.textSecondary,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             )
@@ -306,155 +254,145 @@ class CycleHistoryList extends StatelessWidget {
                           margin: EdgeInsets.only(
                             bottom: isLastItem ? 0 : 10,
                           ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.03)
-                                : Colors.black.withValues(alpha: 0.02),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.06)
-                                  : colors.border.withValues(alpha: 0.35),
-                              width: 0.9,
+                          child: RitmoNeuSurface(
+                            sunken: true,
+                            radius: 16,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              // اطلاعات دوره و تاریخ‌ها
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          isOngoing
-                                              ? 'دوره فعال بدنی'
-                                              : 'دوره قاعدگی',
-                                          style: TextStyle(
-                                            fontSize: 13.5,
-                                            fontWeight: FontWeight.w800,
-                                            color: colors.textPrimary,
+                            child: Row(
+                              children: [
+                                // اطلاعات دوره و تاریخ‌ها
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            isOngoing
+                                                ? 'دوره فعال بدنی'
+                                                : 'دوره قاعدگی',
+                                            style: TextStyle(
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: colors.textPrimary,
+                                            ),
                                           ),
+                                          const SizedBox(width: 8),
+                                          // بج وضعیت یا مدت زمان دوره
+                                          if (isOngoing)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 6,
+                                                vertical: 2,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: colors.primary.withValues(
+                                                  alpha: 0.15,
+                                                ),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                'در حال جریان',
+                                                style: TextStyle(
+                                                  fontSize: 10.5,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: colors.primary,
+                                                ),
+                                              ),
+                                            )
+                                          else if (durationDays != null)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 6,
+                                                vertical: 2,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: colors.error.withValues(
+                                                  alpha: 0.12,
+                                                ),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                '${PersianDigits.toFa(durationDays.toString())} روز',
+                                                style: TextStyle(
+                                                  fontSize: 10.5,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: colors.error,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        isOngoing
+                                            ? 'شروع: ${_formatIsoToJalali(startStr)}'
+                                            : '${_formatIsoToJalali(startStr)} تا ${_formatIsoToJalali(endStr)}',
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: colors.textSecondary,
                                         ),
-                                        const SizedBox(width: 8),
-                                        // بج وضعیت یا مدت زمان دوره
-                                        if (isOngoing)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: colors.primary.withValues(
-                                                alpha: 0.15,
-                                              ),
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              'در حال جریان',
-                                              style: TextStyle(
-                                                fontSize: 10.5,
-                                                fontWeight: FontWeight.w700,
-                                                color: colors.primary,
-                                              ),
-                                            ),
-                                          )
-                                        else if (durationDays != null)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: colors.error.withValues(
-                                                alpha: 0.12,
-                                              ),
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              '${PersianDigits.toFa(durationDays.toString())} روز',
-                                              style: TextStyle(
-                                                fontSize: 10.5,
-                                                fontWeight: FontWeight.w700,
-                                                color: colors.error,
-                                              ),
-                                            ),
-                                          ),
-                                      ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(width: 6),
+
+                                // دکمه‌های عملیات ویرایش و حذف
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // دکمه ویرایش
+                                    InkWell(
+                                      borderRadius: BorderRadius.circular(10),
+                                      onTap: () {
+                                        RitmoHaptics.selection();
+                                        onEditPeriod(p);
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: colors.primary.withValues(alpha: 0.08),
+                                        ),
+                                        child: Icon(
+                                          CupertinoIcons.pencil,
+                                          color: colors.primary,
+                                          size: 15,
+                                        ),
+                                      ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      isOngoing
-                                          ? 'شروع: ${_formatIsoToJalali(startStr)}'
-                                          : '${_formatIsoToJalali(startStr)}  تا  ${_formatIsoToJalali(endStr!)}',
-                                      style: TextStyle(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w600,
-                                        color: colors.textSecondary,
+                                    const SizedBox(width: 6),
+                                    // دکمه حذف
+                                    InkWell(
+                                      borderRadius: BorderRadius.circular(10),
+                                      onTap: () {
+                                        RitmoHaptics.warning();
+                                        onDeletePeriod(p['id'] as String);
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: colors.error.withValues(alpha: 0.08),
+                                        ),
+                                        child: Icon(
+                                          CupertinoIcons.trash,
+                                          color: colors.error.withValues(alpha: 0.8),
+                                          size: 15,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-
-                              // دکمه‌های کنترلی گرد (ویرایش و حذف)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // دکمه ویرایش
-                                  InkWell(
-                                    borderRadius: BorderRadius.circular(10),
-                                    onTap: () {
-                                      RitmoHaptics.selection();
-                                      onEditPeriod(p);
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: isDark
-                                            ? Colors.white.withValues(alpha: 0.05)
-                                            : Colors.black.withValues(alpha: 0.03),
-                                      ),
-                                      child: Icon(
-                                        CupertinoIcons.pencil,
-                                        color: colors.primary,
-                                        size: 15,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  // دکمه حذف
-                                  InkWell(
-                                    borderRadius: BorderRadius.circular(10),
-                                    onTap: () {
-                                      RitmoHaptics.warning();
-                                      onDeletePeriod(p['id'] as String);
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: isDark
-                                            ? Colors.white.withValues(alpha: 0.05)
-                                            : Colors.black.withValues(alpha: 0.03),
-                                      ),
-                                      child: Icon(
-                                        CupertinoIcons.trash,
-                                        color: colors.error.withValues(alpha: 0.8),
-                                        size: 15,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),

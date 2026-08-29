@@ -84,6 +84,12 @@ class CommitmentAgendaSource implements AgendaSource {
       final timeWindowEnd = row['timeWindowEnd']?.toString();
       final plannedMinutes = (row['plannedMinutes'] as int?) ?? 30;
       final allocStatus = row['allocStatus']?.toString() ?? 'PLANNED';
+      if (allocStatus == 'DROPPED' || allocStatus == 'MOVED') {
+        continue;
+      }
+      if (!ctx.options.includeCompleted && allocStatus == 'DONE') {
+        continue;
+      }
       final importance = row['importance']?.toString() ?? 'SHOULD';
       final workKind = row['workKind']?.toString() ?? 'LIGHT';
       final flexibility = row['flexibility']?.toString() ?? 'FLEXIBLE';

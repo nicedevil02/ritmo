@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 
 class CyclePredictionConfidenceCard extends StatelessWidget {
@@ -27,60 +28,30 @@ class CyclePredictionConfidenceCard extends StatelessWidget {
       PredictionConfidenceLevel.low => 'نیازمند داده بیشتر',
     };
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.border),
-      ),
+    return RitmoCard.neumorphic(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.verified_outlined, size: 18, color: badgeColor),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'اعتبار پیش‌بینی ریتم بدنی',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: badgeColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  badgeLabelFa,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: badgeColor,
-                  ),
-                ),
-              ),
-            ],
+          RitmoCardHeader(
+            title: 'اعتبار پیش‌بینی ریتم بدنی',
+            subtitle: 'کیفیت داده‌ها و دقت تخمین دوره‌ها',
+            icon: Icons.verified_outlined,
+            iconColor: badgeColor,
+            trailing: RitmoCardBadge(
+              label: badgeLabelFa,
+              color: badgeColor,
+            ),
           ),
           if (confidence.reasons.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             ...confidence.reasons.map(
               (r) => Padding(
-                padding: const EdgeInsets.only(top: 2),
+                padding: const EdgeInsets.only(top: 4),
                 child: Row(
                   children: [
                     Icon(
                       Icons.info_outline,
-                      size: 12,
+                      size: 13,
                       color: colors.textSecondary,
                     ),
                     const SizedBox(width: 6),
@@ -88,7 +59,7 @@ class CyclePredictionConfidenceCard extends StatelessWidget {
                       child: Text(
                         r,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 11.5,
                           color: colors.textSecondary,
                         ),
                       ),

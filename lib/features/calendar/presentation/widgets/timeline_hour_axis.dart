@@ -46,7 +46,7 @@ class TimelineHourAxis extends StatelessWidget {
       height: rangeHeight,
       child: Stack(
         children: [
-          // Ruler tick marks custom painter
+          // Ruler tick marks custom painter (only at :15, :30, :45)
           Positioned.fill(
             child: CustomPaint(
               painter: _RulerTicksPainter(
@@ -58,20 +58,20 @@ class TimelineHourAxis extends StatelessWidget {
                 nowHour: nowHour,
                 primaryColor: colors.primary,
                 tickColor: isDark
-                    ? Colors.white.withValues(alpha: 0.18)
-                    : Colors.black.withValues(alpha: 0.18),
+                    ? Colors.white.withValues(alpha: 0.38)
+                    : Colors.black.withValues(alpha: 0.32),
                 halfTickColor: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.black.withValues(alpha: 0.08),
+                    ? Colors.white.withValues(alpha: 0.60)
+                    : Colors.black.withValues(alpha: 0.52),
               ),
             ),
           ),
-          // Minimal hour labels
+          // Minimal hour labels (clean, no line behind)
           for (var h = startHour; h <= endHour; h++)
             Positioned(
               top: ((h * 60) - rangeStartMinutes) * effectivePxPerMinute - 8,
-              left: isLeading ? 0 : 7.0,
-              right: isLeading ? 7.0 : 0,
+              left: isLeading ? 0 : 5.0,
+              right: isLeading ? 5.0 : 0,
               child: Align(
                 alignment: isLeading
                     ? Alignment.centerRight
@@ -80,20 +80,20 @@ class TimelineHourAxis extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 0.5),
                   decoration: (isToday && h == nowHour)
                       ? BoxDecoration(
-                          color: colors.primary.withValues(alpha: isDark ? 0.20 : 0.12),
-                          borderRadius: BorderRadius.circular(5),
+                          color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.14),
+                          borderRadius: BorderRadius.circular(4),
                         )
                       : null,
                   child: Text(
                     toPersianDigits('$h'),
                     style: TextStyle(
-                      fontSize: 10.0,
+                      fontSize: 10.5,
                       fontFamily: 'Vazirmatn',
-                      fontWeight: (isToday && h == nowHour) ? FontWeight.w900 : FontWeight.w600,
+                      fontWeight: (isToday && h == nowHour) ? FontWeight.w900 : FontWeight.w700,
                       color: isToday
                           ? (h == nowHour
                               ? colors.primary
-                              : (h < nowHour ? colors.textTertiary.withValues(alpha: 0.6) : colors.textSecondary))
+                              : (h < nowHour ? colors.textTertiary.withValues(alpha: 0.55) : colors.textSecondary))
                           : colors.textSecondary,
                     ),
                   ),
@@ -134,48 +134,47 @@ class _RulerTicksPainter extends CustomPainter {
     final startHour = (rangeStartMinutes / 60.0).ceil();
     final endHour = (rangeEndMinutes / 60.0).floor();
 
+    final quarterPaint = Paint()
+      ..color = tickColor
+      ..strokeWidth = 0.9;
+
+    final halfPaint = Paint()
+      ..color = halfTickColor
+      ..strokeWidth = 1.2;
+
     for (var h = startHour; h <= endHour; h++) {
       final y = ((h * 60) - rangeStartMinutes) * pxPerMinute;
-      final isNow = isToday && h == nowHour;
 
-      final fullPaint = Paint()
-        ..color = isNow ? primaryColor : tickColor
-        ..strokeWidth = isNow ? 1.4 : 0.8;
+      // Note: No tick at :00 behind the hour number to keep it completely clean!
 
-      if (isLeading) {
-        canvas.drawLine(
-          Offset(size.width - 5.0, y),
-          Offset(size.width, y),
-          fullPaint,
-        );
-      } else {
-        canvas.drawLine(
-          Offset(0, y),
-          Offset(5.0, y),
-          fullPaint,
-        );
-      }
-
-      // Half-hour tick
       if (h < endHour) {
+        // Quarter past (:15) tick
+        final q1Y = y + (15 * pxPerMinute);
+        if (q1Y <= size.height) {
+          if (isLeading) {
+            canvas.drawLine(Offset(size.width - 3.5, q1Y), Offset(size.width, q1Y), quarterPaint);
+          } else {
+            canvas.drawLine(Offset(0, q1Y), Offset(3.5, q1Y), quarterPaint);
+          }
+        }
+
+        // Half past (:30) tick
         final halfY = y + (30 * pxPerMinute);
         if (halfY <= size.height) {
-          final halfPaint = Paint()
-            ..color = halfTickColor
-            ..strokeWidth = 0.5;
-
           if (isLeading) {
-            canvas.drawLine(
-              Offset(size.width - 2.5, halfY),
-              Offset(size.width, halfY),
-              halfPaint,
-            );
+            canvas.drawLine(Offset(size.width - 6.5, halfY), Offset(size.width, halfY), halfPaint);
           } else {
-            canvas.drawLine(
-              Offset(0, halfY),
-              Offset(2.5, halfY),
-              halfPaint,
-            );
+            canvas.drawLine(Offset(0, halfY), Offset(6.5, halfY), halfPaint);
+          }
+        }
+
+        // Quarter to (:45) tick
+        final q3Y = y + (45 * pxPerMinute);
+        if (q3Y <= size.height) {
+          if (isLeading) {
+            canvas.drawLine(Offset(size.width - 3.5, q3Y), Offset(size.width, q3Y), quarterPaint);
+          } else {
+            canvas.drawLine(Offset(0, q3Y), Offset(3.5, q3Y), quarterPaint);
           }
         }
       }
@@ -190,7 +189,8 @@ class _RulerTicksPainter extends CustomPainter {
       oldDelegate.isLeading != isLeading ||
       oldDelegate.isToday != isToday ||
       oldDelegate.nowHour != nowHour ||
-      oldDelegate.primaryColor != primaryColor;
+      oldDelegate.tickColor != tickColor ||
+      oldDelegate.halfTickColor != halfTickColor;
 }
 
 class TimelineGridLines extends StatelessWidget {
@@ -219,12 +219,12 @@ class TimelineGridLines extends StatelessWidget {
           pxPerMinute: effectivePxPerMinute,
           rangeStartMinutes: rangeStartMinutes,
           rangeEndMinutes: rangeEndMinutes,
-          lineColor: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.06),
           halfHourLineColor: isDark
-              ? Colors.white.withValues(alpha: 0.02)
-              : Colors.black.withValues(alpha: 0.025),
+              ? Colors.white.withValues(alpha: 0.12)
+              : Colors.black.withValues(alpha: 0.10),
+          quarterLineColor: isDark
+              ? Colors.white.withValues(alpha: 0.04)
+              : Colors.black.withValues(alpha: 0.035),
         ),
       ),
     );
@@ -236,41 +236,51 @@ class _GridLinesPainter extends CustomPainter {
     required this.pxPerMinute,
     required this.rangeStartMinutes,
     required this.rangeEndMinutes,
-    required this.lineColor,
     required this.halfHourLineColor,
+    required this.quarterLineColor,
   });
 
   final double pxPerMinute;
   final int rangeStartMinutes;
   final int rangeEndMinutes;
-  final Color lineColor;
   final Color halfHourLineColor;
+  final Color quarterLineColor;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final mainPaint = Paint()
-      ..color = lineColor
-      ..strokeWidth = 0.5;
-
     final halfPaint = Paint()
       ..color = halfHourLineColor
-      ..strokeWidth = 0.3;
+      ..strokeWidth = 0.8;
+
+    final quarterPaint = Paint()
+      ..color = quarterLineColor
+      ..strokeWidth = 0.5;
 
     final startHour = (rangeStartMinutes / 60.0).ceil();
     final endHour = (rangeEndMinutes / 60.0).floor();
 
     for (var h = startHour; h <= endHour; h++) {
       final y = ((h * 60) - rangeStartMinutes) * pxPerMinute;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), mainPaint);
+
+      // No full hour line across the grid behind the hour digits
 
       if (h < endHour) {
+        // Quarter line (:15)
+        final q1Y = y + (15 * pxPerMinute);
+        if (q1Y <= size.height) {
+          canvas.drawLine(Offset(0, q1Y), Offset(size.width, q1Y), quarterPaint);
+        }
+
+        // Half hour line (:30) - clearly visible
         final halfY = y + (30 * pxPerMinute);
         if (halfY <= size.height) {
-          canvas.drawLine(
-            Offset(0, halfY),
-            Offset(size.width, halfY),
-            halfPaint,
-          );
+          canvas.drawLine(Offset(0, halfY), Offset(size.width, halfY), halfPaint);
+        }
+
+        // Quarter line (:45)
+        final q3Y = y + (45 * pxPerMinute);
+        if (q3Y <= size.height) {
+          canvas.drawLine(Offset(0, q3Y), Offset(size.width, q3Y), quarterPaint);
         }
       }
     }
@@ -281,6 +291,6 @@ class _GridLinesPainter extends CustomPainter {
       oldDelegate.pxPerMinute != pxPerMinute ||
       oldDelegate.rangeStartMinutes != rangeStartMinutes ||
       oldDelegate.rangeEndMinutes != rangeEndMinutes ||
-      oldDelegate.lineColor != lineColor ||
-      oldDelegate.halfHourLineColor != halfHourLineColor;
+      oldDelegate.halfHourLineColor != halfHourLineColor ||
+      oldDelegate.quarterLineColor != quarterLineColor;
 }

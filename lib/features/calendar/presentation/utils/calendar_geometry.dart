@@ -17,11 +17,11 @@ abstract final class CalendarGeometry {
       context.metrics.hourSlotHeight / 60.0;
 
   /// Width of the hour axis gutter in single-day view.
-  static const double hourAxisWidth = 34.0;
+  static const double hourAxisWidth = 20.0;
 
   /// Returns dynamic hour axis width based on text scale.
   static double effectiveHourAxisWidth(BuildContext context) =>
-      34.0 * (context.textScale > 1.0 ? context.textScale : 1.0);
+      20.0 * (context.textScale > 1.0 ? context.textScale : 1.0);
 
   /// Width of the accent color bar indicator on the side of timeline cards.
   static const double accentBarWidth = 3.0;
@@ -41,11 +41,11 @@ abstract final class CalendarGeometry {
       (context.metrics.hourSlotHeight * (1.6 / 1.2)) / 60.0;
 
   /// Width of the hour axis in split two-column view.
-  static const double hourAxisWidthSplit = 28.0;
+  static const double hourAxisWidthSplit = 16.0;
 
   /// Returns dynamic split hour axis width based on text scale.
   static double effectiveHourAxisWidthSplit(BuildContext context) =>
-      28.0 * (context.textScale > 1.0 ? context.textScale : 1.0);
+      16.0 * (context.textScale > 1.0 ? context.textScale : 1.0);
 
   /// Horizontal gap between the morning and afternoon columns.
   static const double columnGap = 4.0;

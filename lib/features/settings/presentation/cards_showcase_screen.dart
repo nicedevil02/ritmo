@@ -51,25 +51,39 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
     return RitmoPageScaffold(
       appBar: RitmoModuleAppBar.fromContext(
         context: context,
-        title: 'سیستم مرجع کارت‌های نئومورفیک',
+        title: 'سیستم مرجع کارت‌ها و پنجره‌ها (AI Guide)',
         showBackButton: true,
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
         children: [
-          // ── هدر معرفی سیستم نئومورفیک ──
+          // ── هدر معرفی سیستم نئومورفیک و راهنمای هوش مصنوعی ──
           _buildHeroHeader(colors, isDark),
           const SizedBox(height: 20),
 
           // ── ۱. کارت مرجع شاهکار نئومورفیک (Master Reference Card) ──
-          _buildSectionTitle('۱. کارت مرجع کامل نئومورفیک (Master Hero Card)', 'ترکیب گیج ۲۴ ساعته، چیپ‌های فرورفته/برآمده، پیل زمان و تایمر'),
+          _buildSectionTitle(
+            number: '۱',
+            widgetClass: 'RitmoNeuMasterCard',
+            title: 'هیرو کارت مرجع داشبورد (Master Hero Card)',
+            usage: 'ویجت اصلی بالای داشبورد برای نمایش قلمروی فعال، وضعیت جاری شبانه‌روز، و تایم‌بلاک فعال.',
+            features: 'دایال ۲۴ ساعته متصل، پیل حالت تعاملی (عادی/تمرکز/بی‌صدا)، بازه زمانی، تایمر معکوس ثانیه‌شمار و دکمه اکشن.',
+            rule: 'همیشه از این ویجت برای هیرو کارت بالای داشبورد استفاده شود. هاله نوری ۳.۲ ثانیه‌ای نباید غیرفعال گردد.',
+          ),
           const SizedBox(height: 10),
 
           _buildMasterReferenceCard(colors, isDark),
           const SizedBox(height: 24),
 
           // ── ۲. کارت‌های برجسته نئومورفیک داشبورد (Neumorphic Raised) ──
-          _buildSectionTitle('۲. کارت برجسته داشبورد ریتمو (Raised Card)', 'سایه دوگانه متضاد + المان‌های اتمیک نئومورفیک'),
+          _buildSectionTitle(
+            number: '۲',
+            widgetClass: 'RitmoCard.neumorphic',
+            title: 'کارت برجسته داشبورد و اجزای اتمیک (Raised Card)',
+            usage: 'ساختار پایه تمام کارت‌های اپلیکیشن (روتین‌ها، نبض سلامت، تحلیل‌های روزانه و خلاصه داده‌ها).',
+            features: 'سایه دوگانه متضاد در جهت نور ۱۳۵ درجه، فرورفتگی فیزیکی در زمان لمس (Depression Animation) و هپتیک اپل.',
+            rule: 'از ویجت‌های کمکی RitmoCardHeader ،RitmoCardTile ،RitmoCardBadge و RitmoCardDivider درون این کارت استفاده کنید.',
+          ),
           const SizedBox(height: 10),
 
           // کارت نمونه ویجت داشبورد با المان‌های اتمیک نئومورفیک
@@ -161,8 +175,15 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ── ۲. کارت‌ها در حالت انتخاب نئومورفیک (Selected State) ──
-          _buildSectionTitle('۲. حالت انتخاب‌شده (Selected State)', 'گرادیان زنده پالت + هاله نوری نئومورفیک'),
+          // ── ۳. کارت‌ها در حالت انتخاب نئومورفیک (Selected State) ──
+          _buildSectionTitle(
+            number: '۳',
+            widgetClass: 'RitmoCard.neumorphic(isSelected: true)',
+            title: 'وضعیت انتخاب‌شده و کارت‌های چندگزینه‌ای (Selected State)',
+            usage: 'سلکتورهای چندگزینه‌ای، انتخاب فازهای چرخه، پلن‌های هفتگی، قلمروهای پیشنهادی و روزهای تقویم.',
+            features: 'کادر رنگی با شفافیت بالا (Border @ 0.70) + هاله نوری درخشان بیرونی به رنگ پالت پویای انتخابی.',
+            rule: 'در کارت‌های سلکشن، حتماً مقدار isSelected را با State صفحه هماهنگ کنید.',
+          ),
           const SizedBox(height: 10),
 
           Row(
@@ -234,8 +255,15 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ── ۳. کارت فرورفته نئومورفیک (Sunken Inset) ──
-          _buildSectionTitle('۳. سطح فرورفته نئومورفیک (Sunken Inset)', 'سایه معکوس برای اینپوت‌ها، پیش‌نمایش و گودی‌ها'),
+          // ── ۴. کارت فرورفته نئومورفیک (Sunken Inset) ──
+          _buildSectionTitle(
+            number: '۴',
+            widgetClass: 'RitmoCard.neumorphicSunken',
+            title: 'سطوح و شیارهای فرورفته در بوم (Sunken Inset)',
+            usage: 'فیلدهای ورودی متن، کادرهای یادداشت، نمایشگر جزئیات، شیارها و محفظه‌های اطلاعاتی مقعر.',
+            features: 'سایه داخلی معکوس عمیق، گرادیان فرورفته و حس عمق واقعی درون بافت پس‌زمینه.',
+            rule: 'برای بخش‌هایی که نقش ظرف محتوا (Container) دارند یا دریافت ورودی می‌کنند از Sunken استفاده شود.',
+          ),
           const SizedBox(height: 10),
 
           RitmoCard.neumorphicSunken(
@@ -270,8 +298,15 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ── ۴. دکمه‌های نئومورفیک ۳ بعدی (Tactile 3D Buttons) ──
-          _buildSectionTitle('۴. دکمه‌های نئومورفیک ۳ بعدی (Tactile Buttons)', 'فشردن فیزیکی با تغییر وضعیت به فرورفته'),
+          // ── ۵. دکمه‌های نئومورفیک ۳ بعدی (Tactile 3D Buttons) ──
+          _buildSectionTitle(
+            number: '۵',
+            widgetClass: 'RitmoNeuButton',
+            title: 'دکمه‌های تعاملی ۳ بعدی فیزیکی (Tactile 3D Buttons)',
+            usage: 'تمام دکمه‌های اکشن، افزایش/کاهش مقادیر، تأیید، بازنشانی و دکمه‌های کنترلی داخل کارت‌ها.',
+            features: 'تغییر آنی وضعیت از برجسته (Raised) به فرورفته (Sunken) در زمان فشردن + فیدبک لمسی Haptic.',
+            rule: 'جایگزین دکمه‌های تخت متریال؛ برای داشتن حس فیزیکی نئومورفیک همواره از RitmoNeuButton استفاده شود.',
+          ),
           const SizedBox(height: 10),
 
           Row(
@@ -321,8 +356,15 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ── ۵. نوار پیشرفت نئومورفیک فرورفته (Sunken Progress Bar) ──
-          _buildSectionTitle('۵. نوار پیشرفت نئومورفیک فرورفته (Progress Bar)', 'شیار سه‌بعدی فرورفته با پرکننده نئونی و درخشان'),
+          // ── ۶. نوار پیشرفت نئومورفیک فرورفته (Sunken Progress Bar) ──
+          _buildSectionTitle(
+            number: '۶',
+            widgetClass: 'RitmoNeuProgressBar',
+            title: 'نوار پیشرفت شیاردار با پرکننده نئونی (Sunken Progress Bar)',
+            usage: 'نمایش درصد پیشرفت اهداف هفتگی، میزان انرژی، گذر زمان بازه و روتین‌های تکمیل‌شده.',
+            features: 'شیار مقعر فرورفته عمیق، انیمیشن پر شدن نرم (TweenAnimationBuilder) و درخشش نئونی پرکننده.',
+            rule: 'مقدار progress بین 0.0 تا 1.0 پاس داده شود و با showLabel عنوان و درصد فارسی نمایش یابد.',
+          ),
           const SizedBox(height: 10),
 
           RitmoCard.neumorphic(
@@ -350,15 +392,29 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ── ۶. کارت اسکلت لودینگ نئومورفیک (Card Skeleton) ──
-          _buildSectionTitle('۶. اسکلت لودینگ نئومورفیک (Loading Skeleton)', 'انیمیشن تنفس نوری روان بدون پرش ابعادی بوم'),
+          // ── ۷. کارت اسکلت لودینگ نئومورفیک (Card Skeleton) ──
+          _buildSectionTitle(
+            number: '۷',
+            widgetClass: 'RitmoCardSkeleton',
+            title: 'اسکلت لودینگ نئومورفیک با تنفس نوری (Loading Skeleton)',
+            usage: 'حالت در حال بارگذاری (Loading State) تمام کارت‌های داده هنگام فراخوانی دیتابیس یا سرویس‌های هوش مصنوعی.',
+            features: 'انیمیشن تنفس نوری Shimmer یکدست، حفظ ابعاد دقیق کارت واقعی و جلوگیری از هرگونه پرش بوم (Zero Layout Shift).',
+            rule: 'قبل از آماده شدن دیتای کارت، همیشه به جای لودینگ گردان (Spinner)، اسکلت نئومورفیک متناظر را رندر کنید.',
+          ),
           const SizedBox(height: 10),
 
           const RitmoCardSkeleton(height: 130),
           const SizedBox(height: 24),
 
-          // ── ۷. کارت حالت خالی سه‌بعدی (Empty State Card) ──
-          _buildSectionTitle('۷. کارت حالت خالی سه‌بعدی (Empty State Card)', 'برای نمایش زیبا و دلنشین وضعیت‌های بدون داده'),
+          // ── ۸. کارت حالت خالی سه‌بعدی (Empty State Card) ──
+          _buildSectionTitle(
+            number: '۸',
+            widgetClass: 'RitmoNeuEmptyCard',
+            title: 'کارت وضعیت خالی و بدون داده (Empty State Card)',
+            usage: 'هنگامی که لیست روتین‌ها، اهداف، قلمروها یا تاریخچه خالی است و داده‌ای برای نمایش وجود ندارد.',
+            features: 'شیار دایره‌ای فرورفته با آیکون نرم، پیام راهنمای دوستانه و دکمه کال‌تو‌اکشن (CTA) برای ایجاد داده.',
+            rule: 'از نمایش صفحات خالی سفید/خاکستری خودداری کنید؛ همیشه از این کارت همراه با اکشن افزودن استفاده شود.',
+          ),
           const SizedBox(height: 10),
 
           RitmoNeuEmptyCard(
@@ -377,10 +433,14 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ── ۸. پنجره‌ها و شیت‌های مرجع ریتمو (Reference Glass Sheets & Windows) ──
+          // ── ۹. پنجره‌ها و شیت‌های مرجع ریتمو (Reference Glass Sheets & Windows) ──
           _buildSectionTitle(
-            '۸. پنجره‌ها و شیت‌های مرجع ریتمو (Reference Sheets)',
-            'طراحی شیشه‌ای استاندارد با اکوسیستم اپل، بلور زنده و هاله نوری پالت',
+            number: '۹',
+            widgetClass: 'RitmoGlassSheet & Modals',
+            title: 'پنجره‌ها و شیت‌های شیشه‌ای مرجع ریتمو (Reference Sheets)',
+            usage: 'تنها روش استاندارد و مجاز باز کردن باتم‌شیت‌ها، دیالوگ‌ها و انتخابگرها در سراسر اپلیکیشن.',
+            features: 'بلور زنده اکوسیستم اپل (BackdropFilter)، هاله نوری پالت، دستگیره کشیدن به پایین و گوشه‌های گرد ۲۸ پیکسل.',
+            rule: 'هرگز از showDialog تخت متریال استفاده نکنید؛ همیشه از RitmoGlassSheet یا RitmoPickerSheet استفاده شود.',
           ),
           const SizedBox(height: 10),
 
@@ -403,6 +463,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 44,
@@ -423,18 +484,19 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ویترین زنده سیستم مرجع نئومورفیک',
+                  'مرجع استاندارد کارت‌ها و پنجره‌های ریتمو',
                   style: TextStyle(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w900,
                     color: colors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
-                  'عمق ۳ بعدی، سایه‌های دوگانه، فرورفتگی و برجستگی',
+                  'راهنمای معماری برای هوش مصنوعی و توسعه‌دهندگان: از این کامپوننت‌ها به عنوان الگوی رسمی و قطعی (Single Source of Truth) در تمام ماژول‌ها و صفحات استفاده کنید.',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 11.5,
+                    height: 1.5,
                     color: colors.textSecondary,
                   ),
                 ),
@@ -446,29 +508,129 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title, String desc) {
+  Widget _buildSectionTitle({
+    required String number,
+    required String widgetClass,
+    required String title,
+    required String usage,
+    required String features,
+    String? rule,
+  }) {
     final colors = context.colors;
+    final isDark = context.isDark;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 13.5,
-            fontWeight: FontWeight.w900,
-            color: colors.textPrimary,
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(alpha: isDark ? 0.08 : 0.04),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
+          width: 0.8,
         ),
-        const SizedBox(height: 2),
-        Text(
-          desc,
-          style: TextStyle(
-            fontSize: 11,
-            color: colors.textSecondary,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  number,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.14),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: isDark ? 0.40 : 0.25),
+                    width: 0.8,
+                  ),
+                ),
+                child: Text(
+                  widgetClass,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? Color.lerp(colors.primary, Colors.white, 0.65)! : colors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: colors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 11,
+                fontFamily: 'Vazirmatn',
+                height: 1.55,
+                color: colors.textSecondary,
+              ),
+              children: [
+                TextSpan(
+                  text: '📌 موارد استفاده (AI Guidance): ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                TextSpan(text: '$usage\n'),
+                TextSpan(
+                  text: '⚙️ ویژگی‌ها و رفتار: ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                TextSpan(text: features),
+                if (rule != null) ...[
+                  TextSpan(
+                    text: '\n🛡️ قانون طراحی: ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: colors.primary,
+                    ),
+                  ),
+                  TextSpan(
+                    text: rule,
+                    style: TextStyle(
+                      color: isDark ? Color.lerp(colors.primary, Colors.white, 0.70)! : colors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -541,8 +703,8 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
     return Column(
       children: [
         _buildSheetLaunchTile(
-          title: 'پنجره شیشه‌ای انتخاب حالت قلمرو',
-          subtitle: 'انتخاب سریع بین حالت عادی، تمرکز و بی‌صدا (RitmoGlassSheet)',
+          title: '[RitmoGlassSheet] شیت انتخاب حالت قلمرو',
+          subtitle: 'الگوی استاندارد انتخاب وضعیت‌های سه‌گانه (عادی، تمرکز، بی‌صدا) با هپتیک',
           badge: 'پنجره اصلی',
           icon: CupertinoIcons.slider_horizontal_3,
           color: colors.primary,
@@ -550,8 +712,8 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
         ),
         const SizedBox(height: 10),
         _buildSheetLaunchTile(
-          title: 'پنجره گاه‌شمار ۲۴ ساعته شبانه‌روز',
-          subtitle: 'نمای شبانه‌روز، دایال ساعت، نوار توازن و مدیریت قلمروها',
+          title: '[Realm24hOverviewSheet] شیت گاه‌شمار ۲۴ ساعته',
+          subtitle: 'نمای کامل ۲۴ ساعته با دایال شبانه‌روز، نوار توازن زمان و مدیریت بازه‌ها',
           badge: 'گاه‌شمار کامل',
           icon: CupertinoIcons.clock_fill,
           color: const Color(0xFF10B981),
@@ -559,8 +721,8 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
         ),
         const SizedBox(height: 10),
         _buildSheetLaunchTile(
-          title: 'پنجره انتخابگر عمومی گزینه‌ها (Picker)',
-          subtitle: 'جست‌وجو، فیلتر و انتخاب تک‌گزینه‌ای با لیست آیتم‌ها (RitmoPickerSheet)',
+          title: '[RitmoPickerSheet] شیت انتخابگر عمومی گزینه‌ها',
+          subtitle: 'انتخابگر جست‌وجوپذیر جنریک برای انتخاب تک‌موردی گزینه‌ها با آیکون',
           badge: 'انتخابگر',
           icon: CupertinoIcons.list_bullet_below_rectangle,
           color: const Color(0xFF8B5CF6),
@@ -568,8 +730,8 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
         ),
         const SizedBox(height: 10),
         _buildSheetLaunchTile(
-          title: 'پنجره فرم تعریف و ویرایش قلمرو',
-          subtitle: 'فرم جامع با پالت رنگ، آیکون، زمان‌بندی و تمپلیت‌های آماده',
+          title: '[RealmEditFormSheet] شیت فرم تعریف و ویرایش',
+          subtitle: 'فرم استاندارد ورود اطلاعات با پالت رنگ، آیکون و زمان‌بندی هفتگی',
           badge: 'فرم تعاملی',
           icon: CupertinoIcons.square_pencil_fill,
           color: const Color(0xFFEC4899),

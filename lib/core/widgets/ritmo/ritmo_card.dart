@@ -1275,7 +1275,7 @@ class _RitmoNeuMasterCardState extends State<RitmoNeuMasterCard>
               margin: widget.margin,
               borderRadius: BorderRadius.circular(28),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              backgroundColor: Color.lerp(colors.surfaceElevated, effectiveColor, isDark ? 0.05 : 0.03),
+              backgroundColor: colors.surfaceElevated,
               borderColor: effectiveColor.withValues(alpha: isDark ? 0.60 : 0.45),
               borderWidth: 1.2,
               customShadows: [
@@ -1323,14 +1323,13 @@ class _RitmoNeuMasterCardState extends State<RitmoNeuMasterCard>
               final rimAlpha = lerpDouble(isDark ? 0.30 : 0.20, isDark ? 0.58 : 0.42, t)!;
 
               final borderAlpha = lerpDouble(isDark ? 0.40 : 0.30, isDark ? 0.75 : 0.58, t)!;
-              final surfaceTintAlpha = lerpDouble(isDark ? 0.03 : 0.02, isDark ? 0.08 : 0.05, t)!;
 
               return RitmoCard.neumorphic(
                 onTap: widget.onTap,
                 margin: widget.margin,
                 borderRadius: BorderRadius.circular(28),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                backgroundColor: Color.lerp(colors.surfaceElevated, effectiveColor, surfaceTintAlpha),
+                backgroundColor: colors.surfaceElevated,
                 borderColor: effectiveColor.withValues(alpha: borderAlpha),
                 borderWidth: 1.2,
                 customShadows: [

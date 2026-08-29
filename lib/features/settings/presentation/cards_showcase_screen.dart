@@ -459,6 +459,20 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           const SizedBox(height: 10),
 
           _buildTabbedMorphingHeaderShowcase(colors, isDark),
+          const SizedBox(height: 24),
+
+          // ── ۱۱. اسکفولد تک‌صفحه‌ای مرجع با هدر مورفینگ اپل (Single Morphing Scaffold) ──
+          _buildSectionTitle(
+            number: '۱۱',
+            widgetClass: 'RitmoSingleMorphingScaffold',
+            title: 'اسکفولد تک‌صفحه‌ای با هدر مورفینگ اپل (Single Morphing Scaffold)',
+            usage: 'الگوی استاندارد برای تمام صفحات تک‌صفحه‌ای و طویل (مانند تنظیمات، سیستم‌ها و داشبورد اصلی امروز).',
+            features: 'محاسبه خودکار پدینگ هوشمند، مدیریت ری‌اکتیو آفست اسکرول، پشتیبانی از آواتار/leading، دکمه‌های اکشن، FAB و Pull-To-Refresh.',
+            rule: 'برای صفحات تک‌صفحه‌ای فاقد تب، منحصراً از RitmoSingleMorphingScaffold استفاده شود تا ساختار Stack و اسکرول یکدست باشد.',
+          ),
+          const SizedBox(height: 10),
+
+          _buildSingleMorphingHeaderShowcase(colors, isDark),
           const SizedBox(height: 32),
         ],
       ),
@@ -1375,6 +1389,68 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
     );
   }
 
+  Widget _buildSingleMorphingHeaderShowcase(RitmoColors colors, bool isDark) {
+    return RitmoCard.neumorphic(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RitmoCardHeader(
+            title: 'داربست تک‌صفحه‌ای با هدر مورفینگ اپل',
+            subtitle: 'هسته متمرکز مدیریت اسکرول و هدر شیشه‌ای',
+            icon: CupertinoIcons.rectangle_fill_on_rectangle_angled_fill,
+            iconColor: colors.primary,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'این داربست تمام پیچیدگی‌های لایه‌بندی Stack، ردیابی آفست اسکرول، پدینگ بالای محتوا و هماهنگی با انیمیشن‌های فیزیکی اپل را برای صفحات تک‌صفحه‌ای حذف می‌کند.',
+            style: TextStyle(fontSize: 13, height: 1.6),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildFeatureTag('محاسبه هوشمند پدینگ بالا', colors),
+              _buildFeatureTag('پشتیبانی از Pull-To-Refresh', colors),
+              _buildFeatureTag('پشتیبانی از آواتار و Leading', colors),
+              _buildFeatureTag('سازگاری با FAB و اکشن‌ها', colors),
+            ],
+          ),
+          const SizedBox(height: 16),
+          RitmoNeuButton(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const _SingleMorphingHeaderDemoScreen(),
+                ),
+              );
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  CupertinoIcons.play_circle_fill,
+                  size: 20,
+                  color: colors.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'اجرای دمو زنده اسکفولد تک‌صفحه‌ای',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: colors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFeatureTag(String label, RitmoColors colors) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -1510,5 +1586,64 @@ class _TabbedMorphingHeaderDemoScreen extends StatelessWidget {
     );
   }
 }
+
+/// صفحه دمو و سندباکس تعاملی برای تست زنده RitmoSingleMorphingScaffold
+class _SingleMorphingHeaderDemoScreen extends StatelessWidget {
+  const _SingleMorphingHeaderDemoScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return RitmoSingleMorphingScaffold(
+      title: 'دموی اسکفولد تک‌صفحه‌ای',
+      subtitle: 'هدر مورفینگ اپل، پدینگ خودکار و اسکرول پیوسته',
+      onBack: () => Navigator.pop(context),
+      onRefresh: () async {
+        await Future.delayed(const Duration(milliseconds: 1200));
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('داده‌ها به‌روزرسانی شدند')),
+          );
+        }
+      },
+      actions: [
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.sparkles,
+          iconColor: colors.primary,
+          tooltip: 'دستیار هوشمند',
+          onTap: () {},
+        ),
+      ],
+      bodyBuilder: (context, scrollController, topPadding) {
+        return ListView.builder(
+          controller: scrollController,
+          padding: EdgeInsets.fromLTRB(14, topPadding, 14, 80),
+          itemCount: 25,
+          itemBuilder: (ctx, i) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: RitmoCard.neumorphic(
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: colors.primary.withValues(alpha: 0.15),
+                  child: Text(
+                    PersianDigits.toFa((i + 1).toString()),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+                title: Text('آیتم تک‌صفحه‌ای شماره ${PersianDigits.toFa((i + 1).toString())}'),
+                subtitle: const Text('اسکرول کنید تا انیمیشن مورفینگ هدر را مشاهده کنید'),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 
 

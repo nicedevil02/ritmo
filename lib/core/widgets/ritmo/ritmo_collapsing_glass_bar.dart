@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 export 'ritmo_tabbed_morphing_scaffold.dart';
+export 'ritmo_single_morphing_scaffold.dart';
 
 /// دکمه اکشن شیشه‌ای با استاندارد Vibrancy اپل
 class RitmoVibrancyActionButton extends StatelessWidget {

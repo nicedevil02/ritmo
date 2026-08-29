@@ -158,7 +158,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
   bool _rhythmScoreHasData = false;
   List<Map<String, dynamic>> _completionsToday = [];
   List<DashboardModuleSummary> _moduleSummaries = [];
-  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
 
   @override
   void initState() {
@@ -188,7 +187,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
     _inboxSubscription?.cancel();
     _agendaSubscription?.cancel();
     RitmoEvents.routineChanges.removeListener(_onRoutineChanges);
-    _scrollOffset.dispose();
     super.dispose();
   }
 
@@ -1000,8 +998,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
         ),
     ];
 
-    final topPadding = MediaQuery.paddingOf(context).top;
-    final contentTopPadding = topPadding + 130.0;
     final locale = Localizations.localeOf(context);
     final isFa = locale.languageCode == 'fa';
     final l10n = AppLocalizations.of(context);
@@ -1050,33 +1046,59 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
     final hasAvatarFile =
         _avatarFileExists && avatarPath != null && avatarPath.isNotEmpty;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Directionality(
-        textDirection: isFa ? TextDirection.rtl : TextDirection.ltr,
-        child: Stack(
-          children: [
-            // ۱. محتوای اسکرول‌شونده داشبورد همراه با ژست‌های کشسانی
-            Positioned.fill(
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (notification) {
-                  if (notification.metrics.axis == Axis.vertical) {
-                    _scrollOffset.value = notification.metrics.pixels;
-                  }
-                  return false;
-                },
-                child: CustomScrollView(
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
-                  ),
-                  slivers: [
-                    SliverPadding(
-                      padding: EdgeInsets.fromLTRB(
-                        10,
-                        contentTopPadding,
-                        10,
-                        140,
-                      ),
+    return Directionality(
+      textDirection: isFa ? TextDirection.rtl : TextDirection.ltr,
+      child: RitmoSingleMorphingScaffold(
+        title: greetingLine,
+        subtitle: dateStr,
+        leading: _buildAvatarLeading(
+          colors,
+          hasAvatarFile,
+          avatarPath,
+          userName,
+        ),
+        actions: [
+          RitmoVibrancyActionButton(
+            icon: CupertinoIcons.search,
+            tooltip: 'جستجو',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const GlobalSearchScreen(),
+                ),
+              ).then((_) => _loadDashboardData());
+            },
+          ),
+          const SizedBox(width: 6),
+          RitmoVibrancyActionButton(
+            icon: CupertinoIcons.bell,
+            tooltip: 'صندوق ورودی',
+            badge: _buildBellBadge(colors, isDarkMode),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const InboxScreen(),
+                ),
+              ).then((_) => _updateUnreadCount());
+            },
+          ),
+        ],
+        bodyBuilder: (context, scrollController, topPadding) {
+          return CustomScrollView(
+            controller: scrollController,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            slivers: [
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  10,
+                  topPadding,
+                  10,
+                  140,
+                ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // ۰. هشدارهای بحرانی — بالاتر از همه چیز
@@ -1280,7 +1302,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                       _enter(
                         10,
                         TodayDetailsSection(
-                          itemCount: detailsChildren.length,
+                           itemCount: detailsChildren.length,
                           children: [
                             for (
                               int i = 0;
@@ -1301,64 +1323,10 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                 ),
               ),
             ],
-          ),
-        ),
+          );
+        },
       ),
-
-      // ۲. هدر شیشه‌ای داینامیک اپل با ترنزیشن فیزیکی و کشسانی اووراسکرول
-      Positioned(
-        top: 0,
-        left: 0,
-        right: 0,
-        child: AnimatedBuilder(
-          animation: _scrollOffset,
-          builder: (context, _) {
-            return RitmoAppleMorphingGlassHeader(
-              title: greetingLine,
-              subtitle: dateStr,
-              scrollOffset: _scrollOffset.value,
-              leading: _buildAvatarLeading(
-                colors,
-                hasAvatarFile,
-                avatarPath,
-                userName,
-              ),
-              actions: [
-                RitmoVibrancyActionButton(
-                  icon: CupertinoIcons.search,
-                  tooltip: 'جستجو',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const GlobalSearchScreen(),
-                      ),
-                    ).then((_) => _loadDashboardData());
-                  },
-                ),
-                const SizedBox(width: 6),
-                RitmoVibrancyActionButton(
-                  icon: CupertinoIcons.bell,
-                  tooltip: 'صندوق ورودی',
-                  badge: _buildBellBadge(colors, isDarkMode),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const InboxScreen(),
-                      ),
-                    ).then((_) => _updateUnreadCount());
-                  },
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    ],
-  ),
-),
-);
+    );
   }
 
   /// G-2: عنوان خوانا برای تایمر فعال — بهجای نمایش itemId خام.

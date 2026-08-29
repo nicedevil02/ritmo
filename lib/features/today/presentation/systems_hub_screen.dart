@@ -67,7 +67,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
 
   bool _isSearching = false;
   String _searchQuery = '';
-  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
 
   @override
   bool get wantKeepAlive => true;
@@ -279,7 +278,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
   void dispose() {
     RitmoEvents.routineChanges.removeListener(_onRoutineChanges);
     _controller.dispose();
-    _scrollOffset.dispose();
     super.dispose();
   }
 
@@ -438,8 +436,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     super.build(context);
     final colors = context.colors;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final topPadding = MediaQuery.paddingOf(context).top;
-    final contentTopPadding = topPadding + 130.0;
     final avatarPath = _settingsMap['user_avatar_path'];
     final userName = _settingsMap['user_name'] ?? '';
     final hasAvatarFile =
@@ -454,82 +450,54 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-            // ۱. محتوای اسکرول‌شونده هاب سیستم‌ها با ژست‌های کشسانی
-            Positioned.fill(
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (notification) {
-                  if (notification.metrics.axis == Axis.vertical) {
-                    _scrollOffset.value = notification.metrics.pixels;
-                  }
-                  return false;
-                },
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
-                  ),
-                  padding: EdgeInsets.fromLTRB(14, contentTopPadding, 14, 100),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (_isSearching) ...[
-                        _buildSearchBar(colors),
-                        const SizedBox(height: 14),
-                      ],
-                      _buildModulesGrid(colors, isDarkMode),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // ۲. هدر شیشه‌ای داینامیک اپل با ترنزیشن فیزیکی و کشسانی اووراسکرول
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: AnimatedBuilder(
-                animation: _scrollOffset,
-                builder: (context, _) {
-                  return RitmoAppleMorphingGlassHeader(
-                    title: 'سیستم‌ها',
-                    subtitle: 'تمام سیستم‌های فعال و قابل مدیریت زندگی شما',
-                    scrollOffset: _scrollOffset.value,
-                    leading: _buildAvatarLeading(
-                      colors,
-                      hasAvatarFile,
-                      avatarPath,
-                      userName,
-                    ),
-                    actions: [
-                      RitmoVibrancyActionButton(
-                        icon: _isSearching ? CupertinoIcons.xmark : CupertinoIcons.search,
-                        tooltip: _isSearching ? 'بستن جستجو' : 'جستجو در سیستم‌ها',
-                        onTap: () {
-                          setState(() {
-                            _isSearching = !_isSearching;
-                            if (!_isSearching) _searchQuery = '';
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 6),
-                      RitmoVibrancyActionButton(
-                        icon: CupertinoIcons.square_grid_2x2,
-                        tooltip: 'مدیریت ماژول‌ها و بخش‌ها',
-                        isAiButton: true,
-                        accentColor: colors.primary,
-                        onTap: _showModulesManagementSheet,
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
+      child: RitmoSingleMorphingScaffold(
+        title: 'سیستم‌ها',
+        subtitle: 'تمام سیستم‌های فعال و قابل مدیریت زندگی شما',
+        leading: _buildAvatarLeading(
+          colors,
+          hasAvatarFile,
+          avatarPath,
+          userName,
         ),
+        actions: [
+          RitmoVibrancyActionButton(
+            icon: _isSearching ? CupertinoIcons.xmark : CupertinoIcons.search,
+            tooltip: _isSearching ? 'بستن جستجو' : 'جستجو در سیستم‌ها',
+            onTap: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) _searchQuery = '';
+              });
+            },
+          ),
+          const SizedBox(width: 6),
+          RitmoVibrancyActionButton(
+            icon: CupertinoIcons.square_grid_2x2,
+            tooltip: 'مدیریت ماژول‌ها و بخش‌ها',
+            isAiButton: true,
+            accentColor: colors.primary,
+            onTap: _showModulesManagementSheet,
+          ),
+        ],
+        bodyBuilder: (context, scrollController, topPadding) {
+          return SingleChildScrollView(
+            controller: scrollController,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            padding: EdgeInsets.fromLTRB(14, topPadding, 14, 100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_isSearching) ...[
+                  _buildSearchBar(colors),
+                  const SizedBox(height: 14),
+                ],
+                _buildModulesGrid(colors, isDarkMode),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

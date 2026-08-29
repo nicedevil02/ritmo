@@ -53,18 +53,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _buildNumber = '';
   int _tapCount = 0;
   DateTime? _lastVersionTapTime;
-  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
 
   @override
   void initState() {
     super.initState();
     _loadPackageInfo();
-  }
-
-  @override
-  void dispose() {
-    _scrollOffset.dispose();
-    super.dispose();
   }
 
   Future<void> _loadPackageInfo() async {
@@ -262,206 +255,172 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     ];
 
-    final topPadding = MediaQuery.paddingOf(context).top;
-    final contentTopPadding = topPadding + 130.0;
-
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoTheme.buildBackgroundContainer(
-        context: context,
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: Stack(
-            children: [
-            // ۱. محتوای اسکرول‌شونده تنظیمات با فیزیک فنری اپل
-            Positioned.fill(
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (notification) {
-                  if (notification.metrics.axis == Axis.vertical) {
-                    _scrollOffset.value = notification.metrics.pixels;
-                  }
-                  return false;
-                },
-                child: SettingsReadyGate(
-                  showDegradedBanner: false,
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics(),
-                    ),
-                    padding: EdgeInsets.fromLTRB(14, contentTopPadding, 14, 80),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SettingsDegradedBanner(),
-                        const SettingsHealthCard(),
+      child: RitmoSingleMorphingScaffold(
+        title: 'پروفایل و تنظیمات',
+        subtitle: 'شخصی‌سازی، حریم خصوصی و اعلان‌ها',
+        onBack: () => Navigator.maybePop(context),
+        actions: [
+          RitmoVibrancyActionButton(
+            icon: CupertinoIcons.search,
+            tooltip: 'جستجو در تنظیمات',
+            onTap: () async {
+              final selected = await showSearch<SettingDescriptor?>(
+                context: context,
+                delegate: SettingsSearchDelegate(
+                  themeRepository: widget.themeRepository,
+                  localeRepository: widget.localeRepository,
+                ),
+              );
+              if (selected != null && context.mounted) {
+                _navigateToGroupWithHighlight(context, selected.group, selected.key);
+              }
+            },
+          ),
+          const SizedBox(width: 6),
+          RitmoVibrancyActionButton(
+            icon: CupertinoIcons.slider_horizontal_3,
+            tooltip: 'تنظیمات سریع',
+            onTap: () {
+              RitmoHaptics.selection();
+              QuickSettingsSheet.show(
+                context,
+                themeRepository: widget.themeRepository,
+              );
+            },
+          ),
+        ],
+        bodyBuilder: (context, scrollController, topPadding) {
+          return SettingsReadyGate(
+            showDegradedBanner: false,
+            child: SingleChildScrollView(
+              controller: scrollController,
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              padding: EdgeInsets.fromLTRB(14, topPadding, 14, 80),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SettingsDegradedBanner(),
+                  const SettingsHealthCard(),
 
-                        // ─── هدر هویتی اختصاصی پرمیوم iOS 26 ───
-                        IdentityHeader(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              Ios26PageRoute(builder: (_) => const IdentityGroupScreen()),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 16),
+                  // ─── هدر هویتی اختصاصی پرمیوم iOS 26 ───
+                  IdentityHeader(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        Ios26PageRoute(builder: (_) => const IdentityGroupScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-                        // ─── کارت وضعیت اشتراک ریتمو پلاس ───
-                        const SettingsPremiumCard(),
-                        const SizedBox(height: 18),
+                  // ─── کارت وضعیت اشتراک ریتمو پلاس ───
+                  const SettingsPremiumCard(),
+                  const SizedBox(height: 18),
 
-                        // ─── بخش‌های جزیره‌ای تنظیمات تفکیک‌شده به سبک iOS 26 ───
-                        AnimatedBuilder(
-                          animation: SettingsService.instance.revision,
-                          builder: (context, _) {
-                            final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
+                  // ─── بخش‌های جزیره‌ای تنظیمات تفکیک‌شده به سبک iOS 26 ───
+                  AnimatedBuilder(
+                    animation: SettingsService.instance.revision,
+                    builder: (context, _) {
+                      final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
 
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                for (final section in sections) ...[
-                                  // کارت جزیره‌ای گروه‌بندی‌شده
-                                  Container(
-                                    margin: const EdgeInsets.only(bottom: 16),
-                                    decoration: BoxDecoration(
-                                      color: colors.card,
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: Column(
-                                      children: [
-                                        for (int i = 0; i < section.items.length; i++) ...[
-                                          if (i > 0)
-                                            Divider(
-                                              height: 1,
-                                              thickness: 0.7,
-                                              color: colors.divider.withValues(alpha: 0.6),
-                                              indent: 64,
-                                              endIndent: 14,
-                                            ),
-                                          Builder(
-                                            builder: (context) {
-                                              final g = section.items[i];
-                                              final count = SettingsRegistry.userVisibleByGroup(
-                                                g.group,
-                                                includeAdvanced: showAdvanced,
-                                              ).length;
-                                              return SettingsGroupTile(
-                                                title: g.title,
-                                                subtitle: g.subtitle,
-                                                icon: g.icon,
-                                                gradient: g.gradient,
-                                                count: count,
-                                                onTap: () {
-                                                  Navigator.push(
-                                                    context,
-                                                    Ios26PageRoute(builder: (_) => g.pageBuilder()),
-                                                  );
-                                                },
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            );
-                          },
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // ─── بخش نسخه و کپی‌رایت ───
-                        Center(
-                          child: GestureDetector(
-                            onTap: _onVersionTapped,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (final section in sections) ...[
+                            // کارت جزیره‌ای گروه‌بندی‌شده
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                color: colors.card,
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              clipBehavior: Clip.antiAlias,
                               child: Column(
-                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    'ریتمو — سبک زندگی منظم و خودآگاه',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: colors.textSecondary,
+                                  for (int i = 0; i < section.items.length; i++) ...[
+                                    if (i > 0)
+                                      Divider(
+                                        height: 1,
+                                        thickness: 0.7,
+                                        color: colors.divider.withValues(alpha: 0.6),
+                                        indent: 64,
+                                        endIndent: 14,
+                                      ),
+                                    Builder(
+                                      builder: (context) {
+                                        final g = section.items[i];
+                                        final count = SettingsRegistry.userVisibleByGroup(
+                                          g.group,
+                                          includeAdvanced: showAdvanced,
+                                        ).length;
+                                        return SettingsGroupTile(
+                                          title: g.title,
+                                          subtitle: g.subtitle,
+                                          icon: g.icon,
+                                          gradient: g.gradient,
+                                          count: count,
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              Ios26PageRoute(builder: (_) => g.pageBuilder()),
+                                            );
+                                          },
+                                        );
+                                      },
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'نسخه $_version (ساخت $_buildNumber)',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: colors.textTertiary,
-                                    ),
-                                  ),
+                                  ],
                                 ],
                               ),
                             ),
-                          ),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // ─── بخش نسخه و کپی‌رایت ───
+                  Center(
+                    child: GestureDetector(
+                      onTap: _onVersionTapped,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'ریتمو — سبک زندگی منظم و خودآگاه',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'نسخه $_version (ساخت $_buildNumber)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colors.textTertiary,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
-
-            // ۲. هدر شیشه‌ای داینامیک اپل با ترنزیشن فیزیکی و کشسانی اووراسکرول
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: AnimatedBuilder(
-                animation: _scrollOffset,
-                builder: (context, _) {
-                  return RitmoAppleMorphingGlassHeader(
-                    title: 'پروفایل و تنظیمات',
-                    subtitle: 'شخصی‌سازی، حریم خصوصی و اعلان‌ها',
-                    scrollOffset: _scrollOffset.value,
-                    onBack: () => Navigator.maybePop(context),
-                    actions: [
-                      RitmoVibrancyActionButton(
-                        icon: CupertinoIcons.search,
-                        tooltip: 'جستجو در تنظیمات',
-                        onTap: () async {
-                          final selected = await showSearch<SettingDescriptor?>(
-                            context: context,
-                            delegate: SettingsSearchDelegate(
-                              themeRepository: widget.themeRepository,
-                              localeRepository: widget.localeRepository,
-                            ),
-                          );
-                          if (selected != null && context.mounted) {
-                            _navigateToGroupWithHighlight(context, selected.group, selected.key);
-                          }
-                        },
-                      ),
-                      const SizedBox(width: 6),
-                      RitmoVibrancyActionButton(
-                        icon: CupertinoIcons.slider_horizontal_3,
-                        tooltip: 'تنظیمات سریع',
-                        onTap: () {
-                          RitmoHaptics.selection();
-                          QuickSettingsSheet.show(
-                            context,
-                            themeRepository: widget.themeRepository,
-                          );
-                        },
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
-    ),
-  );
+    );
   }
 }
 

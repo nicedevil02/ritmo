@@ -56,20 +56,15 @@ class TimelineHourAxis extends StatelessWidget {
                     : Alignment.centerRight,
                 child: Text(
                   toPersianDigits('${h.toString().padLeft(2, '0')}:00'),
-                  style: (labelStyle ??
-                          RitmoTextStyles.badge(
-                            isToday
-                                ? (h == nowHour
-                                      ? colors.primary
-                                      : (h < nowHour
-                                            ? colors.textTertiary
-                                            : colors.textSecondary))
-                                : colors.textTertiary,
-                          ))
-                      .copyWith(
-                    fontWeight: (isToday && h == nowHour)
-                        ? FontWeight.w700
-                        : FontWeight.w500,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontFamily: 'Vazirmatn',
+                    fontWeight: (isToday && h == nowHour) ? FontWeight.w800 : FontWeight.w500,
+                    color: isToday
+                        ? (h == nowHour
+                            ? colors.primary
+                            : (h < nowHour ? colors.textTertiary : colors.textSecondary))
+                        : colors.textTertiary,
                   ),
                 ),
               ),
@@ -94,7 +89,7 @@ class TimelineGridLines extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final effectivePxPerMinute = pxPerMinute ?? CalendarGeometry.effectivePxPerMinute(context);
     final rangeHeight = (rangeEndMinutes - rangeStartMinutes) * effectivePxPerMinute;
 
@@ -106,8 +101,12 @@ class TimelineGridLines extends StatelessWidget {
           pxPerMinute: effectivePxPerMinute,
           rangeStartMinutes: rangeStartMinutes,
           rangeEndMinutes: rangeEndMinutes,
-          lineColor: colors.borderSubtle.withValues(alpha: 0.25),
-          halfHourLineColor: colors.borderSubtle.withValues(alpha: 0.10),
+          lineColor: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.06),
+          halfHourLineColor: isDark
+              ? Colors.white.withValues(alpha: 0.02)
+              : Colors.black.withValues(alpha: 0.025),
         ),
       ),
     );

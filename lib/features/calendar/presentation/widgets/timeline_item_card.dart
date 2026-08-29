@@ -1,5 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_chip.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_time_range.dart';
 import 'package:ritmo/features/calendar/presentation/logic/timeline_layout_engine.dart';
@@ -48,14 +51,13 @@ class TimelineItemCard extends StatelessWidget {
     final isDone = item.isCompleted;
 
     final color = itemColor(context, item);
-    final bgContainerColor = itemContainerColor(context, item);
 
     final height = displayHeightOverride ?? layoutItem.height;
     final isCompact = height < 36.0;
     final isExpanded = height > 64.0;
 
     final cardOpacity = isDone
-        ? 0.55
+        ? 0.60
         : (isDimmed ? 0.30 : (isGhost ? 0.85 : 1.0));
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -63,6 +65,20 @@ class TimelineItemCard extends StatelessWidget {
 
     final startMin = layoutItem.startMinutes;
     final durMin = layoutItem.durationMinutes;
+
+    final bgGradient = LinearGradient(
+      begin: Alignment.topRight,
+      end: Alignment.bottomLeft,
+      colors: isDone
+          ? [
+              (isDark ? colors.card : Colors.white).withValues(alpha: isDark ? 0.35 : 0.65),
+              (isDark ? colors.card : Colors.white).withValues(alpha: isDark ? 0.20 : 0.45),
+            ]
+          : [
+              color.withValues(alpha: isDark ? 0.26 : 0.16),
+              (isDark ? const Color(0xFF1B2230) : Colors.white).withValues(alpha: isDark ? 0.95 : 0.98),
+            ],
+    );
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -80,37 +96,37 @@ class TimelineItemCard extends StatelessWidget {
                 duration: RitmoMotion.press,
                 curve: RitmoMotion.enter,
                 decoration: BoxDecoration(
-                  color: bgContainerColor,
+                  gradient: bgGradient,
                   borderRadius: borderRadius,
                   border: Border.all(
                     color: isHighlighted
                         ? color
                         : (item.isEstimated
-                              ? color.withValues(alpha: 0.4)
-                              : (isDark
-                                    ? Colors.white.withValues(alpha: 0.08)
-                                    : color.withValues(alpha: 0.22))),
-                    width: isHighlighted ? 2.0 : 0.8,
+                              ? color.withValues(alpha: 0.45)
+                              : (isDone
+                                  ? (isDark ? Colors.white.withValues(alpha: 0.05) : colors.border.withValues(alpha: 0.3))
+                                  : color.withValues(alpha: isDark ? 0.42 : 0.26))),
+                    width: isHighlighted ? 2.0 : 0.9,
                   ),
                   boxShadow: [
                     if (isHighlighted)
                       BoxShadow(
-                        color: color.withValues(alpha: 0.35),
+                        color: color.withValues(alpha: 0.45),
                         offset: const Offset(0, 3),
                         blurRadius: 10,
                         spreadRadius: 1,
                       )
                     else if (!isDone) ...[
                       BoxShadow(
-                        color: color.withValues(alpha: isDark ? 0.16 : 0.12),
-                        offset: const Offset(0, 2),
-                        blurRadius: 5,
+                        color: color.withValues(alpha: isDark ? 0.20 : 0.12),
+                        offset: const Offset(0, 2.5),
+                        blurRadius: 6,
                       ),
                       BoxShadow(
                         color: isDark
-                            ? Colors.white.withValues(alpha: 0.02)
-                            : Colors.white.withValues(alpha: 0.6),
-                        offset: const Offset(-0.8, -0.8),
+                            ? Colors.black.withValues(alpha: 0.25)
+                            : const Color(0xFFD0D7E2).withValues(alpha: 0.35),
+                        offset: const Offset(0, 1),
                         blurRadius: 2,
                       ),
                     ],
@@ -123,7 +139,7 @@ class TimelineItemCard extends StatelessWidget {
                       // Content layout by tier
                       Padding(
                         padding: EdgeInsets.only(
-                          right: onToggleComplete != null ? 14.0 : 10.0,
+                          right: onToggleComplete != null ? 14.0 : 8.0,
                           left: 6.0,
                           top: isCompact ? 1.0 : (isHighlighted ? 2.0 : 3.0),
                           bottom: isCompact ? 1.0 : (isHighlighted ? 2.0 : 3.0),
@@ -174,7 +190,7 @@ class TimelineItemCard extends StatelessWidget {
                           ),
                         ),
 
-                      // Right accent bar (RTL) with touch target for completion (Rendered on top)
+                      // Right accent bar (RTL) with touch target for completion
                       Positioned(
                         top: 0,
                         bottom: 0,
@@ -192,9 +208,15 @@ class TimelineItemCard extends StatelessWidget {
                           child: Align(
                             alignment: Alignment.centerRight,
                             child: Container(
-                              width: 4.0,
+                              width: 3.5,
                               height: double.infinity,
-                              color: isDone ? colors.disabled : color,
+                              decoration: BoxDecoration(
+                                color: isDone ? colors.disabled : color,
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(14),
+                                  bottomRight: Radius.circular(14),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -219,18 +241,21 @@ class TimelineItemCard extends StatelessWidget {
     final item = layoutItem.item;
     return Row(
       children: [
+        Icon(itemIcon(item), size: 12, color: color),
+        const SizedBox(width: 4),
         Expanded(
           child: FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerRight,
             child: Text(
-              item.title,
+              toPersianDigits(item.title),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 11.0,
+                fontSize: 11.5,
                 color: colors.textPrimary,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Vazirmatn',
                 decoration: isDone ? TextDecoration.lineThrough : null,
                 height: 1.0,
               ),
@@ -251,10 +276,21 @@ class TimelineItemCard extends StatelessWidget {
     double height,
   ) {
     final item = layoutItem.item;
-    final showTime = item.isTimed && height >= 54.0;
+    final showTime = item.isTimed && height >= 50.0;
     return Row(
       children: [
-        Icon(itemIcon(item), size: 14, color: color),
+        // 3D Sunken Icon Well
+        RitmoNeuSurface(
+          height: 22,
+          width: 22,
+          radius: 11,
+          sunken: true,
+          padding: EdgeInsets.zero,
+          glowColor: color.withValues(alpha: 0.35),
+          child: Center(
+            child: Icon(itemIcon(item), size: 12, color: color),
+          ),
+        ),
         const SizedBox(width: 6),
         Expanded(
           child: Column(
@@ -264,13 +300,14 @@ class TimelineItemCard extends StatelessWidget {
             children: [
               Flexible(
                 child: Text(
-                  item.title,
+                  toPersianDigits(item.title),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 12.0,
                     color: colors.textPrimary,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Vazirmatn',
                     decoration: isDone ? TextDecoration.lineThrough : null,
                   ),
                 ),
@@ -281,7 +318,8 @@ class TimelineItemCard extends StatelessWidget {
                     startMinutes: startMin,
                     endMinutes: startMin + durMin,
                     style: TextStyle(
-                      fontSize: 11.0,
+                      fontSize: 10.5,
+                      fontFamily: 'Vazirmatn',
                       color: colors.textSecondary,
                     ),
                   ),
@@ -305,7 +343,18 @@ class TimelineItemCard extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(itemIcon(item), size: 16, color: color),
+        // 3D Sunken Icon Well
+        RitmoNeuSurface(
+          height: 26,
+          width: 26,
+          radius: 13,
+          sunken: true,
+          padding: EdgeInsets.zero,
+          glowColor: color.withValues(alpha: 0.40),
+          child: Center(
+            child: Icon(itemIcon(item), size: 14, color: color),
+          ),
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -313,29 +362,38 @@ class TimelineItemCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                item.title,
+                toPersianDigits(item.title),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 15.0,
+                  fontSize: 14.0,
                   color: colors.textPrimary,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Vazirmatn',
                   decoration: isDone ? TextDecoration.lineThrough : null,
                 ),
               ),
               if (item.subtitle != null && item.subtitle!.isNotEmpty)
                 Text(
-                  item.subtitle!,
+                  toPersianDigits(item.subtitle ?? ''),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11.0, color: colors.textTertiary),
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    fontFamily: 'Vazirmatn',
+                    color: colors.textTertiary,
+                  ),
                 ),
               const SizedBox(height: 2),
               if (item.isTimed)
                 RitmoTimeRange(
                   startMinutes: startMin,
                   endMinutes: startMin + durMin,
-                  style: TextStyle(fontSize: 11.0, color: colors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    fontFamily: 'Vazirmatn',
+                    color: colors.textSecondary,
+                  ),
                 ),
             ],
           ),
@@ -344,7 +402,7 @@ class TimelineItemCard extends StatelessWidget {
           GestureDetector(
             onTap: onToggleComplete,
             child: Icon(
-              isDone ? Icons.check_circle : Icons.radio_button_unchecked,
+              isDone ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
               size: 18,
               color: isDone ? colors.success : colors.disabled,
             ),

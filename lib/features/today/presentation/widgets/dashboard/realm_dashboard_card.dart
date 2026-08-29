@@ -311,125 +311,141 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (sheetContext) {
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-            decoration: BoxDecoration(
-              color: colors.surfaceElevated,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: activeColor.withValues(alpha: isDark ? 0.40 : 0.25),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.60 : 0.15),
-                  blurRadius: 30,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // نشانگر درگ بالا
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colors.textSecondary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // هدر شیت
-                Row(
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: EdgeInsets.zero,
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: activeColor.withValues(alpha: isDark ? 0.20 : 0.12),
-                      ),
-                      child: Text(
-                        widget.activeZoneIcon ?? realm.icon,
-                        style: const TextStyle(fontSize: 19),
+                    // دستگیره کشیدن شیت (Apple Style Handle Bar)
+                    Center(
+                      child: Container(
+                        width: 38,
+                        height: 4.5,
+                        margin: const EdgeInsets.only(bottom: 14),
+                        decoration: BoxDecoration(
+                          color: colors.textSecondary.withValues(alpha: isDark ? 0.30 : 0.22),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'حالت قلمرو «${realm.name}»',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              fontFamily: 'Vazirmatn',
-                              color: colors.textPrimary,
+
+                    // ردیف هدر شیت با آیکون قلمرو و دکمه بستن
+                    Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: activeColor.withValues(alpha: isDark ? 0.20 : 0.12),
+                            border: Border.all(
+                              color: activeColor.withValues(alpha: isDark ? 0.35 : 0.20),
+                              width: 1,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'نحوه رفتار روتین‌ها و دریافت اعلان‌ها را تنظیم کنید',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontFamily: 'Vazirmatn',
+                          child: Text(
+                            widget.activeZoneIcon ?? realm.icon,
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'حالت قلمرو «${realm.name}»',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  fontFamily: 'Vazirmatn',
+                                  color: colors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'نحوه رفتار روتین‌ها و دریافت اعلان‌ها را تنظیم کنید',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontFamily: 'Vazirmatn',
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => Navigator.of(sheetContext).pop(),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : Colors.black.withValues(alpha: 0.05),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              CupertinoIcons.xmark,
+                              size: 15,
                               color: colors.textSecondary,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 20),
+
+                    // ۳ گزینه حالت مطابق استانداردهای مرجع اپل و ریتمو
+                    _buildModeOptionItem(
+                      context: sheetContext,
+                      title: 'حالت عادی',
+                      subtitle: 'همه روتین‌ها بدون محدودیت اجرا می‌شوند',
+                      mode: RealmMode.normal,
+                      isSelected: realm.mode == RealmMode.normal,
+                      icon: CupertinoIcons.sparkles,
+                      color: activeColor,
+                      onSelect: () => _handleSelectMode(sheetContext, realm.id, RealmMode.normal),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildModeOptionItem(
+                      context: sheetContext,
+                      title: 'حالت تمرکز',
+                      subtitle: 'فقط روتین‌های ضروری و حیاتی نمایش داده می‌شوند',
+                      mode: RealmMode.focus,
+                      isSelected: realm.mode == RealmMode.focus,
+                      icon: CupertinoIcons.flame_fill,
+                      color: activeColor,
+                      onSelect: () => _handleSelectMode(sheetContext, realm.id, RealmMode.focus),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildModeOptionItem(
+                      context: sheetContext,
+                      title: 'حالت بی‌صدا',
+                      subtitle: 'اعلان‌ها مسدود شده و محیط کاملاً آرام می‌شود',
+                      mode: RealmMode.silent,
+                      isSelected: realm.mode == RealmMode.silent,
+                      icon: CupertinoIcons.bell_slash_fill,
+                      color: activeColor,
+                      onSelect: () => _handleSelectMode(sheetContext, realm.id, RealmMode.silent),
+                    ),
+                    const SizedBox(height: 8),
                   ],
                 ),
-                const SizedBox(height: 18),
-
-                // ۳ گزینه حالت
-                _buildModeOptionItem(
-                  context: sheetContext,
-                  title: 'حالت عادی',
-                  subtitle: 'همه روتین‌ها بدون محدودیت اجرا می‌شوند',
-                  mode: RealmMode.normal,
-                  isSelected: realm.mode == RealmMode.normal,
-                  icon: CupertinoIcons.sparkles,
-                  color: activeColor,
-                  onSelect: () => _handleSelectMode(sheetContext, realm.id, RealmMode.normal),
-                ),
-                const SizedBox(height: 10),
-                _buildModeOptionItem(
-                  context: sheetContext,
-                  title: 'حالت تمرکز',
-                  subtitle: 'فقط روتین‌های ضروری و حیاتی نمایش داده می‌شوند',
-                  mode: RealmMode.focus,
-                  isSelected: realm.mode == RealmMode.focus,
-                  icon: CupertinoIcons.flame_fill,
-                  color: activeColor,
-                  onSelect: () => _handleSelectMode(sheetContext, realm.id, RealmMode.focus),
-                ),
-                const SizedBox(height: 10),
-                _buildModeOptionItem(
-                  context: sheetContext,
-                  title: 'حالت بی‌صدا',
-                  subtitle: 'اعلان‌ها مسدود شده و محیط کاملاً آرام می‌شود',
-                  mode: RealmMode.silent,
-                  isSelected: realm.mode == RealmMode.silent,
-                  icon: CupertinoIcons.bell_slash_fill,
-                  color: activeColor,
-                  onSelect: () => _handleSelectMode(sheetContext, realm.id, RealmMode.silent),
-                ),
-                const SizedBox(height: 8),
-              ],
+              ),
             ),
           ),
         );
@@ -459,65 +475,109 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
     final colors = context.colors;
     final isDark = widget.isDarkMode;
 
-    return RitmoCard.neumorphic(
-      onTap: onSelect,
-      borderRadius: BorderRadius.circular(18),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      borderColor: isSelected ? color.withValues(alpha: isDark ? 0.70 : 0.50) : null,
-      borderWidth: isSelected ? 1.4 : null,
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onSelect,
+        borderRadius: BorderRadius.circular(18),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? color.withValues(alpha: isDark ? 0.18 : 0.10)
+                : (isDark ? colors.surfaceElevated.withValues(alpha: 0.60) : colors.surfaceElevated),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
               color: isSelected
-                  ? color.withValues(alpha: isDark ? 0.25 : 0.15)
-                  : colors.surfaceSunken,
+                  ? color.withValues(alpha: isDark ? 0.65 : 0.45)
+                  : (isDark ? colors.border.withValues(alpha: 0.22) : colors.divider),
+              width: isSelected ? 1.4 : 1.0,
             ),
-            child: Icon(
-              icon,
-              size: 16,
-              color: isSelected ? color : colors.textSecondary,
-            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: isDark ? 0.25 : 0.12),
+                      blurRadius: 12,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : null,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
-                    fontFamily: 'Vazirmatn',
-                    color: isSelected
-                        ? (isDark ? Color.lerp(color, Colors.white, 0.75)! : Color.lerp(color, Colors.black, 0.30)!)
-                        : colors.textPrimary,
+          child: Row(
+            children: [
+              // آیکون وضعیت در سمت راست (Leading در RTL)
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: isSelected
+                      ? color.withValues(alpha: isDark ? 0.25 : 0.18)
+                      : (isDark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : Colors.black.withValues(alpha: 0.04)),
+                ),
+                child: Icon(
+                  icon,
+                  size: 18,
+                  color: isSelected ? color : colors.textSecondary,
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // متن عنوان و توضیح در مرکز
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                        fontFamily: 'Vazirmatn',
+                        color: isSelected
+                            ? (isDark ? Color.lerp(color, Colors.white, 0.75)! : Color.lerp(color, Colors.black, 0.30)!)
+                            : colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontFamily: 'Vazirmatn',
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // نشانگر انتخاب در سمت چپ (Trailing در RTL)
+              if (isSelected)
+                Icon(
+                  CupertinoIcons.checkmark_alt_circle_fill,
+                  size: 20,
+                  color: color,
+                )
+              else
+                Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: colors.textSecondary.withValues(alpha: 0.30),
+                      width: 1.5,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontFamily: 'Vazirmatn',
-                    color: colors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
-          if (isSelected)
-            Icon(
-              CupertinoIcons.checkmark_alt_circle_fill,
-              size: 18,
-              color: color,
-            ),
-        ],
+        ),
       ),
     );
   }

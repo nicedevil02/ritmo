@@ -173,7 +173,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                       Icon(
                         CupertinoIcons.sun_max_fill,
                         size: 26,
-                        color: _selectedCardIndex == 0 ? Colors.white : colors.primary,
+                        color: _selectedCardIndex == 0 ? colors.primary : colors.textSecondary,
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -181,14 +181,14 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
-                          color: _selectedCardIndex == 0 ? Colors.white : colors.textPrimary,
+                          color: colors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
                       RitmoCardBadge(
                         label: 'فعال',
-                        color: _selectedCardIndex == 0 ? Colors.white : colors.primary,
-                        isOutlined: _selectedCardIndex == 0,
+                        color: colors.primary,
+                        isOutlined: _selectedCardIndex != 0,
                       ),
                     ],
                   ),
@@ -205,7 +205,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                       Icon(
                         CupertinoIcons.moon_stars_fill,
                         size: 26,
-                        color: _selectedCardIndex == 1 ? Colors.white : colors.textSecondary,
+                        color: _selectedCardIndex == 1 ? colors.primary : colors.textSecondary,
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -213,14 +213,14 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
-                          color: _selectedCardIndex == 1 ? Colors.white : colors.textPrimary,
+                          color: colors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
                       RitmoCardBadge(
                         label: 'رزرو',
-                        color: _selectedCardIndex == 1 ? Colors.white : colors.textSecondary,
-                        isOutlined: _selectedCardIndex == 1,
+                        color: _selectedCardIndex == 1 ? colors.primary : colors.textSecondary,
+                        isOutlined: _selectedCardIndex != 1,
                       ),
                     ],
                   ),

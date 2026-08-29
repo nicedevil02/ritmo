@@ -265,14 +265,24 @@ class _RitmoCardState extends State<RitmoCard> {
     // ۱. تعیین دکوراسیون و گرادیان نئومورفیک
     Gradient? resolveGradient() {
       if (widget.isSelected) {
-        return LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color.lerp(colors.primary, Colors.white, isDark ? 0.08 : 0.35)!,
-            colors.primary.withValues(alpha: isDark ? 0.85 : 0.90),
-          ],
-        );
+        final tintSurface = Color.lerp(baseColor, colors.primary, isDark ? 0.12 : 0.08)!;
+        return isDark
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.lerp(tintSurface, Colors.white, 0.08)!,
+                  Color.lerp(tintSurface, Colors.black, 0.12)!,
+                ],
+              )
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.lerp(tintSurface, Colors.white, 0.70)!,
+                  tintSurface,
+                ],
+              );
       }
 
       switch (widget.variant) {
@@ -291,7 +301,9 @@ class _RitmoCardState extends State<RitmoCard> {
 
     Color resolveSolidColor() {
       if (widget.backgroundColor != null) return widget.backgroundColor!;
-      if (widget.isSelected) return colors.primary;
+      if (widget.isSelected) {
+        return Color.lerp(baseColor, colors.primary, isDark ? 0.12 : 0.08)!;
+      }
 
       switch (widget.variant) {
         case RitmoCardVariant.neumorphic:
@@ -324,7 +336,7 @@ class _RitmoCardState extends State<RitmoCard> {
 
       final Color color = widget.borderColor ??
           (widget.isSelected
-              ? colors.primary
+              ? colors.primary.withValues(alpha: isDark ? 0.85 : 0.75)
               : (highContrast
                   ? colors.border
                   : (isDark
@@ -340,16 +352,25 @@ class _RitmoCardState extends State<RitmoCard> {
       if (widget.variant == RitmoCardVariant.outlined) return const [];
 
       if (widget.isSelected) {
+        final shadowDark = isDark
+            ? Colors.black.withValues(alpha: 0.45)
+            : Color.lerp(colors.surfaceElevated, Colors.black, 0.18)!.withValues(alpha: 0.55);
+
         return [
           BoxShadow(
-            color: colors.primary.withValues(alpha: isDark ? 0.40 : 0.30),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: colors.primary.withValues(alpha: isDark ? 0.25 : 0.18),
+            blurRadius: 14,
+            offset: const Offset(0, 3),
           ),
           BoxShadow(
-            color: RitmoNeu.lightShadow(isDark),
+            color: shadowDark,
             blurRadius: 10,
-            offset: const Offset(-3, -3),
+            offset: const Offset(3, 3.5),
+          ),
+          BoxShadow(
+            color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white.withValues(alpha: 0.95),
+            blurRadius: 7,
+            offset: const Offset(-2.5, -2.5),
           ),
         ];
       }

@@ -1067,6 +1067,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
     this.onActionTap,
     this.onTap,
     this.height = 224,
+    this.margin,
   });
 
   final String title;
@@ -1082,6 +1083,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
   final VoidCallback? onActionTap;
   final VoidCallback? onTap;
   final double height;
+  final EdgeInsetsGeometry? margin;
 
   @override
   Widget build(BuildContext context) {
@@ -1098,6 +1100,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
 
           return RitmoCard.neumorphic(
             onTap: onTap,
+            margin: margin,
             borderRadius: BorderRadius.circular(34),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             child: SizedBox(

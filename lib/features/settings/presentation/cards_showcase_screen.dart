@@ -51,7 +51,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
         showBackButton: true,
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
         children: [
           // ── هدر معرفی سیستم نئومورفیک ──
           _buildHeroHeader(colors, isDark),

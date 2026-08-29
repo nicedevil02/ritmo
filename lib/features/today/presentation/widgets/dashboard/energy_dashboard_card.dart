@@ -1,10 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo_energy_dial.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 
 /// کارت وضعیت انرژی جاری در داشبورد امروز با طراحی نئومورفیک و لیست تیتروار علل انرژی
+/// متصل به سیستم مرجع نئومورفیک ریتمو (RitmoCard.neumorphic)
 class EnergyDashboardCard extends StatelessWidget {
   const EnergyDashboardCard({
     super.key,
@@ -87,242 +89,176 @@ class EnergyDashboardCard extends StatelessWidget {
 
     final reasons = _resolveDisplayReasons(currentEnergyPercent);
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: colors.surfaceElevated,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDarkMode
-              ? const Color(0xFF94A3B8).withValues(alpha: 0.14)
-              : colors.border,
-          width: 0.9,
-        ),
-        boxShadow: isDarkMode
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.40),
-                  offset: const Offset(0, 3),
-                  blurRadius: 10,
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: const Color(0xFF64748B).withValues(alpha: 0.08),
-                  offset: const Offset(0, 3),
-                  blurRadius: 10,
-                ),
-              ],
+    return RitmoCard.neumorphic(
+      borderRadius: BorderRadius.circular(28),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onEnergyTap,
-          borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-            child: Row(
+      onTap: onEnergyTap,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // سمت راست (شروع خوانش RTL): عنوان انرژی همراه آیکون، سطح، توضیح و علل
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // سمت راست (شروع خوانش RTL): عنوان انرژی همراه آیکون، سطح، توضیح و علل
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // ردیف عنوان به همراه نشان دایره‌ای درخشان و جذاب آیکون انرژی
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 26,
-                            height: 26,
-                            decoration: BoxDecoration(
-                              color: isDarkMode
-                                  ? const Color(0xFF232A38)
-                                  : Colors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: energyColor.withValues(
-                                  alpha: isDarkMode ? 0.35 : 0.25,
-                                ),
-                                width: 1.0,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: energyColor.withValues(
-                                    alpha: isDarkMode ? 0.38 : 0.28,
-                                  ),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 1.5),
-                                ),
-                                BoxShadow(
-                                  color: isDarkMode
-                                      ? Colors.black.withValues(alpha: 0.25)
-                                      : const Color(0xFFCAD3DF).withValues(alpha: 0.5),
-                                  blurRadius: 3,
-                                  offset: const Offset(0.8, 1.2),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Icon(
-                                energyIcon,
-                                size: 14,
-                                color: energyColor,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 7),
-                          Text(
-                            l10n.currentEnergyTitle,
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w800,
-                              color: colors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3), // فاصله بسیار کم بین عنوان و وضعیت انرژی
-
-                      Text(
-                        energyLabel,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: energyColor,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        energyDesc,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w500,
-                          color: colors.textSecondary,
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-
-                      // علل شکل‌گیری این سطح انرژی (تیتروار و خلاصه‌وار)
-                      for (final reason in reasons)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 3.5),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 4.5,
-                                height: 4.5,
-                                decoration: BoxDecoration(
-                                  color: energyColor,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  reason,
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDarkMode
-                                        ? const Color(0xFFCBD5E1)
-                                        : const Color(0xFF475569),
-                                    height: 1.25,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                // سمت چپ (در RTL انتهای Row): گیج دایره‌ای در بالاترین نقطه + دکمه مدیریت در زیر آن
-                Column(
+                // ردیف عنوان به همراه نشان دایره‌ای درخشان و جذاب آیکون انرژی
+                Row(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    RitmoEnergyDial(
-                      percentage: currentEnergyPercent,
-                      isDarkMode: isDarkMode,
-                      size: 90.0 * m.densityFactor,
-                      activeColor: energyColor,
-                    ),
-                    const SizedBox(height: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 4.5,
-                      ),
+                      width: 26,
+                      height: 26,
                       decoration: BoxDecoration(
-                        color: isDarkMode
-                            ? const Color(0xFF222835)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            energyColor.withValues(alpha: 0.35),
+                            energyColor.withValues(alpha: 0.18),
+                          ],
+                        ),
                         border: Border.all(
                           color: isDarkMode
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : const Color(0xFFD6DCE5),
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.white.withValues(alpha: 0.85),
                           width: 0.8,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: isDarkMode
-                                ? Colors.black.withValues(alpha: 0.30)
-                                : const Color(0xFFCBD3DE).withValues(alpha: 0.65),
-                            offset: const Offset(1, 1.5),
-                            blurRadius: 3,
-                          ),
-                          BoxShadow(
-                            color: isDarkMode
-                                ? Colors.white.withValues(alpha: 0.02)
-                                : Colors.white,
-                            offset: const Offset(-1, -1),
-                            blurRadius: 2,
-                          ),
-                        ],
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            l10n.manageEnergy,
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(width: 3),
-                          Icon(
-                            CupertinoIcons.chevron_left,
-                            size: 12,
-                            color: colors.textSecondary,
-                          ),
-                        ],
+                      child: Center(
+                        child: Icon(
+                          energyIcon,
+                          size: 13,
+                          color: energyColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.currentEnergyTitle,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Vazirmatn',
+                        color: colors.textSecondary,
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 4),
+
+                Text(
+                  energyLabel,
+                  style: TextStyle(
+                    fontSize: 16.5,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Vazirmatn',
+                    color: energyColor,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  energyDesc,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Vazirmatn',
+                    color: colors.textSecondary,
+                    height: 1.3,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+
+                // علل شکل‌گیری این سطح انرژی (تیتروار و خلاصه‌وار)
+                for (final reason in reasons)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: energyColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 7),
+                        Expanded(
+                          child: Text(
+                            reason,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Vazirmatn',
+                              color: colors.textSecondary,
+                              height: 1.25,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
-        ),
+
+          const SizedBox(width: 12),
+
+          // سمت چپ (در RTL انتهای Row): گیج دایره‌ای در بالاترین نقطه + دکمه مدیریت در زیر آن
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              RitmoEnergyDial(
+                percentage: currentEnergyPercent,
+                isDarkMode: isDarkMode,
+                size: 90.0 * m.densityFactor,
+                activeColor: energyColor,
+              ),
+              const SizedBox(height: 8),
+              RitmoNeuButton(
+                height: 28,
+                radius: 14,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                onTap: onEnergyTap,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.manageEnergy,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Vazirmatn',
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Icon(
+                      CupertinoIcons.chevron_left,
+                      size: 11,
+                      color: colors.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

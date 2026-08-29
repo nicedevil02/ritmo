@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_pressable.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 
 /// یک سنجهٔ کوتاه در کارت «نبض امروز».
 @immutable
@@ -27,7 +28,7 @@ class HomePulseMetric {
 /// کارت «نبض امروز»: حلقهٔ پیشرفت مسیر روز در کنار سنجه‌های کلیدی،
 /// تا کاربر بدون رفتن به صفحهٔ دیگر بداند امروز کجاست.
 ///
-/// طراحی نئومورفیک (Neumorphic) در حالت روشن؛ شیشه‌ای/تیره در حالت دارک.
+/// متصل به سیستم مرجع نئومورفیک ریتمو (RitmoCard.neumorphic).
 class HomePulseStrip extends StatelessWidget {
   const HomePulseStrip({
     super.key,
@@ -55,35 +56,11 @@ class HomePulseStrip extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final clamped = progress.clamp(0.0, 1.0).toDouble();
 
-    return Container(
+    return RitmoCard.neumorphic(
+      borderRadius: BorderRadius.circular(28),
       padding: const EdgeInsets.symmetric(
-        horizontal: RitmoSpacing.lg,
-        vertical: 10,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: colors.surfaceElevated,
-        border: Border.all(
-          color: isDark
-              ? const Color(0xFF94A3B8).withValues(alpha: 0.14)
-              : colors.border,
-          width: 0.9,
-        ),
-        boxShadow: isDark
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.40),
-                  offset: const Offset(0, 3),
-                  blurRadius: 10,
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: const Color(0xFF64748B).withValues(alpha: 0.08),
-                  offset: const Offset(0, 3),
-                  blurRadius: 10,
-                ),
-              ],
+        horizontal: 14,
+        vertical: 12,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -195,11 +172,14 @@ class HomePulseStrip extends StatelessWidget {
     const ringSize = 108.0;
     const innerSize = 68.0;
 
-    // رنگ‌های حلقه بنفش/لاوندر
-    const ringColors = <Color>[
-      Color(0xFFCDBBF0), // لاوندر روشن — شروع
-      Color(0xFF8B6FD6), // بنفش تیره — پایان
+    final ringColors = <Color>[
+      Color.lerp(colors.primary, const Color(0xFFCDBBF0), 0.35)!,
+      colors.primary,
     ];
+
+    final shadowDark = isDark
+        ? Colors.black.withValues(alpha: 0.45)
+        : Color.lerp(colors.surfaceElevated, Colors.black, 0.18)!.withValues(alpha: 0.55);
 
     return SizedBox(
       height: ringSize,
@@ -220,24 +200,8 @@ class HomePulseStrip extends StatelessWidget {
                 height: ringSize,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isDark
-                      ? colors.surfaceSunken.withValues(alpha: 0.5)
-                      : const Color(0xFFDDE0E6),
-                  boxShadow: isDark
-                      ? null
-                      : [
-                          // سایه داخلی (شبیه‌سازی inset با inner shadow)
-                          const BoxShadow(
-                            color: Color(0xFFA8ADB7),
-                            offset: Offset(4, 4),
-                            blurRadius: 8,
-                          ),
-                          const BoxShadow(
-                            color: Color(0xFFF5F7FA),
-                            offset: Offset(-4, -4),
-                            blurRadius: 8,
-                          ),
-                        ],
+                  gradient: RitmoNeu.sunkenGradient(colors.surfaceSunken, isDark),
+                  boxShadow: RitmoNeu.sunkenShadows(isDark, blur: 6, distance: 2.0),
                 ),
               ),
               // ── آرک پیشرفت + نقطه درخشان ──
@@ -245,9 +209,7 @@ class HomePulseStrip extends StatelessWidget {
                 size: const Size(ringSize, ringSize),
                 painter: _NeumorphicPulseRingPainter(
                   progress: animated,
-                  trackColor: isDark
-                      ? colors.surfaceSunken.withValues(alpha: 0.9)
-                      : const Color(0xFFD5D8DE),
+                  trackColor: colors.surfaceSunken,
                   ringColors: ringColors,
                   isDark: isDark,
                 ),
@@ -258,23 +220,33 @@ class HomePulseStrip extends StatelessWidget {
                 height: innerSize,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isDark
-                      ? colors.surface.withValues(alpha: 0.6)
-                      : const Color(0xFFE4E7ED),
-                  boxShadow: isDark
-                      ? null
-                      : [
-                          const BoxShadow(
-                            color: Color(0xFFF9FBFF),
-                            offset: Offset(-3, -3),
-                            blurRadius: 6,
-                          ),
-                          const BoxShadow(
-                            color: Color(0xFFBCC1CA),
-                            offset: Offset(3, 3),
-                            blurRadius: 6,
-                          ),
-                        ],
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isDark
+                        ? [
+                            Color.lerp(colors.surfaceElevated, Colors.white, 0.08)!,
+                            Color.lerp(colors.surfaceElevated, Colors.black, 0.15)!,
+                          ]
+                        : [
+                            Colors.white,
+                            Color.lerp(colors.surfaceElevated, Colors.white, 0.6)!,
+                          ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: shadowDark,
+                      offset: const Offset(2.5, 3),
+                      blurRadius: 6,
+                    ),
+                    BoxShadow(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.04)
+                          : Colors.white.withValues(alpha: 0.95),
+                      offset: const Offset(-2, -2),
+                      blurRadius: 4,
+                    ),
+                  ],
                 ),
                 child: Center(
                   child: Column(
@@ -319,18 +291,11 @@ class HomePulseStrip extends StatelessWidget {
     HomePulseMetric metric,
   ) {
     final row = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: isDark
-            ? colors.surfaceSunken.withValues(alpha: 0.35)
-            : colors.surface.withValues(alpha: 0.85),
-        border: Border.all(
-          color: isDark
-              ? colors.border.withValues(alpha: 0.25)
-              : colors.divider,
-          width: 0.7,
-        ),
+        gradient: RitmoNeu.sunkenGradient(colors.surfaceSunken, isDark),
+        boxShadow: RitmoNeu.sunkenShadows(isDark, blur: 4, distance: 1.5),
       ),
       child: Directionality(
         textDirection: TextDirection.rtl,
@@ -346,28 +311,14 @@ class HomePulseStrip extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    metric.color.withValues(alpha: 0.28),
-                    metric.color.withValues(alpha: 0.14),
+                    metric.color.withValues(alpha: 0.35),
+                    metric.color.withValues(alpha: 0.18),
                   ],
                 ),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.75),
+                  color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.85),
                   width: 0.6,
                 ),
-                boxShadow: isDark
-                    ? null
-                    : [
-                        const BoxShadow(
-                          color: Colors.white,
-                          offset: Offset(-1, -1),
-                          blurRadius: 2,
-                        ),
-                        BoxShadow(
-                          color: metric.color.withValues(alpha: 0.35),
-                          offset: const Offset(1, 1.5),
-                          blurRadius: 3,
-                        ),
-                      ],
               ),
               child: Center(
                 child: Icon(metric.icon, size: 12, color: metric.color),

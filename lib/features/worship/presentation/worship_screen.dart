@@ -37,6 +37,16 @@ class _WorshipScreenState extends State<WorshipScreen>
   String _cityName = 'تهران';
   Timer? _debounceTimer;
   StreamSubscription<dynamic>? _eventSub;
+
+  // Multi-Tab Scroll Synchronization Controllers & State
+  final List<ScrollController> _tabScrollControllers = [
+    ScrollController(),
+    ScrollController(),
+    ScrollController(),
+  ];
+  final List<double> _tabOffsets = [0.0, 0.0, 0.0];
+  final List<bool> _tabExpanded = [true, true, true];
+
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
   final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
   double _accumulatedUpScroll = 0.0;
@@ -46,7 +56,18 @@ class _WorshipScreenState extends State<WorshipScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
-      if (mounted) setState(() {});
+      if (_tabController.indexIsChanging ||
+          _tabController.animation?.value == _tabController.index.toDouble()) {
+        _syncHeaderWithActiveTab(_tabController.index);
+        if (mounted) setState(() {});
+      }
+    });
+    _tabController.animation?.addListener(() {
+      final value = _tabController.animation?.value ?? 0.0;
+      final roundIndex = value.round().clamp(0, 2);
+      if ((value - roundIndex).abs() < 0.05 && _tabController.index == roundIndex) {
+        _syncHeaderWithActiveTab(roundIndex);
+      }
     });
 
     _loadData();
@@ -68,10 +89,61 @@ class _WorshipScreenState extends State<WorshipScreen>
   void dispose() {
     _debounceTimer?.cancel();
     _eventSub?.cancel();
+    for (final controller in _tabScrollControllers) {
+      controller.dispose();
+    }
     _tabController.dispose();
     _scrollOffset.dispose();
     _isTabsExpanded.dispose();
     super.dispose();
+  }
+
+  void _syncHeaderWithActiveTab(int activeIndex) {
+    if (activeIndex < 0 || activeIndex >= _tabOffsets.length) return;
+    final controller = _tabScrollControllers[activeIndex];
+    final offset = controller.hasClients ? controller.offset : _tabOffsets[activeIndex];
+    _tabOffsets[activeIndex] = offset;
+    _scrollOffset.value = offset;
+
+    final isExpanded = offset <= 75.0 || _tabExpanded[activeIndex];
+    _isTabsExpanded.value = isExpanded;
+    _accumulatedUpScroll = 0.0;
+  }
+
+  void _onTabScroll(int tabIndex, ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return;
+    final pixels = notification.metrics.pixels;
+    _tabOffsets[tabIndex] = pixels;
+
+    // Only update the active header if this scroll notification came from the currently visible tab
+    if (_tabController.index == tabIndex) {
+      _scrollOffset.value = pixels;
+
+      if (pixels <= 20) {
+        _accumulatedUpScroll = 0.0;
+        if (!_isTabsExpanded.value) {
+          _isTabsExpanded.value = true;
+          _tabExpanded[tabIndex] = true;
+        }
+      } else if (notification is ScrollUpdateNotification) {
+        final delta = notification.scrollDelta ?? 0.0;
+        if (delta > 1.0) {
+          _accumulatedUpScroll = 0.0;
+          if (pixels > 75 && _isTabsExpanded.value) {
+            _isTabsExpanded.value = false;
+            _tabExpanded[tabIndex] = false;
+          }
+        } else if (delta < -1.0) {
+          _accumulatedUpScroll += -delta;
+          if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
+            _isTabsExpanded.value = true;
+            _tabExpanded[tabIndex] = true;
+          }
+        }
+      } else if (notification is ScrollEndNotification) {
+        _accumulatedUpScroll = 0.0;
+      }
+    }
   }
 
   Future<void> _loadData() async {
@@ -208,48 +280,24 @@ class _WorshipScreenState extends State<WorshipScreen>
             children: [
               // Layer 1: Body Content with Multi-Tab TabBarView
               Positioned.fill(
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: (notification) {
-                    if (notification.metrics.axis == Axis.vertical) {
-                      final pixels = notification.metrics.pixels;
-                      _scrollOffset.value = pixels;
-
-                      if (pixels <= 20) {
-                        _accumulatedUpScroll = 0.0;
-                        if (!_isTabsExpanded.value) _isTabsExpanded.value = true;
-                      } else if (notification is ScrollUpdateNotification) {
-                        final delta = notification.scrollDelta ?? 0.0;
-                        if (delta > 1.0) {
-                          // اسکرول پیوسته و بدون وقفه به سمت پایین
-                          _accumulatedUpScroll = 0.0;
-                          if (pixels > 75 && _isTabsExpanded.value) {
-                            _isTabsExpanded.value = false;
-                          }
-                        } else if (delta < -1.0) {
-                          // اسکرول رو به بالا با آستانه هوشمند برای حذف لرزش دست
-                          _accumulatedUpScroll += -delta;
-                          if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
-                            _isTabsExpanded.value = true;
-                          }
-                        }
-                      } else if (notification is ScrollEndNotification) {
-                        _accumulatedUpScroll = 0.0;
-                      }
-                    }
-                    return false;
-                  },
-                  child: (_isLoading && _worshipDay == null)
-                      ? Padding(
-                          padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 100),
-                          child: const RitmoSkeletonCard(height: 320),
-                        )
-                      : TabBarView(
-                          controller: _tabController,
-                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                          children: [
-                            // ─── TAB 0: امروز ───
-                            _WorshipTabKeepAlive(
+                child: (_isLoading && _worshipDay == null)
+                    ? Padding(
+                        padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 100),
+                        child: const RitmoSkeletonCard(height: 320),
+                      )
+                    : TabBarView(
+                        controller: _tabController,
+                        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                        children: [
+                          // ─── TAB 0: امروز ───
+                          _WorshipTabKeepAlive(
+                            child: NotificationListener<ScrollNotification>(
+                              onNotification: (n) {
+                                _onTabScroll(0, n);
+                                return false;
+                              },
                               child: ListView(
+                                controller: _tabScrollControllers[0],
                                 physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                                 padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 100),
                                 children: [
@@ -312,10 +360,17 @@ class _WorshipScreenState extends State<WorshipScreen>
                                 ],
                               ),
                             ),
+                          ),
 
-                            // ─── TAB 1: گاه‌شمار و اعمال ───
-                            _WorshipTabKeepAlive(
+                          // ─── TAB 1: گاه‌شمار و اعمال ───
+                          _WorshipTabKeepAlive(
+                            child: NotificationListener<ScrollNotification>(
+                              onNotification: (n) {
+                                _onTabScroll(1, n);
+                                return false;
+                              },
                               child: ListView(
+                                controller: _tabScrollControllers[1],
                                 physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                                 padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 100),
                                 children: [
@@ -335,10 +390,17 @@ class _WorshipScreenState extends State<WorshipScreen>
                                 ],
                               ),
                             ),
+                          ),
 
-                            // ─── TAB 2: قضا و جبران ───
-                            _WorshipTabKeepAlive(
+                          // ─── TAB 2: قضا و جبران ───
+                          _WorshipTabKeepAlive(
+                            child: NotificationListener<ScrollNotification>(
+                              onNotification: (n) {
+                                _onTabScroll(2, n);
+                                return false;
+                              },
                               child: ListView(
+                                controller: _tabScrollControllers[2],
                                 physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                                 padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 100),
                                 children: [
@@ -349,9 +411,9 @@ class _WorshipScreenState extends State<WorshipScreen>
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                ),
+                          ),
+                        ],
+                      ),
               ),
 
               // Layer 2: Apple Dynamic Large Title Morphing Glass Header with Quick-Return Liquid Tabs
@@ -416,6 +478,7 @@ class _WorshipScreenState extends State<WorshipScreen>
                         selectedIndex: _tabController.index.clamp(0, 2),
                         onTabChanged: (index) {
                           _tabController.animateTo(index);
+                          _syncHeaderWithActiveTab(index);
                           setState(() {});
                         },
                       ),

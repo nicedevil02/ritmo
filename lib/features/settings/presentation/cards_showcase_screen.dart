@@ -504,9 +504,9 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
       timeRange: '${toPersianDigits("۲۲:۳۰")}   ➔   ${toPersianDigits("۰۵:۳۰")}',
       remainingTime: toPersianDigits('۰۵:۵۶:۱۶'),
       activeColor: activeColor,
-      height: 224,
+      height: 180,
       gaugeWidget: Realm24hDial(
-        size: 114,
+        size: 92,
         activeZoneId: 'sleep',
         activeZoneColor: activeColor,
         activeZoneIcon: '🌙',

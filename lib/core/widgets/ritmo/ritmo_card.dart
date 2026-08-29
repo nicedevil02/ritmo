@@ -1067,7 +1067,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
     this.actionButtonText = 'مدیریت قلمرو',
     this.onActionTap,
     this.onTap,
-    this.height = 224,
+    this.height = 180,
     this.margin,
   });
 
@@ -1097,15 +1097,15 @@ class RitmoNeuMasterCard extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final maxW = constraints.maxWidth.isFinite ? constraints.maxWidth : 380.0;
-          final dialColWidth = (maxW * 0.34).clamp(112.0, 134.0);
+          final dialColWidth = (maxW * 0.33).clamp(104.0, 124.0);
 
           return RitmoCard.neumorphic(
             onTap: onTap,
             margin: margin,
-            borderRadius: BorderRadius.circular(34),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            borderRadius: BorderRadius.circular(28),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: SizedBox(
-              height: height - 28,
+              height: height - 24,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -1118,13 +1118,13 @@ class RitmoNeuMasterCard extends StatelessWidget {
                         // ردیف هدر چیپ‌های فیزیکی برجسته
                         Row(
                           children: [
-                            // چیپ وضعیت فعال با نقطه سه‌بعدی سبز زمردی
+                            // چیپ وضعیت فعال با نقطه سه‌بعدی
                             _buildTactileStatusPill(
                               isDark: isDark,
                               statusLabel: statusLabel,
                               color: effectiveColor,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             // چیپ نام قلمروی فعال با آیکون ماه
                             Expanded(
                               child: _buildTactileRealmPill(
@@ -1140,29 +1140,30 @@ class RitmoNeuMasterCard extends StatelessWidget {
 
                         // عنوان اصلی و زیرعنوان
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 19.5,
+                                  fontSize: 16.5,
                                   fontWeight: FontWeight.w900,
-                                  letterSpacing: -0.4,
+                                  letterSpacing: -0.3,
                                   fontFamily: 'Vazirmatn',
                                   color: colors.textPrimary,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 1),
                               Text(
                                 subtitle,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 11.5,
+                                  fontSize: 10.5,
                                   fontWeight: FontWeight.w500,
                                   fontFamily: 'Vazirmatn',
                                   color: colors.textSecondary,
@@ -1188,7 +1189,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
 
                   // ── ستون چپ: گیج نئومورفیک سه‌بعدی و دکمه مدیریت فیزیکی ──
                   SizedBox(
@@ -1204,11 +1205,11 @@ class RitmoNeuMasterCard extends StatelessWidget {
                                   context: context,
                                   color: effectiveColor,
                                   isDark: isDark,
-                                  size: (dialColWidth - 4).clamp(100.0, 126.0),
+                                  size: (dialColWidth - 8).clamp(84.0, 98.0),
                                 ),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         _buildTactileManageButton(
                           isDark: isDark,
                           colors: colors,
@@ -1238,10 +1239,10 @@ class RitmoNeuMasterCard extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1259,22 +1260,22 @@ class RitmoNeuMasterCard extends StatelessWidget {
           color: isDark
               ? color.withValues(alpha: 0.40)
               : Colors.white,
-          width: 1.0,
+          width: 0.8,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withValues(alpha: 0.45)
-                : const Color(0xFFB8C8D8).withValues(alpha: 0.65),
-            offset: const Offset(3, 3.5),
-            blurRadius: 7,
+                ? Colors.black.withValues(alpha: 0.35)
+                : const Color(0xFFB8C8D8).withValues(alpha: 0.50),
+            offset: const Offset(2, 2.5),
+            blurRadius: 5,
           ),
           BoxShadow(
             color: isDark
                 ? Colors.white.withValues(alpha: 0.04)
                 : Colors.white.withValues(alpha: 0.95),
-            offset: const Offset(-2.5, -2.5),
-            blurRadius: 5,
+            offset: const Offset(-1.5, -1.5),
+            blurRadius: 3,
           ),
         ],
       ),
@@ -1282,26 +1283,26 @@ class RitmoNeuMasterCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 8,
-            height: 8,
+            width: 6,
+            height: 6,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: color,
               boxShadow: [
                 BoxShadow(
                   color: color.withValues(alpha: 0.6),
-                  blurRadius: 4,
+                  blurRadius: 3,
                   offset: const Offset(0.5, 0.5),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 5),
           Text(
             statusLabel,
             style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
               fontFamily: 'Vazirmatn',
               color: isDark
                   ? Color.lerp(color, Colors.white, 0.55)!
@@ -1322,14 +1323,14 @@ class RitmoNeuMasterCard extends StatelessWidget {
     required Color color,
   }) {
     final shadowDarkColor = isDark
-        ? Colors.black.withValues(alpha: 0.45)
-        : Color.lerp(colors.surfaceElevated, Colors.black, 0.18)!.withValues(alpha: 0.55);
+        ? Colors.black.withValues(alpha: 0.35)
+        : Color.lerp(colors.surfaceElevated, Colors.black, 0.18)!.withValues(alpha: 0.45);
 
     return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1347,20 +1348,20 @@ class RitmoNeuMasterCard extends StatelessWidget {
           color: isDark
               ? Colors.white.withValues(alpha: 0.08)
               : Color.lerp(colors.surfaceElevated, Colors.white, 0.70)!,
-          width: 1.0,
+          width: 0.8,
         ),
         boxShadow: [
           BoxShadow(
             color: shadowDarkColor,
-            offset: const Offset(3, 3.5),
-            blurRadius: 7,
+            offset: const Offset(2, 2.5),
+            blurRadius: 5,
           ),
           BoxShadow(
             color: isDark
                 ? Colors.white.withValues(alpha: 0.04)
                 : Colors.white.withValues(alpha: 0.95),
-            offset: const Offset(-2.5, -2.5),
-            blurRadius: 5,
+            offset: const Offset(-1.5, -1.5),
+            blurRadius: 3,
           ),
         ],
       ),
@@ -1369,17 +1370,17 @@ class RitmoNeuMasterCard extends StatelessWidget {
         children: [
           Icon(
             icon,
-            size: 15,
+            size: 12,
             color: colors.textSecondary,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           Expanded(
             child: Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: 10.5,
                 fontWeight: FontWeight.w800,
                 fontFamily: 'Vazirmatn',
                 color: colors.textPrimary,
@@ -1398,14 +1399,14 @@ class RitmoNeuMasterCard extends StatelessWidget {
     required String timeRange,
   }) {
     final shadowDarkColor = isDark
-        ? Colors.black.withValues(alpha: 0.45)
-        : Color.lerp(colors.surfaceElevated, Colors.black, 0.18)!.withValues(alpha: 0.55);
+        ? Colors.black.withValues(alpha: 0.35)
+        : Color.lerp(colors.surfaceElevated, Colors.black, 0.18)!.withValues(alpha: 0.45);
 
     return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(19),
+        borderRadius: BorderRadius.circular(15),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1423,20 +1424,20 @@ class RitmoNeuMasterCard extends StatelessWidget {
           color: isDark
               ? Colors.white.withValues(alpha: 0.07)
               : Color.lerp(colors.surfaceElevated, Colors.white, 0.70)!,
-          width: 1.0,
+          width: 0.8,
         ),
         boxShadow: [
           BoxShadow(
             color: shadowDarkColor,
-            offset: const Offset(3.5, 4),
-            blurRadius: 8,
+            offset: const Offset(2.5, 3),
+            blurRadius: 6,
           ),
           BoxShadow(
             color: isDark
                 ? Colors.white.withValues(alpha: 0.04)
                 : Colors.white.withValues(alpha: 0.95),
-            offset: const Offset(-2.5, -2.5),
-            blurRadius: 5,
+            offset: const Offset(-2, -2),
+            blurRadius: 4,
           ),
         ],
       ),
@@ -1444,18 +1445,18 @@ class RitmoNeuMasterCard extends StatelessWidget {
         children: [
           Icon(
             CupertinoIcons.clock,
-            size: 15,
+            size: 13,
             color: colors.textSecondary,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Expanded(
             child: Text(
               timeRange,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.5,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.3,
                 fontFamily: 'Vazirmatn',
                 color: colors.textPrimary,
               ),
@@ -1473,10 +1474,10 @@ class RitmoNeuMasterCard extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(19),
+        borderRadius: BorderRadius.circular(15),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1494,22 +1495,22 @@ class RitmoNeuMasterCard extends StatelessWidget {
           color: isDark
               ? color.withValues(alpha: 0.40)
               : Colors.white,
-          width: 1.0,
+          width: 0.8,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withValues(alpha: 0.45)
-                : const Color(0xFFB5C6D6).withValues(alpha: 0.65),
-            offset: const Offset(3.5, 4),
-            blurRadius: 8,
+                ? Colors.black.withValues(alpha: 0.35)
+                : const Color(0xFFB5C6D6).withValues(alpha: 0.50),
+            offset: const Offset(2.5, 3),
+            blurRadius: 6,
           ),
           BoxShadow(
             color: isDark
                 ? Colors.white.withValues(alpha: 0.04)
                 : Colors.white.withValues(alpha: 0.95),
-            offset: const Offset(-2.5, -2.5),
-            blurRadius: 5,
+            offset: const Offset(-2, -2),
+            blurRadius: 4,
           ),
         ],
       ),
@@ -1517,11 +1518,11 @@ class RitmoNeuMasterCard extends StatelessWidget {
         children: [
           // بج مربع گوشه‌گرد سه‌بعدی ساعت شنی
           Container(
-            width: 24,
-            height: 24,
+            width: 20,
+            height: 20,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -1540,24 +1541,24 @@ class RitmoNeuMasterCard extends StatelessWidget {
                   color: isDark
                       ? Colors.black.withValues(alpha: 0.35)
                       : color.withValues(alpha: 0.20),
-                  offset: const Offset(1, 1.5),
-                  blurRadius: 3,
+                  offset: const Offset(1, 1),
+                  blurRadius: 2,
                 ),
               ],
             ),
             child: Icon(
               CupertinoIcons.hourglass,
-              size: 13,
+              size: 11,
               color: isDark
                   ? Color.lerp(color, Colors.white, 0.65)!
                   : Color.lerp(color, Colors.black, 0.40)!,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Text(
             'باقی‌مانده:',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.w700,
               fontFamily: 'Vazirmatn',
               color: isDark
@@ -1565,12 +1566,12 @@ class RitmoNeuMasterCard extends StatelessWidget {
                   : Color.lerp(color, Colors.black, 0.35)!,
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 5),
           Expanded(
             child: Text(
               remainingTime,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: 11.5,
                 fontWeight: FontWeight.w900,
                 fontFamily: 'Vazirmatn',
                 color: isDark
@@ -1592,9 +1593,9 @@ class RitmoNeuMasterCard extends StatelessWidget {
     required VoidCallback? onTap,
   }) {
     return RitmoNeuButton(
-      height: 36,
-      radius: 18,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      height: 28,
+      radius: 14,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       onTap: onTap ?? () {},
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1605,18 +1606,18 @@ class RitmoNeuMasterCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10.5,
                 fontWeight: FontWeight.w800,
                 fontFamily: 'Vazirmatn',
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                color: colors.textPrimary,
               ),
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 3),
           Icon(
             CupertinoIcons.chevron_left,
-            size: 11,
-            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            size: 10,
+            color: colors.textSecondary,
           ),
         ],
       ),

@@ -251,7 +251,7 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
       remainingTime: toPersianDigits(remainingStr),
       activeColor: activeColor,
       gaugeWidget: Realm24hDial(
-        size: 110,
+        size: 92,
         activeZoneId: zoneId,
         activeZoneColor: activeColor,
         activeZoneName: chipName,
@@ -263,11 +263,12 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
         surfaceColor: colors.surfaceElevated,
         surfaceSunkenColor: colors.surfaceSunken,
         textColor: colors.textPrimary,
+        showHourLabels: false,
       ),
       actionButtonText: 'مدیریت قلمرو',
       onActionTap: _openManagementSheet,
       onTap: _openManagementSheet,
-      height: 224,
+      height: widget.height,
     );
   }
 

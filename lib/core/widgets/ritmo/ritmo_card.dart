@@ -1106,31 +1106,39 @@ class RitmoNeuMasterCard extends StatelessWidget {
             margin: margin,
             borderRadius: BorderRadius.circular(28),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            borderColor: effectiveColor.withValues(alpha: isDark ? 0.35 : 0.25),
-            borderWidth: 1.0,
+            backgroundColor: Color.lerp(colors.surfaceElevated, effectiveColor, isDark ? 0.05 : 0.03),
+            borderColor: effectiveColor.withValues(alpha: isDark ? 0.60 : 0.45),
+            borderWidth: 1.2,
             customShadows: [
-              // هاله پرمیوم رنگ قلمرو فعال دور کارت طبق اکوسیستم اپل (Apple Ambient Luminous Halo)
+              // ۱. هاله بیرونی نرم و فراگیر نوری (Broad Soft Ambient Dispersion)
               BoxShadow(
-                color: effectiveColor.withValues(alpha: isDark ? 0.22 : 0.14),
-                blurRadius: 22,
-                spreadRadius: 0,
-                offset: const Offset(0, 3),
+                color: effectiveColor.withValues(alpha: isDark ? 0.36 : 0.24),
+                blurRadius: 32,
+                spreadRadius: 3.5,
+                offset: const Offset(0, 4),
               ),
-              // سایه فیزیکی نئومورفیک تیره عمیق
+              // ۲. هاله متمرکز پرنور دور لبه‌ها (Intense Rim Glow)
+              BoxShadow(
+                color: effectiveColor.withValues(alpha: isDark ? 0.45 : 0.32),
+                blurRadius: 16,
+                spreadRadius: 1.0,
+                offset: const Offset(0, 2),
+              ),
+              // ۳. سایه فیزیکی نئومورفیک تیره عمیق
               BoxShadow(
                 color: isDark
-                    ? Colors.black.withValues(alpha: 0.50)
-                    : Color.lerp(colors.surfaceElevated, Colors.black, 0.18)!.withValues(alpha: 0.55),
+                    ? Colors.black.withValues(alpha: 0.45)
+                    : Color.lerp(colors.surfaceElevated, Colors.black, 0.16)!.withValues(alpha: 0.45),
                 blurRadius: 14,
                 offset: const Offset(3.5, 4.5),
               ),
-              // سایه فیزیکی نئومورفیک لبه روشن
+              // ۴. سایه فیزیکی نئومورفیک لبه روشن
               BoxShadow(
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.04)
+                    ? Colors.white.withValues(alpha: 0.05)
                     : Colors.white.withValues(alpha: 0.95),
-                blurRadius: 8,
-                offset: const Offset(-3, -3),
+                blurRadius: 7,
+                offset: const Offset(-2.5, -2.5),
               ),
             ],
             child: SizedBox(

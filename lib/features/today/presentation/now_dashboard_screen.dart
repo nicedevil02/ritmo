@@ -75,6 +75,7 @@ import 'package:ritmo/features/today/presentation/widgets/dashboard/next_action_
 import 'package:ritmo/features/today/presentation/widgets/dashboard/today_path_progress_banner.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_dashboard_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/energy_dashboard_card.dart';
+import 'package:ritmo/features/today/presentation/widgets/dashboard/morning_checkin_pill_banner.dart';
 import 'package:ritmo/features/today/presentation/widgets/morning_checkin_sheet.dart';
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
 import 'package:ritmo/features/worship/presentation/worship_screen.dart';
@@ -1045,6 +1046,18 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                     // ۰. هشدارهای بحرانی — بالاتر از همه چیز
                     if (alerts.isNotEmpty) ...[
                       _enter(0, CriticalAlertsCard(alerts: alerts)),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // ۰.۲ بنر کپسولی هوشمند ارزیابی انرژی صبحگاهی
+                    if (_needCheckin &&
+                        heroData.type != HeroPriorityType.morningCheckIn) ...[
+                      _enter(
+                        0,
+                        MorningCheckinPillBanner(
+                          onTap: _showMorningCheckinSheet,
+                        ),
+                      ),
                       const SizedBox(height: 16),
                     ],
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -598,23 +599,29 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
   /// پیشرفت واقعی مسیر امروز — اول از اسنپشات Agenda، در نبود آن از تایملاین.
   ({double ratio, int done, int remaining, int total}) _todayProgress() {
     final snapshot = _todaySnapshot;
+    final timelineDone = _timelineItems.where((i) => i['isCompleted'] == true).length;
+    final timelineTotal = _timelineItems.length;
+
     if (snapshot != null) {
-      final total = snapshot.completedCount + snapshot.remainingCount;
+      final done = math.max(snapshot.completedCount, timelineDone);
+      final remaining = snapshot.remainingCount;
+      final total = done + remaining;
       if (total > 0) {
         return (
-          ratio: snapshot.completedCount / total,
-          done: snapshot.completedCount,
-          remaining: snapshot.remainingCount,
+          ratio: done / total,
+          done: done,
+          remaining: remaining,
           total: total,
         );
       }
     }
-    final total = _timelineItems.length;
-    final done = _timelineItems.where((i) => i['isCompleted'] == true).length;
+
+    final total = timelineTotal;
+    final done = timelineDone;
     return (
       ratio: total == 0 ? 0.0 : done / total,
       done: done,
-      remaining: total - done,
+      remaining: total > done ? total - done : 0,
       total: total,
     );
   }
@@ -1386,6 +1393,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                     : 'مشاهده'),
           onPrimaryTap: () => _openAgendaItem(chosen),
           isCurrentActive: isNow,
+          isOverdue: decision.isOverdue,
+          domain: chosen.domain,
+          category: chosen.category,
           previousTaskTitle: decision.previousItem?.title,
           isPreviousTaskCompleted: decision.previousItem?.isCompleted,
           nextTaskTitle: decision.nextItem?.title,
@@ -1425,11 +1435,14 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
           title: title,
           subtitle: foundUpcoming
               ? 'زمان: ${PersianDigits.convert(timeStr)}'
-              : 'عقبافتاده · ${PersianDigits.convert(timeStr)}',
+              : 'عقب‌افتاده · ${PersianDigits.convert(timeStr)}',
           primaryCtaLabel: 'ثبت / شروع',
           onPrimaryTap: () {
             if (routine != null) _showNiyyahSheet(routine);
           },
+          isOverdue: !foundUpcoming,
+          category: routine?.category,
+          domain: AgendaDomain.routine,
         );
 
       // چکاین صبحگاهی

@@ -1,15 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/next_action_hero.dart';
 
-/// کارت هیروی «تمرکز اکنون» — بازطراحی مدرن NextActionHero.
+/// کارت هیروی «تمرکز اکنون» — متصل به سیستم کارت‌های مرجع نئومورفیک ریتمو.
 ///
-/// مدل داده ([NextActionHeroData]) و رتبه‌بند اولویت (HomeFocusRanker) دست‌نخورده‌اند؛
-/// این ویجت بخش نمایش تمرکز کنونی است: تُن رنگی اختصاصی هر اولویت، هالهٔ نور،
-/// دکمهٔ اقدام با هدف لمسی ۵۴ پیکسل و نوار تایم‌لاین کارهای قبل و بعد در زیر دکمه.
+/// با حفظ کامل موتور رنگ‌های پویای دامنه‌ای (عبادت=سبز، ورزش=نارنجی، دارو=قرمز، خواب=بنفش، کار=آبی، عقب‌افتاده=کهربایی).
 class HomeFocusHero extends StatefulWidget {
   const HomeFocusHero({
     super.key,
@@ -65,54 +66,15 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final data = widget.data;
     final tone = _toneFor(colors, data);
-    final radius = BorderRadius.circular(RitmoRadius.hero + 4);
+    final radius = BorderRadius.circular(24);
 
-    final card = Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: radius,
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [
-            tone.withValues(alpha: isDark ? 0.26 : 0.16),
-            (isDark ? colors.card : Colors.white)
-                .withValues(alpha: isDark ? 0.55 : 0.88),
-          ],
-        ),
-        border: Border.all(
-          color: tone.withValues(alpha: isDark ? 0.38 : 0.26),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: tone.withValues(alpha: isDark ? 0.16 : 0.12),
-            blurRadius: 26,
-            spreadRadius: -8,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: radius,
-        child: Stack(
-          children: [
-            Positioned(top: -36, left: -24, child: _glow(tone, 110)),
-            Positioned(
-              bottom: -40,
-              right: -20,
-              child: _glow(colors.primary, 100),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: RitmoSpacing.md + 2,
-                vertical: RitmoSpacing.md,
-              ),
-              child: _content(context, colors, tone),
-            ),
-          ],
-        ),
-      ),
+    final card = RitmoCard.neumorphic(
+      borderRadius: radius,
+      borderColor: tone.withValues(alpha: isDark ? 0.38 : 0.28),
+      borderWidth: 1.2,
+      padding: const EdgeInsets.all(16),
+      enableSpring: true,
+      child: _content(context, colors, tone, isDark),
     );
 
     final semantic = Semantics(
@@ -130,14 +92,14 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
       animation: pulse,
       builder: (context, child) {
         final t = Curves.easeInOut.transform(pulse.value);
-        return DecoratedBox(
+        return Container(
           decoration: BoxDecoration(
             borderRadius: radius,
             boxShadow: [
               BoxShadow(
-                color: tone.withValues(alpha: 0.10 + 0.16 * t),
-                blurRadius: 22 + 16 * t,
-                spreadRadius: -6,
+                color: tone.withValues(alpha: 0.08 + 0.12 * t),
+                blurRadius: 20 + 10 * t,
+                spreadRadius: -4,
               ),
             ],
           ),
@@ -148,27 +110,8 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
     );
   }
 
-  Widget _glow(Color color, double size) {
-    return IgnorePointer(
-      child: Container(
-        height: size,
-        width: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              color.withValues(alpha: 0.20),
-              color.withValues(alpha: 0.0),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _content(BuildContext context, RitmoColors colors, Color tone) {
+  Widget _content(BuildContext context, RitmoColors colors, Color tone, bool isDark) {
     final data = widget.data;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final onTone = ThemeData.estimateBrightnessForColor(tone) == Brightness.dark
         ? Colors.white
         : Colors.black87;
@@ -177,30 +120,42 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // ردیف نشانگر وضعیت + آیکون فرورفته نئومورفیک
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(
-                color: tone.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(RitmoRadius.pill),
-                border: Border.all(color: tone.withValues(alpha: 0.30)),
+                color: tone.withValues(alpha: isDark ? 0.18 : 0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: tone.withValues(alpha: isDark ? 0.35 : 0.25),
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    height: 5.5,
-                    width: 5.5,
-                    decoration:
-                        BoxDecoration(color: tone, shape: BoxShape.circle),
+                    height: 6,
+                    width: 6,
+                    decoration: BoxDecoration(
+                      color: tone,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: tone.withValues(alpha: 0.5),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(width: 5),
                   Text(
                     _badgeText(data),
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w800,
+                      fontFamily: 'Vazirmatn',
                       color: tone,
                     ),
                   ),
@@ -208,33 +163,42 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
               ),
             ),
             const Spacer(),
-            Container(
-              height: 28,
-              width: 28,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: tone.withValues(alpha: 0.14),
-                shape: BoxShape.circle,
-                border: Border.all(color: tone.withValues(alpha: 0.26)),
+            RitmoNeuSurface(
+              height: 38,
+              width: 38,
+              radius: 19,
+              sunken: true,
+              padding: EdgeInsets.zero,
+              glowColor: tone.withValues(alpha: 0.45),
+              child: Center(
+                child: Icon(
+                  _iconFor(data),
+                  size: 18,
+                  color: tone,
+                ),
               ),
-              child: Icon(_iconFor(data), size: 14, color: tone),
             ),
           ],
         ),
-        const SizedBox(height: RitmoSpacing.sm),
+        const SizedBox(height: 10),
+
+        // عنوان اقدام
         Text(
           toPersianDigits(data.title),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 17,
-            height: 1.28,
+            fontSize: 17.5,
+            height: 1.3,
             fontWeight: FontWeight.w800,
+            fontFamily: 'Vazirmatn',
             color: colors.textPrimary,
           ),
         ),
+
+        // توضیح / زمان‌بندی
         if (data.subtitle.isNotEmpty) ...[
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Text(
             toPersianDigits(data.subtitle),
             maxLines: 2,
@@ -242,51 +206,70 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
             style: TextStyle(
               fontSize: 12,
               height: 1.4,
+              fontFamily: 'Vazirmatn',
               color: colors.textSecondary,
             ),
           ),
         ],
-        const SizedBox(height: RitmoSpacing.md),
+        const SizedBox(height: 14),
+
+        // دکمه اقدام با فیدبک لمسی و رنگ دامنه‌ای
         Row(
           children: [
             Expanded(
               child: Semantics(
                 button: true,
                 label: data.primaryCtaLabel,
-                child: SizedBox(
-                  height: 42,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: tone,
-                      foregroundColor: onTone,
-                      elevation: 0,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(RitmoRadius.field),
-                      ),
-                    ),
-                    onPressed: () {
-                      RitmoHaptics.confirm();
-                      data.onPrimaryTap();
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(_ctaIconFor(data), size: 16),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            data.primaryCtaLabel,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
+                child: Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        tone,
+                        Color.lerp(tone, isDark ? Colors.black : Colors.white, 0.12)!,
                       ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: tone.withValues(alpha: isDark ? 0.35 : 0.28),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        RitmoHaptics.confirm();
+                        data.onPrimaryTap();
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(_ctaIconFor(data), size: 17, color: onTone),
+                            const SizedBox(width: 7),
+                            Flexible(
+                              child: Text(
+                                data.primaryCtaLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w800,
+                                  fontFamily: 'Vazirmatn',
+                                  color: onTone,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -299,7 +282,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                 button: true,
                 label: data.secondaryCtaLabel,
                 child: SizedBox(
-                  height: 42,
+                  height: 44,
                   child: TextButton(
                     onPressed: () {
                       RitmoHaptics.tap();
@@ -310,6 +293,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
+                        fontFamily: 'Vazirmatn',
                         color: colors.textSecondary,
                       ),
                     ),
@@ -319,7 +303,8 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
             ],
           ],
         ),
-        // نوار قبل و بعد: قرارگیری در زیر دکمهٔ ثبت با چیدمان اختصاصی و بدون باگ
+
+        // نوار قبل و بعد: قرارگیری در زیر دکمهٔ ثبت
         if (data.isCurrentActive &&
             (data.previousTaskTitle != null || data.nextTaskTitle != null)) ...[
           const SizedBox(height: RitmoSpacing.md),
@@ -348,48 +333,37 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7.5),
         decoration: BoxDecoration(
           color: (isDark ? Colors.black : Colors.white)
-              .withValues(alpha: isDark ? 0.32 : 0.60),
-          borderRadius: BorderRadius.circular(RitmoRadius.card - 2),
+              .withValues(alpha: isDark ? 0.35 : 0.45),
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
           border: Border.all(
-            color: tone.withValues(alpha: isDark ? 0.25 : 0.18),
-            width: 0.9,
+            color: tone.withValues(alpha: isDark ? 0.22 : 0.14),
+            width: 0.8,
           ),
         ),
         child: Row(
           children: [
-            // ۱. کار قبلی (در RTL سمت راست)
+            // کار قبلی
             if (hasPrev) ...[
               Expanded(
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       data.isPreviousTaskCompleted == true
                           ? CupertinoIcons.checkmark_circle_fill
                           : CupertinoIcons.circle,
-                      size: 13.5,
+                      size: 13,
                       color: data.isPreviousTaskCompleted == true
                           ? colors.success
-                          : colors.textTertiary,
+                          : colors.textSecondary.withValues(alpha: 0.6),
                     ),
                     const SizedBox(width: 4.5),
-                    Text(
-                      'قبل:',
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800,
-                        color: colors.textTertiary,
-                      ),
-                    ),
-                    const SizedBox(width: 3.5),
                     Flexible(
                       child: Text(
                         toPersianDigits(prevTitle),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 10.5,
                           color: colors.textSecondary,
                           decoration: data.isPreviousTaskCompleted == true
                               ? TextDecoration.lineThrough
@@ -402,88 +376,37 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
               ),
             ],
 
-            // جداکننده جریان زمانی (از راست به چپ در زبان فارسی)
-            if (hasPrev && hasNext) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Container(
-                  padding: const EdgeInsets.all(2.5),
-                  decoration: BoxDecoration(
-                    color: tone.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.west_rounded,
-                    size: 10,
-                    color: tone,
-                  ),
-                ),
+            if (hasPrev && hasNext)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 6),
+                width: 1,
+                height: 12,
+                color: colors.border.withValues(alpha: 0.5),
               ),
-            ],
 
-            // ۲. کار بعدی (در RTL سمت چپ)
+            // کار بعدی
             if (hasNext) ...[
               Expanded(
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      'بعد:',
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800,
-                        color: tone,
-                      ),
+                    Icon(
+                      CupertinoIcons.arrow_left,
+                      size: 11,
+                      color: colors.textSecondary.withValues(alpha: 0.7),
                     ),
-                    const SizedBox(width: 3.5),
-                    Flexible(
+                    const SizedBox(width: 4.5),
+                    Expanded(
                       child: Text(
                         toPersianDigits(nextTitle),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
                           color: colors.textPrimary,
                         ),
                       ),
                     ),
-                    if (data.nextTaskTime != null &&
-                        data.nextTaskTime!.isNotEmpty) ...[
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 1.5),
-                        decoration: BoxDecoration(
-                          color: tone.withValues(alpha: 0.14),
-                          borderRadius:
-                              BorderRadius.circular(RitmoRadius.pill),
-                          border: Border.all(
-                            color: tone.withValues(alpha: 0.22),
-                            width: 0.6,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              CupertinoIcons.clock,
-                              size: 9.5,
-                              color: tone,
-                            ),
-                            const SizedBox(width: 2.5),
-                            Text(
-                              toPersianDigits(data.nextTaskTime ?? ''),
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w800,
-                                color: tone,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -495,18 +418,64 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
   }
 
   static Color _toneFor(RitmoColors colors, NextActionHeroData data) {
-    if (data.isMedicalAlert) return colors.medicalRed;
+    if (data.isMedicalAlert || data.type == HeroPriorityType.medicalSafety) {
+      return colors.medicalRed;
+    }
+    if (data.domain == AgendaDomain.prayer ||
+        data.domain == AgendaDomain.mustahab ||
+        data.domain == AgendaDomain.worshipDebt ||
+        data.category == Category.religious ||
+        data.title.contains('نماز') ||
+        data.title.contains('قرآن') ||
+        data.title.contains('دعا')) {
+      return const Color(0xFF10B981); // Emerald Worship
+    }
+    if (data.domain == AgendaDomain.sport ||
+        data.category == Category.fitness ||
+        data.title.contains('ورزش') ||
+        data.title.contains('تمرین')) {
+      return const Color(0xFFF97316); // Exercise Orange
+    }
+    if (data.domain == AgendaDomain.medicine || data.category == Category.medical) {
+      return colors.medicalRed;
+    }
+    if (data.type == HeroPriorityType.activeTimer) {
+      return const Color(0xFF0EA5E9); // Cyan / Blue Active Timer
+    }
+    if (data.isOverdue) {
+      return const Color(0xFFF59E0B); // Amber / Gold Overdue
+    }
     return switch (data.type) {
-      HeroPriorityType.activeTimer => colors.primary,
+      HeroPriorityType.activeTimer => const Color(0xFF0EA5E9),
       HeroPriorityType.overdueOrNextItem => colors.primary,
       HeroPriorityType.medicalSafety => colors.medicalRed,
-      HeroPriorityType.morningCheckIn => colors.accent,
+      HeroPriorityType.morningCheckIn => colors.goldAccent,
       HeroPriorityType.emptyState => colors.reflectionAccent,
     };
   }
 
   static IconData _iconFor(NextActionHeroData data) {
+    if (data.isMedicalAlert || data.type == HeroPriorityType.medicalSafety) {
+      return CupertinoIcons.bandage_fill;
+    }
+    if (data.domain == AgendaDomain.prayer ||
+        data.domain == AgendaDomain.mustahab ||
+        data.domain == AgendaDomain.worshipDebt ||
+        data.category == Category.religious ||
+        data.title.contains('نماز') ||
+        data.title.contains('قرآن') ||
+        data.title.contains('دعا')) {
+      return CupertinoIcons.sparkles;
+    }
+    if (data.domain == AgendaDomain.sport ||
+        data.category == Category.fitness) {
+      return CupertinoIcons.flame_fill;
+    }
+    if (data.domain == AgendaDomain.medicine || data.category == Category.medical) {
+      return CupertinoIcons.bandage_fill;
+    }
     if (data.isCurrentActive) return Icons.bolt_rounded;
+    if (data.isOverdue) return CupertinoIcons.clock_fill;
     return switch (data.type) {
       HeroPriorityType.activeTimer => Icons.timer_outlined,
       HeroPriorityType.overdueOrNextItem => CupertinoIcons.flag_fill,
@@ -523,12 +492,13 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
       HeroPriorityType.overdueOrNextItem => Icons.play_arrow_rounded,
       HeroPriorityType.medicalSafety => CupertinoIcons.capsule_fill,
       HeroPriorityType.morningCheckIn => CupertinoIcons.sunrise_fill,
-      HeroPriorityType.emptyState => CupertinoIcons.add,
+      HeroPriorityType.emptyState => Icons.add,
     };
   }
 
   static String _badgeText(NextActionHeroData data) {
     if (data.isCurrentActive) return 'اکنون';
+    if (data.isOverdue) return 'عقب‌افتاده';
     return switch (data.type) {
       HeroPriorityType.activeTimer => 'در حال اجرا',
       HeroPriorityType.overdueOrNextItem => 'اقدام بعدی',

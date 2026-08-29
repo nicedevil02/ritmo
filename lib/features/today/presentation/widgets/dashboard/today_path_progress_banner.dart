@@ -6,6 +6,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/calendar/presentation/logic/today_calendar_convergence_helper.dart';
 
 /// بنر اختصاصی و پریمیوم «مسیر امروز» به همراه قابلیت گسترش کشویی (Expandable)
@@ -96,39 +97,17 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
     final isCompleted = clamped >= 1.0 && widget.totalCount > 0;
 
     final accentColor = isCompleted ? colors.success : colors.primary;
-    final radius = BorderRadius.circular(RitmoRadius.cardLarge);
+    final radius = BorderRadius.circular(22);
 
     final content = AnimatedSize(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOutCubic,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-            horizontal: RitmoSpacing.md + 2, vertical: RitmoSpacing.sm + 4),
-        decoration: BoxDecoration(
-          borderRadius: radius,
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              accentColor.withValues(alpha: isDark ? 0.22 : 0.12),
-              (isDark ? colors.card : Colors.white)
-                  .withValues(alpha: isDark ? 0.65 : 0.90),
-            ],
-          ),
-          border: Border.all(
-            color: accentColor.withValues(alpha: isDark ? 0.32 : 0.22),
-            width: 1.1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: accentColor.withValues(alpha: isDark ? 0.12 : 0.08),
-              blurRadius: 18,
-              spreadRadius: -6,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
+      child: RitmoCard.neumorphic(
+        borderRadius: radius,
+        borderColor: accentColor.withValues(alpha: isDark ? 0.35 : 0.25),
+        borderWidth: 1.2,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        enableSpring: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -143,7 +122,7 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
               isDark,
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
             // نوار پیشرفت چندلایه با انیمیشن روان و مارکرهای مرحله‌ای
             _buildProgressBar(context, colors, accentColor, clamped, isDark),
@@ -178,38 +157,36 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
 
     return InkWell(
       onTap: hasDetails ? _toggleExpanded : widget.onTap,
-      borderRadius: BorderRadius.circular(RitmoRadius.badge + 2),
+      borderRadius: BorderRadius.circular(16),
       child: Row(
         children: [
-          // آیکون شاخص
-          Container(
-            height: 28,
-            width: 28,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(RitmoRadius.badge + 1),
-              border: Border.all(
-                color: accentColor.withValues(alpha: 0.28),
-                width: 0.8,
+          // آیکون شاخص فرورفته نئومورفیک
+          RitmoNeuSurface(
+            height: 34,
+            width: 34,
+            radius: 17,
+            sunken: true,
+            padding: EdgeInsets.zero,
+            glowColor: accentColor.withValues(alpha: 0.40),
+            child: Center(
+              child: Icon(
+                isCompleted
+                    ? CupertinoIcons.sparkles
+                    : CupertinoIcons.compass_fill,
+                size: 17,
+                color: accentColor,
               ),
             ),
-            child: Icon(
-              isCompleted
-                  ? CupertinoIcons.sparkles
-                  : CupertinoIcons.compass_fill,
-              size: 15,
-              color: accentColor,
-            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
 
           // عنوان
           Text(
             'مسیر امروز',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 13.5,
               fontWeight: FontWeight.w800,
+              fontFamily: 'Vazirmatn',
               color: colors.textPrimary,
             ),
           ),
@@ -217,12 +194,12 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
 
           // چیپ نشان‌دهندهٔ درصد
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(RitmoRadius.pill),
+              color: accentColor.withValues(alpha: isDark ? 0.20 : 0.14),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: accentColor.withValues(alpha: 0.26),
+                color: accentColor.withValues(alpha: isDark ? 0.40 : 0.28),
                 width: 0.8,
               ),
             ),
@@ -231,6 +208,7 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
+                fontFamily: 'Vazirmatn',
                 color: accentColor,
               ),
             ),
@@ -245,7 +223,7 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
               children: [
                 Icon(
                   CupertinoIcons.checkmark_seal_fill,
-                  size: 13.5,
+                  size: 14,
                   color: colors.success,
                 ),
                 const SizedBox(width: 4),
@@ -254,6 +232,7 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
+                    fontFamily: 'Vazirmatn',
                     color: colors.success,
                   ),
                 ),
@@ -261,11 +240,11 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
             ),
           ] else if (widget.totalCount > 0) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
               decoration: BoxDecoration(
                 color: (isDark ? Colors.white : Colors.black)
                     .withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: colors.border.withValues(alpha: 0.4),
                   width: 0.7,
@@ -276,6 +255,7 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
                 style: TextStyle(
                   fontSize: 10.5,
                   fontWeight: FontWeight.w600,
+                  fontFamily: 'Vazirmatn',
                   color: colors.textSecondary,
                 ),
               ),
@@ -286,30 +266,32 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
+                fontFamily: 'Vazirmatn',
                 color: colors.textTertiary,
               ),
             ),
           ],
 
           if (hasDetails) ...[
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             // دکمه فلش چرخان برای باز و بسته کردن جزئیات مسیر
             AnimatedRotation(
               turns: _isExpanded ? 0.5 : 0.0,
               duration: const Duration(milliseconds: 260),
               curve: Curves.easeInOutCubic,
-              child: Container(
-                height: 24,
-                width: 24,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  CupertinoIcons.chevron_down,
-                  size: 12,
-                  color: accentColor,
+              child: RitmoNeuSurface(
+                height: 28,
+                width: 28,
+                radius: 14,
+                sunken: true,
+                padding: EdgeInsets.zero,
+                glowColor: accentColor.withValues(alpha: 0.35),
+                child: Center(
+                  child: Icon(
+                    CupertinoIcons.chevron_down,
+                    size: 13,
+                    color: accentColor,
+                  ),
                 ),
               ),
             ),

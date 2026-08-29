@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/domain/agenda/agenda_item.dart';
+import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
@@ -23,6 +25,9 @@ class NextActionHeroData {
     this.onSecondaryTap,
     this.isMedicalAlert = false,
     this.isCurrentActive = false,
+    this.isOverdue = false,
+    this.domain,
+    this.category,
     this.previousTaskTitle,
     this.isPreviousTaskCompleted,
     this.nextTaskTitle,
@@ -38,6 +43,9 @@ class NextActionHeroData {
   final VoidCallback? onSecondaryTap;
   final bool isMedicalAlert;
   final bool isCurrentActive;
+  final bool isOverdue;
+  final AgendaDomain? domain;
+  final Category? category;
   final String? previousTaskTitle;
   final bool? isPreviousTaskCompleted;
   final String? nextTaskTitle;

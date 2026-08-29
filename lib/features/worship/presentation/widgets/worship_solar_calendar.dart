@@ -165,130 +165,140 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
       children: [
         // Main Premium Solar Calendar Surface Card
         RitmoCard.neumorphic(
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. HEADER: Month Title & Subtitle + Modern Navigation Badges
+              // 1. HEADER: Month Title & Subtitle + Apple-Style Capsule Navigation
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Title + Subtitle Range + Today Shortcut (Tap to Toggle Collapse)
+                  // Title + Subtitle Range + Today Shortcut
                   Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        unawaited(HapticFeedback.selectionClick());
-                        setState(() => _isCollapsed = !_isCollapsed);
-                      },
-                      behavior: HitTestBehavior.opaque,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                '${_monthData.monthName} ${toPersianDigits(_monthData.year.toString())}',
-                                style: TextStyle(
-                                  fontSize: 21,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -0.5,
-                                  color: colors.textPrimary,
-                                  ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              '${_monthData.monthName} ${toPersianDigits(_monthData.year.toString())}',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.3,
+                                color: colors.textPrimary,
                               ),
+                            ),
+                            if (!isSelectedToday) ...[
                               const SizedBox(width: 8),
-                              // Today Button Shortcut (Active whenever selected day is not today)
-                              if (!isSelectedToday)
-                                InkWell(
-                                  onTap: _goToToday,
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
-                                    decoration: BoxDecoration(
-                                      color: colors.primaryContainer,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: colors.primary.withValues(alpha: 0.5),
-                                        width: 1,
-                                      ),
+                              GestureDetector(
+                                onTap: _goToToday,
+                                behavior: HitTestBehavior.opaque,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: colors.primary.withValues(alpha: isDark ? 0.2 : 0.12),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: colors.primary.withValues(alpha: 0.4),
+                                      width: 0.8,
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          CupertinoIcons.arrow_counterclockwise,
-                                          size: 11,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.arrow_counterclockwise,
+                                        size: 10,
+                                        color: colors.primary,
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        'امروز',
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w800,
                                           color: colors.primary,
                                         ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'امروز',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w800,
-                                            color: colors.primary,
-                                            ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${_monthData.gregorianRangeText}  •  ${_monthData.hijriRangeText}',
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w600,
-                              color: colors.textSecondary.withValues(alpha: 0.85),
                               ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          '${_monthData.gregorianRangeText}  •  ${_monthData.hijriRangeText}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textSecondary.withValues(alpha: 0.8),
                           ),
-                        ],
-                      ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
 
-                  // 36x36 Modern Navigation Badges (Collapse Toggle + Prev / Next Month)
-                  Row(
-                    children: [
-                      _buildNavBadge(
-                        icon: _isCollapsed ? CupertinoIcons.chevron_down : CupertinoIcons.chevron_up,
-                        tooltip: _isCollapsed ? 'نمای کامل ماه' : 'نمای هفته',
-                        onTap: () => setState(() => _isCollapsed = !_isCollapsed),
-                        isDark: isDark,
-                        colors: colors,
+                  const SizedBox(width: 8),
+
+                  // Tactile Capsule Navigation Group [ > (ماه بعد) | تغییر نما | < (ماه قبل) ]
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceSunken,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: colors.border.withValues(alpha: isDark ? 0.3 : 0.6),
+                        width: 0.8,
                       ),
-                      const SizedBox(width: 6),
-                      _buildNavBadge(
-                        icon: CupertinoIcons.chevron_forward,
-                        tooltip: 'ماه قبل',
-                        onTap: _goToPrevMonth,
-                        isDark: isDark,
-                        colors: colors,
-                      ),
-                      const SizedBox(width: 6),
-                      _buildNavBadge(
-                        icon: CupertinoIcons.chevron_back,
-                        tooltip: 'ماه بعد',
-                        onTap: _goToNextMonth,
-                        isDark: isDark,
-                        colors: colors,
-                      ),
-                    ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Next Month Button
+                        _buildCapsuleNavButton(
+                          icon: CupertinoIcons.chevron_forward,
+                          onTap: _goToPrevMonth,
+                          colors: colors,
+                          isDark: isDark,
+                        ),
+                        const SizedBox(width: 2),
+
+                        // Collapse/Expand View Toggle
+                        _buildCapsuleNavButton(
+                          icon: _isCollapsed ? CupertinoIcons.chevron_down : CupertinoIcons.chevron_up,
+                          onTap: () {
+                            unawaited(HapticFeedback.selectionClick());
+                            setState(() => _isCollapsed = !_isCollapsed);
+                          },
+                          colors: colors,
+                          isDark: isDark,
+                          highlightColor: colors.primary,
+                        ),
+                        const SizedBox(width: 2),
+
+                        // Prev Month Button
+                        _buildCapsuleNavButton(
+                          icon: CupertinoIcons.chevron_back,
+                          onTap: _goToNextMonth,
+                          colors: colors,
+                          isDark: isDark,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
 
               const SizedBox(height: 14),
 
-              // 2. WEEKDAY BAR (Saturday to Friday) with full names
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 7),
-                decoration: BoxDecoration(
-                  color: colors.surfaceSunken,
-                  borderRadius: BorderRadius.circular(14),
-                ),
+              // 2. WEEKDAY BAR (Saturday to Friday) with full names & micro-typography
+              RitmoCard.neumorphicSunken(
+                padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
@@ -303,11 +313,13 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                 ),
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
 
-              // 3. MONTH GRID (7 Columns) with Modern Squircle Selection
+              // 3. MONTH GRID (7 Columns) with Neumorphic Squircle Selection
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
                 child: LayoutBuilder(
                   key: ValueKey('${_monthData.year}-${_monthData.month}-collapsed:$_isCollapsed-week:$weekStart'),
                   builder: (context, constraints) {
@@ -315,7 +327,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                     const spacing = 5.0;
                     final cellWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
                     final scale = context.textScale;
-                    final cellHeight = (cellWidth * 1.02).clamp(38.0 * scale, 58.0 * scale);
+                    final cellHeight = (cellWidth * 1.05).clamp(42.0 * scale, 58.0 * scale);
 
                     return GridView.builder(
                       shrinkWrap: true,
@@ -352,12 +364,12 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
     );
   }
 
-  Widget _buildNavBadge({
+  Widget _buildCapsuleNavButton({
     required IconData icon,
-    required String tooltip,
     required VoidCallback onTap,
-    required bool isDark,
     required RitmoColors colors,
+    required bool isDark,
+    Color? highlightColor,
   }) {
     return Material(
       color: Colors.transparent,
@@ -366,25 +378,18 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
           unawaited(HapticFeedback.selectionClick());
           onTap();
         },
-        borderRadius: BorderRadius.circular(12),
-        child: Tooltip(
-          message: tooltip,
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: colors.border,
-                width: 1,
-              ),
-            ),
-            child: Icon(
-              icon,
-              size: 17,
-              color: colors.textPrimary,
-            ),
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: colors.surface.withValues(alpha: isDark ? 0.6 : 0.85),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            size: 15,
+            color: highlightColor ?? colors.textPrimary,
           ),
         ),
       ),
@@ -401,12 +406,13 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w800,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.2,
                 color: isFriday
                     ? colors.error
-                    : colors.textSecondary.withValues(alpha: 0.8),
-                ),
+                    : colors.textSecondary.withValues(alpha: 0.85),
+              ),
             ),
           ),
         ),
@@ -424,61 +430,42 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
     final isHoliday = day.isHoliday;
 
     // Card background, border, shadow, text color
-    Decoration decoration;
+    BoxDecoration decoration;
     Color mainTextColor;
 
     if (isSelected) {
-      if (isHoliday) {
-        // Luxury Rose/Coral Gradient for Holiday/Friday selection
-        decoration = BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              colors.error,
-              colors.error,
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: colors.error.withValues(alpha: 0.35),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        );
-        mainTextColor = Colors.white;
-      } else {
-        // Luxury Warm Gold Gradient for standard day selection
-        decoration = BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              colors.primary,
-              colors.primaryPressed,
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: colors.primary.withValues(alpha: 0.35),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        );
-        mainTextColor = Colors.white;
-      }
-    } else if (isToday && isCurrentMonth) {
-      // Elegant Today indicator when not selected
+      final baseAccent = isHoliday ? colors.error : colors.primary;
       decoration = BoxDecoration(
-        color: colors.primaryContainer,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.lerp(baseAccent, Colors.white, isDark ? 0.12 : 0.25)!,
+            baseAccent,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: colors.primary,
-          width: 1.5,
+          color: Colors.white.withValues(alpha: isDark ? 0.25 : 0.45),
+          width: 0.8,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: baseAccent.withValues(alpha: isDark ? 0.40 : 0.32),
+            blurRadius: 10,
+            offset: const Offset(0, 3.5),
+          ),
+        ],
+      );
+      mainTextColor = Colors.white;
+    } else if (isToday && isCurrentMonth) {
+      // Elegant Today indicator when unselected
+      decoration = BoxDecoration(
+        color: colors.primary.withValues(alpha: isDark ? 0.15 : 0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: colors.primary.withValues(alpha: 0.65),
+          width: 1.2,
         ),
       );
       mainTextColor = colors.primary;
@@ -487,10 +474,10 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
 
       if (!isCurrentMonth) {
         mainTextColor = isHoliday
-            ? colors.error.withValues(alpha: 0.28)
+            ? colors.error.withValues(alpha: 0.25)
             : colors.textSecondary.withValues(alpha: 0.25);
       } else if (isHoliday) {
-        mainTextColor = isDark ? colors.error : colors.error;
+        mainTextColor = colors.error;
       } else {
         mainTextColor = colors.textPrimary;
       }
@@ -506,11 +493,11 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Single Primary Solar Day Number
+            // Solar Day Number
             Text(
               toPersianDigits(day.jalali.day.toString()),
               style: TextStyle(
-                fontSize: 18.5,
+                fontSize: 17.5,
                 fontWeight: (isToday || isSelected)
                     ? FontWeight.w900
                     : (isHoliday ? FontWeight.w800 : FontWeight.w700),
@@ -521,14 +508,14 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
 
             const SizedBox(height: 3),
 
-            // Occasion Micro-Dots
+            // Occasion Micro-Jewel Indicators
             if (isCurrentMonth && day.hasOccasions)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: day.occasions.take(3).map((occ) {
                   Color dotColor;
                   if (isSelected) {
-                    dotColor = Colors.white.withValues(alpha: 0.9);
+                    dotColor = Colors.white.withValues(alpha: 0.95);
                   } else {
                     switch (occ.category) {
                       case WorshipOccasionCategory.celebration:
@@ -553,6 +540,13 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                     decoration: BoxDecoration(
                       color: dotColor,
                       shape: BoxShape.circle,
+                      boxShadow: isSelected ? null : [
+                        BoxShadow(
+                          color: dotColor.withValues(alpha: 0.4),
+                          blurRadius: 2,
+                          offset: const Offset(0, 0.5),
+                        ),
+                      ],
                     ),
                   );
                 }).toList(),

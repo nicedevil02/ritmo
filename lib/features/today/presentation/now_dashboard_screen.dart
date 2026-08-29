@@ -719,12 +719,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
             AiDayPlannerLauncher.open(context, onSaved: _loadDashboardData),
       ),
       HomeQuickAction(
-        label: 'مدیریت انرژی',
-        icon: CupertinoIcons.bolt_fill,
-        color: colors.energyAccent,
-        onTap: () => _showEnergyManagementSheet(isDarkMode),
-      ),
-      HomeQuickAction(
         label: 'تقویم امروز',
         icon: CupertinoIcons.calendar,
         color: colors.primary,

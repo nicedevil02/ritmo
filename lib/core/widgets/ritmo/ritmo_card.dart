@@ -2085,7 +2085,7 @@ class RitmoNeuProgressBar extends StatelessWidget {
 
 /// -----------------------------------------------------------------------------
 /// کارت اسکلت لودینگ نئومورفیک (Ritmo Card Skeleton)
-/// با انیمیشن تنفس نوری روان بدون پرش ابعادی
+/// با انیمیشن تنفس نوری روان و چیدمان تطبیقی بدون سرریز و پرش ابعادی
 /// -----------------------------------------------------------------------------
 class RitmoCardSkeleton extends StatefulWidget {
   const RitmoCardSkeleton({
@@ -2093,11 +2093,13 @@ class RitmoCardSkeleton extends StatefulWidget {
     this.height = 140,
     this.borderRadius,
     this.margin,
+    this.padding,
   });
 
   final double height;
   final BorderRadius? borderRadius;
   final EdgeInsetsGeometry? margin;
+  final EdgeInsetsGeometry? padding;
 
   @override
   State<RitmoCardSkeleton> createState() => _RitmoCardSkeletonState();
@@ -2130,11 +2132,20 @@ class _RitmoCardSkeletonState extends State<RitmoCardSkeleton>
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDark;
+    final isCompact = widget.height < 85;
+    final effectivePadding = widget.padding ??
+        (isCompact
+            ? const EdgeInsets.symmetric(horizontal: 14, vertical: 10)
+            : const EdgeInsets.all(14));
+
+    final verticalPadding = effectivePadding is EdgeInsets
+        ? effectivePadding.vertical
+        : 28.0;
 
     return RitmoCard.neumorphic(
       margin: widget.margin,
-      borderRadius: widget.borderRadius ?? BorderRadius.circular(28),
-      padding: const EdgeInsets.all(16),
+      borderRadius: widget.borderRadius ?? BorderRadius.circular(24),
+      padding: effectivePadding,
       child: AnimatedBuilder(
         animation: _animation,
         builder: (context, child) {
@@ -2144,82 +2155,190 @@ class _RitmoCardSkeletonState extends State<RitmoCardSkeleton>
               : const Color(0xFFCAD4E2).withValues(alpha: opacity * 0.45);
 
           return SizedBox(
-            height: widget.height - 32,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: boneColor,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            height: 14,
-                            width: 120,
-                            decoration: BoxDecoration(
-                              color: boneColor,
-                              borderRadius: BorderRadius.circular(7),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            height: 10,
-                            width: 180,
-                            decoration: BoxDecoration(
-                              color: boneColor,
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: boneColor,
-                    borderRadius: BorderRadius.circular(7),
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      height: 28,
-                      width: 80,
-                      decoration: BoxDecoration(
-                        color: boneColor,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    Container(
-                      height: 28,
-                      width: 110,
-                      decoration: BoxDecoration(
-                        color: boneColor,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            height: (widget.height - verticalPadding).clamp(24.0, double.infinity),
+            child: _buildAdaptiveContent(widget.height, boneColor),
           );
         },
       ),
     );
+  }
+
+  Widget _buildAdaptiveContent(double h, Color boneColor) {
+    if (h < 85) {
+      // فرمت فشرده/کپسولی (مانند بنر مسیر امروز و نوارهای باریک)
+      return Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: boneColor,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 11,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: boneColor,
+                    borderRadius: BorderRadius.circular(5.5),
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Container(
+                  height: 8,
+                  width: 140,
+                  decoration: BoxDecoration(
+                    color: boneColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            height: 22,
+            width: 46,
+            decoration: BoxDecoration(
+              color: boneColor,
+              borderRadius: BorderRadius.circular(11),
+            ),
+          ),
+        ],
+      );
+    } else if (h <= 135) {
+      // فرمت متوسط (مانند نبض امروز، تجربه امروز و قلمرو)
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: boneColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 12,
+                      width: 110,
+                      decoration: BoxDecoration(
+                        color: boneColor,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 8,
+                      width: 160,
+                      decoration: BoxDecoration(
+                        color: boneColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Container(
+            height: 12,
+            decoration: BoxDecoration(
+              color: boneColor,
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+        ],
+      );
+    } else {
+      // فرمت بزرگ (مانند هیرو فوکوس، انرژی و سیستم‌های فعال)
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: boneColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 13,
+                      width: 120,
+                      decoration: BoxDecoration(
+                        color: boneColor,
+                        borderRadius: BorderRadius.circular(6.5),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 9,
+                      width: 170,
+                      decoration: BoxDecoration(
+                        color: boneColor,
+                        borderRadius: BorderRadius.circular(4.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Container(
+            height: 14,
+            decoration: BoxDecoration(
+              color: boneColor,
+              borderRadius: BorderRadius.circular(7),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                height: 26,
+                width: 75,
+                decoration: BoxDecoration(
+                  color: boneColor,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+              ),
+              Container(
+                height: 26,
+                width: 105,
+                decoration: BoxDecoration(
+                  color: boneColor,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
   }
 }
 

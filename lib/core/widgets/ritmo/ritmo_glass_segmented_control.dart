@@ -133,20 +133,20 @@ class RitmoGlassSegmentedControl<T> extends StatelessWidget {
         width: 0.9,
       );
       pillShadows = [
-        // سایه عمق‌بخش معلق
+        // سایه ملایم و متوازن بدون سوگیری نامتقارن به سمت پایین
         BoxShadow(
           color: isDark
-              ? Colors.black.withValues(alpha: 0.45)
-              : const Color(0xFF94A3B8).withValues(alpha: 0.35),
-          offset: const Offset(0, 2),
-          blurRadius: 6,
+              ? Colors.black.withValues(alpha: 0.35)
+              : const Color(0xFF0F172A).withValues(alpha: 0.12),
+          offset: const Offset(0, 1.0),
+          blurRadius: 3.5,
           spreadRadius: 0,
         ),
         // هالهٔ رنگی ملایم اکسنت (Soft Ambient Glow)
         BoxShadow(
-          color: activeAccent.withValues(alpha: isDark ? 0.25 : 0.15),
-          blurRadius: 8,
-          spreadRadius: 0.5,
+          color: activeAccent.withValues(alpha: isDark ? 0.20 : 0.08),
+          blurRadius: 6,
+          spreadRadius: 0.2,
         ),
       ];
     }
@@ -174,15 +174,15 @@ class RitmoGlassSegmentedControl<T> extends StatelessWidget {
           ),
           child: Stack(
             children: [
-              // ۱. پیل لغزنده فعال شیشه‌ای (Illuminated Sliding Pill)
+              // ۱. پیل لغزنده فعال شیشه‌ای با تقارن ۱۰۰٪ ریاضی از بالا و پایین
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 260),
                 curve: Curves.easeInOutCubic,
                 right: isRtl ? edgeInsets.right + (safeIndex * tabWidth) : null,
                 left: isRtl ? null : edgeInsets.left + (safeIndex * tabWidth),
                 top: edgeInsets.top,
+                bottom: edgeInsets.bottom,
                 width: tabWidth,
-                height: pillHeight,
                 child: Container(
                   decoration: BoxDecoration(
                     color: pillColor,
@@ -203,10 +203,15 @@ class RitmoGlassSegmentedControl<T> extends StatelessWidget {
                 ),
               ),
 
-              // ۲. ردیف آیکون‌ها و عناوین تب‌ها
+              // ۲. ردیف آیکون‌ها و عناوین تب‌ها متناظر و هم‌مرکز با پیل
               Positioned.fill(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: edgeInsets.right),
+                  padding: EdgeInsets.only(
+                    left: edgeInsets.left,
+                    right: edgeInsets.right,
+                    top: edgeInsets.top,
+                    bottom: edgeInsets.bottom,
+                  ),
                   child: Row(
                     children: List.generate(tabCount, (index) {
                       final item = items[index];

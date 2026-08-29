@@ -784,7 +784,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'ساعت ۲۴ ساعته شبانه‌روز',
+                        'گاه‌شمار شبانه‌روز',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
@@ -793,9 +793,10 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'گاه‌شمار هوشمند، توازن زمان و قلمروها',
+                        'نمای ۲۴ ساعته، توازن زمان و جریان قلمروها',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 11.5,
+                          fontFamily: 'Vazirmatn',
                           color: colors.textSecondary,
                         ),
                       ),

@@ -61,6 +61,7 @@ import 'package:ritmo/features/today/presentation/widgets/dashboard/assistant_ca
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_header.dart';
 import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/search/presentation/global_search_screen.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
@@ -809,7 +810,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
     );
   }
 
-  /// اسکلت لودینگ همشکل با چیدمان جدید — بهجای اسپینر (سند طراحی ۴.۲)
+  /// اسکلت لودینگ نئومورفیک یکپارچه با چیدمان دقیق کارت‌های مرجع داشبورد (Zero Layout Shift)
   Widget _buildLoadingSkeleton() {
     return const Scaffold(
       backgroundColor: Colors.transparent,
@@ -824,98 +825,109 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
               // هدر: آواتار + دو خط متن + خوشهٔ اکشن
               Row(
                 children: [
-                  RitmoSkeleton(width: 46, height: 46, borderRadius: 23),
+                  RitmoSkeleton(width: 44, height: 44, borderRadius: 22),
                   SizedBox(width: RitmoSpacing.md),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      RitmoSkeleton(width: 120, height: 14, borderRadius: 4),
+                      RitmoSkeleton(width: 120, height: 14, borderRadius: 6),
                       SizedBox(height: 6),
-                      RitmoSkeleton(width: 80, height: 10, borderRadius: 4),
+                      RitmoSkeleton(width: 80, height: 10, borderRadius: 5),
                     ],
                   ),
                   Spacer(),
-                  RitmoSkeleton(width: 92, height: 46, borderRadius: 23),
+                  RitmoSkeleton(width: 88, height: 40, borderRadius: 20),
                 ],
               ),
               SizedBox(height: 16),
-              // کارت تمرکز اکنون
-              RitmoSkeleton(
-                width: double.infinity,
-                height: 208,
-                borderRadius: 24,
+
+              // ۱. بنر مسیر امروز
+              RitmoCardSkeleton(
+                height: 72,
+                borderRadius: BorderRadius.all(Radius.circular(22)),
               ),
               SizedBox(height: 16),
-              // نبض امروز
-              RitmoSkeleton(
-                width: double.infinity,
-                height: 122,
-                borderRadius: 20,
+
+              // ۲. تمرکز اکنون (هیرو فوکوس)
+              RitmoCardSkeleton(
+                height: 190,
+                borderRadius: BorderRadius.all(Radius.circular(24)),
               ),
               SizedBox(height: 16),
-              // نوار میانبرها
+
+              // ۳. کارت قلمرو فعلی
+              RitmoCardSkeleton(
+                height: 130,
+                borderRadius: BorderRadius.all(Radius.circular(22)),
+              ),
+              SizedBox(height: 16),
+
+              // ۴. نبض امروز
+              RitmoCardSkeleton(
+                height: 105,
+                borderRadius: BorderRadius.all(Radius.circular(20)),
+              ),
+              SizedBox(height: 16),
+
+              // ۵. کارت انرژی فعلی
+              RitmoCardSkeleton(
+                height: 160,
+                borderRadius: BorderRadius.all(Radius.circular(24)),
+              ),
+              SizedBox(height: 16),
+
+              // ۶. نوار میان‌برهای سریع (۴ کارت مربعی نئومورفیک)
               Row(
                 children: [
                   Expanded(
-                    child: RitmoSkeleton(
-                      width: double.infinity,
-                      height: 88,
-                      borderRadius: 16,
+                    child: RitmoCardSkeleton(
+                      height: 92,
+                      borderRadius: BorderRadius.all(Radius.circular(18)),
                     ),
                   ),
                   SizedBox(width: RitmoSpacing.sm),
                   Expanded(
-                    child: RitmoSkeleton(
-                      width: double.infinity,
-                      height: 88,
-                      borderRadius: 16,
+                    child: RitmoCardSkeleton(
+                      height: 92,
+                      borderRadius: BorderRadius.all(Radius.circular(18)),
                     ),
                   ),
                   SizedBox(width: RitmoSpacing.sm),
                   Expanded(
-                    child: RitmoSkeleton(
-                      width: double.infinity,
-                      height: 88,
-                      borderRadius: 16,
+                    child: RitmoCardSkeleton(
+                      height: 92,
+                      borderRadius: BorderRadius.all(Radius.circular(18)),
                     ),
                   ),
                   SizedBox(width: RitmoSpacing.sm),
                   Expanded(
-                    child: RitmoSkeleton(
-                      width: double.infinity,
-                      height: 88,
-                      borderRadius: 16,
+                    child: RitmoCardSkeleton(
+                      height: 92,
+                      borderRadius: BorderRadius.all(Radius.circular(18)),
                     ),
                   ),
                 ],
               ),
               SizedBox(height: 16),
-              // تیتر بخش + کارت مسیر امروز
-              RitmoSkeleton(width: 140, height: 14, borderRadius: 4),
-              SizedBox(height: 16),
-              RitmoSkeleton(
-                width: double.infinity,
-                height: 136,
-                borderRadius: 20,
+
+              // ۷. کارت تجربهٔ امروز
+              RitmoCardSkeleton(
+                height: 100,
+                borderRadius: BorderRadius.all(Radius.circular(22)),
               ),
               SizedBox(height: 16),
-              // ۳ ردیف کار امروز
-              RitmoSkeleton(
-                width: double.infinity,
-                height: 62,
-                borderRadius: 18,
+
+              // ۸. سیستم‌های فعال
+              RitmoCardSkeleton(
+                height: 220,
+                borderRadius: BorderRadius.all(Radius.circular(22)),
               ),
-              SizedBox(height: 10),
-              RitmoSkeleton(
-                width: double.infinity,
-                height: 62,
-                borderRadius: 18,
-              ),
-              SizedBox(height: 10),
-              RitmoSkeleton(
-                width: double.infinity,
-                height: 62,
-                borderRadius: 18,
+              SizedBox(height: 16),
+
+              // ۹. دستیار هوشمند
+              RitmoCardSkeleton(
+                height: 150,
+                borderRadius: BorderRadius.all(Radius.circular(24)),
               ),
             ],
           ),

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 
+/// المان استخوانی پایه لودینگ با انیمیشن تنفس نوری نرم نئومورفیک.
 class RitmoSkeleton extends StatefulWidget {
-
   const RitmoSkeleton({
     super.key,
     required this.width,
     required this.height,
     this.borderRadius = 8,
   });
+
   final double width;
   final double height;
   final double borderRadius;
@@ -17,16 +18,22 @@ class RitmoSkeleton extends StatefulWidget {
   State<RitmoSkeleton> createState() => _RitmoSkeletonState();
 }
 
-class _RitmoSkeletonState extends State<RitmoSkeleton> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+class _RitmoSkeletonState extends State<RitmoSkeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat();
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(begin: 0.35, end: 0.75).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutSine),
+    );
   }
 
   @override
@@ -37,26 +44,23 @@ class _RitmoSkeletonState extends State<RitmoSkeleton> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return RepaintBoundary(
       child: AnimatedBuilder(
-        animation: _controller,
+        animation: _animation,
         builder: (context, child) {
+          final opacity = _animation.value;
+          final boneColor = isDark
+              ? Colors.white.withValues(alpha: opacity * 0.09)
+              : const Color(0xFFCAD4E2).withValues(alpha: opacity * 0.55);
+
           return Container(
             width: widget.width,
             height: widget.height,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(widget.borderRadius),
-              gradient: LinearGradient(
-                begin: Alignment(widget.width > 0 ? (_controller.value * 3 - 2.0) : -1.0, -1),
-                end: Alignment(widget.width > 0 ? (_controller.value * 3 - 1.0) : 1.0, 1),
-                colors: [
-                  colors.card.withValues(alpha: 0.3),
-                  colors.border.withValues(alpha: 0.6),
-                  colors.card.withValues(alpha: 0.3),
-                ],
-                stops: const [0.0, 0.5, 1.0],
-              ),
+              color: boneColor,
             ),
           );
         },
@@ -65,13 +69,14 @@ class _RitmoSkeletonState extends State<RitmoSkeleton> with SingleTickerProvider
   }
 }
 
+/// لیست اسکلت‌های نئومورفیک متصل به کارت‌های مرجع.
 class RitmoSkeletonList extends StatelessWidget {
-
   const RitmoSkeletonList({
     super.key,
     this.itemCount = 5,
     this.itemHeight = 80,
   });
+
   final int itemCount;
   final double itemHeight;
 
@@ -83,11 +88,10 @@ class RitmoSkeletonList extends StatelessWidget {
       itemCount: itemCount,
       itemBuilder: (context, index) {
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: RitmoSkeleton(
-            width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: RitmoCardSkeleton(
             height: itemHeight,
-            borderRadius: 16,
+            borderRadius: BorderRadius.circular(18),
           ),
         );
       },
@@ -95,37 +99,26 @@ class RitmoSkeletonList extends StatelessWidget {
   }
 }
 
+/// کارت اسکلت لودینگ نئومورفیک متصل به کارت‌های مرجع ریتمو.
 class RitmoSkeletonCard extends StatelessWidget {
-
   const RitmoSkeletonCard({
     super.key,
     this.height = 120,
+    this.borderRadius,
   });
+
   final double height;
+  final BorderRadius? borderRadius;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: RitmoCardSkeleton(
         height: height,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: context.colors.border.withValues(alpha: 0.3)),
-          color: context.colors.card.withValues(alpha: 0.2),
-        ),
-        child: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            RitmoSkeleton(width: 80, height: 16, borderRadius: 4),
-            SizedBox(height: 12),
-            Expanded(child: RitmoSkeleton(width: double.infinity, height: 12, borderRadius: 4)),
-            SizedBox(height: 8),
-            RitmoSkeleton(width: 150, height: 12, borderRadius: 4),
-          ],
-        ),
+        borderRadius: borderRadius ?? BorderRadius.circular(22),
       ),
     );
   }
 }
+

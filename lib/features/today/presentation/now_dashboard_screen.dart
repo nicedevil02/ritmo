@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
@@ -41,7 +40,6 @@ import 'package:ritmo/features/courses/presentation/courses_screen.dart';
 import 'package:ritmo/features/cycle/presentation/cycle_screen.dart';
 import 'package:ritmo/features/goals/presentation/goals_screen.dart';
 import 'package:ritmo/features/health/presentation/health_screen.dart';
-import 'package:ritmo/features/inbox/logic/inbox_navigator.dart';
 import 'package:ritmo/features/inbox/presentation/inbox_screen.dart';
 import 'package:ritmo/features/sleep/presentation/widgets/sleep_tonight_shortcut.dart';
 import 'package:ritmo/features/study/study_module_entry.dart';
@@ -74,7 +72,6 @@ import 'package:ritmo/features/today/presentation/widgets/dashboard/home_pulse_s
 import 'package:ritmo/features/today/presentation/widgets/dashboard/home_quick_actions.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/module_summary_grid.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/next_action_hero.dart';
-import 'package:ritmo/features/today/presentation/widgets/dashboard/today_details_section.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/today_path_progress_banner.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/todays_tasks_section.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_dashboard_card.dart';
@@ -83,7 +80,6 @@ import 'package:ritmo/features/today/presentation/widgets/morning_checkin_sheet.
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
 import 'package:ritmo/features/worship/presentation/worship_screen.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
-import 'package:sqflite/sqflite.dart';
 
 class NowDashboardScreen extends StatefulWidget {
   const NowDashboardScreen({
@@ -111,7 +107,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
   int _unreadInboxCount = 0;
   StreamSubscription? _inboxSubscription;
   StreamSubscription? _agendaSubscription;
-  List<InboxItem> _recentInboxItems = [];
 
   // Timeline list representation
   List<Map<String, dynamic>> _timelineItems = [];
@@ -403,16 +398,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
         await controller.loadP1();
         if (isStale()) return;
 
-        var recentInbox = <InboxItem>[];
-        try {
-          recentInbox = await CentralInboxService.getItems(
-            statusFilter: InboxStatus.UNREAD,
-            limit: 3,
-          );
-        } catch (e) {
-          debugPrint('Error loading recent inbox: $e');
-        }
-
         final showReplan = await MidDayReplanService.instance
             .shouldSuggestReplan();
 
@@ -447,7 +432,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
           _rhythmScoreHasData = controller.rhythmScoreHasData;
           _completionsToday = controller.completionsToday;
           _moduleSummaries = controller.moduleSummaries;
-          _recentInboxItems = recentInbox;
           _showReplanBanner = showReplan;
           _avatarFileExists = avatarExistsResult;
           // G-2: منبع واحد Agenda برای کارت اقدام بعدی
@@ -957,40 +941,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
     // جای دیگری دوباره تکرار نمیشود.
     final heroData = _buildNextActionHeroData();
 
-    final showReflectionCard =
-        DateTime.now().hour >= 22 && !_hasReflection && !_reflectionDismissed;
-
-    final detailsChildren = <Widget>[
-      if (_showReplanBanner)
-        MidDayReplanCard(
-          onDismiss: _dismissReplanSuggestion,
-          onReplan: _runReplanFlow,
-        ),
-      if (_needCheckin && heroData.type != HeroPriorityType.morningCheckIn)
-        CheckinReminderCard(onTap: _showMorningCheckinSheet),
-      if (showReflectionCard)
-        ReflectionSuggestionCard(
-          onDismiss: _dismissReflection,
-          onRecord: _openReflectionSheet,
-        ),
-      if (_recentInboxItems.isNotEmpty)
-        RecentInboxCard(
-          items: _recentInboxItems,
-          onItemTap: (item) {
-            InboxNavigator.open(
-              context,
-              item,
-            ).then((_) => _loadDashboardData());
-          },
-          onViewAll: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const InboxScreen()),
-            ).then((_) => _loadDashboardData());
-          },
-        ),
-    ];
-
     final locale = Localizations.localeOf(context);
     final isFa = locale.languageCode == 'fa';
     final l10n = AppLocalizations.of(context);
@@ -1278,28 +1228,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                         showNextAction: false,
                       ),
                     ),
-
-                    // ۱۰. جزئیات امروز — فقط وقتی چیزی برای گفتن هست
-                    if (detailsChildren.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      _enter(
-                        10,
-                        TodayDetailsSection(
-                           itemCount: detailsChildren.length,
-                          children: [
-                            for (
-                              int i = 0;
-                              i < detailsChildren.length;
-                              i++
-                            ) ...[
-                              if (i > 0)
-                                const SizedBox(height: 16),
-                              detailsChildren[i],
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
                     const SizedBox(height: 16),
                     AdService.instance.getBannerAd(),
                   ]),
@@ -1845,15 +1773,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
     }
   }
 
-  Future<void> _dismissReplanSuggestion() async {
-    await MidDayReplanService.instance.recordUserRejected();
-    if (!mounted) return;
-    setState(() {
-      _showReplanBanner = false;
-    });
-    RitmoToast.show(context, 'پیشنهاد رد شد.');
-  }
-
   void _openReflectionSheet() {
     DailyReflectionSheet.show(
       context: context,
@@ -1868,29 +1787,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
         _loadDashboardData();
       },
     );
-  }
-
-  Future<void> _dismissReflection() async {
-    final db = await DatabaseHelper.instance.database;
-    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-    await db.insert('app_settings', {
-      'key': 'dismissed_reflection_date',
-      'value': todayStr,
-      'updatedAt': DateTime.now().millisecondsSinceEpoch,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
-    await HapticFeedback.lightImpact();
-    final now = DateTime.now();
-    final dateStr =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    await CentralInboxService.markActionedForEntity(
-      'system',
-      'reflection_$dateStr',
-    );
-    if (!mounted) return;
-    setState(() {
-      _reflectionDismissed = true;
-    });
-    await _loadDashboardData();
   }
 
   /// G-4: هش پایدار FNV-1a — برخلاف hashCode دارت، بین اجراهای اپ ثابت میماند

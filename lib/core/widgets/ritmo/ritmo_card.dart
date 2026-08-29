@@ -782,15 +782,15 @@ class RitmoNeuButton extends StatefulWidget {
     super.key,
     required this.child,
     required this.onTap,
-    this.height = 42,
+    this.height,
     this.radius = 18,
     this.color,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
   });
 
   final Widget child;
   final VoidCallback onTap;
-  final double height;
+  final double? height;
   final double radius;
   final Color? color;
   final EdgeInsetsGeometry padding;
@@ -838,7 +838,9 @@ class _RitmoNeuButtonState extends State<RitmoNeuButton> {
               ? RitmoNeu.sunkenShadows(isDark, blur: 6, distance: 2.0)
               : RitmoNeu.raisedShadows(isDark, blur: 10, distance: 3.5),
         ),
-        child: widget.child,
+        child: Center(
+          child: widget.child,
+        ),
       ),
     );
   }
@@ -1051,8 +1053,8 @@ class RitmoNeuSurface extends StatelessWidget {
 /// کارت مرجع شاهکار نئومورفیک (Ritmo Master Reference Hero Card)
 /// شامل چیدمان دو ستونه: گیج ۲۴ ساعته + دکمه تعاملی + چیپ‌های نئومورفیک + تایمر شمارش معکوس
 /// کارت مرجع شاهکار نئومورفیک (Ritmo Master Reference Hero Card)
-/// با دکمه‌ها و پیل‌های برجسته کامپکت و فیزیکی (Tactile Physical 3D Buttons & Pills)
-class RitmoNeuMasterCard extends StatelessWidget {
+/// با دکمه‌ها و پیل‌های برجسته کامپکت، فیزیکی و هاله تنفسی زنده (Breathing Ambient Halo)
+class RitmoNeuMasterCard extends StatefulWidget {
   const RitmoNeuMasterCard({
     super.key,
     required this.title,
@@ -1070,6 +1072,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
     this.onTap,
     this.height = 180,
     this.margin,
+    this.enableBreathing = true,
   });
 
   final String title;
@@ -1087,12 +1090,57 @@ class RitmoNeuMasterCard extends StatelessWidget {
   final VoidCallback? onTap;
   final double height;
   final EdgeInsetsGeometry? margin;
+  final bool enableBreathing;
+
+  @override
+  State<RitmoNeuMasterCard> createState() => _RitmoNeuMasterCardState();
+}
+
+class _RitmoNeuMasterCardState extends State<RitmoNeuMasterCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _breathingController;
+  late final Animation<double> _breathingAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _breathingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3200),
+    );
+    _breathingAnim = CurvedAnimation(
+      parent: _breathingController,
+      curve: Curves.easeInOutSine,
+    );
+
+    if (widget.enableBreathing) {
+      _breathingController.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant RitmoNeuMasterCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.enableBreathing != oldWidget.enableBreathing) {
+      if (widget.enableBreathing) {
+        _breathingController.repeat(reverse: true);
+      } else {
+        _breathingController.stop();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _breathingController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
-    final effectiveColor = activeColor ?? colors.primary;
+    final effectiveColor = widget.activeColor ?? colors.primary;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -1101,165 +1149,226 @@ class RitmoNeuMasterCard extends StatelessWidget {
           final maxW = constraints.maxWidth.isFinite ? constraints.maxWidth : 380.0;
           final dialColWidth = (maxW * 0.38).clamp(118.0, 138.0);
 
-          return RitmoCard.neumorphic(
-            onTap: onTap,
-            margin: margin,
-            borderRadius: BorderRadius.circular(28),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            backgroundColor: Color.lerp(colors.surfaceElevated, effectiveColor, isDark ? 0.05 : 0.03),
-            borderColor: effectiveColor.withValues(alpha: isDark ? 0.60 : 0.45),
-            borderWidth: 1.2,
-            customShadows: [
-              // ۱. هاله بیرونی نرم و فراگیر نوری (Broad Soft Ambient Dispersion)
-              BoxShadow(
-                color: effectiveColor.withValues(alpha: isDark ? 0.36 : 0.24),
-                blurRadius: 32,
-                spreadRadius: 3.5,
-                offset: const Offset(0, 4),
-              ),
-              // ۲. هاله متمرکز پرنور دور لبه‌ها (Intense Rim Glow)
-              BoxShadow(
-                color: effectiveColor.withValues(alpha: isDark ? 0.45 : 0.32),
-                blurRadius: 16,
-                spreadRadius: 1.0,
-                offset: const Offset(0, 2),
-              ),
-              // ۳. سایه فیزیکی نئومورفیک تیره عمیق
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.45)
-                    : Color.lerp(colors.surfaceElevated, Colors.black, 0.16)!.withValues(alpha: 0.45),
-                blurRadius: 14,
-                offset: const Offset(3.5, 4.5),
-              ),
-              // ۴. سایه فیزیکی نئومورفیک لبه روشن
-              BoxShadow(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.white.withValues(alpha: 0.95),
-                blurRadius: 7,
-                offset: const Offset(-2.5, -2.5),
-              ),
-            ],
-            child: SizedBox(
-              height: height - 24,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // ── ستون راست (RTL): اطلاعات، چیپ‌ها و پیل‌های نئومورفیک فیزیکی ──
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // ردیف هدر چیپ‌های فیزیکی برجسته
-                        Row(
-                          children: [
-                            // چیپ وضعیت فعال با نقطه سه‌بعدی
-                            _buildTactileStatusPill(
+          final innerContent = SizedBox(
+            height: widget.height - 24,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── ستون راست (RTL): اطلاعات، چیپ‌ها و پیل‌های نئومورفیک فیزیکی ──
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // ردیف هدر چیپ‌های فیزیکی برجسته
+                      Row(
+                        children: [
+                          // چیپ وضعیت فعال با نقطه سه‌بعدی
+                          _buildTactileStatusPill(
+                            isDark: isDark,
+                            statusLabel: widget.statusLabel,
+                            color: effectiveColor,
+                          ),
+                          const SizedBox(width: 6),
+                          // چیپ نام قلمروی فعال با آیکون یا ایموجی منتخب
+                          Expanded(
+                            child: _buildTactileRealmPill(
                               isDark: isDark,
-                              statusLabel: statusLabel,
+                              colors: colors,
+                              label: widget.activeChipLabel,
+                              icon: widget.activeChipIcon,
+                              emoji: widget.activeChipEmoji,
                               color: effectiveColor,
                             ),
-                            const SizedBox(width: 6),
-                            // چیپ نام قلمروی فعال با آیکون یا ایموجی منتخب
-                            Expanded(
-                              child: _buildTactileRealmPill(
-                                isDark: isDark,
-                                colors: colors,
-                                label: activeChipLabel,
-                                icon: activeChipIcon,
-                                emoji: activeChipEmoji,
-                                color: effectiveColor,
+                          ),
+                        ],
+                      ),
+
+                      // عنوان اصلی و زیرعنوان
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 16.5,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.3,
+                                fontFamily: 'Vazirmatn',
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              widget.subtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Vazirmatn',
+                                color: colors.textSecondary,
                               ),
                             ),
                           ],
                         ),
+                      ),
 
-                        // عنوان اصلی و زیرعنوان
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 2),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 16.5,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -0.3,
-                                  fontFamily: 'Vazirmatn',
-                                  color: colors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 1),
-                              Text(
-                                subtitle,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Vazirmatn',
-                                  color: colors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      // پیل فیزیکی بازه زمانی
+                      _buildTactileTimePill(
+                        isDark: isDark,
+                        colors: colors,
+                        timeRange: widget.timeRange,
+                      ),
 
-                        // پیل فیزیکی بازه زمانی
-                        _buildTactileTimePill(
-                          isDark: isDark,
-                          colors: colors,
-                          timeRange: timeRange,
-                        ),
-
-                        // پیل فیزیکی تایمر شمارش معکوس با هاله پالت
-                        _buildTactileCountdownPill(
-                          isDark: isDark,
-                          remainingTime: remainingTime,
-                          color: effectiveColor,
-                        ),
-                      ],
-                    ),
+                      // پیل فیزیکی تایمر شمارش معکوس با هاله پالت
+                      _buildTactileCountdownPill(
+                        isDark: isDark,
+                        remainingTime: widget.remainingTime,
+                        color: effectiveColor,
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 10),
+                ),
+                const SizedBox(width: 10),
 
-                  // ── ستون چپ: گیج نئومورفیک سه‌بعدی و دکمه مدیریت فیزیکی ──
-                  SizedBox(
-                    width: dialColWidth,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Center(
-                            child: gaugeWidget ??
-                                _build3dClockGauge(
-                                  context: context,
-                                  color: effectiveColor,
-                                  isDark: isDark,
-                                  size: (dialColWidth - 4).clamp(100.0, 120.0),
-                                ),
-                          ),
+                // ── ستون چپ: گیج نئومورفیک سه‌بعدی و دکمه مدیریت فیزیکی ──
+                SizedBox(
+                  width: dialColWidth,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: widget.gaugeWidget ??
+                              _build3dClockGauge(
+                                context: context,
+                                color: effectiveColor,
+                                isDark: isDark,
+                                size: (dialColWidth - 4).clamp(100.0, 120.0),
+                              ),
                         ),
-                        const SizedBox(height: 4),
-                        _buildTactileManageButton(
-                          isDark: isDark,
-                          colors: colors,
-                          text: actionButtonText,
-                          onTap: onActionTap,
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 4),
+                      _buildTactileManageButton(
+                        isDark: isDark,
+                        colors: colors,
+                        text: widget.actionButtonText,
+                        onTap: widget.onActionTap,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+
+          if (!widget.enableBreathing) {
+            return RitmoCard.neumorphic(
+              onTap: widget.onTap,
+              margin: widget.margin,
+              borderRadius: BorderRadius.circular(28),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              backgroundColor: Color.lerp(colors.surfaceElevated, effectiveColor, isDark ? 0.05 : 0.03),
+              borderColor: effectiveColor.withValues(alpha: isDark ? 0.60 : 0.45),
+              borderWidth: 1.2,
+              customShadows: [
+                BoxShadow(
+                  color: effectiveColor.withValues(alpha: isDark ? 0.36 : 0.24),
+                  blurRadius: 32,
+                  spreadRadius: 3.5,
+                  offset: const Offset(0, 4),
+                ),
+                BoxShadow(
+                  color: effectiveColor.withValues(alpha: isDark ? 0.45 : 0.32),
+                  blurRadius: 16,
+                  spreadRadius: 1.0,
+                  offset: const Offset(0, 2),
+                ),
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.45)
+                      : Color.lerp(colors.surfaceElevated, Colors.black, 0.16)!.withValues(alpha: 0.45),
+                  blurRadius: 14,
+                  offset: const Offset(3.5, 4.5),
+                ),
+                BoxShadow(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.white.withValues(alpha: 0.95),
+                  blurRadius: 7,
+                  offset: const Offset(-2.5, -2.5),
+                ),
+              ],
+              child: innerContent,
+            );
+          }
+
+          return AnimatedBuilder(
+            animation: _breathingAnim,
+            builder: (context, child) {
+              final t = _breathingAnim.value;
+              final outerSpread = lerpDouble(2.0, 5.5, t)!;
+              final outerBlur = lerpDouble(22.0, 40.0, t)!;
+              final outerAlpha = lerpDouble(isDark ? 0.22 : 0.14, isDark ? 0.48 : 0.34, t)!;
+
+              final rimSpread = lerpDouble(0.4, 2.0, t)!;
+              final rimBlur = lerpDouble(12.0, 22.0, t)!;
+              final rimAlpha = lerpDouble(isDark ? 0.30 : 0.20, isDark ? 0.58 : 0.42, t)!;
+
+              final borderAlpha = lerpDouble(isDark ? 0.40 : 0.30, isDark ? 0.75 : 0.58, t)!;
+              final surfaceTintAlpha = lerpDouble(isDark ? 0.03 : 0.02, isDark ? 0.08 : 0.05, t)!;
+
+              return RitmoCard.neumorphic(
+                onTap: widget.onTap,
+                margin: widget.margin,
+                borderRadius: BorderRadius.circular(28),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                backgroundColor: Color.lerp(colors.surfaceElevated, effectiveColor, surfaceTintAlpha),
+                borderColor: effectiveColor.withValues(alpha: borderAlpha),
+                borderWidth: 1.2,
+                customShadows: [
+                  // ۱. هاله بیرونی نرم تنفسی (Breathing Ambient Dispersion)
+                  BoxShadow(
+                    color: effectiveColor.withValues(alpha: outerAlpha),
+                    blurRadius: outerBlur,
+                    spreadRadius: outerSpread,
+                    offset: const Offset(0, 4),
+                  ),
+                  // ۲. هاله ریم متمرکز تنفسی (Breathing Rim Glow)
+                  BoxShadow(
+                    color: effectiveColor.withValues(alpha: rimAlpha),
+                    blurRadius: rimBlur,
+                    spreadRadius: rimSpread,
+                    offset: const Offset(0, 2),
+                  ),
+                  // ۳. سایه فیزیکی نئومورفیک تیره عمیق
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.45)
+                        : Color.lerp(colors.surfaceElevated, Colors.black, 0.16)!.withValues(alpha: 0.45),
+                    blurRadius: 14,
+                    offset: const Offset(3.5, 4.5),
+                  ),
+                  // ۴. سایه فیزیکی نئومورفیک لبه روشن
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.white.withValues(alpha: 0.95),
+                    blurRadius: 7,
+                    offset: const Offset(-2.5, -2.5),
                   ),
                 ],
-              ),
-            ),
+                child: child!,
+              );
+            },
+            child: innerContent,
           );
         },
       ),

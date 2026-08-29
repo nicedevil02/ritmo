@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/calendar/presentation/journey_controller.dart';
 
 /// Redesigned Apple HIG & Neumorphic Scale Switcher:
@@ -78,7 +78,7 @@ class JourneyScaleSwitcher extends StatelessWidget {
                       button: true,
                       child: GestureDetector(
                         onTap: () {
-                          HapticFeedback.selectionClick();
+                          RitmoHaptics.selection();
                           onScaleChanged(scale);
                         },
                         behavior: HitTestBehavior.opaque,
@@ -126,7 +126,8 @@ class JourneyScaleSwitcher extends StatelessWidget {
                           child: Text(
                             label,
                             style: TextStyle(
-                              fontSize: 12.0,
+                              fontSize: 12.5,
+                              fontFamily: 'Vazirmatn',
                               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                               color: isSelected
                                   ? colors.primary
@@ -225,9 +226,10 @@ class _OverflowScaleButton extends StatelessWidget {
                 value: scale,
                 child: Text(
                   JourneyScaleSwitcher.scaleLabelFa(scale),
-                  style: RitmoTextStyles.label(
-                    scale == activeScale ? colors.primary : colors.textPrimary,
-                  ).copyWith(
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 13,
+                    color: scale == activeScale ? colors.primary : colors.textPrimary,
                     fontWeight: scale == activeScale
                         ? FontWeight.w800
                         : FontWeight.w500,
@@ -237,7 +239,7 @@ class _OverflowScaleButton extends StatelessWidget {
             )
             .toList(),
         onSelected: (scale) {
-          HapticFeedback.selectionClick();
+          RitmoHaptics.selection();
           onScaleChanged(scale);
         },
         child: AnimatedContainer(

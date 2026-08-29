@@ -1763,27 +1763,27 @@ class _NeumorphicHeaderIconButton extends StatelessWidget {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF222834) : Colors.white,
+        color: isDark ? const Color(0xFF1E2430) : Colors.white,
         shape: BoxShape.circle,
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : const Color(0xFFCBD3DC),
-          width: 0.8,
+              ? Colors.white.withValues(alpha: 0.08)
+              : const Color(0xFFD5DCE4),
+          width: 0.9,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
                 ? Colors.black.withValues(alpha: 0.35)
-                : const Color(0xFFC7CFDA).withValues(alpha: 0.75),
-            offset: const Offset(1, 1.8),
+                : const Color(0xFFCCD4DF).withValues(alpha: 0.65),
+            offset: const Offset(0, 1.5),
             blurRadius: 3,
           ),
           BoxShadow(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.03)
+                ? Colors.white.withValues(alpha: 0.02)
                 : Colors.white,
-            offset: const Offset(-1, -1),
+            offset: const Offset(-0.8, -0.8),
             blurRadius: 2,
           ),
         ],
@@ -1791,14 +1791,17 @@ class _NeumorphicHeaderIconButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onPressed,
+          onTap: () {
+            RitmoHapticsPolicy.tap();
+            onPressed();
+          },
           customBorder: const CircleBorder(),
           child: Center(
             child: Icon(
               icon,
               size: size,
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.88)
+                  ? Colors.white.withValues(alpha: 0.90)
                   : const Color(0xFF334155),
             ),
           ),
@@ -1821,7 +1824,7 @@ class _NeumorphicHeaderIconButton extends StatelessWidget {
                 color: colors.error,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isDark ? const Color(0xFF222834) : Colors.white,
+                  color: isDark ? const Color(0xFF1E2430) : Colors.white,
                   width: 1.2,
                 ),
               ),

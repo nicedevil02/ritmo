@@ -498,9 +498,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
     return RitmoNeuMasterCard(
       title: 'خواب و ریکاوری',
       subtitle: 'ذهنی آرام‌تر، عملکردی بهتر',
-      activeChipLabel: 'خواب و ریکاوری',
-      activeChipIcon: CupertinoIcons.moon_fill,
-      activeChipEmoji: '🌙',
+      modeLabel: 'عادی',
       statusLabel: 'قلمرو فعال',
       timeRange: '${toPersianDigits("۲۲:۳۰")}   ➔   ${toPersianDigits("۰۵:۳۰")}',
       remainingTime: toPersianDigits('۰۵:۵۶:۱۶'),

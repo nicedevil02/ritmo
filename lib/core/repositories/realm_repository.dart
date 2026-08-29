@@ -210,6 +210,20 @@ class RealmRepository {
     );
   }
 
+  /// Updates the operating mode of a specific realm.
+  Future<void> updateRealmMode(String realmId, RealmMode mode) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'zones',
+      {
+        'mode': realmModeToRaw(mode),
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      },
+      where: 'id = ?',
+      whereArgs: [realmId],
+    );
+  }
+
   /// Atomically saves or updates a realm and its schedules (ق-۱۰).
   Future<void> saveRealm(RealmData realm, List<RealmScheduleData> schedules) async {
     final db = await _dbHelper.database;

@@ -1059,9 +1059,11 @@ class RitmoNeuMasterCard extends StatefulWidget {
     super.key,
     required this.title,
     required this.subtitle,
-    required this.activeChipLabel,
+    this.activeChipLabel = '',
     this.activeChipIcon = CupertinoIcons.moon_fill,
     this.activeChipEmoji,
+    this.modeLabel,
+    this.onModeTap,
     this.statusLabel = 'قلمرو فعال',
     required this.timeRange,
     required this.remainingTime,
@@ -1080,6 +1082,8 @@ class RitmoNeuMasterCard extends StatefulWidget {
   final String activeChipLabel;
   final IconData activeChipIcon;
   final String? activeChipEmoji;
+  final String? modeLabel;
+  final VoidCallback? onModeTap;
   final String statusLabel;
   final String timeRange;
   final String remainingTime;
@@ -1170,17 +1174,26 @@ class _RitmoNeuMasterCardState extends State<RitmoNeuMasterCard>
                             color: effectiveColor,
                           ),
                           const SizedBox(width: 6),
-                          // چیپ نام قلمروی فعال با آیکون یا ایموجی منتخب
-                          Expanded(
-                            child: _buildTactileRealmPill(
+                          // چیپ حالت قلمرو (عادی / تمرکز / بی‌صدا) با قابلیت لمس و تغییر حالت
+                          if (widget.modeLabel != null && widget.modeLabel!.isNotEmpty)
+                            _buildTactileModePill(
                               isDark: isDark,
                               colors: colors,
-                              label: widget.activeChipLabel,
-                              icon: widget.activeChipIcon,
-                              emoji: widget.activeChipEmoji,
+                              label: widget.modeLabel!,
                               color: effectiveColor,
+                              onTap: widget.onModeTap,
+                            )
+                          else if (widget.activeChipLabel.isNotEmpty)
+                            Expanded(
+                              child: _buildTactileRealmPill(
+                                isDark: isDark,
+                                colors: colors,
+                                label: widget.activeChipLabel,
+                                icon: widget.activeChipIcon,
+                                emoji: widget.activeChipEmoji,
+                                color: effectiveColor,
+                              ),
                             ),
-                          ),
                         ],
                       ),
 
@@ -1456,6 +1469,91 @@ class _RitmoNeuMasterCardState extends State<RitmoNeuMasterCard>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// پیل حالت قلمرو (مانند: «عادی»، «تمرکز»، «بی‌صدا») با آیکون فلش شیک و لمس‌پذیری
+  Widget _buildTactileModePill({
+    required bool isDark,
+    required RitmoColors colors,
+    required String label,
+    required Color color,
+    VoidCallback? onTap,
+  }) {
+    final shadowDarkColor = isDark
+        ? Colors.black.withValues(alpha: 0.35)
+        : Color.lerp(colors.surfaceElevated, Colors.black, 0.18)!.withValues(alpha: 0.45);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          height: 28,
+          padding: const EdgeInsets.symmetric(horizontal: 9),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      Color.lerp(colors.surfaceElevated, Colors.white, 0.08)!,
+                      Color.lerp(colors.surfaceElevated, Colors.black, 0.15)!,
+                    ]
+                  : [
+                      Color.lerp(colors.surfaceElevated, Colors.white, 0.85)!,
+                      colors.surfaceElevated,
+                    ],
+            ),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Color.lerp(colors.surfaceElevated, Colors.white, 0.70)!,
+              width: 0.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: shadowDarkColor,
+                offset: const Offset(2, 2.5),
+                blurRadius: 5,
+              ),
+              BoxShadow(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.04)
+                    : Colors.white.withValues(alpha: 0.95),
+                offset: const Offset(-1.5, -1.5),
+                blurRadius: 3,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Vazirmatn',
+                  color: isDark
+                      ? Color.lerp(color, Colors.white, 0.75)!
+                      : Color.lerp(color, Colors.black, 0.30)!,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                CupertinoIcons.chevron_down,
+                size: 9,
+                color: isDark
+                    ? Color.lerp(color, Colors.white, 0.55)!
+                    : colors.textSecondary,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

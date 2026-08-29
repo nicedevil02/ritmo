@@ -85,23 +85,23 @@ class TimelineColumnHeader extends StatelessWidget {
       constraints: BoxConstraints(
         minHeight: CalendarGeometry.effectiveColumnHeaderHeight(context),
       ),
-      margin: const EdgeInsets.symmetric(vertical: 3.0, horizontal: 3.0),
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 2.0),
+      padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 3.0),
       decoration: BoxDecoration(
         gradient: bgGradient,
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(10.0),
         border: Border.all(
           color: isActive
               ? tone.withValues(alpha: isDark ? 0.60 : 0.45)
               : (isDark ? Colors.white.withValues(alpha: 0.06) : colors.border.withValues(alpha: 0.5)),
-          width: isActive ? 1.4 : 0.8,
+          width: isActive ? 1.2 : 0.8,
         ),
         boxShadow: [
           if (isActive)
             BoxShadow(
               color: tone.withValues(alpha: isDark ? 0.22 : 0.15),
-              offset: const Offset(0, 2),
-              blurRadius: 6,
+              offset: const Offset(0, 1.5),
+              blurRadius: 5,
               spreadRadius: -1,
             )
           else
@@ -116,62 +116,64 @@ class TimelineColumnHeader extends StatelessWidget {
         children: [
           // Sunken icon well with semantic domain tone
           RitmoNeuSurface(
-            height: 22,
-            width: 22,
-            radius: 11,
+            height: 20,
+            width: 20,
+            radius: 10,
             sunken: true,
             padding: EdgeInsets.zero,
             glowColor: tone.withValues(alpha: isActive ? 0.45 : 0.20),
             child: Center(
               child: Icon(
                 icon,
-                size: 12,
+                size: 11,
                 color: isActive ? tone : colors.textSecondary,
               ),
             ),
           ),
-          const SizedBox(width: 6.0),
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 12.0,
-              fontWeight: FontWeight.w800,
-              fontFamily: 'Vazirmatn',
-              color: isActive ? colors.textPrimary : colors.textSecondary,
+          const SizedBox(width: 4.0),
+          Flexible(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Vazirmatn',
+                color: isActive ? colors.textPrimary : colors.textSecondary,
+              ),
             ),
           ),
           if (isActive) ...[
-            const SizedBox(width: 5),
+            const SizedBox(width: 3),
             Container(
-              width: 6,
-              height: 6,
+              width: 5,
+              height: 5,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: tone,
                 boxShadow: [
                   BoxShadow(
                     color: tone.withValues(alpha: 0.6),
-                    blurRadius: 4,
+                    blurRadius: 3,
                   ),
                 ],
               ),
             ),
           ],
-          const Spacer(),
+          const SizedBox(width: 4),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.0),
             decoration: BoxDecoration(
               color: (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.08 : 0.04),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               toPersianDigits(rangeLabel),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: 9.5,
                 fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                 fontFamily: 'Vazirmatn',
                 color: isActive ? tone : colors.textTertiary,

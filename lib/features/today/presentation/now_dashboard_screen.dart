@@ -72,7 +72,6 @@ import 'package:ritmo/features/today/presentation/widgets/dashboard/home_focus_h
 import 'package:ritmo/features/today/presentation/widgets/dashboard/home_notice_cards.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/home_pulse_strip.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/home_quick_actions.dart';
-import 'package:ritmo/features/today/presentation/widgets/dashboard/home_section_header.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/module_summary_grid.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/next_action_hero.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/today_details_section.dart';
@@ -1261,32 +1260,22 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                     // ۱۰. دستیار — فقط بریفینگ؛ ورود به گفتوگو کار داک پایین است
                     _enter(
                       10,
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          HomeSectionHeader(
-                            title: 'دستیار هوشمند ریتمو',
-                            subtitle: 'خلاصهٔ امروز و پیشنهاد بعدی',
-                            icon: CupertinoIcons.sparkles,
-                            accent: colors.reflectionAccent,
-                          ),
-                          AssistantCard(
-                            suggestedRoutine: _engineOutput?.suggestedRoutine,
-                            suggestLightVersion:
-                                _engineOutput?.suggestLightVersion ?? false,
-                            activeZoneName: _activeZoneName ?? '',
-                            defaultEnergyLevel:
-                                _settingsMap['default_energy_level'] ??
-                                'MEDIUM',
-                            dailyBehavior: _dailyBehavior,
-                            onStartTap: _showNiyyahSheet,
-                            onWhyTap: _showWhySuggestionDialog,
-                            briefing: _briefing,
-                            isBriefingLoading: _isBriefingLoading,
-                            onRefreshBriefing: _refreshBriefing,
-                            showNextAction: false,
-                          ),
-                        ],
+                      AssistantCard(
+                        subtitle: 'خلاصهٔ امروز و پیشنهاد بعدی',
+                        suggestedRoutine: _engineOutput?.suggestedRoutine,
+                        suggestLightVersion:
+                            _engineOutput?.suggestLightVersion ?? false,
+                        activeZoneName: _activeZoneName ?? '',
+                        defaultEnergyLevel:
+                            _settingsMap['default_energy_level'] ??
+                            'MEDIUM',
+                        dailyBehavior: _dailyBehavior,
+                        onStartTap: _showNiyyahSheet,
+                        onWhyTap: _showWhySuggestionDialog,
+                        briefing: _briefing,
+                        isBriefingLoading: _isBriefingLoading,
+                        onRefreshBriefing: _refreshBriefing,
+                        showNextAction: false,
                       ),
                     ),
 

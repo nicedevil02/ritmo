@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_load_status.dart';
@@ -7,19 +8,19 @@ import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/calendar/presentation/logic/agenda_bucketing.dart';
 import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 
 /// K20 — Agenda scale view: scrollable list bucketed by time proximity.
 ///
-/// Layout rules (from 067.md §K20):
-/// - CustomScrollView with SliverPersistentHeader for sticky bucket headers.
-/// - Empty buckets are NOT rendered (no header, no empty space).
-/// - Fixed row height from CalendarGeometry.agendaRowHeight to prevent scroll jitter.
-/// - thisWeek/nextWeek/later group items under a Jalali day sub-heading.
-/// - Completed items go to the bottom of their group with lineThrough style.
-/// - K23: right→left swipe = postpone (task/goalStep only); left→right swipe = done.
+/// ارتقایافته به سیستم کارت‌های مرجع نئومورفیک ریتمو:
+/// - کارت‌های مجتمع برای هر روز (Grouped Day Cards)
+/// - آیکون‌های فرورفتهٔ سه‌بعدی نئومورفیک با رنگ‌های دامنه‌ای (Sunken Wells)
+/// - دکمهٔ تیک و ثبت سریع تعاملی (Quick Complete) با فیدبک لمسی
+/// - تفکیک دیداری کارهای انجام‌شده
 class JourneyAgendaView extends StatefulWidget {
   const JourneyAgendaView({
     super.key,
@@ -171,9 +172,9 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
             final sortedDates = groupedSingles.keys.toList()..sort();
             for (final dateStr in sortedDates) {
               final dayItems = _sortItems(groupedSingles[dateStr]!);
-              slivers.add(_DaySubGroupHeader(dateStr: dateStr));
               slivers.add(
                 _ItemsSliver(
+                  title: daySubGroupLabel(dateStr),
                   items: dayItems,
                   onItemTap: widget.onItemTap,
                   onPostponeItem: widget.onPostponeItem,
@@ -236,34 +237,34 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
         }
       } else {
         // Normal uncompressed bucket rendering
-        slivers.add(
-          _BucketHeaderSliver(
-            bucket: bucket,
-            countText: toPersianDigits(items.length),
-            isOverdue: isOverdueBucket,
-            isCollapsible: isOverdueBucket,
-            isCollapsed: isCollapsed,
-            onToggleCollapse: isOverdueBucket
-                ? () =>
-                      setState(() => _isOverdueCollapsed = !_isOverdueCollapsed)
-                : null,
-          ),
-        );
+        final needsSubGroups =
+            bucket == AgendaBucket.thisWeek ||
+            bucket == AgendaBucket.nextWeek ||
+            bucket == AgendaBucket.later;
 
-        if (!isCollapsed) {
-          final needsSubGroups =
-              bucket == AgendaBucket.thisWeek ||
-              bucket == AgendaBucket.nextWeek ||
-              bucket == AgendaBucket.later;
+        if (needsSubGroups) {
+          slivers.add(
+            _BucketHeaderSliver(
+              bucket: bucket,
+              countText: toPersianDigits(items.length),
+              isOverdue: isOverdueBucket,
+              isCollapsible: isOverdueBucket,
+              isCollapsed: isCollapsed,
+              onToggleCollapse: isOverdueBucket
+                  ? () =>
+                        setState(() => _isOverdueCollapsed = !_isOverdueCollapsed)
+                  : null,
+            ),
+          );
 
-          if (needsSubGroups) {
+          if (!isCollapsed) {
             final grouped = groupByDate(items);
             final sortedDates = grouped.keys.toList()..sort();
             for (final dateStr in sortedDates) {
               final dayItems = _sortItems(grouped[dateStr]!);
-              slivers.add(_DaySubGroupHeader(dateStr: dateStr));
               slivers.add(
                 _ItemsSliver(
+                  title: daySubGroupLabel(dateStr),
                   items: dayItems,
                   onItemTap: widget.onItemTap,
                   onPostponeItem: widget.onPostponeItem,
@@ -271,17 +272,19 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
                 ),
               );
             }
-          } else {
-            final sorted = _sortItems(items);
-            slivers.add(
-              _ItemsSliver(
-                items: sorted,
-                onItemTap: widget.onItemTap,
-                onPostponeItem: widget.onPostponeItem,
-                onDoneItem: widget.onDoneItem,
-              ),
-            );
           }
+        } else {
+          final sorted = _sortItems(items);
+          slivers.add(
+            _ItemsSliver(
+              title: bucketLabelFa(bucket),
+              isOverdue: isOverdueBucket,
+              items: sorted,
+              onItemTap: widget.onItemTap,
+              onPostponeItem: widget.onPostponeItem,
+              onDoneItem: widget.onDoneItem,
+            ),
+          );
         }
       }
 
@@ -379,6 +382,8 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
 
     final uniques = allFutureItems.where((i) {
       if (i.isCompleted) return false;
+      if (i.domain == AgendaDomain.cycle) return false;
+      if (i.kind == AgendaItemKind.reminder) return false;
       final cnt = keyCounts[i.recurrenceKey] ?? 0;
       return cnt < 3;
     }).toList();
@@ -592,107 +597,171 @@ class _UpcomingUniqueBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const bannerAccent = Color(0xFFF59E0B);
+    final radius = BorderRadius.circular(20);
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(
-        RitmoSpacing.xl,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
         RitmoSpacing.md,
-        RitmoSpacing.xl,
         RitmoSpacing.sm,
+        RitmoSpacing.md,
+        RitmoSpacing.xs,
       ),
-      padding: const EdgeInsets.all(RitmoSpacing.md),
-      decoration: BoxDecoration(
-        color: colors.primaryContainer.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.bookmark_added_outlined,
-                size: 16,
-                color: colors.primary,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'پیش‌رو (کارهای یکتا)',
-                style: TextStyle(
-                  fontSize: 14.0,
-                  fontWeight: FontWeight.w700,
-                  color: colors.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Column(
-            children: items.map((item) {
-              final iconColor = domainIconColor(context, item.domain);
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: InkWell(
-                  onTap: () => onItemTap(item),
-                  borderRadius: BorderRadius.circular(6),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 2,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: iconColor,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            item.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 14.0,
-                              fontWeight: FontWeight.w500,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.surfaceSunken.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(
-                              RitmoRadius.badge,
-                            ),
-                          ),
-                          child: Text(
-                            daySubGroupLabel(item.dateStr),
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+      child: RitmoCard.neumorphic(
+        borderRadius: radius,
+        backgroundColor: Color.lerp(
+          isDark ? colors.card : Colors.white,
+          bannerAccent,
+          isDark ? 0.18 : 0.09,
+        ),
+        borderColor: bannerAccent.withValues(alpha: isDark ? 0.38 : 0.25),
+        borderWidth: 1.2,
+        customShadows: [
+          ...RitmoNeu.raisedShadows(isDark, blur: 12, distance: 4),
+          BoxShadow(
+            color: bannerAccent.withValues(alpha: isDark ? 0.20 : 0.12),
+            blurRadius: 20,
+            spreadRadius: -4,
+            offset: const Offset(0, 6),
           ),
         ],
+        padding: EdgeInsets.zero,
+        enableSpring: false,
+        child: ClipRRect(
+          borderRadius: radius,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: [
+                  bannerAccent.withValues(alpha: isDark ? 0.25 : 0.14),
+                  (isDark ? colors.card : Colors.white)
+                      .withValues(alpha: isDark ? 0.45 : 0.85),
+                ],
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      RitmoNeuSurface(
+                        height: 32,
+                        width: 32,
+                        radius: 16,
+                        sunken: true,
+                        padding: EdgeInsets.zero,
+                        glowColor: bannerAccent.withValues(alpha: 0.45),
+                        child: const Center(
+                          child: Icon(
+                            CupertinoIcons.bookmark_fill,
+                            size: 15,
+                            color: bannerAccent,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'پیش‌رو (کارهای یکتا)',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Vazirmatn',
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const RitmoCardDivider(margin: EdgeInsets.symmetric(vertical: 4)),
+                  Column(
+                    children: items.map((item) {
+                      final iconColor = itemColor(context, item);
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: InkWell(
+                          onTap: () => onItemTap(item),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 3,
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: iconColor,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: iconColor.withValues(alpha: 0.5),
+                                        blurRadius: 4,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    toPersianDigits(item.title),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 13.0,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Vazirmatn',
+                                      color: colors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: (isDark ? Colors.white : Colors.black)
+                                        .withValues(alpha: 0.06),
+                                    borderRadius: BorderRadius.circular(
+                                      RitmoRadius.badge,
+                                    ),
+                                    border: Border.all(
+                                      color: colors.border.withValues(alpha: 0.4),
+                                      width: 0.7,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    toPersianDigits(daySubGroupLabel(item.dateStr)),
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Vazirmatn',
+                                      color: colors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -723,47 +792,45 @@ class _RecurringGroupRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final rep = series.representative;
-    final color = domainColor(context, rep.domain);
-    final iconColor = domainIconColor(context, rep.domain);
-    final icon = domainIcon(rep.domain);
+    final color = itemColor(context, rep);
+    final icon = itemIcon(rep);
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: RitmoSpacing.xl,
+        horizontal: RitmoSpacing.md,
         vertical: 3,
       ),
-      child: Card(
-        margin: EdgeInsets.zero,
-        elevation: 0,
-        color: colors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
-          side: BorderSide(color: colors.border),
-        ),
+      child: RitmoCard.neumorphic(
+        borderRadius: BorderRadius.circular(18),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        enableSpring: false,
         child: Column(
           children: [
             InkWell(
               onTap: onToggleExpand,
-              borderRadius: BorderRadius.circular(RitmoRadius.card),
+              borderRadius: BorderRadius.circular(12),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: RitmoSpacing.md,
-                  vertical: 10,
+                  horizontal: 2,
+                  vertical: 4,
                 ),
                 child: Row(
                   children: [
-                    // Domain Icon
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
+                    // Domain Sunken Icon
+                    RitmoNeuSurface(
+                      height: 36,
+                      width: 36,
+                      radius: 18,
+                      sunken: true,
+                      padding: EdgeInsets.zero,
+                      glowColor: color.withValues(alpha: 0.4),
+                      child: Center(
+                        child: Icon(icon, size: 17, color: color),
                       ),
-                      child: Icon(icon, size: 16, color: iconColor),
                     ),
-                    const SizedBox(width: RitmoSpacing.sm),
+                    const SizedBox(width: 10),
 
                     // Title + Subtitle
                     Expanded(
@@ -772,12 +839,13 @@ class _RecurringGroupRow extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            rep.title,
+                            toPersianDigits(rep.title),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 14.0,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Vazirmatn',
                               color: colors.textPrimary,
                             ),
                           ),
@@ -787,9 +855,10 @@ class _RecurringGroupRow extends StatelessWidget {
                               child: Text(
                                 '${toPersianDigits(series.completedCount)} از ${toPersianDigits(series.totalCount)} انجام شد',
                                 style: TextStyle(
-                                  fontSize: 12.0,
-                                  color: colors.primary,
-                                  fontWeight: FontWeight.w500,
+                                  fontSize: 11.5,
+                                  fontFamily: 'Vazirmatn',
+                                  color: colors.success,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
@@ -804,7 +873,8 @@ class _RecurringGroupRow extends StatelessWidget {
                         child: Text(
                           toPersianDigits(rep.timeOfDay ?? ''),
                           style: TextStyle(
-                            fontSize: 12.0,
+                            fontSize: 11.5,
+                            fontFamily: 'Vazirmatn',
                             color: colors.textSecondary,
                           ),
                         ),
@@ -817,14 +887,19 @@ class _RecurringGroupRow extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.1),
+                        color: colors.primary.withValues(alpha: isDark ? 0.18 : 0.10),
                         borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                        border: Border.all(
+                          color: colors.primary.withValues(alpha: 0.25),
+                          width: 0.7,
+                        ),
                       ),
                       child: Text(
                         series.recurrenceLabel,
                         style: TextStyle(
-                          fontSize: 12.0,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 11.0,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Vazirmatn',
                           color: colors.primary,
                         ),
                       ),
@@ -846,7 +921,7 @@ class _RecurringGroupRow extends StatelessWidget {
 
             // Expanded Child Instances List
             if (isExpanded) ...[
-              Divider(height: 1, color: colors.divider),
+              const RitmoCardDivider(margin: EdgeInsets.symmetric(vertical: 6)),
               Column(
                 children: series.instances.map((inst) {
                   final onPostpone = onPostponeItem;
@@ -855,12 +930,13 @@ class _RecurringGroupRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
                         child: Text(
-                          daySubGroupLabel(inst.dateStr),
+                          toPersianDigits(daySubGroupLabel(inst.dateStr)),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
+                            fontFamily: 'Vazirmatn',
                             color: colors.textSecondary,
                           ),
                         ),
@@ -886,31 +962,105 @@ class _RecurringGroupRow extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────
-// Day Sub-Group Header (non-sticky)
+// Day Group Card (Grouped Day Cards)
 // ────────────────────────────────────────────────────────────
 
-class _DaySubGroupHeader extends StatelessWidget {
-  const _DaySubGroupHeader({required this.dateStr});
-  final String dateStr;
+class _DayGroupCard extends StatelessWidget {
+  const _DayGroupCard({
+    required this.title,
+    this.isOverdue = false,
+    required this.items,
+    required this.onItemTap,
+    this.onPostponeItem,
+    this.onDoneItem,
+  });
+
+  final String title;
+  final bool isOverdue;
+  final List<AgendaItem> items;
+  final void Function(AgendaItem item) onItemTap;
+  final Future<void> Function(AgendaItem item)? onPostponeItem;
+  final Future<void> Function(AgendaItem item)? onDoneItem;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          RitmoSpacing.xl,
-          RitmoSpacing.sm,
-          RitmoSpacing.xl,
-          2,
-        ),
-        child: Text(
-          daySubGroupLabel(dateStr),
-          style: TextStyle(
-            fontSize: 12.0,
-            fontWeight: FontWeight.w600,
-            color: colors.textTertiary,
-          ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final count = items.length;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: RitmoSpacing.md,
+        vertical: 4,
+      ),
+      child: RitmoCard.neumorphic(
+        borderRadius: BorderRadius.circular(22),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        enableSpring: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // هدر روز نئومورفیک با شمارنده
+            Row(
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Vazirmatn',
+                    color: isOverdue ? colors.error : colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: (isOverdue ? colors.error : colors.primary)
+                        .withValues(alpha: isDark ? 0.18 : 0.10),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: (isOverdue ? colors.error : colors.primary)
+                          .withValues(alpha: isDark ? 0.35 : 0.22),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Text(
+                    toPersianDigits('$count'),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Vazirmatn',
+                      color: isOverdue ? colors.error : colors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const RitmoCardDivider(margin: EdgeInsets.symmetric(vertical: 4)),
+            // لیست ردیف‌های کارهای روز
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
+              itemCount: items.length,
+              separatorBuilder: (ctx, i) =>
+                  const RitmoCardDivider(margin: EdgeInsets.symmetric(vertical: 2)),
+              itemBuilder: (ctx, i) {
+                final item = items[i];
+                return _AgendaRow(
+                  item: item,
+                  onTap: () => onItemTap(item),
+                  onPostpone: onPostponeItem != null
+                      ? () => onPostponeItem!(item)
+                      : null,
+                  onDone: onDoneItem != null ? () => onDoneItem!(item) : null,
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -918,17 +1068,21 @@ class _DaySubGroupHeader extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────
-// Items Sliver — K23 swipe gestures embedded
+// Items Sliver
 // ────────────────────────────────────────────────────────────
 
 class _ItemsSliver extends StatelessWidget {
   const _ItemsSliver({
+    required this.title,
+    this.isOverdue = false,
     required this.items,
     required this.onItemTap,
     this.onPostponeItem,
     this.onDoneItem,
   });
 
+  final String title;
+  final bool isOverdue;
   final List<AgendaItem> items;
   final void Function(AgendaItem) onItemTap;
   final Future<void> Function(AgendaItem)? onPostponeItem;
@@ -936,24 +1090,23 @@ class _ItemsSliver extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (ctx, i) => _AgendaRow(
-          item: items[i],
-          onTap: () => onItemTap(items[i]),
-          onPostpone: onPostponeItem != null
-              ? () => onPostponeItem!(items[i])
-              : null,
-          onDone: onDoneItem != null ? () => onDoneItem!(items[i]) : null,
-        ),
-        childCount: items.length,
+    if (items.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+    return SliverToBoxAdapter(
+      child: _DayGroupCard(
+        title: title,
+        isOverdue: isOverdue,
+        items: items,
+        onItemTap: onItemTap,
+        onPostponeItem: onPostponeItem,
+        onDoneItem: onDoneItem,
       ),
     );
   }
 }
 
 // ────────────────────────────────────────────────────────────
-// Single Agenda Row — K23 Dismissible swipe
+// Single Agenda Row — 3D Sunken Well + Quick Complete
 // ────────────────────────────────────────────────────────────
 
 class _AgendaRow extends StatefulWidget {
@@ -979,8 +1132,7 @@ class _AgendaRowState extends State<_AgendaRow> {
       widget.item.domain == AgendaDomain.task ||
       widget.item.domain == AgendaDomain.goalStep;
 
-  /// Items that can be marked done/completed via swipe:
-  /// Non-actionable informational items (like cycle actual period status, events, reflections) cannot be "completed".
+  /// Items that can be marked done/completed via swipe / quick-tap:
   bool get _canComplete =>
       widget.item.kind != AgendaItemKind.event &&
       (widget.item.domain != AgendaDomain.cycle ||
@@ -993,105 +1145,139 @@ class _AgendaRowState extends State<_AgendaRow> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final theme = Theme.of(context);
     final item = widget.item;
-    final color = domainColor(context, item.domain);
-    final iconColor = domainIconColor(context, item.domain);
-    final icon = domainIcon(item.domain);
+    final color = itemColor(context, item);
+    final icon = itemIcon(item);
     final isDone = _isDone;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final Widget row = SizedBox(
-      height: CalendarGeometry.effectiveAgendaRowHeight(context),
+      height: 48,
       child: InkWell(
         onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: RitmoSpacing.xl,
-            vertical: RitmoSpacing.xs,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
             children: [
-              // Domain icon
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: isDone ? 0.06 : 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  icon,
-                  size: 16,
-                  color: iconColor.withValues(alpha: isDone ? 0.4 : 1.0),
+              // شیار فرورفته مقعر سه‌بعدی نئومورفیک با رنگ و هاله نوری اختصاصی دامنه
+              RitmoNeuSurface(
+                height: 36,
+                width: 36,
+                radius: 18,
+                sunken: true,
+                padding: EdgeInsets.zero,
+                glowColor: color.withValues(alpha: isDone ? 0.15 : 0.40),
+                child: Center(
+                  child: Icon(
+                    icon,
+                    size: 17,
+                    color: isDone ? color.withValues(alpha: 0.4) : color,
+                  ),
                 ),
               ),
-              const SizedBox(width: RitmoSpacing.sm),
+              const SizedBox(width: 10),
 
-              // Title + subtitle
+              // عنوان + زیرعنوان
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.title,
+                      toPersianDigits(item.title),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 14.0,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 13.5,
+                        fontWeight: isDone ? FontWeight.w500 : FontWeight.w700,
+                        fontFamily: 'Vazirmatn',
                         color: isDone
-                            ? theme.textTheme.bodyMedium?.color?.withValues(
-                                alpha: 0.35,
-                              )
-                            : theme.textTheme.bodyMedium?.color,
+                            ? colors.textTertiary
+                            : colors.textPrimary,
                         decoration: isDone ? TextDecoration.lineThrough : null,
                       ),
                     ),
                     if (item.subtitle != null && item.subtitle!.isNotEmpty)
                       Text(
-                        item.subtitle!,
+                        toPersianDigits(item.subtitle ?? ''),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 12.0,
-                          color: theme.textTheme.bodyMedium?.color?.withValues(
-                            alpha: isDone ? 0.25 : 0.5,
-                          ),
+                          fontSize: 11.0,
+                          fontFamily: 'Vazirmatn',
+                          color: colors.textTertiary,
                         ),
                       ),
                   ],
                 ),
               ),
 
-              // Time label if timed
+              // پیل زمان در صورت زمان‌دار بودن
               if (item.isTimed && item.timeOfDay != null)
-                Padding(
-                  padding: const EdgeInsets.only(right: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: (isDark ? Colors.white : Colors.black)
+                        .withValues(alpha: isDark ? 0.12 : 0.06),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   child: Text(
                     toPersianDigits(item.timeOfDay ?? ''),
                     style: TextStyle(
-                      fontSize: 12.0,
-                      color: theme.textTheme.bodyMedium?.color?.withValues(
-                        alpha: isDone ? 0.25 : 0.55,
-                      ),
+                      fontSize: 11.0,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Vazirmatn',
+                      color: isDone
+                          ? colors.textTertiary
+                          : colors.textSecondary,
                     ),
                   ),
                 ),
 
-              // Importance star — task domain only
+              // ستاره اهمیت برای تسک‌ها
               if (item.domain == AgendaDomain.task &&
                   item.meta['isImportant'] == 1)
                 Padding(
-                  padding: const EdgeInsets.only(right: 4),
+                  padding: const EdgeInsets.only(right: 6),
                   child: Icon(
                     Icons.star_rounded,
                     size: 16,
-                    color: theme.colorScheme.primary.withValues(
-                      alpha: isDone ? 0.25 : 0.75,
+                    color: colors.primary.withValues(
+                      alpha: isDone ? 0.25 : 0.85,
                     ),
                   ),
                 ),
+
+              // دکمه تعاملی تیک و ثبت سریع (Quick Complete)
+              if (_canComplete) ...[
+                const SizedBox(width: 8),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      RitmoHaptics.confirm();
+                      if (widget.onDone != null) widget.onDone!();
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        isDone
+                            ? CupertinoIcons.checkmark_circle_fill
+                            : CupertinoIcons.circle,
+                        size: 21,
+                        color: isDone
+                            ? colors.success
+                            : colors.textSecondary.withValues(alpha: 0.45),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -1102,7 +1288,7 @@ class _AgendaRowState extends State<_AgendaRow> {
       return row;
     }
 
-    // K23 — wrap in Dismissible for swipe gestures
+    // K23 — Dismissible swipe gestures
     return Dismissible(
       key: ValueKey(item.id),
       direction: _canPostpone && _canComplete
@@ -1110,14 +1296,12 @@ class _AgendaRowState extends State<_AgendaRow> {
           : (_canPostpone
               ? DismissDirection.endToStart
               : DismissDirection.startToEnd),
-      // Left→right: mark done (all domains)
       background: _SwipeBackground(
         color: colors.success,
         icon: Icons.check_rounded,
         alignment: AlignmentDirectional.centerStart,
         label: 'انجام شد',
       ),
-      // Right→left: postpone (task/goalStep only); disabled when !_canPostpone
       secondaryBackground: _SwipeBackground(
         color: _canPostpone ? colors.accent : Colors.transparent,
         icon: _canPostpone ? Icons.schedule_rounded : null,
@@ -1126,16 +1310,11 @@ class _AgendaRowState extends State<_AgendaRow> {
       ),
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.startToEnd) {
-          // Done swipe
           RitmoHapticsPolicy.tap();
           if (widget.onDone != null) await widget.onDone!();
-          return false; // parent refreshes via event; don't remove from list directly
+          return false;
         } else {
-          // Postpone swipe
-          if (!_canPostpone) {
-            // Snap back — routines cannot be postponed
-            return false;
-          }
+          if (!_canPostpone) return false;
           RitmoHapticsPolicy.tap();
           if (widget.onPostpone != null) await widget.onPostpone!();
           return false;

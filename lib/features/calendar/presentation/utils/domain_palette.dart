@@ -197,12 +197,125 @@ Color domainIconColor(
   return domainColor(context, domain, kind: kind);
 }
 
-IconData itemIcon(AgendaItem item) => domainIcon(item.domain, kind: item.kind);
-Color itemColor(BuildContext context, AgendaItem item) =>
-    domainColor(context, item.domain, kind: item.kind);
-Color itemIconColor(BuildContext context, AgendaItem item) =>
-    domainIconColor(context, item.domain, kind: item.kind);
-Color itemContainerColor(BuildContext context, AgendaItem item) =>
-    domainContainerColor(context, item.domain, kind: item.kind);
+IconData itemIcon(AgendaItem item) {
+  final tLower = item.title.toLowerCase();
+  if (item.domain == AgendaDomain.prayer ||
+      item.domain == AgendaDomain.mustahab ||
+      item.domain == AgendaDomain.worshipDebt ||
+      tLower.contains('نماز') ||
+      tLower.contains('قرآن') ||
+      tLower.contains('دعا') ||
+      tLower.contains('زیارت') ||
+      tLower.contains('اذان') ||
+      tLower.contains('مسجد') ||
+      tLower.contains('ذکر')) {
+    return Icons.mosque_rounded;
+  }
+  if (item.domain == AgendaDomain.sport ||
+      tLower.contains('ورزش') ||
+      tLower.contains('تمرین') ||
+      tLower.contains('باشگاه') ||
+      tLower.contains('دویدن') ||
+      tLower.contains('شنا')) {
+    return CupertinoIcons.flame_fill;
+  }
+  if (item.domain == AgendaDomain.medicine ||
+      tLower.contains('دارو') ||
+      tLower.contains('قرص') ||
+      tLower.contains('شربت') ||
+      tLower.contains('انسولین') ||
+      tLower.contains('پزشک')) {
+    return CupertinoIcons.bandage_fill;
+  }
+  if (item.domain == AgendaDomain.course ||
+      item.domain == AgendaDomain.konkur ||
+      tLower.contains('درس') ||
+      tLower.contains('مطالعه') ||
+      tLower.contains('کتاب') ||
+      tLower.contains('کنکور')) {
+    return CupertinoIcons.book_fill;
+  }
+  if (item.domain == AgendaDomain.task ||
+      item.domain == AgendaDomain.commitment ||
+      tLower.contains('کار') ||
+      tLower.contains('پروژه') ||
+      tLower.contains('کد') ||
+      tLower.contains('جلسه')) {
+    return CupertinoIcons.briefcase_fill;
+  }
+  if (tLower.contains('خواب') || tLower.contains('استراحت')) {
+    return CupertinoIcons.moon_fill;
+  }
+  return domainIcon(item.domain, kind: item.kind);
+}
+
+Color itemColor(BuildContext context, AgendaItem item) {
+  final tLower = item.title.toLowerCase();
+  if (item.domain == AgendaDomain.prayer ||
+      item.domain == AgendaDomain.mustahab ||
+      item.domain == AgendaDomain.worshipDebt ||
+      tLower.contains('نماز') ||
+      tLower.contains('قرآن') ||
+      tLower.contains('دعا') ||
+      tLower.contains('زیارت') ||
+      tLower.contains('اذان') ||
+      tLower.contains('مسجد') ||
+      tLower.contains('ذکر')) {
+    return const Color(0xFF10B981); // Emerald Worship
+  }
+  if (item.domain == AgendaDomain.sport ||
+      tLower.contains('ورزش') ||
+      tLower.contains('تمرین') ||
+      tLower.contains('باشگاه') ||
+      tLower.contains('دویدن') ||
+      tLower.contains('شنا') ||
+      tLower.contains('پیاده‌روی')) {
+    return const Color(0xFFF97316); // Exercise Orange
+  }
+  if (item.domain == AgendaDomain.medicine ||
+      tLower.contains('دارو') ||
+      tLower.contains('قرص') ||
+      tLower.contains('شربت') ||
+      tLower.contains('انسولین') ||
+      tLower.contains('پزشک')) {
+    return const Color(0xFFEF4444); // Medical Red
+  }
+  if (item.domain == AgendaDomain.course ||
+      item.domain == AgendaDomain.konkur ||
+      tLower.contains('درس') ||
+      tLower.contains('مطالعه') ||
+      tLower.contains('کتاب') ||
+      tLower.contains('کنکور')) {
+    return const Color(0xFF8B5CF6); // Purple Learning
+  }
+  if (item.domain == AgendaDomain.task ||
+      item.domain == AgendaDomain.commitment ||
+      tLower.contains('کار') ||
+      tLower.contains('پروژه') ||
+      tLower.contains('کد') ||
+      tLower.contains('جلسه')) {
+    return const Color(0xFF2563EB); // Royal Focus Blue
+  }
+  if (tLower.contains('خواب') || tLower.contains('استراحت')) {
+    return const Color(0xFF6366F1); // Night Indigo
+  }
+  return domainColor(context, item.domain, kind: item.kind);
+}
+
+Color itemIconColor(BuildContext context, AgendaItem item) {
+  if (item.domain == AgendaDomain.cycle) {
+    return const Color(0xFFEF4444);
+  }
+  return itemColor(context, item);
+}
+
+Color itemContainerColor(BuildContext context, AgendaItem item) {
+  final baseColor = itemColor(context, item);
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final alpha = isDark ? 0.16 : 0.10;
+  return baseColor.withValues(alpha: alpha);
+}
+
 String itemLabelFa(AgendaItem item) =>
     domainLabelFa(item.domain, kind: item.kind);
+

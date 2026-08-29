@@ -29,8 +29,11 @@ class WorshipScreen extends StatefulWidget {
 }
 
 class _WorshipScreenState extends State<WorshipScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late TabController _tabController;
+  late AnimationController _headerMorphAnimCtrl;
+  Animation<double>? _headerMorphAnim;
+
   WorshipDay? _worshipDay;
   bool _isLoading = true;
   bool _isNightPrayerEnabled = false;
@@ -54,11 +57,21 @@ class _WorshipScreenState extends State<WorshipScreen>
   @override
   void initState() {
     super.initState();
+    _headerMorphAnimCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _headerMorphAnimCtrl.addListener(() {
+      if (_headerMorphAnim != null) {
+        _scrollOffset.value = _headerMorphAnim!.value;
+      }
+    });
+
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging ||
           _tabController.animation?.value == _tabController.index.toDouble()) {
-        _syncHeaderWithActiveTab(_tabController.index);
+        _syncHeaderWithActiveTab(_tabController.index, animate: true);
         if (mounted) setState(() {});
       }
     });
@@ -66,7 +79,7 @@ class _WorshipScreenState extends State<WorshipScreen>
       final value = _tabController.animation?.value ?? 0.0;
       final roundIndex = value.round().clamp(0, 2);
       if ((value - roundIndex).abs() < 0.05 && _tabController.index == roundIndex) {
-        _syncHeaderWithActiveTab(roundIndex);
+        _syncHeaderWithActiveTab(roundIndex, animate: true);
       }
     });
 
@@ -89,6 +102,7 @@ class _WorshipScreenState extends State<WorshipScreen>
   void dispose() {
     _debounceTimer?.cancel();
     _eventSub?.cancel();
+    _headerMorphAnimCtrl.dispose();
     for (final controller in _tabScrollControllers) {
       controller.dispose();
     }
@@ -98,16 +112,33 @@ class _WorshipScreenState extends State<WorshipScreen>
     super.dispose();
   }
 
-  void _syncHeaderWithActiveTab(int activeIndex) {
+  void _syncHeaderWithActiveTab(int activeIndex, {bool animate = true}) {
     if (activeIndex < 0 || activeIndex >= _tabOffsets.length) return;
     final controller = _tabScrollControllers[activeIndex];
-    final offset = controller.hasClients ? controller.offset : _tabOffsets[activeIndex];
-    _tabOffsets[activeIndex] = offset;
-    _scrollOffset.value = offset;
+    final targetOffset = controller.hasClients ? controller.offset : _tabOffsets[activeIndex];
+    _tabOffsets[activeIndex] = targetOffset;
 
-    final isExpanded = offset <= 75.0 || _tabExpanded[activeIndex];
+    final currentOffset = _scrollOffset.value;
+    final isExpanded = targetOffset <= 75.0 || _tabExpanded[activeIndex];
     _isTabsExpanded.value = isExpanded;
     _accumulatedUpScroll = 0.0;
+
+    if (animate && (targetOffset - currentOffset).abs() > 1.0) {
+      _headerMorphAnimCtrl.stop();
+      _headerMorphAnim = Tween<double>(
+        begin: currentOffset,
+        end: targetOffset,
+      ).animate(
+        CurvedAnimation(
+          parent: _headerMorphAnimCtrl,
+          curve: Curves.easeOutCubic,
+        ),
+      );
+      _headerMorphAnimCtrl.forward(from: 0.0);
+    } else {
+      _headerMorphAnimCtrl.stop();
+      _scrollOffset.value = targetOffset;
+    }
   }
 
   void _onTabScroll(int tabIndex, ScrollNotification notification) {
@@ -117,6 +148,9 @@ class _WorshipScreenState extends State<WorshipScreen>
 
     // Only update the active header if this scroll notification came from the currently visible tab
     if (_tabController.index == tabIndex) {
+      if (_headerMorphAnimCtrl.isAnimating) {
+        _headerMorphAnimCtrl.stop();
+      }
       _scrollOffset.value = pixels;
 
       if (pixels <= 20) {

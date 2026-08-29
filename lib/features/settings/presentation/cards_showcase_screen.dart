@@ -315,6 +315,62 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 24),
+
+          // ── ۵. نوار پیشرفت نئومورفیک فرورفته (Sunken Progress Bar) ──
+          _buildSectionTitle('۵. نوار پیشرفت نئومورفیک فرورفته (Progress Bar)', 'شیار سه‌بعدی فرورفته با پرکننده نئونی و درخشان'),
+          const SizedBox(height: 10),
+
+          RitmoCard.neumorphic(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                RitmoNeuProgressBar(
+                  progress: 0.72,
+                  label: 'پیشرفت اهداف هفتگی',
+                  showLabel: true,
+                  height: 12,
+                  color: colors.primary,
+                ),
+                const SizedBox(height: 14),
+                const RitmoNeuProgressBar(
+                  progress: 0.45,
+                  label: 'ریکاوری و خواب شبانه',
+                  showLabel: true,
+                  height: 10,
+                  color: Color(0xFF10B981),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // ── ۶. کارت اسکلت لودینگ نئومورفیک (Card Skeleton) ──
+          _buildSectionTitle('۶. اسکلت لودینگ نئومورفیک (Loading Skeleton)', 'انیمیشن تنفس نوری روان بدون پرش ابعادی بوم'),
+          const SizedBox(height: 10),
+
+          const RitmoCardSkeleton(height: 130),
+          const SizedBox(height: 24),
+
+          // ── ۷. کارت حالت خالی سه‌بعدی (Empty State Card) ──
+          _buildSectionTitle('۷. کارت حالت خالی سه‌بعدی (Empty State Card)', 'برای نمایش زیبا و دلنشین وضعیت‌های بدون داده'),
+          const SizedBox(height: 10),
+
+          RitmoNeuEmptyCard(
+            title: 'هنوز هیچ برنامه‌ای برای امروز ثبت نشده',
+            subtitle: 'می‌توانید با دکمه زیر اولین هدف یا عادت روزانه خود را تعریف کنید.',
+            actionLabel: 'افزودن برنامه جدید',
+            onActionTap: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('دکمه «افزودن برنامه جدید» لمس شد'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
+          ),
           const SizedBox(height: 32),
         ],
       ),

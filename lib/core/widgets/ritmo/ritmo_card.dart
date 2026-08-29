@@ -9,6 +9,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 
 /// گونه‌های متریال کارت مرجع ریتمو
 enum RitmoCardVariant {
@@ -1708,6 +1709,370 @@ class RitmoNeuMasterCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// -----------------------------------------------------------------------------
+/// نوار پیشرفت نئومورفیک فرورفته با شیار سه‌بعدی و پرکننده درخشان (Ritmo Neu Progress Bar)
+/// -----------------------------------------------------------------------------
+class RitmoNeuProgressBar extends StatelessWidget {
+  const RitmoNeuProgressBar({
+    super.key,
+    required this.progress,
+    this.height = 12,
+    this.color,
+    this.showLabel = false,
+    this.label,
+    this.borderRadius,
+    this.animate = true,
+  });
+
+  /// مقدار پیشرفت بین ۰.۰ تا ۱.۰
+  final double progress;
+  final double height;
+  final Color? color;
+  final bool showLabel;
+  final String? label;
+  final BorderRadius? borderRadius;
+  final bool animate;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isDark = context.isDark;
+    final effectiveColor = color ?? colors.primary;
+    final clamped = progress.clamp(0.0, 1.0);
+    final radius = borderRadius ?? BorderRadius.circular(height / 2);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (showLabel || label != null) ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (label != null)
+                Text(
+                  label!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              Text(
+                toPersianDigits('${(clamped * 100).toInt()}٪'),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: effectiveColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+        ],
+        Container(
+          height: height,
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: RitmoNeu.sunkenGradient(colors.surfaceSunken, isDark),
+            boxShadow: RitmoNeu.sunkenShadows(isDark, blur: 5, distance: 2.0),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final maxWidth = constraints.maxWidth;
+              final fillWidth = (maxWidth * clamped).clamp(0.0, maxWidth);
+
+              return Align(
+                alignment: Alignment.centerRight, // RTL
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0.0, end: fillWidth),
+                  duration: animate
+                      ? const Duration(milliseconds: 600)
+                      : Duration.zero,
+                  curve: Curves.easeOutCubic,
+                  builder: (context, width, child) {
+                    if (width <= 0) return const SizedBox.shrink();
+
+                    return Container(
+                      width: width,
+                      height: height,
+                      decoration: BoxDecoration(
+                        borderRadius: radius,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color.lerp(effectiveColor, Colors.white, isDark ? 0.20 : 0.35)!,
+                            effectiveColor,
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: effectiveColor.withValues(alpha: isDark ? 0.45 : 0.35),
+                            blurRadius: 7,
+                            offset: const Offset(0, 1.5),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// -----------------------------------------------------------------------------
+/// کارت اسکلت لودینگ نئومورفیک (Ritmo Card Skeleton)
+/// با انیمیشن تنفس نوری روان بدون پرش ابعادی
+/// -----------------------------------------------------------------------------
+class RitmoCardSkeleton extends StatefulWidget {
+  const RitmoCardSkeleton({
+    super.key,
+    this.height = 140,
+    this.borderRadius,
+    this.margin,
+  });
+
+  final double height;
+  final BorderRadius? borderRadius;
+  final EdgeInsetsGeometry? margin;
+
+  @override
+  State<RitmoCardSkeleton> createState() => _RitmoCardSkeletonState();
+}
+
+class _RitmoCardSkeletonState extends State<RitmoCardSkeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(begin: 0.35, end: 0.75).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutSine),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = context.isDark;
+
+    return RitmoCard.neumorphic(
+      margin: widget.margin,
+      borderRadius: widget.borderRadius ?? BorderRadius.circular(28),
+      padding: const EdgeInsets.all(16),
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          final opacity = _animation.value;
+          final boneColor = isDark
+              ? Colors.white.withValues(alpha: opacity * 0.08)
+              : const Color(0xFFCAD4E2).withValues(alpha: opacity * 0.45);
+
+          return SizedBox(
+            height: widget.height - 32,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: boneColor,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 14,
+                            width: 120,
+                            decoration: BoxDecoration(
+                              color: boneColor,
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            height: 10,
+                            width: 180,
+                            decoration: BoxDecoration(
+                              color: boneColor,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: boneColor,
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      height: 28,
+                      width: 80,
+                      decoration: BoxDecoration(
+                        color: boneColor,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    Container(
+                      height: 28,
+                      width: 110,
+                      decoration: BoxDecoration(
+                        color: boneColor,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// -----------------------------------------------------------------------------
+/// کارت حالت خالی سه‌بعدی نئومورفیک (Ritmo Neu Empty Card)
+/// برای نمایش وضعیت‌های بدون داده یا بدون برنامه
+/// -----------------------------------------------------------------------------
+class RitmoNeuEmptyCard extends StatelessWidget {
+  const RitmoNeuEmptyCard({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    this.icon = CupertinoIcons.tray_fill,
+    this.actionLabel,
+    this.onActionTap,
+    this.height = 180,
+    this.margin,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final String? actionLabel;
+  final VoidCallback? onActionTap;
+  final double height;
+  final EdgeInsetsGeometry? margin;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isDark = context.isDark;
+
+    return RitmoCard.neumorphic(
+      margin: margin,
+      borderRadius: BorderRadius.circular(28),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: SizedBox(
+        height: height - 32,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // شیار دایره‌ای نئومورفیک با آیکون نرم
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RitmoNeu.sunkenGradient(colors.surfaceSunken, isDark),
+                boxShadow: RitmoNeu.sunkenShadows(isDark, blur: 6, distance: 2.2),
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  size: 24,
+                  color: colors.textSecondary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w800,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
+                color: colors.textSecondary,
+              ),
+            ),
+            if (actionLabel != null) ...[
+              const SizedBox(height: 12),
+              RitmoNeuButton(
+                height: 32,
+                radius: 16,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                onTap: onActionTap ?? () {},
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(CupertinoIcons.add, size: 14, color: colors.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      actionLabel!,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

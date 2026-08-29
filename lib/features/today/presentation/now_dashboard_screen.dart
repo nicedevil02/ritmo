@@ -73,7 +73,6 @@ import 'package:ritmo/features/today/presentation/widgets/dashboard/home_quick_a
 import 'package:ritmo/features/today/presentation/widgets/dashboard/module_summary_grid.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/next_action_hero.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/today_path_progress_banner.dart';
-import 'package:ritmo/features/today/presentation/widgets/dashboard/todays_tasks_section.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_dashboard_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/energy_dashboard_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/morning_checkin_sheet.dart';
@@ -933,7 +932,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final colors = context.colors;
 
-    final tasksList = _timelineItems.where((i) => i['type'] == 'task').toList();
     final alerts = _engineOutput?.criticalAlerts ?? const <String>[];
     final progress = _todayProgress();
 
@@ -1175,26 +1173,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                     ),
                     const SizedBox(height: 16),
 
-                    // ۷. کارهای امروز (تیتر و اکشنها داخل خودش)
-                    _enter(
-                      7,
-                      TodaysTasksSection(
-                        // G-6: لیست کامل پاس داده میشود؛ برش ۴تایی مسئولیت خود ویجت است.
-                        tasks: tasksList,
-                        onOpenDetails: _showDetailsSheet,
-                        onStartTask: _showNiyyahSheet,
-                        onReshuffleApplied: _loadDashboardData,
-                        onViewAll: () => widget.onNavigateToTab?.call(
-                          RitmoShellMetrics.calendarTabIndexFor(
-                            AppModeService.instance.current,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ۸. کارت تجربهٔ امروز
-                    _enter(8, const TodayExperienceCard()),
+                    // ۷. کارت تجربهٔ امروز
+                    _enter(7, const TodayExperienceCard()),
                     const SizedBox(height: 16),
 
                     // ۹. سیستمهای فعال (تیتر داخل خودش)

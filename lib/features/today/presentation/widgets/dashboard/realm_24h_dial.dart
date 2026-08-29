@@ -113,7 +113,8 @@ class RealmDialSegment {
     required this.endMinute,
     required this.color,
     required this.isActive,
-    required this.icon,
+    this.icon,
+    this.iconStr,
     this.name = '',
   });
 
@@ -122,6 +123,7 @@ class RealmDialSegment {
   final Color color;
   final bool isActive;
   final IconData? icon;
+  final String? iconStr;
   final String name;
 }
 
@@ -226,6 +228,7 @@ class Realm24hDial extends StatelessWidget {
         final isActive = sched.zoneId == activeZoneId;
         final startMin = _timeStrToMinutes(sched.startTime);
         final endMin = _timeStrToMinutes(sched.endTime);
+        final iconStr = realm?.icon;
         final icon = iconForRealm(realm?.name ?? '', realm?.icon);
 
         if (endMin <= startMin) {
@@ -236,6 +239,7 @@ class Realm24hDial extends StatelessWidget {
               color: color,
               isActive: isActive,
               icon: icon,
+              iconStr: iconStr,
               name: realm?.name ?? '',
             ),
           );
@@ -247,6 +251,7 @@ class Realm24hDial extends StatelessWidget {
                 color: color,
                 isActive: isActive,
                 icon: icon,
+                iconStr: iconStr,
                 name: realm?.name ?? '',
               ),
             );
@@ -259,6 +264,7 @@ class Realm24hDial extends StatelessWidget {
               color: color,
               isActive: isActive,
               icon: icon,
+              iconStr: iconStr,
               name: realm?.name ?? '',
             ),
           );
@@ -295,6 +301,7 @@ class Realm24hDial extends StatelessWidget {
         color: head.color,
         isActive: head.isActive,
         icon: head.icon,
+        iconStr: head.iconStr ?? tail.iconStr,
         name: head.name,
       );
       segments.removeAt(tailIndex);
@@ -540,21 +547,21 @@ class _NeuDialPainter extends CustomPainter {
     }
 
     // آیکون وسط کمان — فقط وقتی جا دارد
-    final icon = seg.icon;
-    if (icon != null && g.sweep * radius > stroke * 1.05) {
+    if (g.sweep > 0.08) {
       final mid = g.start + g.sweep / 2;
       final pos = center + Offset(math.cos(mid), math.sin(mid)) * radius;
-      _drawIcon(
-        canvas,
-        icon,
-        pos,
-        (stroke * 0.58).clamp(9.0, 24.0),
-        RealmNeu.muted(isDarkMode).withValues(alpha: isDarkMode ? 0.85 : 0.72),
+      _drawSegmentIcon(
+        canvas: canvas,
+        iconStr: seg.iconStr,
+        icon: seg.icon,
+        center: pos,
+        size: (stroke * 0.58).clamp(10.0, 24.0),
+        color: RealmNeu.muted(isDarkMode).withValues(alpha: isDarkMode ? 0.85 : 0.72),
       );
     }
   }
 
-  /// کمان فعال (رنگ پالت + هاله + نقطهٔ پایان)
+  /// کمان فعال (لوله شیشه‌ای نئونی سه‌بعدی پرمیوم + بازتاب‌های لایه‌ای + آیکون/ایموجی)
   void _paintActiveSegment(
     Canvas canvas,
     Rect ring,
@@ -566,17 +573,17 @@ class _NeuDialPainter extends CustomPainter {
   ) {
     final segColor = seg.color;
 
-    // ۱. هالهٔ نئونی زیر کمان فعال
+    // ۱. هالهٔ نئونی زیر کمان فعال (Ambient Neon Aura)
     final glow = Paint()
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = stroke + 10 * k
-      ..color = segColor.withValues(alpha: isDarkMode ? 0.38 : 0.28)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 12 * k);
+      ..strokeWidth = stroke + 8 * k
+      ..color = segColor.withValues(alpha: isDarkMode ? 0.40 : 0.30)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10 * k);
     canvas.drawArc(ring, g.start, g.sweep, false, glow);
 
-    // ۲. بدنهٔ گرادیانی کمان فعال
-    final bright = Color.lerp(segColor, Colors.white, isDarkMode ? 0.22 : 0.40)!;
+    // ۲. بدنهٔ گرادیانی لوله شیشه‌ای با عمق مایع (Liquid Cylinder Body)
+    final bright = Color.lerp(segColor, Colors.white, isDarkMode ? 0.25 : 0.45)!;
     final body = Paint()
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -588,20 +595,65 @@ class _NeuDialPainter extends CustomPainter {
       ).createShader(ring);
     canvas.drawArc(ring, g.start, g.sweep, false, body);
 
-    // ۳. های‌لایت شیشه‌ای بالای لوله (Specular tube reflection)
-    final spec = Paint()
+    // ۳. ریم شیشه‌ای لبه پایینی (Subsurface Glass Wall Thickness)
+    final rimSweep = math.max(0.01, g.sweep - capAngle * 0.4);
+    final innerRim = Paint()
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = stroke * 0.32
-      ..color = Colors.white.withValues(alpha: isDarkMode ? 0.75 : 0.90);
-    final specRect = ring.deflate(stroke * 0.22);
+      ..strokeWidth = (stroke * 0.12).clamp(1.0, 2.0)
+      ..color = Colors.white.withValues(alpha: isDarkMode ? 0.20 : 0.35);
+    canvas.drawArc(
+      ring.inflate(stroke * 0.26),
+      g.start + capAngle * 0.2,
+      rimSweep,
+      false,
+      innerRim,
+    );
+
+    // ۴. های‌لایت شیشه‌ای خطی و بسیار ظریف با فید انتها (Curved Specular Feathered Glint)
+    final specRect = ring.deflate(stroke * 0.20);
+    final specSweep = math.max(0.01, g.sweep - capAngle * 0.6);
+    final specPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = (stroke * 0.16).clamp(1.4, 2.6)
+      ..shader = SweepGradient(
+        startAngle: g.start + capAngle * 0.3,
+        endAngle: g.start + capAngle * 0.3 + specSweep,
+        colors: [
+          Colors.white.withValues(alpha: 0.05),
+          Colors.white.withValues(alpha: isDarkMode ? 0.78 : 0.90),
+          Colors.white.withValues(alpha: isDarkMode ? 0.85 : 0.95),
+          Colors.white.withValues(alpha: 0.10),
+        ],
+        stops: const [0.0, 0.25, 0.75, 1.0],
+      ).createShader(specRect);
+
     canvas.drawArc(
       specRect,
-      g.start + capAngle * 0.4,
-      math.max(0.01, g.sweep - capAngle * 0.8),
+      g.start + capAngle * 0.3,
+      specSweep,
       false,
-      spec,
+      specPaint,
     );
+
+    // ۵. رسم آیکون یا ایموجی منتخب قلمرو درون نوار فعال (Active Realm Emoji / Icon)
+    if (g.sweep > 0.08) {
+      final mid = g.start + g.sweep / 2;
+      final pos = ring.center + Offset(math.cos(mid), math.sin(mid)) * (ring.width / 2);
+      final rawIconStr = seg.iconStr ?? (activeZoneIcon != null && activeZoneIcon!.trim().isNotEmpty ? activeZoneIcon : null);
+      final rawIcon = seg.icon ?? Realm24hDial.iconForRealm(activeZoneName, activeZoneIcon);
+
+      _drawSegmentIcon(
+        canvas: canvas,
+        iconStr: rawIconStr,
+        icon: rawIcon,
+        center: pos,
+        size: (stroke * 0.60).clamp(11.0, 24.0),
+        color: Colors.white,
+        hasShadow: true,
+      );
+    }
   }
 
   /// نقطهٔ زمان جاری (سفید شفاف با هاله)
@@ -824,6 +876,38 @@ class _NeuDialPainter extends CustomPainter {
     )..layout(maxWidth: maxWidth ?? double.infinity);
 
     tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
+  }
+
+  void _drawSegmentIcon({
+    required Canvas canvas,
+    required String? iconStr,
+    required IconData? icon,
+    required Offset center,
+    required double size,
+    required Color color,
+    bool hasShadow = false,
+  }) {
+    if (iconStr != null && iconStr.trim().isNotEmpty) {
+      final text = iconStr.trim();
+      final style = TextStyle(
+        fontSize: size,
+        shadows: hasShadow
+            ? [
+                Shadow(
+                  color: Colors.black.withValues(alpha: 0.60),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ]
+            : null,
+      );
+      _drawText(canvas, text, center, style);
+      return;
+    }
+
+    if (icon != null) {
+      _drawIcon(canvas, icon, center, size, color);
+    }
   }
 
   void _drawIcon(

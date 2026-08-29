@@ -1059,6 +1059,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
     required this.subtitle,
     required this.activeChipLabel,
     this.activeChipIcon = CupertinoIcons.moon_fill,
+    this.activeChipEmoji,
     this.statusLabel = 'قلمرو فعال',
     required this.timeRange,
     required this.remainingTime,
@@ -1075,6 +1076,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
   final String subtitle;
   final String activeChipLabel;
   final IconData activeChipIcon;
+  final String? activeChipEmoji;
   final String statusLabel;
   final String timeRange;
   final String remainingTime;
@@ -1097,13 +1099,40 @@ class RitmoNeuMasterCard extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final maxW = constraints.maxWidth.isFinite ? constraints.maxWidth : 380.0;
-          final dialColWidth = (maxW * 0.33).clamp(104.0, 124.0);
+          final dialColWidth = (maxW * 0.38).clamp(118.0, 138.0);
 
           return RitmoCard.neumorphic(
             onTap: onTap,
             margin: margin,
             borderRadius: BorderRadius.circular(28),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            borderColor: effectiveColor.withValues(alpha: isDark ? 0.35 : 0.25),
+            borderWidth: 1.0,
+            customShadows: [
+              // هاله پرمیوم رنگ قلمرو فعال دور کارت طبق اکوسیستم اپل (Apple Ambient Luminous Halo)
+              BoxShadow(
+                color: effectiveColor.withValues(alpha: isDark ? 0.22 : 0.14),
+                blurRadius: 22,
+                spreadRadius: 0,
+                offset: const Offset(0, 3),
+              ),
+              // سایه فیزیکی نئومورفیک تیره عمیق
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.50)
+                    : Color.lerp(colors.surfaceElevated, Colors.black, 0.18)!.withValues(alpha: 0.55),
+                blurRadius: 14,
+                offset: const Offset(3.5, 4.5),
+              ),
+              // سایه فیزیکی نئومورفیک لبه روشن
+              BoxShadow(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.04)
+                    : Colors.white.withValues(alpha: 0.95),
+                blurRadius: 8,
+                offset: const Offset(-3, -3),
+              ),
+            ],
             child: SizedBox(
               height: height - 24,
               child: Row(
@@ -1125,13 +1154,14 @@ class RitmoNeuMasterCard extends StatelessWidget {
                               color: effectiveColor,
                             ),
                             const SizedBox(width: 6),
-                            // چیپ نام قلمروی فعال با آیکون ماه
+                            // چیپ نام قلمروی فعال با آیکون یا ایموجی منتخب
                             Expanded(
                               child: _buildTactileRealmPill(
                                 isDark: isDark,
                                 colors: colors,
                                 label: activeChipLabel,
                                 icon: activeChipIcon,
+                                emoji: activeChipEmoji,
                                 color: effectiveColor,
                               ),
                             ),
@@ -1189,7 +1219,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
 
                   // ── ستون چپ: گیج نئومورفیک سه‌بعدی و دکمه مدیریت فیزیکی ──
                   SizedBox(
@@ -1205,7 +1235,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
                                   context: context,
                                   color: effectiveColor,
                                   isDark: isDark,
-                                  size: (dialColWidth - 8).clamp(84.0, 98.0),
+                                  size: (dialColWidth - 4).clamp(100.0, 120.0),
                                 ),
                           ),
                         ),
@@ -1320,6 +1350,7 @@ class RitmoNeuMasterCard extends StatelessWidget {
     required RitmoColors colors,
     required String label,
     required IconData icon,
+    String? emoji,
     required Color color,
   }) {
     final shadowDarkColor = isDark
@@ -1368,11 +1399,17 @@ class RitmoNeuMasterCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 12,
-            color: colors.textSecondary,
-          ),
+          if (emoji != null && emoji.trim().isNotEmpty)
+            Text(
+              emoji.trim(),
+              style: const TextStyle(fontSize: 12),
+            )
+          else
+            Icon(
+              icon,
+              size: 12,
+              color: colors.textSecondary,
+            ),
           const SizedBox(width: 4),
           Expanded(
             child: Text(

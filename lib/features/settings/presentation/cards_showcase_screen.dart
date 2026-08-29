@@ -532,42 +532,23 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ردیف عنوان بخش و شماره
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                 decoration: BoxDecoration(
                   color: colors.primary,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(7),
                 ),
                 child: Text(
-                  number,
+                  'بخش $number',
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w900,
+                    fontFamily: 'Vazirmatn',
                     color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.14),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: colors.primary.withValues(alpha: isDark ? 0.40 : 0.25),
-                    width: 0.8,
-                  ),
-                ),
-                child: Text(
-                  widgetClass,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontFamily: 'monospace',
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Color.lerp(colors.primary, Colors.white, 0.65)! : colors.primary,
                   ),
                 ),
               ),
@@ -576,15 +557,55 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w900,
+                    fontFamily: 'Vazirmatn',
                     color: colors.textPrimary,
                   ),
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 6),
+
+          // بج نام ویجت و کلاس با آیکون کد
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: isDark ? 0.18 : 0.10),
+              borderRadius: BorderRadius.circular(7),
+              border: Border.all(
+                color: colors.primary.withValues(alpha: isDark ? 0.35 : 0.20),
+                width: 0.8,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  CupertinoIcons.chevron_left_slash_chevron_right,
+                  size: 11,
+                  color: isDark ? Color.lerp(colors.primary, Colors.white, 0.70)! : colors.primary,
+                ),
+                const SizedBox(width: 5),
+                Flexible(
+                  child: Text(
+                    widgetClass,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? Color.lerp(colors.primary, Colors.white, 0.75)! : colors.primary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 8),
+
+          // توضیحات و راهنمای هوش مصنوعی
           RichText(
             text: TextSpan(
               style: TextStyle(

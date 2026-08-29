@@ -99,6 +99,15 @@ class ModuleManagementService {
         await SettingsService.instance.set('module_health_enabled', true);
       }
 
+      if (key == 'module_religion_enabled') {
+        try {
+          final existingAdhan = SettingsService.instance.get<String?>('worship_adhan_enabled');
+          if (existingAdhan == null) {
+            await SettingsService.instance.set('worship_adhan_enabled', 'true');
+          }
+        } catch (_) {}
+      }
+
       // 2. Invalidate DayAgenda cache & schedule alarms
       DayAgendaService.instance.invalidateAll();
       try {

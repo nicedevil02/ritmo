@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
@@ -59,8 +60,8 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
   final TextEditingController _titleController = TextEditingController();
   late PlanningHorizon _horizon;
   int _effortMinutes = 60;
-  CommitmentImportance _importance = CommitmentImportance.must;
-  WorkKind _workKind = WorkKind.deep;
+  CommitmentImportance _importance = CommitmentImportance.should;
+  WorkKind _workKind = WorkKind.light;
   late String _selectedDayKey;
   bool _isSaving = false;
 
@@ -95,14 +96,18 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
       var cycle = await repo.activeCycle(_horizon, _selectedDayKey);
       if (cycle == null) {
         final weekDays = PlanningWeek.dayKeysOfWeekContaining(now);
+        final jNow = Jalali.fromDateTime(now);
+        final startDayKey = _horizon == PlanningHorizon.month
+            ? DayKey.from(Jalali(jNow.year, jNow.month, 1).toDateTime()).value
+            : weekDays.first;
+        final endDayKey = _horizon == PlanningHorizon.month
+            ? DayKey.from(Jalali(jNow.year, jNow.month, jNow.monthLength).toDateTime()).value
+            : weekDays.last;
+
         final draft = await repo.createDraft(
           horizon: _horizon,
-          startDayKey: _horizon == PlanningHorizon.month
-              ? '${now.year}-${now.month.toString().padLeft(2, '0')}-01'
-              : weekDays.first,
-          endDayKey: _horizon == PlanningHorizon.month
-              ? '${now.year}-${now.month.toString().padLeft(2, '0')}-30'
-              : weekDays.last,
+          startDayKey: startDayKey,
+          endDayKey: endDayKey,
           title: _horizon == PlanningHorizon.month ? 'برنامهٔ ماه' : 'برنامهٔ هفته',
           nowMs: nowMs,
         );
@@ -110,7 +115,7 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
       }
 
       // 2. Create commitment
-      final commitmentId = 'comm_${nowMs}_${title.hashCode.abs()}';
+      final commitmentId = 'comm_${DateTime.now().microsecondsSinceEpoch}';
       final commitment = PlanningCommitment(
         id: commitmentId,
         cycleId: cycle.id,
@@ -200,7 +205,7 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'افزودن تعهد جدید',
+                          'کار یا برنامهٔ جدید',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -208,7 +213,7 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                           ),
                         ),
                         Text(
-                          'تعهدی را برای امروز، این هفته یا این ماه ثبت کنید',
+                          'برای امروز، این هفته یا این ماه برنامه‌ریزی کنید',
                           style: TextStyle(
                             fontSize: 12,
                             color: colors.textSecondary,
@@ -280,12 +285,12 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                   color: colors.textPrimary,
                 ),
                 decoration: InputDecoration(
-                  labelText: 'عنوان تعهد یا کار',
+                  labelText: 'چه کاری می‌خواهی انجام دهی؟',
                   labelStyle: TextStyle(
                     fontSize: 13,
                     color: colors.textSecondary,
                   ),
-                  hintText: 'مثلاً: مطالعه ۳۰ صفحه کتاب، پیاده‌سازی فرم لاگین...',
+                  hintText: 'مثلاً: مطالعهٔ فصل ۳، ورزش، پیگیری کار اداری...',
                   hintStyle: TextStyle(
                     fontSize: 12,
                     color: colors.textSecondary.withValues(alpha: 0.5),
@@ -313,7 +318,7 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
 
               // 3. Duration Selector
               Text(
-                'مدت زمان تخمینی:',
+                'چقدر وقت می‌برد؟',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -363,7 +368,7 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'اولویت:',
+                          'ضرورت:',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -387,16 +392,16 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                               dropdownColor: colors.surfaceElevated,
                               items: const [
                                 DropdownMenuItem(
-                                  value: CommitmentImportance.must,
-                                  child: Text('ضروری (Must)', style: TextStyle(fontSize: 12)),
+                                  value: CommitmentImportance.should,
+                                  child: Text('بهتر است انجام شود', style: TextStyle(fontSize: 12)),
                                 ),
                                 DropdownMenuItem(
-                                  value: CommitmentImportance.should,
-                                  child: Text('مهم (Should)', style: TextStyle(fontSize: 12)),
+                                  value: CommitmentImportance.must,
+                                  child: Text('حتماً انجام شود', style: TextStyle(fontSize: 12)),
                                 ),
                                 DropdownMenuItem(
                                   value: CommitmentImportance.could,
-                                  child: Text('در صورت امکان (Could)', style: TextStyle(fontSize: 12)),
+                                  child: Text('اگر وقت شد', style: TextStyle(fontSize: 12)),
                                 ),
                               ],
                               onChanged: (val) {
@@ -414,7 +419,7 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'نوع کار:',
+                          'نوع فعالیت:',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -438,16 +443,24 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                               dropdownColor: colors.surfaceElevated,
                               items: const [
                                 DropdownMenuItem(
-                                  value: WorkKind.deep,
-                                  child: Text('کار عمیق (Deep)', style: TextStyle(fontSize: 12)),
+                                  value: WorkKind.light,
+                                  child: Text('کار سبک', style: TextStyle(fontSize: 12)),
                                 ),
                                 DropdownMenuItem(
-                                  value: WorkKind.light,
-                                  child: Text('کار سبک (Light)', style: TextStyle(fontSize: 12)),
+                                  value: WorkKind.deep,
+                                  child: Text('تمرکز عمیق', style: TextStyle(fontSize: 12)),
+                                ),
+                                DropdownMenuItem(
+                                  value: WorkKind.social,
+                                  child: Text('دیدار و روابط', style: TextStyle(fontSize: 12)),
+                                ),
+                                DropdownMenuItem(
+                                  value: WorkKind.recovery,
+                                  child: Text('استراحت و بازیابی', style: TextStyle(fontSize: 12)),
                                 ),
                                 DropdownMenuItem(
                                   value: WorkKind.admin,
-                                  child: Text('اداری (Admin)', style: TextStyle(fontSize: 12)),
+                                  child: Text('پیگیری اداری', style: TextStyle(fontSize: 12)),
                                 ),
                               ],
                               onChanged: (val) {
@@ -465,7 +478,7 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
               if (_horizon == PlanningHorizon.week) ...[
                 const SizedBox(height: 16),
                 Text(
-                  'تخصیص به روز مشخص:',
+                  'روز مشخص (اختیاری):',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -521,7 +534,7 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                 child: _isSaving
                     ? const CupertinoActivityIndicator(color: Colors.white)
                     : const Text(
-                        'ثبت تعهد',
+                        'ثبت در برنامه',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,

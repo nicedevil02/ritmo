@@ -98,27 +98,29 @@ abstract final class NotificationGateway {
       return false;
     }
 
-    // 5. Push to Central Inbox ONLY upon successful platform schedule
-    try {
-      await CentralInboxService.push(
-        category: InboxCategory.REMINDER,
-        sourceSystem: req.sourceSystem,
-        entityId: req.entityId ?? req.id,
-        eventType: 'routine_reminder',
-        title: req.title,
-        body: req.body,
-        priority: req.channel.isEssential ? 2 : 0,
-        linkEntityId: req.entityId,
-        dateBucket: '${req.id}_$scheduledTimeMs',
-        payload: {
-          'channel': req.channel.name,
-          'privacy': req.privacy.name,
-          'isRedacted': decision.isRedacted,
-          ...?req.payload,
-        },
-      );
-    } catch (e) {
-      debugPrint('NotificationGateway: Failed to push to central inbox: $e');
+    // 5. Push to Central Inbox ONLY upon successful platform schedule (excluding background worship alarms)
+    if (req.sourceSystem != 'worship') {
+      try {
+        await CentralInboxService.push(
+          category: InboxCategory.REMINDER,
+          sourceSystem: req.sourceSystem,
+          entityId: req.entityId ?? req.id,
+          eventType: 'routine_reminder',
+          title: req.title,
+          body: req.body,
+          priority: req.channel.isEssential ? 2 : 0,
+          linkEntityId: req.entityId,
+          dateBucket: '${req.id}_$scheduledTimeMs',
+          payload: {
+            'channel': req.channel.name,
+            'privacy': req.privacy.name,
+            'isRedacted': decision.isRedacted,
+            ...?req.payload,
+          },
+        );
+      } catch (e) {
+        debugPrint('NotificationGateway: Failed to push to central inbox: $e');
+      }
     }
 
     return true;

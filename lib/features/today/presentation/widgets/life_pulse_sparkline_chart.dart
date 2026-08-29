@@ -40,98 +40,114 @@ class _LifePulseSparklineChartState extends State<LifePulseSparklineChart> {
         ? history[_selectedIndex!]
         : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'نمودار تعاملی ۳۰ روز اخیر:',
-              style: TextStyle(
-                fontSize: 11,
-                color: colors.textSecondary,
-              ),
-            ),
-            if (selectedItem != null)
+    return Semantics(
+      container: true,
+      label: 'نمودار تعاملی نبض زندگی ۳۰ روز اخیر',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
               Text(
-                '${selectedItem['date']}: ${toPersianDigits('${selectedItem['rhythmScore']}٪')}',
+                'نمودار تعاملی ۳۰ روز اخیر:',
                 style: TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: colors.primary,
+                  color: colors.textSecondary,
                 ),
               ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 48,
-          child: Stack(
-            children: [
-              // Normal Band (60% to 80% range)
-              Positioned(
-                top: 48 * (1 - 0.8),
-                bottom: 48 * 0.6,
-                left: 0,
-                right: 0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: colors.success.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(4),
+              if (selectedItem != null)
+                Text(
+                  '${selectedItem['date']}: ${toPersianDigits('${selectedItem['rhythmScore']}٪')}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: colors.primary,
                   ),
                 ),
-              ),
-              // Bars
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: List.generate(history.length, (index) {
-                  final item = history[index];
-                  final score = (item['rhythmScore'] as num? ?? 0).toDouble();
-                  final heightFactor = (score / 100).clamp(0.05, 1.0);
-                  final isSelected = _selectedIndex == index;
-
-                  Color barColor = colors.success;
-                  if (score < 50) {
-                    barColor = colors.medicalRed;
-                  } else if (score < 75) {
-                    barColor = colors.primary;
-                  }
-
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedIndex = index;
-                      });
-                    },
-                    child: Tooltip(
-                      message: '${item['date']}: ${score.round()}٪',
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        width: isSelected ? 6.0 : 4.0,
-                        height: 48 * heightFactor,
-                        decoration: BoxDecoration(
-                          color: isSelected ? barColor : barColor.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(2),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: barColor.withValues(alpha: 0.6),
-                                    blurRadius: 4,
-                                  )
-                                ]
-                              : null,
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 48,
+            child: Stack(
+              children: [
+                // Normal Band (60% to 80% range)
+                Positioned(
+                  top: 48 * (1 - 0.8),
+                  bottom: 48 * 0.6,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colors.success.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                // Bars with accessible hit targets (IN-31, IN-32)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: List.generate(history.length, (index) {
+                    final item = history[index];
+                    final score = (item['rhythmScore'] as num? ?? 0).toDouble();
+                    final heightFactor = (score / 100).clamp(0.05, 1.0);
+                    final isSelected = _selectedIndex == index;
+
+                    Color barColor = colors.success;
+                    if (score < 50) {
+                      barColor = colors.medicalRed;
+                    } else if (score < 75) {
+                      barColor = colors.primary;
+                    }
+
+                    return Semantics(
+                      label: '${item['date']}: ${toPersianDigits(score.round())} درصد',
+                      selected: isSelected,
+                      button: true,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          setState(() {
+                            _selectedIndex = index;
+                          });
+                        },
+                        child: Container(
+                          // IN-31: Generous hit target width around each thin bar
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          height: 48,
+                          alignment: Alignment.bottomCenter,
+                          child: Tooltip(
+                            message: '${item['date']}: ${toPersianDigits(score.round())}٪',
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              width: isSelected ? 8.0 : 5.0,
+                              height: 48 * heightFactor,
+                              decoration: BoxDecoration(
+                                color: isSelected ? barColor : barColor.withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(2),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: barColor.withValues(alpha: 0.6),
+                                          blurRadius: 4,
+                                        )
+                                      ]
+                                    : null,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

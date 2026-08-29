@@ -30,17 +30,6 @@ class OccasionsCalendarSource {
 
       final result = <CalendarOccasion>[];
 
-      // Add Friday as weekly holiday
-      if (solar.weekDay == 7) {
-        result.add(
-          const CalendarOccasion(
-            title: 'جمعه (تعطیل هفته)',
-            isHoliday: true,
-            category: 'تعطیلات',
-          ),
-        );
-      }
-
       for (final occ in list) {
         result.add(
           CalendarOccasion(

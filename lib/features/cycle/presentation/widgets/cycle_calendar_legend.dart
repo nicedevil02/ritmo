@@ -12,11 +12,13 @@ class CycleCalendarLegend extends StatelessWidget {
     required this.marks,
     required this.settings,
     required this.activePhaseColor,
+    this.showTitleAndDivider = true,
   });
 
   final Map<String, CycleDayMark> marks;
   final Map<String, String> settings;
   final Color activePhaseColor;
+  final bool showTitleAndDivider;
 
   @override
   Widget build(BuildContext context) {
@@ -106,10 +108,12 @@ class CycleCalendarLegend extends StatelessWidget {
     if (hasOvulation) {
       legendItems.add(
         _buildLegendItem(
-          colors.accent.withValues(alpha: 0.35),
+          colors.accent.withValues(alpha: isDark ? 0.28 : 0.20),
           l10n?.cycleOvulationDay ?? 'روز تخمک‌گذاری',
           colors.textPrimary,
           borderColor: colors.accent,
+          borderWidth: 1.5,
+          isCircle: true,
         ),
       );
     }
@@ -127,11 +131,10 @@ class CycleCalendarLegend extends StatelessWidget {
 
     legendItems.add(
       _buildLegendItem(
-        Colors.transparent,
+        colors.primary,
         l10n?.cycleToday ?? 'امروز',
         colors.textPrimary,
-        borderColor: activePhaseColor,
-        borderWidth: 2,
+        isCircle: true,
       ),
     );
 
@@ -141,37 +144,45 @@ class CycleCalendarLegend extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 7,
-              height: 7,
+              width: 5,
+              height: 5,
               decoration: BoxDecoration(
                 color: activePhaseColor,
                 shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 7),
+            const SizedBox(width: 5),
             Text(
-              l10n?.cycleLoggedSymptoms ?? 'علائم ثبت شده',
-              style: RitmoTextStyles.caption(
-                colors.textSecondary,
-              ).copyWith(fontWeight: FontWeight.w700),
+              l10n?.cycleLoggedSymptoms ?? 'دارای ثبت علائم',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: colors.textSecondary,
+              ),
             ),
           ],
         ),
       );
     }
 
+    if (!showTitleAndDivider) {
+      return Wrap(spacing: 12, runSpacing: 10, children: legendItems);
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Divider(color: colors.border.withValues(alpha: 0.6), height: 28),
+        Divider(color: colors.border.withValues(alpha: 0.6), height: 20),
         Text(
           l10n?.cycleCalendarGuide ?? 'راهنمای تقویم چرخه بدنی:',
-          style: RitmoTextStyles.titleMedium(
-            colors.textPrimary,
-          ).copyWith(fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w800,
+            color: colors.textPrimary,
+          ),
         ),
-        const SizedBox(height: 14),
-        Wrap(spacing: 16, runSpacing: 12, children: legendItems),
+        const SizedBox(height: 10),
+        Wrap(spacing: 12, runSpacing: 8, children: legendItems),
       ],
     );
   }
@@ -181,28 +192,32 @@ class CycleCalendarLegend extends StatelessWidget {
     String text,
     Color textColor, {
     Color? borderColor,
-    double borderWidth = 1.3,
+    double borderWidth = 1.2,
+    bool isCircle = false,
   }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 16,
-          height: 16,
+          width: 12,
+          height: 12,
           decoration: BoxDecoration(
             color: bg,
             border: borderColor != null
                 ? Border.all(color: borderColor, width: borderWidth)
                 : null,
-            borderRadius: BorderRadius.circular(5),
+            shape: isCircle ? BoxShape.circle : BoxShape.rectangle,
+            borderRadius: isCircle ? null : BorderRadius.circular(4),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 5),
         Text(
           text,
-          style: RitmoTextStyles.caption(
-            textColor,
-          ).copyWith(fontWeight: FontWeight.w700),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
         ),
       ],
     );

@@ -7,6 +7,9 @@ import 'package:sqflite/sqflite.dart';
 
 class MockDatabase implements Database {
   @override
+  bool get isOpen => true;
+
+  @override
   Future<void> execute(String sql, [List<Object?>? arguments]) async {}
 
   @override
@@ -333,29 +336,41 @@ void main() {
       // Seed occurrences inside the past season (May 1 to May 30)
       // and outside the season (June 1 onwards)
       db.tables['routine_occurrences'] = [
-        // Inside
+        // Inside (8 occurrences, 6 completed -> 75%)
         {'routine_id': 'r_rel_1', 'date': '2026-05-05', 'scheduled_time': '12:30', 'status': 'done'},
-        {'routine_id': 'r_rel_1', 'date': '2026-05-10', 'scheduled_time': '12:30', 'status': 'done'},
-        {'routine_id': 'r_rel_1', 'date': '2026-05-15', 'scheduled_time': '12:30', 'status': 'done'},
-        {'routine_id': 'r_rel_1', 'date': '2026-05-20', 'scheduled_time': '12:30', 'status': 'pending'}, // missed
-        // Outside
+        {'routine_id': 'r_rel_1', 'date': '2026-05-08', 'scheduled_time': '12:30', 'status': 'done'},
+        {'routine_id': 'r_rel_1', 'date': '2026-05-11', 'scheduled_time': '12:30', 'status': 'done'},
+        {'routine_id': 'r_rel_1', 'date': '2026-05-14', 'scheduled_time': '12:30', 'status': 'done'},
+        {'routine_id': 'r_rel_1', 'date': '2026-05-17', 'scheduled_time': '12:30', 'status': 'done'},
+        {'routine_id': 'r_rel_1', 'date': '2026-05-20', 'scheduled_time': '12:30', 'status': 'done'},
+        {'routine_id': 'r_rel_1', 'date': '2026-05-23', 'scheduled_time': '12:30', 'status': 'pending'}, // missed
+        {'routine_id': 'r_rel_1', 'date': '2026-05-26', 'scheduled_time': '12:30', 'status': 'pending'}, // missed
+        // Outside (8 occurrences, 2 completed -> 25%)
         {'routine_id': 'r_rel_1', 'date': '2026-06-05', 'scheduled_time': '12:30', 'status': 'done'},
-        {'routine_id': 'r_rel_1', 'date': '2026-06-10', 'scheduled_time': '12:30', 'status': 'pending'}, // missed
-        {'routine_id': 'r_rel_1', 'date': '2026-06-15', 'scheduled_time': '12:30', 'status': 'pending'}, // missed
+        {'routine_id': 'r_rel_1', 'date': '2026-06-08', 'scheduled_time': '12:30', 'status': 'done'},
+        {'routine_id': 'r_rel_1', 'date': '2026-06-11', 'scheduled_time': '12:30', 'status': 'pending'}, // missed
+        {'routine_id': 'r_rel_1', 'date': '2026-06-14', 'scheduled_time': '12:30', 'status': 'pending'}, // missed
+        {'routine_id': 'r_rel_1', 'date': '2026-06-17', 'scheduled_time': '12:30', 'status': 'pending'}, // missed
         {'routine_id': 'r_rel_1', 'date': '2026-06-20', 'scheduled_time': '12:30', 'status': 'pending'}, // missed
+        {'routine_id': 'r_rel_1', 'date': '2026-06-23', 'scheduled_time': '12:30', 'status': 'pending'}, // missed
+        {'routine_id': 'r_rel_1', 'date': '2026-06-26', 'scheduled_time': '12:30', 'status': 'pending'}, // missed
       ];
 
-      // Inside: 3 completed out of 4 scheduled -> 75% completion rate
-      // Outside: 1 completed out of 4 scheduled -> 25% completion rate
+      // Inside: 6 completed out of 8 scheduled -> 75% completion rate
+      // Outside: 2 completed out of 8 scheduled -> 25% completion rate
       // Difference: +50% completion rate growth!
       db.tables['routine_completions'] = [
         {'id': 'c1', 'routineId': 'r_rel_1', 'completionDate': '2026-05-05', 'completionTime': 100000000000, 'resultType': 'FULL'},
-        {'id': 'c2', 'routineId': 'r_rel_1', 'completionDate': '2026-05-10', 'completionTime': 100000000000, 'resultType': 'FULL'},
-        {'id': 'c3', 'routineId': 'r_rel_1', 'completionDate': '2026-05-15', 'completionTime': 100000000000, 'resultType': 'FULL'},
-        {'id': 'c4', 'routineId': 'r_rel_1', 'completionDate': '2026-06-05', 'completionTime': 100000000000, 'resultType': 'FULL'},
+        {'id': 'c2', 'routineId': 'r_rel_1', 'completionDate': '2026-05-08', 'completionTime': 100000000000, 'resultType': 'FULL'},
+        {'id': 'c3', 'routineId': 'r_rel_1', 'completionDate': '2026-05-11', 'completionTime': 100000000000, 'resultType': 'FULL'},
+        {'id': 'c4', 'routineId': 'r_rel_1', 'completionDate': '2026-05-14', 'completionTime': 100000000000, 'resultType': 'FULL'},
+        {'id': 'c5', 'routineId': 'r_rel_1', 'completionDate': '2026-05-17', 'completionTime': 100000000000, 'resultType': 'FULL'},
+        {'id': 'c6', 'routineId': 'r_rel_1', 'completionDate': '2026-05-20', 'completionTime': 100000000000, 'resultType': 'FULL'},
+        {'id': 'c7', 'routineId': 'r_rel_1', 'completionDate': '2026-06-05', 'completionTime': 100000000000, 'resultType': 'FULL'},
+        {'id': 'c8', 'routineId': 'r_rel_1', 'completionDate': '2026-06-08', 'completionTime': 100000000000, 'resultType': 'FULL'},
       ];
 
-      final correlation = await InsightGenerationEngine.calculateWorshipCorrelation();
+      final correlation = await InsightGenerationEngine.calculateWorshipCorrelation(now: DateTime(2026, 6, 10));
       expect(correlation, equals('+50%'));
     });
   });

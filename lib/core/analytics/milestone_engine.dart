@@ -76,7 +76,9 @@ class MilestoneEngine implements CachedEngine<MilestoneEngineInput, List<Milesto
   }
 
   @override
-  void invalidate() {}
+  void invalidate() {
+    RitmoEngineBus.instance.invalidate(MilestoneEngine);
+  }
 
   @override
   bool canRun(MilestoneEngineInput input) => true;

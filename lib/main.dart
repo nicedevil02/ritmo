@@ -172,57 +172,6 @@ void main() async {
     return false;
   };
 
-  if (!kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.android ||
-          defaultTargetPlatform == TargetPlatform.iOS)) {
-    unawaited(
-      Future.microtask(() async {
-        try {
-          final prefs = await SharedPreferences.getInstance();
-
-          // Clean up legacy single-register flag if present
-          if (prefs.containsKey('wm_registered_v2')) {
-            await prefs.remove('wm_registered_v2');
-          }
-
-          // Store handle before scheduling tasks (BOOT-10)
-          final handle = PluginUtilities.getCallbackHandle(
-            notificationActionDispatcher,
-          )?.toRawHandle();
-          if (handle != null) {
-            await prefs.setInt('notification_action_callback_handle', handle);
-          }
-
-          // Digest count reset comparison using DayKey (BOOT-11)
-          final todayStr = DayKey.from(DateTime.now()).value;
-          final lastResetDate = prefs.getString('digest_notif_reset_date');
-          if (lastResetDate != todayStr) {
-            await prefs.setInt('digest_notif_count', 0);
-            await prefs.setString('digest_notif_reset_date', todayStr);
-          }
-
-          // Workmanager initialization on every non-web mobile boot (P0-04)
-          await Workmanager().initialize(ritmoCallbackDispatcher);
-          await Workmanager().registerPeriodicTask(
-            'ritmo_periodic_reschedule',
-            'ritmoRescheduleTask',
-            frequency: const Duration(hours: 6),
-            existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
-            constraints: Constraints(networkType: NetworkType.notRequired),
-            backoffPolicy: BackoffPolicy.linear,
-          );
-        } catch (e, st) {
-          RitmoLog.error(
-            'BackgroundInit',
-            'Workmanager init/register error',
-            e,
-            st,
-          );
-        }
-      }),
-    );
-  }
-
   ErrorWidget.builder = (details) {
     return RitmoFriendlyErrorPane(details: details);
   };
@@ -389,18 +338,8 @@ class _RitmoAppState extends State<RitmoApp> with WidgetsBindingObserver {
       // 4. Save real device timezone for background isolates (REG-03, RIT-040)
       unawaited(_syncDeviceTimezone());
 
-      // 5. Ensure periodic backup registration if enabled in settings (RIT-041)
-      try {
-        final autoBackup = SettingsService.instance.get<bool>('backup_auto_enabled');
-        if (autoBackup == true) {
-          unawaited(Workmanager().registerPeriodicTask(
-            'weekly_backup_task',
-            'weekly_backup_task',
-            frequency: const Duration(days: 7),
-            existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
-          ));
-        }
-      } catch (_) {}
+      // 5. Initialize Workmanager & register background tasks safely AFTER database is open (BOOT-10, RIT-041)
+      unawaited(_initBackgroundWorkmanager());
 
       // قدم صفر: همگام‌سازی یادآور پیش‌خواب با تنظیمات در هر شروع اپ
       unawaited(SleepWinddownReminderService.syncFromSettings());
@@ -429,6 +368,62 @@ class _RitmoAppState extends State<RitmoApp> with WidgetsBindingObserver {
           _initError = e;
         });
       }
+    }
+  }
+
+  static Future<void> _initBackgroundWorkmanager() async {
+    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Clean up legacy single-register flag if present
+      if (prefs.containsKey('wm_registered_v2')) {
+        await prefs.remove('wm_registered_v2');
+      }
+
+      // Store handle before scheduling tasks (BOOT-10)
+      final handle = PluginUtilities.getCallbackHandle(
+        notificationActionDispatcher,
+      )?.toRawHandle();
+      if (handle != null) {
+        await prefs.setInt('notification_action_callback_handle', handle);
+      }
+
+      // Digest count reset comparison using DayKey (BOOT-11)
+      final todayStr = DayKey.from(DateTime.now()).value;
+      final lastResetDate = prefs.getString('digest_notif_reset_date');
+      if (lastResetDate != todayStr) {
+        await prefs.setInt('digest_notif_count', 0);
+        await prefs.setString('digest_notif_reset_date', todayStr);
+      }
+
+      // Workmanager initialization safely after DB is created and ready (P0-04)
+      await Workmanager().initialize(ritmoCallbackDispatcher);
+      await Workmanager().registerPeriodicTask(
+        'ritmo_periodic_reschedule',
+        'ritmoRescheduleTask',
+        frequency: const Duration(hours: 6),
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+        constraints: Constraints(networkType: NetworkType.notRequired),
+        backoffPolicy: BackoffPolicy.linear,
+      );
+
+      final autoBackup = SettingsService.instance.get<bool>('backup_auto_enabled');
+      if (autoBackup == true) {
+        await Workmanager().registerPeriodicTask(
+          'weekly_backup_task',
+          'weekly_backup_task',
+          frequency: const Duration(days: 7),
+          existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+        );
+      }
+    } catch (e, st) {
+      RitmoLog.error(
+        'BackgroundInit',
+        'Workmanager init/register error',
+        e,
+        st,
+      );
     }
   }
 

@@ -106,5 +106,45 @@ void main() {
 
       await db.close();
     });
+
+    test('ensureCriticalSchema cleans worship inbox reminders when religion module is unconfigured or disabled', () async {
+      final db = await openDatabase(
+        inMemoryDatabasePath,
+        version: DatabaseHelper.dbVersionForTest,
+        onCreate: (db, version) async {
+          await SchemaManager.createAll(db);
+        },
+      );
+
+      // Insert seeded religion setting without worship configuration
+      await db.insert(
+        'app_settings',
+        {
+          'key': 'module_religion_enabled',
+          'value': 'true',
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      // Insert accidental prayer reminder inbox item
+      await db.insert('inbox_items', {
+        'id': 'inbox_1',
+        'category': 'REMINDER',
+        'sourceSystem': 'worship',
+        'title': 'وقت نماز مغرب 🌅',
+        'createdAt': DateTime.now().millisecondsSinceEpoch,
+      });
+
+      await DatabaseHelper.ensureCriticalSchema(db);
+
+      final religionSetting = await db.query('app_settings', where: "key = 'module_religion_enabled'");
+      expect(religionSetting.first['value'], 'false');
+
+      final items = await db.query('inbox_items', where: "sourceSystem = 'worship'");
+      expect(items.isEmpty, isTrue);
+
+      await db.close();
+    });
   });
 }

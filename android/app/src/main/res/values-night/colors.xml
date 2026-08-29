@@ -4,14 +4,23 @@
 
     <!-- Ritmo Persistent Notification Dark Theme Palette -->
     <color name="notif_bg">#12141F</color>
-    <color name="notif_text_primary">#FFFFFF</color>
-    <color name="notif_text_secondary">#A0A6B5</color>
+    <color name="notif_card_bg">#1A1D2B</color>
+    <color name="notif_text_primary">#F8FAFC</color>
+    <color name="notif_text_secondary">#94A3B8</color>
+    <color name="notif_text_tertiary">#64748B</color>
     <color name="notif_divider">#1FFFFFFF</color>
-    <color name="notif_progress_bg">#1FFFFFFF</color>
-    <color name="notif_accent">#D4A843</color>
-    <color name="notif_btn_inactive_bg">#0FFFFFFF</color>
-    <color name="notif_btn_inactive_stroke">#20FFFFFF</color>
-    <color name="notif_btn_inactive_text">#FFFFFF</color>
-    <color name="notif_btn_active_bg">#D4A843</color>
+    <color name="notif_progress_bg">#25293A</color>
+    <color name="notif_progress_fill">#10B981</color>
+    <color name="notif_accent">#10B981</color>
+    <color name="notif_action_primary_bg">#059669</color>
+    <color name="notif_action_primary_text">#FFFFFF</color>
+    <color name="notif_action_secondary_bg">#1E2232</color>
+    <color name="notif_action_secondary_stroke">#333B50</color>
+    <color name="notif_action_secondary_text">#F1F5F9</color>
+    <color name="notif_btn_inactive_bg">#1E2232</color>
+    <color name="notif_btn_inactive_stroke">#333B50</color>
+    <color name="notif_btn_inactive_text">#F1F5F9</color>
+    <color name="notif_btn_active_bg">#10B981</color>
     <color name="notif_btn_active_text">#12141F</color>
+    <color name="ritmo_accent">#10B981</color>
 </resources>

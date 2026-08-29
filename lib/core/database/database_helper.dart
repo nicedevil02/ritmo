@@ -115,6 +115,14 @@ class DatabaseHelper {
           where: "title = 'تمرین قدرتی خانگی' OR title = 'تمرین قدرتی باشگاه'",
         );
       }
+
+      final religionEnabled = settingsMap['module_religion_enabled'] == 'true';
+      if (!religionEnabled) {
+        await db.delete(
+          'inbox_items',
+          where: "sourceSystem = 'worship' OR title LIKE '%نماز%'",
+        );
+      }
     } catch (_) {}
   }
 
@@ -194,9 +202,11 @@ class DatabaseHelper {
           final isLocked = e is DatabaseException &&
               (errStr.contains('database is locked') ||
                   errStr.contains('sqlite_busy') ||
+                  errStr.contains('no current transaction') ||
+                  errStr.contains('database_closed') ||
                   (errStr.contains('code 5') && errStr.contains('busy')));
           if (isLocked && attempts < 5) {
-            RitmoLog.warning('DatabaseHelper', 'Database locked on open attempt $attempts (SQLITE_BUSY). Retrying in ${attempts * 400}ms...');
+            RitmoLog.warning('DatabaseHelper', 'Database contention on open attempt $attempts ($e). Retrying in ${attempts * 400}ms...');
             await Future.delayed(Duration(milliseconds: attempts * 400));
             continue;
           }

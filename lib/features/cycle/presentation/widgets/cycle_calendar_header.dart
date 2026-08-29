@@ -38,28 +38,60 @@ class CycleCalendarHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
+
+    // توکن‌های نئومورفیک دکمه‌های ناوبری (Neumorphic Raised Soft Control)
+    final navButtonBg = isDark ? const Color(0xFF1F2430) : Colors.white;
+    final navButtonBorder = isDark
+        ? Colors.white.withValues(alpha: 0.10)
+        : colors.border.withValues(alpha: 0.45);
+    final navButtonShadows = [
+      BoxShadow(
+        offset: const Offset(-2, -2),
+        blurRadius: 6,
+        color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
+      ),
+      BoxShadow(
+        offset: const Offset(3, 4),
+        blurRadius: 8,
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.55)
+            : const Color(0xFFCBD2DD).withValues(alpha: 0.60),
+      ),
+    ];
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Previous Month Button (pointing right in RTL)
-        InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onPreviousMonth,
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colors.textSecondary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: colors.border.withValues(alpha: 0.4)),
-            ),
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: Icon(
-                Icons.chevron_right_rounded,
-                color: colors.textPrimary,
-                size: 24,
+        Semantics(
+          label: 'ماه قبل',
+          button: true,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () {
+              RitmoHapticsPolicy.selection();
+              onPreviousMonth();
+            },
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: navButtonBg,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: navButtonBorder, width: 0.8),
+                boxShadow: navButtonShadows,
+              ),
+              child: Center(
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Icon(
+                    CupertinoIcons.chevron_right,
+                    color: colors.textPrimary,
+                    size: 16,
+                  ),
+                ),
               ),
             ),
           ),
@@ -73,16 +105,21 @@ class CycleCalendarHeader extends StatelessWidget {
               children: [
                 Text(
                   monthName,
-                  style: RitmoTextStyles.cardTitle(
-                    colors.textPrimary,
-                  ).copyWith(fontWeight: FontWeight.w900, letterSpacing: -0.3),
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: colors.textPrimary,
+                    letterSpacing: -0.3,
+                  ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Text(
                   PersianDigits.toFa(year.toString()),
-                  style: RitmoTextStyles.body(
-                    colors.textSecondary,
-                  ).copyWith(fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textSecondary,
+                  ),
                 ),
                 if (isPredictionOnlyMonth && dominantConfidence != null) ...[
                   const SizedBox(width: 8),
@@ -97,34 +134,47 @@ class CycleCalendarHeader extends StatelessWidget {
                 children: [
                   if (!isCurrentMonth)
                     InkWell(
-                      borderRadius: BorderRadius.circular(10),
-                      onTap: onGoToCurrentMonth,
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () {
+                        RitmoHapticsPolicy.tap();
+                        onGoToCurrentMonth();
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
+                          horizontal: 10,
+                          vertical: 3.5,
                         ),
                         decoration: BoxDecoration(
-                          color: activePhaseColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
+                          color: isDark ? const Color(0xFF222834) : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: activePhaseColor.withValues(alpha: 0.3),
+                            color: activePhaseColor.withValues(alpha: 0.45),
+                            width: 0.8,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              offset: const Offset(0, 2),
+                              blurRadius: 6,
+                              color: activePhaseColor.withValues(alpha: 0.16),
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              CupertinoIcons.arrow_counterclockwise,
+                              CupertinoIcons.calendar_today,
                               size: 11,
                               color: activePhaseColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              l10n?.cycleCurrentMonth ?? 'ماه جاری',
-                              style: RitmoTextStyles.badge(
-                                activePhaseColor,
-                              ).copyWith(fontWeight: FontWeight.bold),
+                              l10n?.cycleCurrentMonth ?? 'امروز',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: activePhaseColor,
+                              ),
                             ),
                           ],
                         ),
@@ -134,34 +184,47 @@ class CycleCalendarHeader extends StatelessWidget {
                     const SizedBox(width: 6),
                   if (canJumpToNext)
                     InkWell(
-                      borderRadius: BorderRadius.circular(10),
-                      onTap: onJumpToNextPeriod,
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () {
+                        RitmoHapticsPolicy.tap();
+                        onJumpToNextPeriod();
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
+                          horizontal: 10,
+                          vertical: 3.5,
                         ),
                         decoration: BoxDecoration(
-                          color: colors.error.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
+                          color: isDark ? const Color(0xFF2B2024) : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: colors.error.withValues(alpha: 0.3),
+                            color: colors.error.withValues(alpha: 0.45),
+                            width: 0.8,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              offset: const Offset(0, 2),
+                              blurRadius: 6,
+                              color: colors.error.withValues(alpha: 0.16),
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              CupertinoIcons.calendar_today,
+                              CupertinoIcons.arrow_right_circle,
                               size: 11,
                               color: colors.error,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               l10n?.cycleJumpToNext ?? 'پرش به دوره بعد',
-                              style: RitmoTextStyles.badge(
-                                colors.error,
-                              ).copyWith(fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: colors.error,
+                              ),
                             ),
                           ],
                         ),
@@ -174,22 +237,33 @@ class CycleCalendarHeader extends StatelessWidget {
         ),
 
         // Next Month Button (pointing left in RTL)
-        InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onNextMonth,
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colors.textSecondary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: colors.border.withValues(alpha: 0.4)),
-            ),
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: Icon(
-                Icons.chevron_left_rounded,
-                color: colors.textPrimary,
-                size: 24,
+        Semantics(
+          label: 'ماه بعد',
+          button: true,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () {
+              RitmoHapticsPolicy.selection();
+              onNextMonth();
+            },
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: navButtonBg,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: navButtonBorder, width: 0.8),
+                boxShadow: navButtonShadows,
+              ),
+              child: Center(
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Icon(
+                    CupertinoIcons.chevron_left,
+                    color: colors.textPrimary,
+                    size: 16,
+                  ),
+                ),
               ),
             ),
           ),

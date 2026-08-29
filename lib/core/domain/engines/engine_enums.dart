@@ -27,6 +27,7 @@ class InsightResult {
     this.actionType,
     this.linkModule,
     this.actionParams,
+    this.isPrivate = false,
   });
   final InsightType type;
   final Map<String, dynamic> params;
@@ -37,6 +38,7 @@ class InsightResult {
   final String? actionType;
   final String? linkModule;
   final Map<String, dynamic>? actionParams;
+  final bool isPrivate;
 
   Map<String, dynamic> toMap() => {
     'type': type.name,
@@ -48,6 +50,7 @@ class InsightResult {
     if (actionType != null) 'actionType': actionType,
     if (linkModule != null) 'linkModule': linkModule,
     if (actionParams != null) 'actionParams': actionParams,
+    'isPrivate': isPrivate,
   };
 
   factory InsightResult.fromMap(Map<String, dynamic> map) {
@@ -66,6 +69,7 @@ class InsightResult {
       actionParams: map['actionParams'] != null
           ? Map<String, dynamic>.from(map['actionParams'] as Map)
           : null,
+      isPrivate: map['isPrivate'] as bool? ?? false,
     );
   }
 }

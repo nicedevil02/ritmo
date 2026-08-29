@@ -68,7 +68,9 @@ class LifeBalanceEngine implements CachedEngine<LifeBalanceEngineInput, LifeBala
   }
 
   @override
-  void invalidate() {}
+  void invalidate() {
+    RitmoEngineBus.instance.invalidate(LifeBalanceEngine);
+  }
 
   @override
   bool canRun(LifeBalanceEngineInput input) => true;
@@ -317,4 +319,15 @@ class LifeBalanceEngine implements CachedEngine<LifeBalanceEngineInput, LifeBala
 
     return trends;
   }
+
+  /// Canonical domain names in Persian (IN-29)
+  static const Map<String, String> domainNamesFarsi = {
+    'RELIGION': 'عبادی و معنوی',
+    'HEALTH': 'ورزش و سلامتی',
+    'LEARNING': 'آموزش و یادگیری',
+    'WORK': 'کار و پروژه‌ها',
+    'PERSONAL': 'شخصی و خانوادگی',
+    'FREE': 'تفریح و استراحت',
+    'CUSTOM': 'سایر',
+  };
 }

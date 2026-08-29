@@ -84,20 +84,20 @@ class AIGateway {
   static const String defaultApiKey = String.fromEnvironment('AI_API_KEY', defaultValue: 'sk-jFjvHozwSit6S3YthLrr9UiFLYMSTBABkXnxACu5pFSiTpHv2YG8gGj4pWNgQKWn');
   static const String defaultBaseUrl = String.fromEnvironment('AI_BASE_URL', defaultValue: 'https://opencode.ai/zen/v1/chat/completions');
   static const String defaultModel =
-      String.fromEnvironment('AI_MODEL', defaultValue: 'deepseek-v4-flash-free');
+      String.fromEnvironment('AI_MODEL', defaultValue: 'hy3-free');
   static const int defaultTimeoutMs =
       int.fromEnvironment('AI_TIMEOUT', defaultValue: 120000);
 
-  // Zhipu AI Default Credentials (Ritmo Server Priority 1)
+  // Zhipu AI Default Credentials (Ritmo Server Priority 2)
   static const String defaultZhipuApiKey = String.fromEnvironment('AI_ZHIPU_API_KEY', defaultValue: '048e18c7dec54278882116d380cd646b.Gyb5WGTwFWWtaoUz');
   static const String defaultZhipuBaseUrl = String.fromEnvironment('AI_ZHIPU_BASE_URL', defaultValue: 'https://open.bigmodel.cn/api/paas/v4/chat/completions');
-  static const String defaultZhipuModel = String.fromEnvironment('AI_ZHIPU_MODEL', defaultValue: 'glm-4.7-flash');
+  static const String defaultZhipuModel = String.fromEnvironment('AI_ZHIPU_MODEL', defaultValue: 'glm-4-flash');
 
-  // Cloudflare Workers AI Default Credentials (Ritmo Server Priority 2)
+  // Cloudflare Workers AI Default Credentials (Optional)
   static const String defaultCloudflareApiKey = String.fromEnvironment('AI_CLOUDFLARE_API_KEY', defaultValue: 'cfut_2Xz1dxkip1movAHy524PsuFC04pcCzhBNjaNnKwj65aa7165');
   static const String defaultCloudflareModel = String.fromEnvironment('AI_CLOUDFLARE_MODEL', defaultValue: '@cf/zai-org/glm-4.7-flash');
   static const String defaultCloudflareBaseUrl = String.fromEnvironment('AI_CLOUDFLARE_BASE_URL', defaultValue: 'https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/ai/v1/chat/completions');
-  static const int defaultRitmoServerTimeoutMs = 15000; // 15 seconds
+  static const int defaultRitmoServerTimeoutMs = 35000; // 35 seconds
   static const int defaultOpenCodeTimeoutMs = 30000; // 30 seconds
 
   // Secondary credentials used as automatic failover when the primary key
@@ -107,7 +107,7 @@ class AIGateway {
 
   static const String defaultFeaturesApiKey = String.fromEnvironment('AI_FEATURES_API_KEY', defaultValue: 'sk-jFjvHozwSit6S3YthLrr9UiFLYMSTBABkXnxACu5pFSiTpHv2YG8gGj4pWNgQKWn');
   static const String defaultFeaturesBaseUrl = String.fromEnvironment('AI_FEATURES_BASE_URL', defaultValue: 'https://opencode.ai/zen/v1/chat/completions');
-  static const String defaultFeaturesModel = String.fromEnvironment('AI_FEATURES_MODEL', defaultValue: 'deepseek-v4-flash-free');
+  static const String defaultFeaturesModel = String.fromEnvironment('AI_FEATURES_MODEL', defaultValue: 'hy3-free');
 
   Future<AIGatewayConfig> loadConfig({AiSlot slot = AiSlot.assistant}) => _loadConfig(slot: slot);
 
@@ -174,59 +174,31 @@ class AIGateway {
 
   /// Builds the ordered list of credential sets to try.
   /// When in [AiMode.ritmoServer]:
-  ///   - Priority 1: Zhipu AI (glm-4.7-flash, timeout: 15s)
-  ///   - Priority 2: Cloudflare Workers AI (@cf/zai-org/glm-4.7-flash, timeout: 15s - if account ID is set)
-  ///   - Priority 3: OpenCode fallback (deepseek-v4-flash-free, timeout: 30s)
+  ///   - Priority 1: OpenCode (hy3-free, timeout: 30s)
+  ///   - Priority 2: Zhipu AI (glm-4-flash, timeout: 35s)
   /// When in [AiMode.personalKey]:
   ///   - Uses credentials corresponding to [slot].
-  ///   - All server defaults (Zhipu, Cloudflare & OpenCode) are IGNORED.
+  ///   - All server defaults (OpenCode & Zhipu) are IGNORED.
   Future<List<AIGatewayConfig>> _configChain({AiSlot slot = AiSlot.assistant}) async {
     final mode = await AiConnectionRepository.instance.loadMode();
 
     if (mode == AiMode.ritmoServer) {
-      String cloudflareAccountId = 'd30ec37bac346109c0683cb64a420d97';
-      try {
-        final db = await DatabaseHelper.instance.database;
-        final rows = await db.query('app_settings', where: 'key = ?', whereArgs: ['ai_cloudflare_account_id'], limit: 1);
-        if (rows.isNotEmpty) {
-          final val = (rows.first['value'] as String?) ?? '';
-          if (val.trim().isNotEmpty) {
-            cloudflareAccountId = val;
-          }
-        }
-      } catch (e) {
-        debugPrint('AIGateway: could not read cloudflare_account_id: $e');
-      }
-
       final chain = <AIGatewayConfig>[];
 
-      // Priority 1: Zhipu AI (glm-4.7-flash, 15s)
-      chain.add(const AIGatewayConfig(
-        baseUrl: defaultZhipuBaseUrl,
-        apiKey: defaultZhipuApiKey,
-        model: defaultZhipuModel,
-        timeoutMs: defaultRitmoServerTimeoutMs,
-      ));
-
-      // Priority 2: Cloudflare Workers AI (15s)
-      final cfUrl = defaultCloudflareBaseUrl
-          .replaceAll('{ACCOUNT_ID}', cloudflareAccountId.trim())
-          .replaceAll('YOUR_ACCOUNT_ID', cloudflareAccountId.trim());
-
-      chain.add(AIGatewayConfig(
-        baseUrl: cfUrl,
-        apiKey: defaultCloudflareApiKey,
-        model: defaultCloudflareModel,
-        timeoutMs: defaultRitmoServerTimeoutMs,
-        supportsNativeTools: false,
-      ));
-
-      // Priority 3: OpenCode fallback (30s)
+      // Priority 1: OpenCode (hy3-free, 30s)
       chain.add(const AIGatewayConfig(
         baseUrl: defaultBaseUrl,
         apiKey: defaultApiKey,
         model: defaultModel,
         timeoutMs: defaultOpenCodeTimeoutMs,
+      ));
+
+      // Priority 2: Zhipu AI (glm-4-flash, 35s)
+      chain.add(const AIGatewayConfig(
+        baseUrl: defaultZhipuBaseUrl,
+        apiKey: defaultZhipuApiKey,
+        model: defaultZhipuModel,
+        timeoutMs: defaultRitmoServerTimeoutMs,
       ));
 
       return chain;

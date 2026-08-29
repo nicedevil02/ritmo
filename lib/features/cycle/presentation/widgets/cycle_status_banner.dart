@@ -38,7 +38,7 @@ class CycleStatusBanner extends StatelessWidget {
           : 'بر اساس میانگین شما، دوره پایان یافته است. برای ثبت وضعیت کلیک کنید.';
 
       return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.only(bottom: 16),
         child: RitmoTheme.glassCardLight(
           borderRadius: 20,
           color: colors.primary.withValues(alpha: isDark ? 0.15 : 0.08),
@@ -107,7 +107,7 @@ class CycleStatusBanner extends StatelessWidget {
     if (engineOutput.isOpenPeriodBeyondAverage &&
         engineOutput.isBleedingConfirmed) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.only(bottom: 16),
         child: RitmoTheme.glassCardLight(
           borderRadius: 20,
           color: colors.warning.withValues(alpha: isDark ? 0.15 : 0.08),
@@ -169,7 +169,7 @@ class CycleStatusBanner extends StatelessWidget {
     // ۳. تأخیر در شروع دوره
     if (engineOutput.isOverdue && engineOutput.daysOverdue > 0) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.only(bottom: 16),
         child: RitmoTheme.glassCardLight(
           borderRadius: 20,
           color: colors.accent.withValues(alpha: isDark ? 0.15 : 0.08),

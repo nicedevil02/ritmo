@@ -40,7 +40,7 @@ class CommitmentAgendaSource implements AgendaSource {
                c.id as commId, c.title as commTitle, c.importance, c.workKind, c.flexibility, c.goalId
         FROM planning_allocations a
         JOIN planning_commitments c ON a.commitmentId = c.id
-        WHERE a.dayKey >= ? AND a.dayKey <= ? AND a.status != 'DROPPED' AND c.status != 'DROPPED'
+        WHERE a.dayKey >= ? AND a.dayKey <= ? AND a.status != 'DROPPED' AND a.status != 'MOVED' AND c.status != 'DROPPED'
           AND (a.materializedEntityType IS NULL OR a.materializedEntityType != 'TASK' OR a.materializedEntityId IS NULL)
         ORDER BY a.exactTime ASC, a.timeWindowStart ASC, a.createdAt ASC
       ''',

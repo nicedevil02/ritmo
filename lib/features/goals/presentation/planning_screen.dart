@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -148,20 +149,27 @@ class _PlanningScreenState extends State<PlanningScreen> {
 
     if (_controller.status == PlanningStateStatus.failed) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _controller.errorMessage ?? 'خطا در بارگذاری داده‌ها',
-              style: TextStyle(fontSize: 14, color: colors.textSecondary),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () =>
-                  _controller.loadHorizon(_controller.selectedHorizon),
-              child: const Text('تلاش مجدد'),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline_rounded, size: 48, color: colors.error),
+              const SizedBox(height: 12),
+              Text(
+                _controller.errorMessage ?? 'خطا در بارگذاری داده‌ها',
+                style: TextStyle(fontSize: 14, color: colors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('تلاش مجدد'),
+                onPressed: () =>
+                    _controller.loadHorizon(_controller.selectedHorizon),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -911,10 +919,22 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                                     .insertAllocation(
                                                       alloc.copyWith(
                                                         status: newStatus,
+                                                        materializedEntityType:
+                                                            'planning_allocation',
+                                                        materializedEntityId:
+                                                            alloc.id,
                                                         updatedAt: DateTime.now()
                                                             .millisecondsSinceEpoch,
                                                       ),
                                                     );
+                                                RitmoEventBus().fire(RitmoEvent(
+                                                  type: 'commitmentChanged',
+                                                  timestamp: DateTime.now(),
+                                                  payload: {
+                                                    'allocationId': alloc.id,
+                                                    'status': newStatus.name,
+                                                  },
+                                                ));
                                                 await _controller.loadHorizon(
                                                   PlanningHorizon.week,
                                                 );
@@ -936,34 +956,72 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  Text(
-                                                    commitment.title,
-                                                    style:
-                                                        RitmoTextStyles.bodyMedium(
-                                                          isDone
-                                                              ? colors
-                                                                    .textSecondary
-                                                              : colors
-                                                                    .textPrimary,
-                                                        ).copyWith(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          decoration: isDone
-                                                              ? TextDecoration
-                                                                    .lineThrough
-                                                              : null,
-                                                        ),
-                                                  ),
-                                                  Text(
-                                                    '${PersianDigits.toPersian(alloc.plannedMinutes.toString())} دقیقه · اولویت: ${commitment.importance.name.toUpperCase()}',
-                                                    style:
-                                                        RitmoTextStyles.caption(
-                                                          colors.textSecondary,
-                                                        ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
+                                                   Row(
+                                                     children: [
+                                                       Expanded(
+                                                         child: Text(
+                                                           commitment.title,
+                                                           style:
+                                                               RitmoTextStyles.bodyMedium(
+                                                                 isDone
+                                                                     ? colors
+                                                                           .textSecondary
+                                                                     : colors
+                                                                           .textPrimary,
+                                                               ).copyWith(
+                                                                 fontWeight:
+                                                                     FontWeight.bold,
+                                                                 decoration: isDone
+                                                                     ? TextDecoration
+                                                                           .lineThrough
+                                                                     : null,
+                                                               ),
+                                                         ),
+                                                       ),
+                                                       if (commitment.isUserLocked) ...[
+                                                         const SizedBox(width: 4),
+                                                         Icon(
+                                                           Icons.lock_rounded,
+                                                           size: 13,
+                                                           color: colors.primary,
+                                                         ),
+                                                       ],
+                                                     ],
+                                                   ),
+                                                   Text(
+                                                     '${PersianDigits.toPersian(alloc.plannedMinutes.toString())} دقیقه · اولویت: ${commitment.importance.name.toUpperCase()}',
+                                                     style:
+                                                         RitmoTextStyles.caption(
+                                                           colors.textSecondary,
+                                                         ),
+                                                   ),
+                                                   if ((_controller.allocationResult?.explanations[alloc.id] ?? commitment.planningReason) != null &&
+                                                       (_controller.allocationResult?.explanations[alloc.id] ?? commitment.planningReason)!.isNotEmpty) ...[
+                                                     const SizedBox(height: 2),
+                                                     Row(
+                                                       children: [
+                                                         Icon(
+                                                           Icons.lightbulb_outline_rounded,
+                                                           size: 12,
+                                                           color: colors.warning,
+                                                         ),
+                                                         const SizedBox(width: 4),
+                                                         Expanded(
+                                                           child: Text(
+                                                             (_controller.allocationResult?.explanations[alloc.id] ?? commitment.planningReason)!,
+                                                             style: RitmoTextStyles.caption(colors.textSecondary).copyWith(
+                                                               fontSize: 10,
+                                                             ),
+                                                             maxLines: 1,
+                                                             overflow: TextOverflow.ellipsis,
+                                                           ),
+                                                         ),
+                                                       ],
+                                                     ),
+                                                   ],
+                                                 ],
+                                               ),
+                                             ),
                                             PopupMenuButton<String>(
                                               icon: Icon(
                                                 Icons.more_vert,
@@ -994,12 +1052,14 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                                     'کوچک‌تر کن (۵۰٪)',
                                                   ),
                                                 ),
-                                                const PopupMenuItem(
-                                                  value: 'lock',
-                                                  child: Text(
-                                                    'قفل در همین روز',
-                                                  ),
-                                                ),
+                                                 PopupMenuItem(
+                                                   value: 'lock',
+                                                   child: Text(
+                                                     commitment.isUserLocked
+                                                         ? 'باز کردن قفل 🔓'
+                                                         : 'قفل در همین روز 🔒',
+                                                   ),
+                                                 ),
                                                 const PopupMenuItem(
                                                   value: 'drop',
                                                   child: Text(
@@ -1191,61 +1251,40 @@ class _PlanningScreenState extends State<PlanningScreen> {
           top: false,
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: BorderSide(color: colors.border),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    onPressed: () {
-                      WeekPlannerSheet.show(
-                        context,
-                        onSaved: () {
-                          _controller.loadHorizon(PlanningHorizon.week);
-                        },
-                      );
-                    },
-                    icon: const Icon(Icons.auto_awesome, size: 16),
-                    label: const Text(
-                      'پیشنهاد هوشمند ✨',
-                      style: TextStyle(fontSize: 13),
-                    ),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    onPressed: () {
-                      WeekPlannerSheet.show(
-                        context,
-                        onSaved: () {
-                          _controller.loadHorizon(PlanningHorizon.week);
-                        },
-                      );
+                onPressed: () {
+                  WeekPlannerSheet.show(
+                    context,
+                    onSaved: () {
+                      _controller.loadHorizon(PlanningHorizon.week);
                     },
-                    child: const Text(
-                      'بازطراحی هفته',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                  );
+                },
+                icon: const Icon(
+                  Icons.auto_awesome,
+                  size: 18,
+                  color: Colors.white,
+                ),
+                label: Text(
+                  _controller.allocations.isNotEmpty
+                      ? 'بازطراحی و بهینه‌سازی هفته ✨'
+                      : 'پیشنهاد هوشمند و چیدمان هفته ✨',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -1311,40 +1350,91 @@ class _PlanningScreenState extends State<PlanningScreen> {
           break;
 
         case 'split':
-          final halfMin = (firstAlloc.plannedMinutes / 2).round().clamp(
-            15,
-            120,
+          if (firstAlloc.plannedMinutes < 30) {
+            if (mounted) {
+              RitmoToast.show(
+                context,
+                'زمان تخصیص کمتر از ۳۰ دقیقه است و قابل شکستن نیست.',
+              );
+            }
+            break;
+          }
+          final part1 = (firstAlloc.plannedMinutes / 2).floor();
+          final part2 = (firstAlloc.plannedMinutes / 2).ceil();
+
+          // 1. Update current allocation with part1
+          await repo.insertAllocation(
+            firstAlloc.copyWith(
+              plannedMinutes: part1,
+              updatedAt: nowMs,
+            ),
           );
-          final updatedComm = commitment.copyWith(effortMinutes: halfMin);
-          await repo.upsertCommitment(updatedComm);
+
+          // 2. Find next day in week
+          final cycle = _controller.activeCycle;
+          final weekDays = cycle != null
+              ? PlanningWeek.dayKeysOfWeekContaining(
+                  DateTime.tryParse(firstAlloc.dayKey) ?? DateTime.now(),
+                )
+              : [firstAlloc.dayKey];
+          final curIdx = weekDays.indexOf(firstAlloc.dayKey);
+          final nextDayKey = (curIdx != -1 && curIdx + 1 < weekDays.length)
+              ? weekDays[curIdx + 1]
+              : firstAlloc.dayKey;
+
+          // 3. Create second allocation with part2
+          final secondAlloc = PlanningAllocation(
+            id: 'alloc_${nowMs}_split',
+            commitmentId: firstAlloc.commitmentId,
+            dayKey: nextDayKey,
+            plannedMinutes: part2,
+            idempotencyKey: 'split_${firstAlloc.id}_$nowMs',
+            status: AllocationStatus.planned,
+            createdAt: nowMs,
+            updatedAt: nowMs,
+          );
+          await repo.insertAllocation(secondAlloc);
+
           await _controller.loadHorizon(PlanningHorizon.week);
-          if (mounted)
+          if (mounted) {
             RitmoToast.show(
               context,
-              'تعهد به دو بخش $halfMin دقیقه‌ای تقسیم شد.',
+              'تخصیص به دو بخش $part1 و $part2 دقیقه‌ای تقسیم شد.',
             );
+          }
           break;
 
         case 'shrink':
-          final shrunkMin = (commitment.effortMinutes * 0.5).round().clamp(
+          final shrunkMin = (firstAlloc.plannedMinutes * 0.5).round().clamp(
             15,
             240,
           );
-          final updatedComm = commitment.copyWith(effortMinutes: shrunkMin);
-          await repo.upsertCommitment(updatedComm);
+          await repo.insertAllocation(
+            firstAlloc.copyWith(
+              plannedMinutes: shrunkMin,
+              updatedAt: nowMs,
+            ),
+          );
           await _controller.loadHorizon(PlanningHorizon.week);
-          if (mounted)
+          if (mounted) {
             RitmoToast.show(
               context,
-              'زمان تعهد به $shrunkMin دقیقه کاهش یافت.',
+              'زمان تخصیص به $shrunkMin دقیقه کاهش یافت.',
             );
+          }
           break;
 
         case 'lock':
-          final lockedComm = commitment.copyWith(isUserLocked: true);
-          await repo.upsertCommitment(lockedComm);
+          final newLocked = !commitment.isUserLocked;
+          final updatedComm = commitment.copyWith(isUserLocked: newLocked);
+          await repo.upsertCommitment(updatedComm);
           await _controller.loadHorizon(PlanningHorizon.week);
-          if (mounted) RitmoToast.show(context, 'تعهد در این روز قفل شد 🔒');
+          if (mounted) {
+            RitmoToast.show(
+              context,
+              newLocked ? 'تعهد در این روز قفل شد 🔒' : 'قفل تعهد باز شد 🔓',
+            );
+          }
           break;
 
         case 'drop':

@@ -310,12 +310,12 @@ class PlanningAllocation {
     String? commitmentId,
     String? dayKey,
     int? plannedMinutes,
-    String? timeWindowStart,
-    String? timeWindowEnd,
-    String? exactTime,
+    Object? timeWindowStart = _unset,
+    Object? timeWindowEnd = _unset,
+    Object? exactTime = _unset,
     AllocationStatus? status,
-    String? materializedEntityType,
-    String? materializedEntityId,
+    Object? materializedEntityType = _unset,
+    Object? materializedEntityId = _unset,
     String? idempotencyKey,
     int? createdAt,
     int? updatedAt,
@@ -325,12 +325,22 @@ class PlanningAllocation {
         commitmentId: commitmentId ?? this.commitmentId,
         dayKey: dayKey ?? this.dayKey,
         plannedMinutes: plannedMinutes ?? this.plannedMinutes,
-        timeWindowStart: timeWindowStart ?? this.timeWindowStart,
-        timeWindowEnd: timeWindowEnd ?? this.timeWindowEnd,
-        exactTime: exactTime ?? this.exactTime,
+        timeWindowStart: identical(timeWindowStart, _unset)
+            ? this.timeWindowStart
+            : timeWindowStart as String?,
+        timeWindowEnd: identical(timeWindowEnd, _unset)
+            ? this.timeWindowEnd
+            : timeWindowEnd as String?,
+        exactTime: identical(exactTime, _unset)
+            ? this.exactTime
+            : exactTime as String?,
         status: status ?? this.status,
-        materializedEntityType: materializedEntityType ?? this.materializedEntityType,
-        materializedEntityId: materializedEntityId ?? this.materializedEntityId,
+        materializedEntityType: identical(materializedEntityType, _unset)
+            ? this.materializedEntityType
+            : materializedEntityType as String?,
+        materializedEntityId: identical(materializedEntityId, _unset)
+            ? this.materializedEntityId
+            : materializedEntityId as String?,
         idempotencyKey: idempotencyKey ?? this.idempotencyKey,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,

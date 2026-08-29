@@ -15,6 +15,7 @@ class CycleOrbCard extends StatefulWidget {
     required this.dayOfCycle,
     required this.totalCycleLength,
     required this.avgPeriodDuration,
+    this.lutealPhaseDays = 14,
     this.onStatusTap,
     this.onForecastTap,
     this.onCareTipsTap,
@@ -26,6 +27,7 @@ class CycleOrbCard extends StatefulWidget {
   final int dayOfCycle;
   final double totalCycleLength;
   final double avgPeriodDuration;
+  final int lutealPhaseDays;
   final VoidCallback? onStatusTap;
   final VoidCallback? onForecastTap;
   final VoidCallback? onCareTipsTap;
@@ -361,12 +363,37 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     required RitmoMetrics m,
     required bool isDark,
   }) {
-    final cycleLen = widget.totalCycleLength > 0 ? widget.totalCycleLength.round() : 28;
-    final periodDur = widget.avgPeriodDuration > 0 ? widget.avgPeriodDuration.round() : 5;
-    final ovulationDay = (cycleLen - 14).clamp(periodDur + 2, cycleLen - 4);
-    final follicularDays = (ovulationDay - periodDur).clamp(3, 16);
-    final lutealDays = (cycleLen - ovulationDay - 2).clamp(5, 18);
-    final daysUntilPeriodEnd = (periodDur - widget.activePeriodDay).clamp(1, periodDur);
+    final cycleLen = widget.totalCycleLength > 0
+        ? widget.totalCycleLength.round().clamp(21, 45)
+        : 28;
+    final periodDur = widget.avgPeriodDuration > 0
+        ? widget.avgPeriodDuration.round().clamp(2, 10)
+        : 6;
+    final lutealSetting =
+        widget.lutealPhaseDays > 0 ? widget.lutealPhaseDays : 14;
+    final effectiveLutealDays =
+        math.min(lutealSetting, math.max(1, cycleLen - 10));
+    final ovulationDayNum = cycleLen - effectiveLutealDays;
+
+    // ۱. فاز پریود
+    const periodStart = 1;
+    final periodEnd = periodDur;
+    final periodDays = periodDur;
+
+    // ۲. فاز فولیکولی
+    final folliStart = periodEnd + 1;
+    final ovulStart = math.max(folliStart + 1, ovulationDayNum);
+    final folliEnd = ovulStart - 1;
+    final folliDays = math.max(1, folliEnd - folliStart + 1);
+
+    // ۳. فاز تخمک‌گذاری
+    final ovulEnd = math.min(cycleLen - 1, ovulStart + 1);
+    final ovulDays = ovulEnd - ovulStart + 1;
+
+    // ۴. فاز لوتئال
+    final lutealStart = ovulEnd + 1;
+    final lutealEnd = cycleLen;
+    final lutealDays = math.max(1, lutealEnd - lutealStart + 1);
 
     return Material(
       color: Colors.transparent,
@@ -399,7 +426,9 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                     'نمای کلی چرخه تا شروع دوره بعدی (مشاهده تقویم)',
                     style: TextStyle(
                       fontSize: 10.2,
-                      color: isDark ? const Color(0xFF9096A2) : const Color(0xFF7A828E),
+                      color: isDark
+                          ? const Color(0xFF9096A2)
+                          : const Color(0xFF7A828E),
                     ),
                   ),
                 ],
@@ -412,27 +441,30 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                 child: Row(
                   children: [
                     _buildTimelinePhaseCard(
-                      title: 'پایان پریود',
-                      duration: '$daysUntilPeriodEnd روز دیگر',
+                      title: 'پریود',
+                      duration: '$periodDays روز',
                       icon: CupertinoIcons.drop_fill,
                       color: const Color(0xFFEB6E60),
                       isDark: isDark,
+                      isCurrentPhase: widget.phase == CyclePhase.menstrual,
                     ),
                     const SizedBox(width: 5),
                     _buildTimelinePhaseCard(
                       title: 'فاز فولیکولی',
-                      duration: '$follicularDays روز',
+                      duration: '$folliDays روز',
                       icon: CupertinoIcons.leaf_arrow_circlepath,
                       color: const Color(0xFF38AA84),
                       isDark: isDark,
+                      isCurrentPhase: widget.phase == CyclePhase.follicular,
                     ),
                     const SizedBox(width: 5),
                     _buildTimelinePhaseCard(
                       title: 'تخمک‌گذاری',
-                      duration: '۲ روز',
+                      duration: '$ovulDays روز',
                       icon: CupertinoIcons.sparkles,
                       color: const Color(0xFFE88A2E),
                       isDark: isDark,
+                      isCurrentPhase: widget.phase == CyclePhase.ovulation,
                     ),
                     const SizedBox(width: 5),
                     _buildTimelinePhaseCard(
@@ -441,6 +473,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                       icon: CupertinoIcons.moon_fill,
                       color: const Color(0xFFC752A8),
                       isDark: isDark,
+                      isCurrentPhase: widget.phase == CyclePhase.luteal,
                     ),
                   ],
                 ),
@@ -448,12 +481,13 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
 
               const SizedBox(height: 6),
 
-              // خط تایم‌لاین با نقاط متناظر
+              // خط تایم‌لاین با بازه روزهای دقیق متناظر با هر کارت
               _buildConnectingTimelineBar(
                 isDark: isDark,
-                periodDur: periodDur,
-                ovulationDay: ovulationDay,
-                cycleLen: cycleLen,
+                periodSpan: '$periodStart–$periodEnd',
+                folliSpan: '$folliStart–$folliEnd',
+                ovulSpan: '$ovulStart–$ovulEnd',
+                lutealSpan: '$lutealStart–$lutealEnd',
               ),
             ],
           ),
@@ -468,26 +502,58 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     required IconData icon,
     required Color color,
     required bool isDark,
+    bool isCurrentPhase = false,
   }) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 3),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: isDark ? 0.18 : 0.10),
+          color: isCurrentPhase
+              ? color.withValues(alpha: isDark ? 0.28 : 0.18)
+              : color.withValues(alpha: isDark ? 0.18 : 0.10),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: color.withValues(alpha: isDark ? 0.35 : 0.22),
-            width: 0.9,
+            color: isCurrentPhase
+                ? color.withValues(alpha: isDark ? 0.70 : 0.60)
+                : color.withValues(alpha: isDark ? 0.35 : 0.22),
+            width: isCurrentPhase ? 1.4 : 0.9,
           ),
+          boxShadow: isCurrentPhase
+              ? [
+                  BoxShadow(
+                    color: color.withValues(alpha: isDark ? 0.30 : 0.20),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            if (isCurrentPhase) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: const Text(
+                  'امروز',
+                  style: TextStyle(
+                    fontSize: 7.5,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
             Text(
               title,
               style: TextStyle(
                 fontSize: 9.0,
-                fontWeight: FontWeight.w600,
+                fontWeight: isCurrentPhase ? FontWeight.w800 : FontWeight.w600,
                 color: isDark ? color : Color.lerp(color, Colors.black, 0.3),
               ),
               maxLines: 1,
@@ -512,9 +578,10 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
 
   Widget _buildConnectingTimelineBar({
     required bool isDark,
-    required int periodDur,
-    required int ovulationDay,
-    required int cycleLen,
+    required String periodSpan,
+    required String folliSpan,
+    required String ovulSpan,
+    required String lutealSpan,
   }) {
     return Column(
       children: [
@@ -525,51 +592,85 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
               height: 2.5,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF2C323D) : const Color(0xFFD6DCE5),
+                color: isDark
+                    ? const Color(0xFF2C323D)
+                    : const Color(0xFFD6DCE5),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildDot(const Color(0xFFEB6E60)),
-                _buildDot(const Color(0xFF38AA84)),
-                _buildDot(const Color(0xFFE88A2E)),
-                _buildDot(const Color(0xFFC752A8)),
+                Expanded(child: Center(child: _buildDot(const Color(0xFFEB6E60)))),
+                const SizedBox(width: 5),
+                Expanded(child: Center(child: _buildDot(const Color(0xFF38AA84)))),
+                const SizedBox(width: 5),
+                Expanded(child: Center(child: _buildDot(const Color(0xFFE88A2E)))),
+                const SizedBox(width: 5),
+                Expanded(child: Center(child: _buildDot(const Color(0xFFC752A8)))),
               ],
             ),
           ],
         ),
         const SizedBox(height: 3),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Text(
-              PersianDigits.toFa('روز $periodDur'),
-              style: TextStyle(
-                fontSize: 9.0,
-                color: isDark ? const Color(0xFF8E95A2) : const Color(0xFF7A828E),
+            Expanded(
+              child: Center(
+                child: Text(
+                  PersianDigits.toFa('روز $periodSpan'),
+                  style: TextStyle(
+                    fontSize: 8.6,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? const Color(0xFF8E95A2)
+                        : const Color(0xFF7A828E),
+                  ),
+                ),
               ),
             ),
-            Text(
-              PersianDigits.toFa('روز $ovulationDay'),
-              style: TextStyle(
-                fontSize: 9.0,
-                color: isDark ? const Color(0xFF8E95A2) : const Color(0xFF7A828E),
+            const SizedBox(width: 5),
+            Expanded(
+              child: Center(
+                child: Text(
+                  PersianDigits.toFa('روز $folliSpan'),
+                  style: TextStyle(
+                    fontSize: 8.6,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? const Color(0xFF8E95A2)
+                        : const Color(0xFF7A828E),
+                  ),
+                ),
               ),
             ),
-            Text(
-              PersianDigits.toFa('روز ${ovulationDay + 2}'),
-              style: TextStyle(
-                fontSize: 9.0,
-                color: isDark ? const Color(0xFF8E95A2) : const Color(0xFF7A828E),
+            const SizedBox(width: 5),
+            Expanded(
+              child: Center(
+                child: Text(
+                  PersianDigits.toFa('روز $ovulSpan'),
+                  style: TextStyle(
+                    fontSize: 8.6,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? const Color(0xFF8E95A2)
+                        : const Color(0xFF7A828E),
+                  ),
+                ),
               ),
             ),
-            Text(
-              PersianDigits.toFa('روز $cycleLen'),
-              style: TextStyle(
-                fontSize: 9.0,
-                color: isDark ? const Color(0xFF8E95A2) : const Color(0xFF7A828E),
+            const SizedBox(width: 5),
+            Expanded(
+              child: Center(
+                child: Text(
+                  PersianDigits.toFa('روز $lutealSpan'),
+                  style: TextStyle(
+                    fontSize: 8.6,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? const Color(0xFF8E95A2)
+                        : const Color(0xFF7A828E),
+                  ),
+                ),
               ),
             ),
           ],

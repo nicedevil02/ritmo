@@ -138,7 +138,7 @@ class CycleHistoryList extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(14),
                   onTap: () {
-                    RitmoHapticsPolicy.selection();
+                    RitmoHaptics.selection();
                     onAddNewPeriod();
                   },
                   child: Container(
@@ -411,7 +411,7 @@ class CycleHistoryList extends StatelessWidget {
                                   InkWell(
                                     borderRadius: BorderRadius.circular(10),
                                     onTap: () {
-                                      RitmoHapticsPolicy.selection();
+                                      RitmoHaptics.selection();
                                       onEditPeriod(p);
                                     },
                                     child: Container(
@@ -434,7 +434,7 @@ class CycleHistoryList extends StatelessWidget {
                                   InkWell(
                                     borderRadius: BorderRadius.circular(10),
                                     onTap: () {
-                                      RitmoHapticsPolicy.warning();
+                                      RitmoHaptics.warning();
                                       onDeletePeriod(p['id'] as String);
                                     },
                                     child: Container(

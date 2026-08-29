@@ -77,11 +77,23 @@ void main() {
             updatedAt INTEGER NOT NULL
           );
         ''');
+        await d.execute('''
+          CREATE TABLE IF NOT EXISTS calendar_exceptions (
+            id TEXT PRIMARY KEY,
+            date TEXT NOT NULL,
+            behavior TEXT NOT NULL,
+            reason TEXT NOT NULL,
+            createdAt INTEGER NOT NULL,
+            updatedAt INTEGER NOT NULL
+          );
+        ''');
       },
     );
+    PlanningRepository.instance.setTestDatabase(db);
   });
 
   tearDown(() async {
+    PlanningRepository.instance.setTestDatabase(null);
     await db.close();
   });
 
@@ -219,5 +231,62 @@ void main() {
 
     final allocations = await db.query('planning_allocations');
     expect(allocations.isEmpty, isTrue);
+  });
+
+  test('PL-07 / F-06: setDayLight and getLightDays round trip in calendar_exceptions', () async {
+    final repo = PlanningRepository.instance;
+
+    expect(await repo.getLightDays(), isEmpty);
+
+    await repo.setDayLight('2026-08-10', true);
+    await repo.setDayLight('2026-08-12', true);
+
+    final lightDays = await repo.getLightDays();
+    expect(lightDays, containsAll(['2026-08-10', '2026-08-12']));
+    expect(lightDays.length, equals(2));
+
+    await repo.setDayLight('2026-08-10', false);
+    final lightDaysAfter = await repo.getLightDays();
+    expect(lightDaysAfter, equals({'2026-08-12'}));
+  });
+
+  test('PL-15 / F-10: allocationsOf filters out MOVED/DROPPED and purgeGhostAllocations cleans them up', () async {
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final repo = PlanningRepository.instance;
+
+    await db.insert('planning_cycles', {
+      'id': 'c_ghost', 'horizon': 'WEEK', 'startDayKey': '2026-08-08', 'endDayKey': '2026-08-14', 'status': 'ACTIVE', 'createdAt': nowMs,
+    });
+    await db.insert('planning_commitments', {
+      'id': 'cm_ghost', 'cycleId': 'c_ghost', 'title': 'Test Ghost', 'createdAt': nowMs, 'updatedAt': nowMs,
+    });
+
+    // Valid allocation
+    await db.insert('planning_allocations', {
+      'id': 'a_valid', 'commitmentId': 'cm_ghost', 'dayKey': '2026-08-09', 'plannedMinutes': 30,
+      'status': 'PLANNED', 'idempotencyKey': 'idemp_v', 'createdAt': nowMs, 'updatedAt': nowMs,
+    });
+    // Moved allocation
+    await db.insert('planning_allocations', {
+      'id': 'a_moved', 'commitmentId': 'cm_ghost', 'dayKey': '2026-08-09', 'plannedMinutes': 30,
+      'status': 'MOVED', 'idempotencyKey': 'idemp_m', 'createdAt': nowMs, 'updatedAt': nowMs,
+    });
+    // Dropped allocation
+    await db.insert('planning_allocations', {
+      'id': 'a_dropped', 'commitmentId': 'cm_ghost', 'dayKey': '2026-08-09', 'plannedMinutes': 30,
+      'status': 'DROPPED', 'idempotencyKey': 'idemp_d', 'createdAt': nowMs, 'updatedAt': nowMs,
+    });
+
+    // allocationsOf should only return 1 (a_valid)
+    final allocs = await repo.allocationsOf('c_ghost');
+    expect(allocs.length, equals(1));
+    expect(allocs.first.id, equals('a_valid'));
+
+    // Purge ghost allocations
+    final deleted = await repo.purgeGhostAllocations('c_ghost');
+    expect(deleted, equals(2));
+
+    final totalRows = await db.query('planning_allocations', where: 'commitmentId = ?', whereArgs: ['cm_ghost']);
+    expect(totalRows.length, equals(1));
   });
 }

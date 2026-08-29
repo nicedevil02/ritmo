@@ -230,6 +230,9 @@ class PremiumService {
     }
   }
 
+  /// Alias for can(feature)
+  bool has(PremiumFeature feature) => can(feature);
+
   /// Get limits for numerical features (§10)
   int limitFor(PremiumFeature feature) {
     final limits = FeatureLimits.current;

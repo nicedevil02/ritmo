@@ -24,6 +24,7 @@ void main() {
       ];
 
       final insights = InsightGenerationEngine.generate(
+        now: now,
         routineCompletions: recentComp,
         routines: routines,
         peakPerformanceWindow: null,
@@ -80,6 +81,7 @@ void main() {
       ];
 
       final normalInsights = InsightGenerationEngine.generate(
+        now: now,
         routineCompletions: completions,
         routines: routines,
         peakPerformanceWindow: null,
@@ -90,6 +92,7 @@ void main() {
       );
 
       final cycleInsights = InsightGenerationEngine.generate(
+        now: now,
         routineCompletions: completions,
         routines: routines,
         peakPerformanceWindow: null,
@@ -115,6 +118,80 @@ void main() {
       if (cycleDecline.type == InsightType.healthDecline) {
         expect(cycleDecline.severity, equals('INFO'));
       }
+    });
+
+    test('fatigueWarning and productiveWeekday are suppressed when sample size < 5 (IN-13)', () {
+      final now = DateTime.now();
+      final sparseComp = [
+        {
+          'routineId': 'r1',
+          'completionTime': now.subtract(const Duration(days: 1)).millisecondsSinceEpoch,
+          'resultType': 'FULL',
+        },
+      ];
+      final routines = [{'id': 'r1', 'category': 'LEARNING', 'isArchived': 0}];
+
+      final insights = InsightGenerationEngine.generate(
+        now: now,
+        routineCompletions: sparseComp,
+        routines: routines,
+        peakPerformanceWindow: null,
+        mostProductiveWeekday: 'دوشنبه',
+        mostFatiguedWindow: '14:00 - 16:00',
+        daysOfData: 10,
+      );
+
+      expect(insights.any((i) => i.type == InsightType.fatigueWarning), isFalse);
+      expect(insights.any((i) => i.type == InsightType.productiveWeekday), isFalse);
+    });
+
+    test('calculationWindow dynamically reflects windowDays (IN-14)', () {
+      final now = DateTime.now();
+      final completions = List.generate(10, (index) => {
+        'routineId': 'r1',
+        'completionTime': now.subtract(Duration(days: index)).millisecondsSinceEpoch,
+        'resultType': 'FULL',
+      });
+      final routines = [{'id': 'r1', 'category': 'LEARNING', 'isArchived': 0}];
+
+      final insights = InsightGenerationEngine.generate(
+        now: now,
+        windowDays: 45,
+        routineCompletions: completions,
+        routines: routines,
+        peakPerformanceWindow: null,
+        mostProductiveWeekday: 'دوشنبه',
+        mostFatiguedWindow: '14:00 - 16:00',
+        daysOfData: 20,
+      );
+
+      final fatigue = insights.firstWhere((i) => i.type == InsightType.fatigueWarning);
+      expect(fatigue.calculationWindow, equals('LAST_45_DAYS'));
+    });
+
+    test('WATCH insights are ranked higher than POSITIVE with equal or slightly lower strength (IN-12)', () {
+      final now = DateTime.now();
+      final completions = List.generate(10, (index) => {
+        'routineId': 'r1',
+        'completionTime': now.subtract(Duration(days: index)).millisecondsSinceEpoch,
+        'resultType': 'FULL',
+      });
+      final routines = [{'id': 'r1', 'category': 'LEARNING', 'isArchived': 0}];
+
+      final insights = InsightGenerationEngine.generate(
+        now: now,
+        routineCompletions: completions,
+        routines: routines,
+        peakPerformanceWindow: null,
+        mostProductiveWeekday: 'دوشنبه', // POSITIVE, weight 0.9
+        mostFatiguedWindow: '14:00 - 16:00', // WATCH, weight 1.3
+        daysOfData: 20,
+      );
+
+      final types = insights.map((i) => i.type).toList();
+      final fatigueIdx = types.indexOf(InsightType.fatigueWarning);
+      final weekdayIdx = types.indexOf(InsightType.productiveWeekday);
+      expect(fatigueIdx, lessThan(weekdayIdx));
     });
   });
 }

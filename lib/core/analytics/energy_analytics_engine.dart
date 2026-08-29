@@ -93,7 +93,7 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
       routineCompletions: input.routineCompletions,
     );
 
-    final now = input.now ?? DateTime.fromMillisecondsSinceEpoch(1700000000000);
+    final now = input.now ?? DateTime.now();
     final logs = input.energyLogs;
     final validityMinutes = input.validityMinutes;
     final defaultLevel = input.defaultEnergyLevel;
@@ -115,11 +115,11 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
           latestLog = log;
         }
       }
-      final loggedAt = latestLog['loggedAt'] as int;
+      final loggedAt = (latestLog['loggedAt'] as num?)?.toInt() ?? 0;
       final differenceMinutes = now.difference(DateTime.fromMillisecondsSinceEpoch(loggedAt)).inMinutes;
 
       if (differenceMinutes <= validityMinutes) {
-        baseLevel = (latestLog['energyLevel'] as String).toUpperCase();
+        baseLevel = ((latestLog['energyLevel'] as String?) ?? 'MEDIUM').toUpperCase();
         lastManualTime = loggedAt;
       }
     }
@@ -206,13 +206,15 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
 
   @override
   String fingerprint(EnergyAnalyticsEngineInput input) {
-    final nowMs = (input.now ?? DateTime.fromMillisecondsSinceEpoch(0)).millisecondsSinceEpoch;
+    final nowMs = (input.now ?? DateTime.now()).millisecondsSinceEpoch;
     final quarter = nowMs ~/ (15 * 60 * 1000);
     return '$quarter|${input.energyLogs.length}|${input.routineCompletions.length}|${input.sleepDiagList.length}';
   }
 
   @override
-  void invalidate() {}
+  void invalidate() {
+    RitmoEngineBus.instance.invalidate(EnergyAnalyticsEngine);
+  }
 
   @override
   bool canRun(EnergyAnalyticsEngineInput input) => true;
@@ -234,14 +236,14 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
     if (routineCompletions.length < 5) return null;
 
     final rhythmMap = {
-      for (final r in dailyRhythm) r['date'] as String: (r['rhythmScore'] as num).toDouble()
+      for (final r in dailyRhythm) (r['date'] as String? ?? ''): ((r['rhythmScore'] as num?)?.toDouble() ?? 0.0)
     };
 
     final hourScores = List<double>.filled(24, 0);
 
     for (var h = 0; h < 24; h++) {
       final hEnergyLogs = energyLogs.where((log) {
-        final local = DateTime.fromMillisecondsSinceEpoch(log['loggedAt'] as int);
+        final local = DateTime.fromMillisecondsSinceEpoch((log['loggedAt'] as num?)?.toInt() ?? 0);
         return local.hour == h;
       }).toList();
 
@@ -249,7 +251,7 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
       if (hEnergyLogs.isNotEmpty) {
         var sumEnergy = 0.0;
         for (final log in hEnergyLogs) {
-          final level = (log['energyLevel'] as String).toLowerCase();
+          final level = ((log['energyLevel'] as String?) ?? '').toLowerCase();
           if (level == 'high') {
             sumEnergy += 100.0;
           } else if (level == 'medium') {
@@ -264,7 +266,7 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
       }
 
       final hCompletions = routineCompletions.where((comp) {
-        final local = DateTime.fromMillisecondsSinceEpoch(comp['completionTime'] as int);
+        final local = DateTime.fromMillisecondsSinceEpoch((comp['completionTime'] as num?)?.toInt() ?? 0);
         return local.hour == h;
       }).toList();
 
@@ -278,7 +280,7 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
           final partialRatio = (comp['partialRatio'] as num?)?.toDouble();
           sumCompletion += CompletionResult.fromDb(type).rhythmWeight(partialRatio);
 
-          final date = comp['completionDate'] as String;
+          final date = comp['completionDate'] as String? ?? '';
           sumRhythm += rhythmMap[date] ?? 50.0;
         }
         avgCompletion = sumCompletion / hCompletions.length;
@@ -309,28 +311,34 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
     required List<Map<String, dynamic>> dailyRhythm,
   }) {
     final rhythmMap = {
-      for (final r in dailyRhythm) r['date'] as String: (r['rhythmScore'] as num).toDouble()
+      for (final r in dailyRhythm) (r['date'] as String? ?? ''): ((r['rhythmScore'] as num?)?.toDouble() ?? 0.0)
     };
 
     final weekdayDates = { for (final k in Iterable.generate(7, (i) => i + 1)) k : <String>{} };
 
     for (final comp in routineCompletions) {
-      final local = DateTime.fromMillisecondsSinceEpoch(comp['completionTime'] as int);
-      final date = comp['completionDate'] as String;
+      final local = DateTime.fromMillisecondsSinceEpoch((comp['completionTime'] as num?)?.toInt() ?? 0);
+      final date = comp['completionDate'] as String? ?? '';
       weekdayDates[local.weekday]?.add(date);
     }
 
+    const minDaysPerWeekday = 3;
+    final eligible = <int>[];
     for (var w = 1; w <= 7; w++) {
-      if ((weekdayDates[w]?.length ?? 0) < 4) {
-        return null;
+      if ((weekdayDates[w]?.length ?? 0) >= minDaysPerWeekday) {
+        eligible.add(w);
       }
+    }
+
+    if (eligible.length < 4) {
+      return null;
     }
 
     final weekdayScores = { for (final k in Iterable.generate(7, (i) => i + 1)) k : 0.0 };
 
-    for (var w = 1; w <= 7; w++) {
+    for (final w in eligible) {
       final wCompletions = routineCompletions.where((comp) {
-        final local = DateTime.fromMillisecondsSinceEpoch(comp['completionTime'] as int);
+        final local = DateTime.fromMillisecondsSinceEpoch((comp['completionTime'] as num?)?.toInt() ?? 0);
         return local.weekday == w;
       }).toList();
 
@@ -345,7 +353,7 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
           final partialRatio = (comp['partialRatio'] as num?)?.toDouble();
           sumCompletion += CompletionResult.fromDb(type).rhythmWeight(partialRatio);
 
-          final date = comp['completionDate'] as String;
+          final date = comp['completionDate'] as String? ?? '';
           sumRhythm += rhythmMap[date] ?? 50.0;
         }
         avgCompletion = sumCompletion / wCompletions.length;
@@ -355,14 +363,15 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
       weekdayScores[w] = (avgCompletion * 100) + avgRhythm;
     }
 
-    var bestW = 1;
+    var bestW = eligible.first;
     var bestScore = -1.0;
-    weekdayScores.forEach((w, score) {
+    for (final w in eligible) {
+      final score = weekdayScores[w] ?? 0.0;
       if (score > bestScore) {
         bestScore = score;
         bestW = w;
       }
-    });
+    }
 
     const farsiWeekdays = {
       1: 'دوشنبه',
@@ -386,12 +395,12 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
 
     for (var h = 0; h < 24; h++) {
       final lowEnergyCount = energyLogs.where((log) {
-        final local = DateTime.fromMillisecondsSinceEpoch(log['loggedAt'] as int);
-        return local.hour == h && (log['energyLevel'] as String).toLowerCase() == 'low';
+        final local = DateTime.fromMillisecondsSinceEpoch((log['loggedAt'] as num?)?.toInt() ?? 0);
+        return local.hour == h && ((log['energyLevel'] as String?) ?? '').toLowerCase() == 'low';
       }).length;
 
       final missedRoutinesCount = routineCompletions.where((comp) {
-        final local = DateTime.fromMillisecondsSinceEpoch(comp['completionTime'] as int);
+        final local = DateTime.fromMillisecondsSinceEpoch((comp['completionTime'] as num?)?.toInt() ?? 0);
         final type = comp['resultType'] as String? ?? 'FULL';
         return local.hour == h && type == 'CANNOT_NOW';
       }).length;

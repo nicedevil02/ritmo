@@ -2,63 +2,75 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="64dp"
-    android:padding="8dp"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
     android:background="@color/notif_bg">
 
-    <!-- Far Right App Icon -->
+    <!-- 1. Right Side: App Icon -->
     <ImageView
         android:id="@+id/notif_app_icon"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
         android:src="@drawable/ic_notification"
-        android:contentDescription="Ritmo Icon"
-        android:padding="4dp" />
+        android:contentDescription="Ritmo" />
 
-    <!-- Left Complete Checkbox -->
-    <ImageView
-        android:id="@+id/btn_collapsed_done"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+    <!-- 2. Left Side: Action Checkbox Button (44x44dp touch area) -->
+    <FrameLayout
+        android:id="@+id/btn_collapsed_done_container"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
         android:layout_alignParentStart="true"
-        android:layout_centerVertical="true"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
-        android:src="@drawable/ic_checkbox_unchecked"
-        android:scaleType="centerInside"
-        android:visibility="gone"
-        android:clickable="true"
-        android:focusable="true"
-        android:contentDescription="Complete Task" />
+        android:layout_centerVertical="true">
 
-    <!-- Center Info Column (Persian Layout: right to left) -->
+        <ImageView
+            android:id="@+id/btn_collapsed_done"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_notif_check_circle"
+            android:src="@drawable/ic_notif_check"
+            android:scaleType="centerInside"
+            android:contentDescription="تکمیل روتین"
+            android:clickable="true"
+            android:focusable="true" />
+    </FrameLayout>
+
+    <!-- 3. Center: Content Column (Right to Left) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_toStartOf="@id/notif_app_icon"
-        android:layout_toEndOf="@id/btn_collapsed_done"
+        android:layout_toEndOf="@id/btn_collapsed_done_container"
         android:layout_centerVertical="true"
         android:orientation="vertical"
-        android:paddingEnd="12dp"
-        android:paddingStart="8dp">
+        android:paddingEnd="10dp"
+        android:paddingStart="10dp">
 
-        <TextView
-            android:id="@+id/txt_collapsed_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="زون: آزاد | انرژی: متوسط"
-            android:textColor="@color/notif_text_primary"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:layout_gravity="end" />
-
+        <!-- Task Title (Next Action) -->
         <TextView
             android:id="@+id/txt_collapsed_task"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="پیشنهاد: استراحت 🌿"
+            android:text="اقدام بعدی: مطالعه کتاب"
+            android:textColor="@color/notif_text_primary"
+            android:textSize="12.5sp"
+            android:textStyle="bold"
+            android:layout_gravity="end"
+            android:ellipsize="end"
+            android:maxLines="1" />
+
+        <!-- Subtitle (Time & Progress) -->
+        <TextView
+            android:id="@+id/txt_collapsed_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ساعت ۱۶:۳۰ • ۳ از ۵ کار امروز"
             android:textColor="@color/notif_text_secondary"
-            android:textSize="11sp"
+            android:textSize="10.5sp"
             android:layout_marginTop="2dp"
             android:layout_gravity="end"
             android:ellipsize="end"

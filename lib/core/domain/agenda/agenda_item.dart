@@ -287,6 +287,7 @@ class AgendaQueryOptions {
   const AgendaQueryOptions({
     this.includeCompleted = true,
     this.domains = const {},
+    this.excludeDomains = const {},
     this.includeWorshipDebt = false,
   });
 
@@ -297,10 +298,16 @@ class AgendaQueryOptions {
   /// If non-empty, restrict collection to these domains only.
   final Set<AgendaDomain> domains;
 
+  /// If non-empty, exclude collection of these domains.
+  final Set<AgendaDomain> excludeDomains;
+
   /// Explicit policy flag: whether to include worship debt items (default: false).
   final bool includeWorshipDebt;
 
   bool wants(AgendaDomain domain) {
+    if (excludeDomains.contains(domain)) {
+      return false;
+    }
     if (domain == AgendaDomain.worshipDebt && !includeWorshipDebt) {
       return false;
     }

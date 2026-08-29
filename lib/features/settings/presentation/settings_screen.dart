@@ -267,10 +267,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
+      child: RitmoTheme.buildBackgroundContainer(
+        context: context,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Stack(
+            children: [
             // ۱. محتوای اسکرول‌شونده تنظیمات با فیزیک فنری اپل
             Positioned.fill(
               child: NotificationListener<ScrollNotification>(
@@ -458,7 +460,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

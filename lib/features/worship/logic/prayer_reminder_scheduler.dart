@@ -33,7 +33,7 @@ class PrayerReminderScheduler {
       final db = await DatabaseHelper.instance.database;
       final rows = await db.query(
         'app_settings',
-        where: "key LIKE 'worship_%'",
+        where: "key LIKE 'worship_%' OR key = 'module_religion_enabled'",
       );
       final settings = <String, String>{};
       for (final r in rows) {
@@ -44,9 +44,10 @@ class PrayerReminderScheduler {
         }
       }
 
-      final isAdhanEnabled = _parseBool(settings['worship_adhan_enabled']);
-      final isRemindersEnabled = _parseBool(settings['worship_prayer_reminders_enabled']);
-      final isEnabled = isAdhanEnabled && isRemindersEnabled;
+      final isReligionEnabled = _parseBool(settings['module_religion_enabled'], defaultValue: false);
+      final isAdhanEnabled = _parseBool(settings['worship_adhan_enabled'], defaultValue: false);
+      final isRemindersEnabled = _parseBool(settings['worship_prayer_reminders_enabled'], defaultValue: false);
+      final isEnabled = isReligionEnabled && isAdhanEnabled && isRemindersEnabled;
 
       // Always clear previous schedules in horizon to prevent stale alarms
       await cancelAll(horizonDays: daysAhead);

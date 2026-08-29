@@ -207,19 +207,14 @@ class AiConnectionRepository {
     if (mode == AiMode.ritmoServer) {
       return const [
         AiChainEntry(
-          labelFa: 'اولویت ۱ (ژیپو GLM-4.7-Flash)',
-          host: 'open.bigmodel.cn',
-          model: 'glm-4.7-flash',
-        ),
-        AiChainEntry(
-          labelFa: 'اولویت ۲ (کلودفلر)',
-          host: 'api.cloudflare.com',
-          model: '@cf/zai-org/glm-4.7-flash',
-        ),
-        AiChainEntry(
-          labelFa: 'اولویت ۳ (پشتیبان اوپن‌کد)',
+          labelFa: 'اولویت ۱ (اوپن‌کد HY3-Free)',
           host: 'opencode.ai',
-          model: 'deepseek-v4-flash-free',
+          model: 'hy3-free',
+        ),
+        AiChainEntry(
+          labelFa: 'اولویت ۲ (ژیپو GLM-4-Flash)',
+          host: 'open.bigmodel.cn',
+          model: 'glm-4-flash',
         ),
       ];
     }

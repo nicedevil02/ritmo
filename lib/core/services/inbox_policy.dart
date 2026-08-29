@@ -10,7 +10,8 @@ class InboxPolicy {
   }) {
     switch (category) {
       case InboxCategory.REMINDER:
-        // Push all routine reminders into inbox
+        // Background prayer / worship alarms should never pollute the central inbox
+        if (sourceSystem == 'worship') return false;
         return priority.index >= 0;
       case InboxCategory.INSIGHT:
         return true;

@@ -35,7 +35,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         Log.d(TAG, "Notification action received: " + actionType + " (reminder: " + reminderId + ", routine: " + routineId + ")")
 
         // 1. Instantly dismiss the notification (if it's not the persistent notification)
-        if (actionType != "COMPLETE_ROUTINE" && actionType != "CHANGE_ZONE" && actionType != "CHANGE_ENERGY") {
+        if (actionType != "COMPLETE_ROUTINE" && actionType != "SNOOZE_ROUTINE" && actionType != "CHANGE_ZONE" && actionType != "CHANGE_ENERGY") {
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.cancel(notifId)
         }
@@ -134,6 +134,28 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
                                 override fun notImplemented() {
                                     Log.e(TAG, "Dart completeRoutineDirect not implemented")
+                                    pendingResult.finish()
+                                }
+                            }
+                        )
+                    } else if (actionType == "SNOOZE_ROUTINE") {
+                        Log.d(TAG, "Invoking snoozeRoutineDirect in Dart for routine: " + routineId)
+                        channel.invokeMethod(
+                            "snoozeRoutineDirect",
+                            mapOf("routineId" to routineId),
+                            object : MethodChannel.Result {
+                                override fun success(res: Any?) {
+                                    Log.d(TAG, "Dart processed snoozeRoutineDirect successfully")
+                                    pendingResult.finish()
+                                }
+
+                                override fun error(code: String, msg: String?, details: Any?) {
+                                    Log.e(TAG, "Dart error processing snoozeRoutineDirect: " + msg)
+                                    pendingResult.finish()
+                                }
+
+                                override fun notImplemented() {
+                                    Log.e(TAG, "Dart snoozeRoutineDirect not implemented")
                                     pendingResult.finish()
                                 }
                             }

@@ -136,7 +136,9 @@ class SleepEngine implements CachedEngine<SleepEngineInput, SleepEngineOutput> {
   }
 
   @override
-  void invalidate() {}
+  void invalidate() {
+    RitmoEngineBus.instance.invalidate(SleepEngine);
+  }
 
   @override
   bool canRun(SleepEngineInput input) => true;

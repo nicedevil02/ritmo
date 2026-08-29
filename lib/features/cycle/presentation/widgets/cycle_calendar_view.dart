@@ -2,6 +2,7 @@
 // Minimalist, modern, accessible Jalali cycle calendar with swipe gestures,
 // animated month transitions, pre-computed day marks (F-25..F-34), and dynamic legend.
 import 'dart:math' as math;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
@@ -317,6 +318,7 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
   DateTime? _selectedDay;
   Map<String, CycleDayMark> _marks = const {};
   Set<String> _loggedDayKeys = const {};
+  bool _isLegendExpanded = false;
 
   @override
   void initState() {
@@ -452,6 +454,97 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
     return !hasRecorded && hasPredicted;
   }
 
+  Widget _buildCollapsibleLegend(RitmoColors colors, bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.03)
+            : Colors.black.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : colors.border.withValues(alpha: 0.35),
+          width: 0.8,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Semantics(
+            button: true,
+            label: 'راهنمای تقویم چرخه بدنی',
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () {
+                RitmoHapticsPolicy.selection();
+                setState(() {
+                  _isLegendExpanded = !_isLegendExpanded;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.info_circle,
+                          size: 15,
+                          color: colors.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'راهنمای رنگ‌ها و نشانه‌ها',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    AnimatedRotation(
+                      turns: _isLegendExpanded ? 0.5 : 0.0,
+                      duration: const Duration(milliseconds: 240),
+                      curve: Curves.easeInOutCubic,
+                      child: Icon(
+                        CupertinoIcons.chevron_down,
+                        size: 13,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 240),
+            firstCurve: Curves.easeOutCubic,
+            secondCurve: Curves.easeInCubic,
+            crossFadeState: _isLegendExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 2, 12, 10),
+              child: CycleCalendarLegend(
+                marks: _marks,
+                settings: widget.settings,
+                activePhaseColor: widget.activePhaseColor,
+                showTitleAndDivider: false,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -485,6 +578,15 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
       'جمعه',
     ];
 
+    // توکن‌های نئومورفیک کارت تقویم (Apple Neumorphic Soft Card)
+    final cardBg = isDark ? const Color(0xFF1B202B) : const Color(0xFFF0F3F7);
+    final cardBorder = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.white.withValues(alpha: 0.85);
+    final trenchBg = isDark
+        ? const Color(0xFF14171E)
+        : const Color(0xFFE2E7EE);
+
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onHorizontalDragEnd: (details) {
@@ -495,21 +597,39 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
           _changeMonth(-1);
         }
       },
-      child: RitmoTheme.glassCardLight(
-        borderRadius: 24,
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: cardBorder, width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              offset: const Offset(-4, -4),
+              blurRadius: 14,
+              color: isDark ? Colors.white.withValues(alpha: 0.035) : Colors.white,
+            ),
+            BoxShadow(
+              offset: const Offset(6, 8),
+              blurRadius: 18,
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.55)
+                  : const Color(0xFFCBD2DD).withValues(alpha: 0.70),
+            ),
+          ],
+        ),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
               colors: [
                 widget.activePhaseColor.withValues(alpha: isDark ? 0.08 : 0.04),
                 Colors.transparent,
               ],
             ),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
           child: Column(
             children: [
               // Calendar Month Navigation Header
@@ -527,30 +647,43 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                 onJumpToNextPeriod: _jumpToNextPredictedPeriod,
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
 
-              // Weekday Headers Bar
+              // Weekday Headers Bar (شیار فرورفته نئومورفیک Debossed Trench)
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
+                padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 2),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.black.withValues(alpha: 0.035),
+                  color: trenchBg,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.04)
+                        : Colors.black.withValues(alpha: 0.03),
+                    width: 0.8,
+                  ),
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: weekdaysHeaders.map((header) {
                     final isFriday = header == 'جمعه';
                     return Expanded(
                       child: Center(
-                        child: Text(
-                          header,
-                          style: RitmoTextStyles.caption(
-                            isFriday
-                                ? colors.error.withValues(alpha: 0.85)
-                                : colors.textSecondary,
-                          ).copyWith(fontWeight: FontWeight.w800),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 1),
+                            child: Text(
+                              header,
+                              maxLines: 1,
+                              softWrap: false,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: isFriday
+                                    ? colors.error.withValues(alpha: 0.85)
+                                    : colors.textSecondary,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     );
@@ -558,7 +691,7 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 3),
 
               // Animated Days Grid (F-26: Zero loops in itemBuilder)
               AnimatedSwitcher(
@@ -592,14 +725,10 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              // Collapsible Accordion Legend (Default Collapsed)
+              _buildCollapsibleLegend(colors, isDark),
 
-              // Dynamic Legend (F-35, F-31)
-              CycleCalendarLegend(
-                marks: _marks,
-                settings: widget.settings,
-                activePhaseColor: widget.activePhaseColor,
-              ),
+              const SizedBox(height: 6),
 
               // Reasoned Empty State Banner (F-39)
               CycleEmptyStateBanner(

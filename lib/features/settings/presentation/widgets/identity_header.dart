@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -31,8 +30,7 @@ class IdentityHeader extends StatefulWidget {
   State<IdentityHeader> createState() => _IdentityHeaderState();
 }
 
-class _IdentityHeaderState extends State<IdentityHeader>
-    with SingleTickerProviderStateMixin {
+class _IdentityHeaderState extends State<IdentityHeader> {
   String _userName = 'کاربر ریتمو';
   String _avatarPath = '';
   int _daysWithRitmo = 1;
@@ -41,8 +39,6 @@ class _IdentityHeaderState extends State<IdentityHeader>
   bool _isSimpleMode = false;
   bool _isLoading = true;
 
-  late AnimationController _ringController;
-
   @override
   void initState() {
     super.initState();
@@ -50,16 +46,10 @@ class _IdentityHeaderState extends State<IdentityHeader>
     _loadIdentityData();
     SettingsService.instance.revision.addListener(_onSettingsChanged);
     AppModeService.instance.notifier.addListener(_onAppModeChanged);
-    _ringController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 5),
-    )..repeat();
   }
 
   @override
   void dispose() {
-    _ringController.stop();
-    _ringController.dispose();
     AppModeService.instance.notifier.removeListener(_onAppModeChanged);
     SettingsService.instance.revision.removeListener(_onSettingsChanged);
     super.dispose();
@@ -553,86 +543,80 @@ class _IdentityHeaderState extends State<IdentityHeader>
     const double gapWidth = 2.0;
     const double innerSize = outerSize - (ringWidth + gapWidth) * 2;
 
-    return Stack(
-      children: [
-        AnimatedBuilder(
-          animation: _ringController,
-          builder: (context, child) {
-            return Container(
-              width: outerSize,
-              height: outerSize,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: SweepGradient(
-                  transform: GradientRotation(_ringController.value * math.pi * 2),
-                  colors: [
-                    colors.brandGradient.first,
-                    colors.brandGradient.last,
-                    colors.accent,
-                    colors.brandGradient.first,
-                  ],
-                  stops: const [0.0, 0.35, 0.7, 1.0],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.primary.withValues(alpha: 0.28),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
+    return RepaintBoundary(
+      child: Stack(
+        children: [
+          Container(
+            width: outerSize,
+            height: outerSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: SweepGradient(
+                colors: [
+                  colors.brandGradient.first,
+                  colors.brandGradient.last,
+                  colors.accent,
+                  colors.brandGradient.first,
                 ],
+                stops: const [0.0, 0.35, 0.7, 1.0],
               ),
-              child: child,
-            );
-          },
-          child: Center(
-            child: Container(
-              width: innerSize,
-              height: innerSize,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colors.surface,
-              ),
-              child: _isAvatarFileValid(_avatarPath)
-                  ? ClipOval(
-                      child: _avatarPath.startsWith('http') || _avatarPath.startsWith('blob:')
-                          ? Image.network(
-                              _avatarPath,
-                              width: innerSize,
-                              height: innerSize,
-                              cacheWidth: 200,
-                              cacheHeight: 200,
-                              fit: BoxFit.cover,
-                            )
-                          : Image.file(
-                              File(_avatarPath),
-                              width: innerSize,
-                              height: innerSize,
-                              cacheWidth: 200,
-                              cacheHeight: 200,
-                              fit: BoxFit.cover,
+              boxShadow: [
+                BoxShadow(
+                  color: colors.primary.withValues(alpha: 0.28),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Container(
+                width: innerSize,
+                height: innerSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colors.surface,
+                ),
+                child: _isAvatarFileValid(_avatarPath)
+                    ? ClipOval(
+                        child: _avatarPath.startsWith('http') || _avatarPath.startsWith('blob:')
+                            ? Image.network(
+                                _avatarPath,
+                                width: innerSize,
+                                height: innerSize,
+                                cacheWidth: 200,
+                                cacheHeight: 200,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.file(
+                                File(_avatarPath),
+                                width: innerSize,
+                                height: innerSize,
+                                cacheWidth: 200,
+                                cacheHeight: 200,
+                                fit: BoxFit.cover,
+                              ),
+                      )
+                    : Center(
+                        child: ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: colors.brandGradient,
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ).createShader(bounds),
+                          child: Text(
+                            _getMonogram(_userName),
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 1,
                             ),
-                    )
-                  : Center(
-                      child: ShaderMask(
-                        shaderCallback: (bounds) => LinearGradient(
-                          colors: colors.brandGradient,
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ).createShader(bounds),
-                        child: Text(
-                          _getMonogram(_userName),
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: 1,
                           ),
                         ),
                       ),
-                    ),
+              ),
             ),
           ),
-        ),
         // نشان دکمه دوربین کوچک روی لبه آواتار
         Positioned(
           bottom: 0,
@@ -661,8 +645,9 @@ class _IdentityHeaderState extends State<IdentityHeader>
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 
   /// بج آماری سه‌گانه شیشه‌ای با زیرمتن
   Widget _buildStatChip({

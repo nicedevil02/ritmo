@@ -25,4 +25,13 @@ class PlanningWeek {
     final last = Jalali(jy, jm, Jalali(jy, jm).monthLength).toDateTime();
     return (dayKey(first), dayKey(last));
   }
+
+  static List<String> dayKeysOfMonthContaining(DateTime day) {
+    final j = Jalali.fromDateTime(day);
+    final length = j.monthLength;
+    return List.generate(length, (i) {
+      final d = Jalali(j.year, j.month, i + 1).toDateTime();
+      return dayKey(d);
+    });
+  }
 }

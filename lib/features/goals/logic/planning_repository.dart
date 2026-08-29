@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
@@ -10,10 +10,18 @@ class PlanningRepository {
   PlanningRepository._();
   static final PlanningRepository instance = PlanningRepository._();
 
+  Database? _testDb;
+
+  @visibleForTesting
+  void setTestDatabase(Database? db) {
+    _testDb = db;
+  }
+
   Future<Database> get _db async {
+    if (_testDb != null) return _testDb!;
     final raw = DatabaseHelper.rawDatabase;
     if (raw != null) return raw;
-    throw StateError('Database not initialized');
+    return await DatabaseHelper.instance.database;
   }
 
   Future<PlanningCycle?> activeCycle(PlanningHorizon horizon, String dayKey) async {
@@ -129,7 +137,22 @@ class PlanningRepository {
   Future<void> deleteDraftCycle(String id) async {
     final db = await _db;
     await db.transaction((txn) async {
-      await txn.delete('planning_cycles', where: 'id = ? AND status = ?', whereArgs: [id, 'DRAFT']);
+      await txn.rawDelete('''
+        DELETE FROM planning_allocations
+        WHERE commitmentId IN (
+          SELECT id FROM planning_commitments WHERE cycleId = ?
+        )
+      ''', [id]);
+      await txn.delete(
+        'planning_commitments',
+        where: 'cycleId = ?',
+        whereArgs: [id],
+      );
+      await txn.delete(
+        'planning_cycles',
+        where: 'id = ? AND status = ?',
+        whereArgs: [id, 'DRAFT'],
+      );
     });
   }
 
@@ -144,6 +167,23 @@ class PlanningRepository {
       return res.map(PlanningCommitment.fromMap).toList();
     } catch (_) {
       return [];
+    }
+  }
+
+  Future<PlanningCommitment?> commitmentById(String id) async {
+    try {
+      final db = await _db;
+      final res = await db.query(
+        'planning_commitments',
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+      if (res.isEmpty) return null;
+      return PlanningCommitment.fromMap(res.first);
+    } catch (e, st) {
+      RitmoLogger.error('PlanningRepository.commitmentById error: $e', error: e, stack: st);
+      return null;
     }
   }
 
@@ -210,22 +250,46 @@ class PlanningRepository {
       final res = await db.rawQuery('''
         SELECT a.* FROM planning_allocations a
         INNER JOIN planning_commitments c ON a.commitmentId = c.id
-        WHERE c.cycleId = ?
+        WHERE c.cycleId = ? AND a.status != 'DROPPED' AND a.status != 'MOVED' AND c.status != 'DROPPED'
       ''', [cycleId]);
       return res.map(PlanningAllocation.fromMap).toList();
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLogger.error('PlanningRepository.allocationsOf error: $e', error: e, stack: st);
       return [];
     }
   }
 
   Future<List<PlanningAllocation>> allocationsForDay(String dayKey) async {
-    final db = await _db;
-    final res = await db.query(
-      'planning_allocations',
-      where: 'dayKey = ?',
-      whereArgs: [dayKey],
-    );
-    return res.map(PlanningAllocation.fromMap).toList();
+    try {
+      final db = await _db;
+      final res = await db.query(
+        'planning_allocations',
+        where: "dayKey = ? AND status != 'DROPPED' AND status != 'MOVED'",
+        whereArgs: [dayKey],
+      );
+      return res.map(PlanningAllocation.fromMap).toList();
+    } catch (e, st) {
+      RitmoLogger.error('PlanningRepository.allocationsForDay error: $e', error: e, stack: st);
+      return [];
+    }
+  }
+
+  Future<int> purgeGhostAllocations(String cycleId) async {
+    try {
+      final db = await _db;
+      return await db.transaction((txn) async {
+        final count = await txn.rawDelete('''
+          DELETE FROM planning_allocations
+          WHERE commitmentId IN (
+            SELECT id FROM planning_commitments WHERE cycleId = ?
+          ) AND (status = 'DROPPED' OR status = 'MOVED')
+        ''', [cycleId]);
+        return count;
+      });
+    } catch (e, st) {
+      RitmoLogger.error('PlanningRepository.purgeGhostAllocations error: $e', error: e, stack: st);
+      return 0;
+    }
   }
 
   Future<void> insertAllocation(PlanningAllocation a) async {
@@ -300,38 +364,43 @@ class PlanningRepository {
   Future<void> setDayLight(String dayKey, bool isLight) async {
     final db = await _db;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
-    await UpsertHelper.upsert(
-      db,
-      'calendar_exceptions',
-      {
-        'id': 'ce_$dayKey',
-        'date': dayKey,
-        'behavior': isLight ? 'ESSENTIAL_ONLY' : 'NORMAL',
-        'reason': isLight ? 'LIGHT_DAY' : 'NORMAL_DAY',
-        'createdAt': nowMs,
-        'updatedAt': nowMs,
-      },
-      conflictColumns: const ['id'],
-    );
+    if (isLight) {
+      await UpsertHelper.upsert(
+        db,
+        'calendar_exceptions',
+        {
+          'id': 'ce_$dayKey',
+          'date': dayKey,
+          'behavior': 'ESSENTIAL_ONLY',
+          'reason': 'LIGHT_DAY',
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        },
+        conflictColumns: const ['id'],
+      );
+    } else {
+      await db.delete(
+        'calendar_exceptions',
+        where: "date = ? AND (reason = 'LIGHT_DAY' OR behavior = 'ESSENTIAL_ONLY')",
+        whereArgs: [dayKey],
+      );
+    }
   }
 
   Future<Set<String>> getLightDays() async {
     try {
       final db = await _db;
-      final existing = await db.query('app_settings', where: 'key = ?', whereArgs: ['planning_light_days']);
-      if (existing.isNotEmpty) {
-        final val = existing.first['value'] as String?;
-        if (val != null && val.isNotEmpty) {
-          return Set<String>.from(jsonDecode(val) as List);
-        }
-      }
-      return {};
-    } catch (e, st) {
-      RitmoLogger.warning(
-        'PlanningRepository.getLightDays error: $e',
-        error: e,
-        stack: st,
+      final rows = await db.query(
+        'calendar_exceptions',
+        columns: ['date'],
+        where: "reason = 'LIGHT_DAY' OR behavior = 'ESSENTIAL_ONLY'",
       );
+      return rows
+          .map((r) => r['date'] as String?)
+          .whereType<String>()
+          .toSet();
+    } catch (e, st) {
+      RitmoLogger.error('PlanningRepository.getLightDays error: $e', error: e, stack: st);
       return {};
     }
   }

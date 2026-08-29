@@ -46,6 +46,27 @@ void notificationActionDispatcher() {
               durationMinutes: 0,
             ),
           );
+          await ForegroundNotificationUpdater.update();
+        }
+      }
+      return true;
+    } else if (call.method == 'snoozeRoutineDirect') {
+      final args = call.arguments as Map?;
+      if (args != null) {
+        final routineId = args['routineId'] as String?;
+        if (routineId != null && routineId.isNotEmpty) {
+          final now = DateTime.now();
+          final dateStr =
+              '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+          await RitmoExecutionKernel.instance.execute(
+            CompleteOccurrenceCommand(
+              routineId: routineId,
+              dateStr: dateStr,
+              resultType: 'SNOOZED',
+              durationMinutes: 0,
+            ),
+          );
+          await ForegroundNotificationUpdater.update();
         }
       }
       return true;

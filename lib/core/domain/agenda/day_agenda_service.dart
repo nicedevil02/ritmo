@@ -249,7 +249,7 @@ class DayAgendaService {
       }
     }
 
-    final cacheEligible = opts.domains.isEmpty && opts.includeCompleted;
+    final cacheEligible = opts.domains.isEmpty && opts.excludeDomains.isEmpty && opts.includeCompleted;
     var servedFromCache = 0;
 
     for (final date in dates) {

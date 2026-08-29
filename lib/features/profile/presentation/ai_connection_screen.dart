@@ -193,7 +193,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
   }
 
   String get _effectiveModelPreview {
-    if (_mode == AiMode.ritmoServer) return 'glm-4.7-flash (ژیپو · سرور ریتمو)';
+    if (_mode == AiMode.ritmoServer) return 'hy3-free (اوپن‌کد · سرور ریتمو)';
     final normalized = AiEndpointNormalizer.normalize(_urlController.text);
     return AIGateway.instance.previewEffectiveModel(
       baseUrl: normalized,
@@ -258,36 +258,21 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
     await _saveConfig();
 
     if (_mode == AiMode.ritmoServer) {
-      // Priority 1: Zhipu AI
+      // Priority 1: OpenCode (hy3-free, 30s)
       var result = await AIGateway.instance.testConnection(
-        baseUrl: AIGateway.defaultZhipuBaseUrl,
-        apiKey: AIGateway.defaultZhipuApiKey,
-        model: AIGateway.defaultZhipuModel,
-        timeoutMs: 15000,
+        baseUrl: AIGateway.defaultBaseUrl,
+        apiKey: AIGateway.defaultApiKey,
+        model: AIGateway.defaultModel,
+        timeoutMs: 30000,
       );
 
-      // Priority 2: Cloudflare Workers AI (15s)
-      if (!result.ok) {
-        var cfAccountId = _cloudflareAccountIdController.text.trim();
-        if (cfAccountId.isEmpty) {
-          cfAccountId = 'd30ec37bac346109c0683cb64a420d97';
-        }
-        final cfUrl = AIGateway.defaultCloudflareBaseUrl.replaceAll('{ACCOUNT_ID}', cfAccountId);
-        result = await AIGateway.instance.testConnection(
-          baseUrl: cfUrl,
-          apiKey: AIGateway.defaultCloudflareApiKey,
-          model: AIGateway.defaultCloudflareModel,
-          timeoutMs: 15000,
-        );
-      }
-
-      // Priority 3: OpenCode fallback (30s)
+      // Priority 2: Zhipu AI (glm-4-flash, 35s)
       if (!result.ok) {
         result = await AIGateway.instance.testConnection(
-          baseUrl: AIGateway.defaultBaseUrl,
-          apiKey: AIGateway.defaultApiKey,
-          model: AIGateway.defaultModel,
-          timeoutMs: 30000,
+          baseUrl: AIGateway.defaultZhipuBaseUrl,
+          apiKey: AIGateway.defaultZhipuApiKey,
+          model: AIGateway.defaultZhipuModel,
+          timeoutMs: 35000,
         );
       }
 
@@ -645,7 +630,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                               Icon(Icons.shield_outlined, color: colors.primary, size: 20),
                               const SizedBox(width: RitmoSpacing.xs),
                               Text(
-                                'اتصال ابری امن ریتمو (۳ لایه خودکار)',
+                                'اتصال ابری امن ریتمو (۲ لایه خودکار)',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -657,9 +642,8 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                           const SizedBox(height: RitmoSpacing.sm),
                           Text(
                             'ریتمو سریع‌ترین و پایدارترین مسیر هوش مصنوعی را به شکل هوشمند انتخاب می‌کند:\n'
-                            '• لایه ۱: ژیپو (Zhipu AI) با مدل پرسرعت glm-4.7-flash (بدون فیلترشکن)\n'
-                            '• لایه ۲: کلودفلر (Cloudflare Workers AI)\n'
-                            '• لایه ۳: سرور پشتیبان OpenCode\n\n'
+                            '• لایه ۱: اوپن‌کد (OpenCode) با مدل پرسرعت و رایگان hy3-free\n'
+                            '• لایه ۲: ژیپو (Zhipu AI) با مدل بدون فیلترشکن glm-4-flash\n\n'
                             'نیازی به ثبت هیچ کلید یا تنظیمی توسط شما نیست و همه چیز آماده کار است.',
                             style: TextStyle(
                               fontSize: 12,

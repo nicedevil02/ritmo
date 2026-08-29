@@ -10,6 +10,7 @@ import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 import 'package:ritmo/features/cycle/logic/cycle_period_status.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_confirmation_models.dart';
+import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_orb_card.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_status_banner.dart';
@@ -34,8 +35,16 @@ class CycleOverviewTab extends StatelessWidget {
     this.onOpenConfirmation,
     this.onNavigateToCalendar,
     this.onOpenSos,
+    this.insightCards,
+    this.predictionConfidence,
+    this.dataQualityReport,
+    this.onOpenDataTab,
   });
 
+  final List<Widget>? insightCards;
+  final PredictionConfidence? predictionConfidence;
+  final DataQualityReport? dataQualityReport;
+  final VoidCallback? onOpenDataTab;
   final CycleEngineOutput? engineOutput;
   final List<Map<String, dynamic>> periods;
   final Map<String, String> settings;
@@ -97,7 +106,7 @@ class CycleOverviewTab extends StatelessWidget {
           ),
         if (forgottenPeriod != null && pendingConfirmation == null) ...[
           _buildForgottenPeriodWarning(context, colors, isDark),
-          const SizedBox(height: 6),
+          const SizedBox(height: 16),
         ],
         CycleOrbCard(
           phase: phase,
@@ -108,29 +117,35 @@ class CycleOverviewTab extends StatelessWidget {
           avgPeriodDuration:
               engineOutput?.stats.avgPeriodDuration ??
               CycleSettings.getPeriodDuration(settings).toDouble(),
+          lutealPhaseDays: CycleSettings.getLutealPhase(settings),
           onStatusTap: onOpenDailyLog,
           onForecastTap: onNavigateToCalendar,
           onCareTipsTap: onOpenSos,
         ),
-        const SizedBox(height: 6),
+        if (insightCards != null && insightCards!.isNotEmpty) ...[
+          for (final card in insightCards!) ...[
+            const SizedBox(height: 16),
+            card,
+          ],
+        ],
+        const SizedBox(height: 16),
         _buildNextPeriodPredictionCard(context, colors, isDark),
-        const SizedBox(height: 6),
+        const SizedBox(height: 16),
         _buildQuickActionButtons(context, colors, isDark),
-        const SizedBox(height: 6),
+        const SizedBox(height: 16),
         CycleWorkoutCard(phase: phase),
-        const SizedBox(height: 6),
+        const SizedBox(height: 16),
         Builder(
           builder: (ctx) {
             final card = _buildSymptomPredictionCard(ctx, colors, isDark);
             return card != null
                 ? Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.only(bottom: 16),
                     child: card,
                   )
                 : const SizedBox();
           },
         ),
-        _buildIrregularityStatsCard(context, colors, isDark),
       ],
     );
   }
@@ -248,81 +263,317 @@ class CycleOverviewTab extends StatelessWidget {
       windowText = 'بازهٔ تخمینی: دادهٔ ناکافی جهت محاسبه بازه';
     }
 
+    final conf = predictionConfidence;
+    Color? badgeColor;
+    String? badgeLabelFa;
+    if (conf != null) {
+      badgeColor = switch (conf.level) {
+        PredictionConfidenceLevel.high => Colors.teal,
+        PredictionConfidenceLevel.medium => Colors.amber.shade700,
+        PredictionConfidenceLevel.low => Colors.orange.shade800,
+      };
+      badgeLabelFa = switch (conf.level) {
+        PredictionConfidenceLevel.high => 'اطمینان بالا',
+        PredictionConfidenceLevel.medium => 'اطمینان متوسط',
+        PredictionConfidenceLevel.low => 'نیازمند داده بیشتر',
+      };
+    }
+
     return RitmoTheme.glassCardLight(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  CupertinoIcons.calendar_circle,
-                  color: colors.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'پیش‌بینی شروع دوره بعدی',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onOpenDataTab,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ۱. ردیف عنوان + نشان سطح اعتبار در سمت چپ (در RTL انتهای Row)
+              Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.calendar_circle,
+                    color: colors.primary,
+                    size: 20,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'تاریخ تخمینی شروع: $predictedDateStr',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: colors.primary,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              windowText,
-              style: TextStyle(fontSize: 13, color: colors.textSecondary),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Text(
-                  'وضعیت ریتم چرخه: ',
-                  style: TextStyle(fontSize: 13, color: colors.textSecondary),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    engineOutput!.regularityLabel,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: colors.primary,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'پیش‌بینی شروع دوره بعدی',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
                     ),
                   ),
+                  if (conf != null && badgeColor != null && badgeLabelFa != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: badgeColor.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: badgeColor.withValues(alpha: 0.30),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.verified_outlined,
+                            size: 13,
+                            color: badgeColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            badgeLabelFa,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: badgeColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (onOpenDataTab != null) ...[
+                    const SizedBox(width: 6),
+                    Icon(
+                      CupertinoIcons.chevron_left,
+                      size: 13,
+                      color: colors.textSecondary.withValues(alpha: 0.7),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // ۲. نمایش تاریخ تخمینی شروع
+              Row(
+                children: [
+                  Text(
+                    'تاریخ تخمینی شروع: ',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                  Text(
+                    predictedDateStr,
+                    style: TextStyle(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w900,
+                      color: colors.primary,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+
+              // ۳. بازه تخمینی و وضعیت ریتم چرخه
+              Text(
+                windowText,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: colors.textSecondary,
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Text(
+                    'وضعیت ریتم چرخه: ',
+                    style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      engineOutput!.regularityLabel,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // ۴. نوار آمار و ریتم بیولوژیک (ادغام‌شده)
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.04)
+                      : colors.surfaceElevated.withValues(alpha: 0.65),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white10
+                        : colors.border.withValues(alpha: 0.5),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatPill(
+                        colors,
+                        'طول چرخه بدنی',
+                        '${PersianDigits.toFa(engineOutput!.stats.avgCycleLength.toStringAsFixed(1))} روز',
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 28,
+                      color: colors.border.withValues(alpha: 0.5),
+                    ),
+                    Expanded(
+                      child: _buildStatPill(
+                        colors,
+                        'طول قاعدگی',
+                        '${PersianDigits.toFa(engineOutput!.stats.avgPeriodDuration.toStringAsFixed(1))} روز',
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 28,
+                      color: colors.border.withValues(alpha: 0.5),
+                    ),
+                    Expanded(
+                      child: _buildStatPill(
+                        colors,
+                        'کل دوره‌ها',
+                        PersianDigits.toFa(
+                          engineOutput!.stats.totalRecordedCycles.toString(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ۵. بنر نوسان در طول چرخه‌ها (در صورت نامنظمی)
+              if (engineOutput!.isIrregular) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: colors.warning.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: colors.warning.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.exclamationmark_triangle_fill,
+                        color: colors.warning,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'نوسان در طول چرخه‌ها مشاهده شد. این موضوع غالباً طبیعی است؛ در صورت تداوم می‌توانید آن را با پزشک متخصص مطرح کنید.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.warning,
+                            height: 1.45,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
-            ),
-            Divider(color: colors.border, height: 20),
-            Text(
-              engineOutput!.predictionDisclaimer,
-              style: TextStyle(
-                fontSize: 11,
-                color: colors.textSecondary,
-                height: 1.5,
+
+              // ۶. جداکننده و جزئیات اعتبارسنجی الگوریتم (ادغام‌شده از کارت دوم)
+              Divider(
+                color: colors.border.withValues(alpha: 0.6),
+                height: 20,
               ),
-            ),
-          ],
+
+              if (conf != null && conf.reasons.isNotEmpty) ...[
+                for (final r in conf.reasons)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 13,
+                          color: colors.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            r,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 2),
+              ],
+
+              Text(
+                engineOutput!.predictionDisclaimer,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  color: colors.textSecondary.withValues(alpha: 0.85),
+                  height: 1.4,
+                ),
+              ),
+
+              if (onOpenDataTab != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      'مشاهده تحلیل‌ها و داده‌ها',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: colors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Icon(
+                      CupertinoIcons.chevron_left,
+                      size: 12,
+                      color: colors.primary,
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -496,99 +747,6 @@ class CycleOverviewTab extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIrregularityStatsCard(
-    BuildContext context,
-    RitmoColors colors,
-    bool isDark,
-  ) {
-    if (engineOutput == null) return const SizedBox();
-
-    return RitmoTheme.glassCardLight(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  CupertinoIcons.graph_square,
-                  color: colors.primary,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'آمار و ریتم بیولوژیک',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildStatPill(
-                  colors,
-                  'طول چرخه بدنی',
-                  '${PersianDigits.toFa(engineOutput!.stats.avgCycleLength.toStringAsFixed(1))} روز',
-                ),
-                _buildStatPill(
-                  colors,
-                  'طول قاعدگی',
-                  '${PersianDigits.toFa(engineOutput!.stats.avgPeriodDuration.toStringAsFixed(1))} روز',
-                ),
-                _buildStatPill(
-                  colors,
-                  'کل دوره‌ها',
-                  PersianDigits.toFa(
-                    engineOutput!.stats.totalRecordedCycles.toString(),
-                  ),
-                ),
-              ],
-            ),
-            if (engineOutput!.isIrregular) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: colors.warning.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: colors.warning.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      CupertinoIcons.exclamationmark_triangle_fill,
-                      color: colors.warning,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'نوسان در طول چرخه‌ها مشاهده شد. این موضوع غالباً طبیعی است؛ در صورت تداوم می‌توانید آن را با پزشک متخصص مطرح کنید.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colors.warning,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ],
         ),
       ),

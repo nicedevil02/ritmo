@@ -404,8 +404,29 @@ class AgendaActionHandler {
             );
           }
         }
+      } else if (item.domain == AgendaDomain.commitment) {
+        await txn.update(
+          'planning_allocations',
+          {
+            'status': isDone ? 'DONE' : 'PLANNED',
+            'materializedEntityType': 'planning_allocation',
+            'materializedEntityId': item.sourceId,
+            'updatedAt': nowMs,
+          },
+          where: 'id = ?',
+          whereArgs: [item.sourceId],
+        );
       }
     });
+
+    if (item.domain == AgendaDomain.commitment) {
+      _invalidateAndNotify(item.dateStr, 'commitmentChanged', {
+        'date': item.dateStr,
+        'allocationId': item.sourceId,
+        'isDone': isDone,
+      });
+      return;
+    }
 
     if (item.domain == AgendaDomain.course) {
       RitmoEventBus().fire(

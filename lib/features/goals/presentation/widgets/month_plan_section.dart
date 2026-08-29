@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
@@ -106,6 +107,68 @@ class MonthPlanSection extends StatelessWidget {
             header!,
             const SizedBox(height: 16),
           ],
+          // Header Card showing Persian Month Name & Year (PL-20)
+          Builder(
+            builder: (context) {
+              final now = DateTime.now();
+              final jNow = Jalali.fromDateTime(now);
+              const monthNames = [
+                'فروردین',
+                'اردیبهشت',
+                'خرداد',
+                'تیر',
+                'مرداد',
+                'شهریور',
+                'مهر',
+                'آبان',
+                'آذر',
+                'دی',
+                'بهمن',
+                'اسفند',
+              ];
+              final monthName = monthNames[jNow.month - 1];
+              final daysInMonth = jNow.monthLength;
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [colors.primary.withValues(alpha: 0.15), colors.card],
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_month_rounded, color: colors.primary, size: 22),
+                        const SizedBox(width: 10),
+                        Text(
+                          'برنامهٔ ماه $monthName ${PersianDigits.toPersian(jNow.year.toString())}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      '${PersianDigits.toPersian(daysInMonth.toString())} روز',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           // 1. Fixed Realities of Month (U-10 timeline integration)
           Container(
             padding: const EdgeInsets.all(16),

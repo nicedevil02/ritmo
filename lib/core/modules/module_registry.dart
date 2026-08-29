@@ -58,7 +58,7 @@ class ModuleRegistry {
       titleFa: 'اهداف و پیشرفت',
       oneLineFa: 'تعریف اهداف کلیدی و شکستن آن‌ها به گام‌های کوچک',
       icon: Icons.flag_rounded,
-      defaultEnabled: false,
+      defaultEnabled: true,
     ),
     ModuleDescriptor(
       key: 'module_study_enabled',

@@ -7,8 +7,8 @@ import 'package:ritmo/core/analytics/milestone_engine.dart';
 
 void main() {
   group('DataMaturityEngine Tests', () {
-    test('Should return notEnoughData for days < 14', () {
-      final res = DataMaturityEngine.evaluate(daysOfData: 10, completionCount: 20, energyLogsCount: 5);
+    test('Should return notEnoughData for days < 7', () {
+      final res = DataMaturityEngine.evaluate(daysOfData: 5, completionCount: 20, energyLogsCount: 5);
       expect(res, DataMaturity.notEnoughData);
     });
 
@@ -65,12 +65,12 @@ void main() {
   group('LifeBalanceEngine Tests', () {
     test('LifeBalanceScore should be 100 for perfectly balanced completions', () {
       final routines = [
-        {'id': 'r1', 'category': 'religious', 'isArchived': 0},
-        {'id': 'r2', 'category': 'fitness', 'isArchived': 0},
+        {'id': 'r1', 'category': 'religious', 'isArchived': 0, 'durationMinutes': 15},
+        {'id': 'r2', 'category': 'fitness', 'isArchived': 0, 'durationMinutes': 15},
       ];
       final completions = [
-        {'routineId': 'r1', 'resultType': 'FULL'},
-        {'routineId': 'r2', 'resultType': 'FULL'},
+        ...List.generate(5, (i) => {'routineId': 'r1', 'resultType': 'FULL', 'durationMinutes': 15}),
+        ...List.generate(5, (i) => {'routineId': 'r2', 'resultType': 'FULL', 'durationMinutes': 15}),
       ];
       final score = LifeBalanceEngine.calculateLifeBalanceScore(
         routines: routines,
@@ -96,20 +96,19 @@ void main() {
       expect(score, lessThan(70));
     });
 
-    test('Inactive domains should not penalize LifeBalanceScore', () {
+    test('Single active domain should return null for LifeBalanceScore', () {
       final routines = [
         {'id': 'r1', 'category': 'religious', 'isArchived': 0},
       ];
-      // Only 1 active routine category (religious). No completions in fitness, medical, work.
+      // Only 1 active routine category (religious). No balance possible across single domain.
       final completions = [
-        {'routineId': 'r1', 'resultType': 'FULL'},
+        ...List.generate(10, (i) => {'routineId': 'r1', 'resultType': 'FULL'}),
       ];
       final score = LifeBalanceEngine.calculateLifeBalanceScore(
         routines: routines,
         routineCompletions: completions,
       );
-      // Since only RELIGION is active, balance score should default to 100
-      expect(score, 100);
+      expect(score, isNull);
     });
 
     test('CategoryDistribution percentages should sum to 100%', () {
@@ -185,9 +184,16 @@ void main() {
 
   group('InsightGenerationEngine Tests', () {
     test('Traceability metadata fields should be populated', () {
+      final completions = List.generate(10, (i) => {
+        'id': 'c$i',
+        'routineId': 'r1',
+        'resultType': 'FULL',
+        'completionTime': DateTime(2026, 6, 20).millisecondsSinceEpoch,
+      });
       final insights = InsightGenerationEngine.generate(
-        routineCompletions: [],
-        routines: [],
+        now: DateTime(2026, 6, 21),
+        routineCompletions: completions,
+        routines: [{'id': 'r1', 'category': 'fitness', 'isArchived': 0}],
         peakPerformanceWindow: '09:00 - 12:00',
         mostProductiveWeekday: 'شنبه',
         mostFatiguedWindow: '15:00 - 18:00',

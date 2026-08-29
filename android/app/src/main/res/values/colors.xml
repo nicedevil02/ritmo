@@ -4,15 +4,23 @@
 
     <!-- Ritmo Persistent Notification Light Theme Palette -->
     <color name="notif_bg">#FFFFFF</color>
+    <color name="notif_card_bg">#F8FAFC</color>
     <color name="notif_text_primary">#0F172A</color>
     <color name="notif_text_secondary">#64748B</color>
+    <color name="notif_text_tertiary">#94A3B8</color>
     <color name="notif_divider">#E2E8F0</color>
     <color name="notif_progress_bg">#E2E8F0</color>
-    <color name="notif_accent">#D4A843</color>
+    <color name="notif_progress_fill">#059669</color>
+    <color name="notif_accent">#059669</color>
+    <color name="notif_action_primary_bg">#059669</color>
+    <color name="notif_action_primary_text">#FFFFFF</color>
+    <color name="notif_action_secondary_bg">#F1F5F9</color>
+    <color name="notif_action_secondary_stroke">#CBD5E1</color>
+    <color name="notif_action_secondary_text">#1E293B</color>
     <color name="notif_btn_inactive_bg">#F1F5F9</color>
     <color name="notif_btn_inactive_stroke">#CBD5E1</color>
     <color name="notif_btn_inactive_text">#334155</color>
-    <color name="notif_btn_active_bg">#D4A843</color>
+    <color name="notif_btn_active_bg">#059669</color>
     <color name="notif_btn_active_text">#FFFFFF</color>
-    <color name="ritmo_accent">#3B82F6</color>
+    <color name="ritmo_accent">#059669</color>
 </resources>

@@ -37,3 +37,10 @@ When building, updating, or refactoring UI components across Ritmo, ALWAYS use t
 - **Empty States**: Use `RitmoNeuEmptyCard` with sunken circle icon and clear Call-To-Action button for empty lists/data.
 - **Canonical Glass Sheets & Modals**: ALWAYS present bottom sheets via `RitmoGlassSheet` (live blur, ambient glow halo, Apple top drag handle) or `RitmoPickerSheet` for search/pickers. Never use flat default Material dialogs.
 
+## 7. 60/120 FPS Performance & Frame Budgeting
+- **`const` Widget Trees**: Always use `const` constructors for static widgets, paddings, decorations, and icons to minimize rebuild cycles.
+- **Zero Heavy Computations in `build()`**: Never execute parsing, heavy loops, regex evaluations, or unmemoized date formatters inside widget `build()` methods; compute in state managers/cubits or memoize.
+- **Isolated Repaints with `RepaintBoundary`**: Wrap high-frequency animating widgets (such as 24h dial gauges, pulsating halos, and progress bars) in `RepaintBoundary` to prevent cascading render tree repaints.
+- **List Virtualization**: Always use virtualized list builders (`ListView.builder`, `SliverList`) for dynamic collections and long lists rather than unvirtualized Column children.
+- **Zero Layout Shifts**: Match skeleton loading dimensions strictly with real content geometry to prevent jarring layout jumps.
+

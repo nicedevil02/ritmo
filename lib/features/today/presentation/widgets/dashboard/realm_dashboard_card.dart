@@ -251,7 +251,7 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
       remainingTime: toPersianDigits(remainingStr),
       activeColor: activeColor,
       gaugeWidget: Realm24hDial(
-        size: 92,
+        size: 104,
         activeZoneId: zoneId,
         activeZoneColor: activeColor,
         activeZoneName: chipName,

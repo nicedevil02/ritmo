@@ -326,7 +326,7 @@ class Realm24hDial extends StatelessWidget {
           activeZoneIcon: activeZoneIcon,
           activeZoneName: activeZoneName ?? 'خواب',
           isDarkMode: isDarkMode,
-          showHourLabels: showHourLabels && size >= 110,
+          showHourLabels: showHourLabels,
           usePersianDigits: usePersianDigits,
           surfaceColor: effectiveSurface,
           surfaceSunkenColor: effectiveSunken,

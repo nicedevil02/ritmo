@@ -506,7 +506,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
       activeColor: activeColor,
       height: 180,
       gaugeWidget: Realm24hDial(
-        size: 92,
+        size: 104,
         activeZoneId: 'sleep',
         activeZoneColor: activeColor,
         activeZoneIcon: '🌙',

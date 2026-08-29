@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
-import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_module_summary.dart';
 
-/// گرید سیستم‌های فعال متصل به سامانه مرجع کارت‌های نئومورفیک ریتمو.
+/// فهرست سیستم‌های فعال متصل به سامانه مرجع کارت‌های نئومورفیک ریتمو.
 class ModuleSummaryGrid extends StatelessWidget {
   const ModuleSummaryGrid({
     super.key,
@@ -20,39 +20,50 @@ class ModuleSummaryGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     if (summaries.isEmpty) return const SizedBox.shrink();
     final colors = context.colors;
-    final m = context.metrics;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'سیستم‌های فعال',
-          style: RitmoTextStyles.sectionHeadline(colors.textPrimary),
-        ),
-        SizedBox(height: m.spaceMd),
-        RitmoAdaptiveGrid(
-          minTileWidth: 145,
-          spacing: 12,
-          maxColumns: 2,
-          children: [
-            for (final summary in summaries)
-              SizedBox(
-                height: (124.0 * context.textScale * m.densityFactor).clamp(124.0, 180.0),
-                child: _ModuleSummaryCard(
-                  summary: summary,
-                  onTap: () => onModuleTap(summary.moduleId),
+    return RitmoCard.neumorphic(
+      borderRadius: BorderRadius.circular(22),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── هدر مرجع کارت نئومورفیک ──
+          RitmoCardHeader(
+            title: 'سیستم‌های فعال',
+            subtitle: 'وضعیت لحظه‌ای و دسترسی سریع به سامانه‌ها',
+            icon: CupertinoIcons.square_grid_2x2_fill,
+            iconColor: colors.primary,
+          ),
+          const SizedBox(height: 4),
+          const RitmoCardDivider(),
+          const SizedBox(height: 6),
+
+          // ── لیست ردیف‌های تعاملی سیستم‌ها ──
+          for (int i = 0; i < summaries.length; i++) ...[
+            if (i > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Divider(
+                  height: 1,
+                  thickness: 0.6,
+                  color: colors.border.withValues(alpha: 0.35),
+                  indent: 48,
                 ),
               ),
+            _ModuleListRow(
+              summary: summaries[i],
+              onTap: () => onModuleTap(summaries[i].moduleId),
+            ),
           ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-/// کارت مینیمال نئومورفیک سیستم‌های فعال با عمق ۳ بعدی، شیار فرورفته آیکون و فیزیک فنری.
-class _ModuleSummaryCard extends StatelessWidget {
-  const _ModuleSummaryCard({
+/// ردیف فهرستی سیستم‌های فعال با آیکون فرورفته، نام سیستم، وضعیت و مقدار اصلی.
+class _ModuleListRow extends StatelessWidget {
+  const _ModuleListRow({
     required this.summary,
     required this.onTap,
   });
@@ -67,110 +78,106 @@ class _ModuleSummaryCard extends StatelessWidget {
     return Semantics(
       button: true,
       label: '${summary.title}: ${summary.primary}، ${summary.secondary}',
-      child: RitmoCard.neumorphic(
-        onTap: () {
-          RitmoHaptics.selection();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(18),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        enableSpring: true,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // ── ردیف سرعنوان: شیار فرورفته نئومورفیک آیکون + عنوان + فلش ──
-            Row(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            RitmoHaptics.selection();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            child: Row(
               children: [
+                // شیار فرورفته نئومورفیک آیکون
                 RitmoNeuSurface(
-                  height: 34,
-                  width: 34,
-                  radius: 17,
+                  height: 38,
+                  width: 38,
+                  radius: 12,
                   sunken: true,
                   padding: EdgeInsets.zero,
-                  glowColor: summary.accentColor.withValues(alpha: 0.35),
+                  glowColor: summary.accentColor.withValues(alpha: 0.30),
                   child: Center(
                     child: Icon(
                       summary.icon,
-                      size: 16,
+                      size: 18,
                       color: summary.accentColor,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
+
+                // نام سیستم و توضیح وضعیت
                 Expanded(
-                  child: Text(
-                    summary.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Vazirmatn',
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                ),
-                Icon(
-                  CupertinoIcons.chevron_left,
-                  size: 12,
-                  color: colors.textSecondary.withValues(alpha: 0.5),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 8),
-
-            // ── بخش داده و آمار اصلی و فرعی ──
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  summary.primary,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Vazirmatn',
-                    color: colors.textPrimary,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    Container(
-                      width: 4.5,
-                      height: 4.5,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: summary.accentColor,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        summary.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Vazirmatn',
+                          color: colors.textPrimary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
+                      const SizedBox(height: 2),
+                      Text(
                         summary.secondary,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Vazirmatn',
                           color: colors.textSecondary,
                         ),
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+
+                // کپسول پلاک مقدار اصلی
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                  decoration: BoxDecoration(
+                    color: summary.accentColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: summary.accentColor.withValues(alpha: 0.28),
+                      width: 0.8,
                     ),
-                  ],
+                  ),
+                  child: Text(
+                    summary.primary,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Vazirmatn',
+                      color: summary.accentColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+
+                // فلش راهنما
+                Icon(
+                  CupertinoIcons.chevron_left,
+                  size: 14,
+                  color: colors.textSecondary.withValues(alpha: 0.4),
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
+
 

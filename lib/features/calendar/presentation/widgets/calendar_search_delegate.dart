@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/domain/agenda/action_router.dart';
@@ -6,12 +7,14 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/persian_text.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_empty_state.dart';
 import 'package:ritmo/features/calendar/data/calendar_search_repository.dart';
 import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 
 /// K36 + K37 — Global Calendar Search Delegate
 /// Grouped into: "امروز", "این هفته", "سایر تاریخ‌ها"
-/// Searches across current day items + global database via CalendarSearchRepository.
+/// Upgraded to Ritmo Neumorphic Soft UI 2.0 with 3D sunken wells and 5-domain glowing palette.
 class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
   CalendarSearchDelegate({required this.items, this.onItemSelected});
 
@@ -19,7 +22,30 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
   final ValueChanged<AgendaItem>? onItemSelected;
 
   @override
-  String get searchFieldLabel => 'جستجوی سراسری رویدادها و کاره…';
+  String get searchFieldLabel => 'جستجوی سراسری رویدادها و کارها…';
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = context.colors;
+
+    return theme.copyWith(
+      appBarTheme: AppBarTheme(
+        backgroundColor: colors.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: IconThemeData(color: colors.textPrimary),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        hintStyle: TextStyle(
+          fontFamily: 'Vazirmatn',
+          fontSize: 14.0,
+          color: colors.textTertiary,
+        ),
+        border: InputBorder.none,
+      ),
+    );
+  }
 
   @override
   List<Widget>? buildActions(BuildContext context) {
@@ -70,14 +96,13 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
 
         final hits = snapshot.data ?? [];
         if (hits.isEmpty) {
-          return Directionality(
+          return const Directionality(
             textDirection: TextDirection.rtl,
             child: Center(
-              child: Text(
-                'هیچ نتیجه‌ای یافت نشد.',
-                style: context.t.bodyMedium?.copyWith(
-                  color: context.colors.textSecondary,
-                ),
+              child: RitmoEmptyState(
+                icon: CupertinoIcons.search,
+                title: 'نتیجه‌ای یافت نشد',
+                description: 'هیچ برنامه یا رویدادی مطابق با عبارت جستجو پیدا نشد.',
               ),
             ),
           );
@@ -93,30 +118,39 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: ListView(
-            padding: const EdgeInsets.all(RitmoSpacing.md),
+            padding: const EdgeInsets.symmetric(
+              horizontal: RitmoSpacing.md,
+              vertical: RitmoSpacing.sm,
+            ),
             children: [
               if (todayHits.isNotEmpty) ...[
-                _SearchSectionHeader(
-                  title: 'امروز (${toPersianDigits(todayHits.length)})',
+                _SearchGroupCard(
+                  title: 'امروز',
+                  badgeCount: todayHits.length,
+                  children: todayHits
+                      .map((h) => _HitTile(hit: h, onSelected: close))
+                      .toList(),
                 ),
-                ...todayHits.map((h) => _HitTile(hit: h, onSelected: close)),
-                SizedBox(height: context.metrics.spaceMd),
+                const SizedBox(height: 12),
               ],
               if (recurringHits.isNotEmpty) ...[
-                _SearchSectionHeader(
-                  title:
-                      'برنامه‌های تکرارشونده (${toPersianDigits(recurringHits.length)})',
+                _SearchGroupCard(
+                  title: 'برنامه‌های تکرارشونده',
+                  badgeCount: recurringHits.length,
+                  children: recurringHits
+                      .map((h) => _HitTile(hit: h, onSelected: close))
+                      .toList(),
                 ),
-                ...recurringHits.map(
-                  (h) => _HitTile(hit: h, onSelected: close),
-                ),
-                SizedBox(height: context.metrics.spaceMd),
+                const SizedBox(height: 12),
               ],
               if (otherHits.isNotEmpty) ...[
-                _SearchSectionHeader(
-                  title: 'سایر تاریخ‌ها (${toPersianDigits(otherHits.length)})',
+                _SearchGroupCard(
+                  title: 'سایر تاریخ‌ها',
+                  badgeCount: otherHits.length,
+                  children: otherHits
+                      .map((h) => _HitTile(hit: h, onSelected: close))
+                      .toList(),
                 ),
-                ...otherHits.map((h) => _HitTile(hit: h, onSelected: close)),
               ],
             ],
           ),
@@ -137,67 +171,232 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
               )
               .toList();
 
+    if (todayResults.isEmpty) {
+      return const Directionality(
+        textDirection: TextDirection.rtl,
+        child: Center(
+          child: RitmoEmptyState(
+            icon: CupertinoIcons.search,
+            title: 'برنامه‌ای برای امروز یافت نشد',
+            description: 'هیچ رویداد یا کاری برای این روز ثبت نشده است.',
+          ),
+        ),
+      );
+    }
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: ListView(
-        padding: const EdgeInsets.all(RitmoSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: RitmoSpacing.md,
+          vertical: RitmoSpacing.sm,
+        ),
         children: [
-          _SearchSectionHeader(
-            title: 'برنامه‌های امروز (${toPersianDigits(todayResults.length)})',
+          _SearchGroupCard(
+            title: 'برنامه‌های امروز',
+            badgeCount: todayResults.length,
+            children: todayResults.map((item) {
+              final color = itemColor(context, item);
+              final icon = itemIcon(item);
+
+              return _SearchItemTile(
+                title: item.title,
+                subtitle: item.subtitle,
+                timeOfDay: item.timeOfDay,
+                color: color,
+                icon: icon,
+                onTap: () {
+                  RitmoHapticsPolicy.tap();
+                  onItemSelected?.call(item);
+                  close(context, item);
+                },
+              );
+            }).toList(),
           ),
-          ...todayResults.map((item) {
-            final color = domainColor(context, item.domain);
-            final icon = domainIcon(item.domain);
-            return ListTile(
-              leading: Icon(icon, color: color),
-              title: Text(
-                item.title,
-                style: context.t.titleSmall?.copyWith(
-                  color: context.colors.textPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              subtitle: item.subtitle != null
-                  ? Text(
-                      item.subtitle!,
-                      style: context.t.bodySmall?.copyWith(
-                        color: context.colors.textSecondary,
-                      ),
-                    )
-                  : null,
-              onTap: () {
-                onItemSelected?.call(item);
-                close(context, item);
-              },
-            );
-          }),
         ],
       ),
     );
   }
 }
 
-class _SearchSectionHeader extends StatelessWidget {
-  const _SearchSectionHeader({required this.title});
+class _SearchGroupCard extends StatelessWidget {
+  const _SearchGroupCard({
+    required this.title,
+    required this.badgeCount,
+    required this.children,
+  });
+
   final String title;
+  final int badgeCount;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        vertical: context.metrics.spaceSm,
-        horizontal: context.metrics.spaceXs,
+    final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return RitmoCard.neumorphic(
+      borderRadius: BorderRadius.circular(20),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      enableSpring: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header row with title & count badge
+          Row(
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Vazirmatn',
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: isDark ? 0.20 : 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: isDark ? 0.35 : 0.22),
+                    width: 0.8,
+                  ),
+                ),
+                child: Text(
+                  toPersianDigits('$badgeCount'),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Vazirmatn',
+                    color: colors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const RitmoCardDivider(margin: EdgeInsets.symmetric(vertical: 4)),
+          // Items list
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            itemCount: children.length,
+            separatorBuilder: (_, _) =>
+                const RitmoCardDivider(margin: EdgeInsets.symmetric(vertical: 2)),
+            itemBuilder: (_, index) => children[index],
+          ),
+        ],
       ),
-      child: Text(
-        title,
-        style:
-            context.t.titleSmall?.copyWith(
-              color: context.colors.primary,
-              fontWeight: FontWeight.bold,
-            ) ??
-            RitmoTextStyles.caption(
-              context.colors.primary,
-            ).copyWith(fontWeight: FontWeight.bold),
+    );
+  }
+}
+
+class _SearchItemTile extends StatelessWidget {
+  const _SearchItemTile({
+    required this.title,
+    this.subtitle,
+    this.timeOfDay,
+    required this.color,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String title;
+  final String? subtitle;
+  final String? timeOfDay;
+  final Color color;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sub = subtitle;
+    final tod = timeOfDay;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),
+        child: Row(
+          children: [
+            // 3D Sunken Icon Well
+            RitmoNeuSurface(
+              height: 38,
+              width: 38,
+              radius: 19,
+              sunken: true,
+              padding: EdgeInsets.zero,
+              glowColor: color.withValues(alpha: 0.38),
+              child: Center(
+                child: Icon(icon, size: 18, color: color),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    toPersianDigits(title),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Vazirmatn',
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  if (sub != null && sub.isNotEmpty)
+                    Text(
+                      toPersianDigits(sub),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.0,
+                        fontFamily: 'Vazirmatn',
+                        color: colors.textTertiary,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (tod != null && tod.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                decoration: BoxDecoration(
+                  color: (isDark ? Colors.white : Colors.black).withValues(
+                    alpha: isDark ? 0.08 : 0.05,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.06),
+                    width: 0.7,
+                  ),
+                ),
+                child: Text(
+                  toPersianDigits(tod),
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Vazirmatn',
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -213,25 +412,16 @@ class _HitTile extends StatelessWidget {
     final color = domainColor(context, hit.domain);
     final icon = domainIcon(hit.domain);
 
-    return ListTile(
-      leading: Icon(icon, color: color),
-      title: Text(
-        hit.title,
-        style: context.t.titleSmall?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: context.colors.textPrimary,
-        ),
-      ),
-      subtitle: Text(
-        hit.isRecurring
-            ? 'تکرارشونده${hit.subtitle != null ? ' · ${hit.subtitle}' : ''}'
-            : '${hit.dateStr != null ? toPersianDigits(hit.dateStr) : 'بدون تاریخ'}${hit.subtitle != null ? ' · ${hit.subtitle}' : ''}',
-        style: context.t.bodySmall?.copyWith(
-          color: context.colors.textSecondary,
-        ),
-      ),
+    final trailingBadge = hit.isRecurring ? 'تکرارشونده' : hit.dateStr;
+
+    return _SearchItemTile(
+      title: hit.title,
+      subtitle: hit.subtitle,
+      timeOfDay: trailingBadge,
+      color: color,
+      icon: icon,
       onTap: () {
-        // Construct target item for router
+        RitmoHapticsPolicy.tap();
         final item = AgendaItem(
           id: hit.id,
           domain: hit.domain,

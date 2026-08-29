@@ -33,24 +33,8 @@ class NotebookScreen extends StatefulWidget {
   State<NotebookScreen> createState() => _NotebookScreenState();
 }
 
-class _NotebookScreenState extends State<NotebookScreen>
-    with TickerProviderStateMixin {
-  late TabController _tabController;
-  late AnimationController _headerMorphAnimCtrl;
-  Animation<double>? _headerMorphAnim;
-
-  // Multi-Tab Scroll Synchronization Controllers & State
-  final List<ScrollController> _tabScrollControllers = [
-    ScrollController(),
-    ScrollController(),
-    ScrollController(),
-  ];
-  final List<double> _tabOffsets = [0.0, 0.0, 0.0];
-  final List<bool> _tabExpanded = [true, true, true];
-
-  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
-  final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
-  double _accumulatedUpScroll = 0.0;
+class _NotebookScreenState extends State<NotebookScreen> {
+  int _activeTabIndex = 0;
 
   // --- Tab 0 (Notes) State ---
   List<Note> _notes = [];
@@ -60,6 +44,7 @@ class _NotebookScreenState extends State<NotebookScreen>
   bool _isGridView = true;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final ScrollController _notesScrollController = ScrollController();
   Timer? _searchDebounceTimer;
   int _searchSequence = 0;
   Map<String, int> _countsByKind = {};
@@ -85,120 +70,20 @@ class _NotebookScreenState extends State<NotebookScreen>
   @override
   void initState() {
     super.initState();
-    _headerMorphAnimCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _headerMorphAnimCtrl.addListener(() {
-      if (_headerMorphAnim != null) {
-        _scrollOffset.value = _headerMorphAnim!.value;
-      }
-    });
-
-    _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() {
-      if (_tabController.indexIsChanging ||
-          _tabController.animation?.value == _tabController.index.toDouble()) {
-        _syncHeaderWithActiveTab(_tabController.index, animate: true);
-        if (mounted) setState(() {});
-      }
-    });
-    _tabController.animation?.addListener(() {
-      final value = _tabController.animation?.value ?? 0.0;
-      final roundIndex = value.round().clamp(0, 2);
-      if ((value - roundIndex).abs() < 0.05 && _tabController.index == roundIndex) {
-        _syncHeaderWithActiveTab(roundIndex, animate: true);
-      }
-    });
-
     _searchFocusNode.addListener(_onSearchFocusChanged);
-    _tabScrollControllers[0].addListener(_onScrollChanged);
-
+    _notesScrollController.addListener(_onScrollChanged);
     _loadAllData();
   }
 
   @override
   void dispose() {
-    _headerMorphAnimCtrl.dispose();
-    for (final controller in _tabScrollControllers) {
-      controller.dispose();
-    }
-    _tabController.dispose();
-    _scrollOffset.dispose();
-    _isTabsExpanded.dispose();
     _searchDebounceTimer?.cancel();
     _searchController.dispose();
     _searchFocusNode.removeListener(_onSearchFocusChanged);
     _searchFocusNode.dispose();
+    _notesScrollController.removeListener(_onScrollChanged);
+    _notesScrollController.dispose();
     super.dispose();
-  }
-
-  void _syncHeaderWithActiveTab(int activeIndex, {bool animate = true}) {
-    if (activeIndex < 0 || activeIndex >= _tabOffsets.length) return;
-    final controller = _tabScrollControllers[activeIndex];
-    final targetOffset = controller.hasClients ? controller.offset : _tabOffsets[activeIndex];
-    _tabOffsets[activeIndex] = targetOffset;
-
-    final currentOffset = _scrollOffset.value;
-    final isExpanded = targetOffset <= 75.0 || _tabExpanded[activeIndex];
-    _isTabsExpanded.value = isExpanded;
-    _accumulatedUpScroll = 0.0;
-
-    if (animate && (targetOffset - currentOffset).abs() > 1.0) {
-      _headerMorphAnimCtrl.stop();
-      _headerMorphAnim = Tween<double>(
-        begin: currentOffset,
-        end: targetOffset,
-      ).animate(
-        CurvedAnimation(
-          parent: _headerMorphAnimCtrl,
-          curve: Curves.easeOutCubic,
-        ),
-      );
-      _headerMorphAnimCtrl.forward(from: 0.0);
-    } else {
-      _headerMorphAnimCtrl.stop();
-      _scrollOffset.value = targetOffset;
-    }
-  }
-
-  void _onTabScroll(int tabIndex, ScrollNotification notification) {
-    if (notification.metrics.axis != Axis.vertical) return;
-    final pixels = notification.metrics.pixels;
-    _tabOffsets[tabIndex] = pixels;
-
-    // Only update the active header if this scroll notification came from the currently visible tab
-    if (_tabController.index == tabIndex) {
-      if (_headerMorphAnimCtrl.isAnimating) {
-        _headerMorphAnimCtrl.stop();
-      }
-      _scrollOffset.value = pixels;
-
-      if (pixels <= 20) {
-        _accumulatedUpScroll = 0.0;
-        if (!_isTabsExpanded.value) {
-          _isTabsExpanded.value = true;
-          _tabExpanded[tabIndex] = true;
-        }
-      } else if (notification is ScrollUpdateNotification) {
-        final delta = notification.scrollDelta ?? 0.0;
-        if (delta > 1.0) {
-          _accumulatedUpScroll = 0.0;
-          if (pixels > 75 && _isTabsExpanded.value) {
-            _isTabsExpanded.value = false;
-            _tabExpanded[tabIndex] = false;
-          }
-        } else if (delta < -1.0) {
-          _accumulatedUpScroll += -delta;
-          if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
-            _isTabsExpanded.value = true;
-            _tabExpanded[tabIndex] = true;
-          }
-        }
-      } else if (notification is ScrollEndNotification) {
-        _accumulatedUpScroll = 0.0;
-      }
-    }
   }
 
   void _onSearchFocusChanged() {
@@ -210,14 +95,14 @@ class _NotebookScreenState extends State<NotebookScreen>
   }
 
   void _onScrollChanged() {
-    if (_tabScrollControllers[0].hasClients &&
-        _tabScrollControllers[0].position.userScrollDirection ==
+    if (_notesScrollController.hasClients &&
+        _notesScrollController.position.userScrollDirection ==
             ScrollDirection.reverse) {
       if (!_isFabCompact) {
         setState(() => _isFabCompact = true);
       }
-    } else if (_tabScrollControllers[0].hasClients &&
-        _tabScrollControllers[0].position.userScrollDirection ==
+    } else if (_notesScrollController.hasClients &&
+        _notesScrollController.position.userScrollDirection ==
             ScrollDirection.forward) {
       if (_isFabCompact) {
         setState(() => _isFabCompact = false);
@@ -376,173 +261,111 @@ class _NotebookScreenState extends State<NotebookScreen>
       (sum, c) => sum + c,
     );
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: colors.bg,
-        floatingActionButton: _buildAdaptiveFab(context, colors),
-        body: Stack(
-          children: [
-            // Layer 1: Body Content
-            Positioned.fill(
-              child: TabBarView(
-                controller: _tabController,
-                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                children: [
-                  // Tab 0: Notes
-                  NotificationListener<ScrollNotification>(
-                    onNotification: (n) {
-                      _onTabScroll(0, n);
-                      return false;
-                    },
-                    child: _buildNotesTab(context, colors, isDark, contentTopPadding),
-                  ),
-
-                  // Tab 1: Experiences & Lessons
-                  NotificationListener<ScrollNotification>(
-                    onNotification: (n) {
-                      _onTabScroll(1, n);
-                      return false;
-                    },
-                    child: _buildExperiencesTab(context, colors, isDark, contentTopPadding),
-                  ),
-
-                  // Tab 2: Spaced Repetition & Reviews
-                  NotificationListener<ScrollNotification>(
-                    onNotification: (n) {
-                      _onTabScroll(2, n);
-                      return false;
-                    },
-                    child: _buildReviewTab(context, colors, isDark, contentTopPadding),
-                  ),
-                ],
-              ),
-            ),
-
-            // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: AnimatedBuilder(
-                animation: Listenable.merge([_scrollOffset, _isTabsExpanded]),
-                builder: (context, _) {
-                  return RitmoAppleMorphingGlassHeader(
-                    title: 'دفترچه و تجربه‌ها',
-                    subtitle: totalActiveCount > 0
-                        ? '${PersianDigits.toFa(totalActiveCount.toString())} یادداشت و ایده ذخیره‌شده'
-                        : 'ثبت افکار، آموخته‌ها و الگوهای شخصی',
-                    scrollOffset: _scrollOffset.value,
-                    isTabsExpanded: _isTabsExpanded.value,
-                    collapseDistance: 55.0,
-                    onBack: () {
-                      RitmoHapticsPolicy.tap();
-                      Navigator.maybePop(context);
-                    },
-                    actions: [
-                      RitmoVibrancyActionButton(
-                        icon: CupertinoIcons.sparkles,
-                        iconColor: colors.primary,
-                        isAiButton: true,
-                        accentColor: colors.primary,
-                        tooltip: 'دستیار هوشمند دفترچه',
-                        onTap: _openAiAssistantSheet,
-                      ),
-                      const SizedBox(width: 8),
-                      RitmoVibrancyActionButton(
-                        icon: _isGridView ? CupertinoIcons.list_bullet : CupertinoIcons.square_grid_2x2_fill,
-                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                        tooltip: _isGridView ? 'نمای فهرستی' : 'نمای شبکه‌ای',
-                        onTap: () {
-                          RitmoHapticsPolicy.selection();
-                          setState(() => _isGridView = !_isGridView);
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      RitmoVibrancyActionButton(
-                        icon: CupertinoIcons.archivebox,
-                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                        tooltip: 'سطل بازیافت و آرشیو',
-                        onTap: () async {
-                          RitmoHapticsPolicy.tap();
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const NoteTrashArchiveScreen(),
-                            ),
-                          );
-                          if (mounted) await _loadNotes();
-                        },
-                      ),
-                    ],
-                    tabs: RitmoGlassSegmentedControl<int>(
-                      items: [
-                        RitmoTabItem(
-                          title: 'یادداشت‌ها',
-                          badge: totalActiveCount > 0
-                              ? Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                  decoration: BoxDecoration(
-                                    color: colors.primary.withValues(alpha: 0.18),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    PersianDigits.toFa(totalActiveCount.toString()),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.primary,
-                                    ),
-                                  ),
-                                )
-                              : null,
-                          icon: CupertinoIcons.doc_text_fill,
-                          value: 0,
-                        ),
-                        RitmoTabItem(
-                          title: 'تجارب',
-                          badge: _experiences.isNotEmpty
-                              ? Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                  decoration: BoxDecoration(
-                                    color: colors.primary.withValues(alpha: 0.18),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    PersianDigits.toFa(_experiences.length.toString()),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.primary,
-                                    ),
-                                  ),
-                                )
-                              : null,
-                          icon: CupertinoIcons.lightbulb_fill,
-                          value: 1,
-                        ),
-                        const RitmoTabItem(
-                          title: 'مرور',
-                          icon: CupertinoIcons.arrow_2_circlepath_circle_fill,
-                          value: 2,
-                        ),
-                      ],
-                      selectedIndex: _tabController.index.clamp(0, 2),
-                      onTabChanged: (index) {
-                        _tabController.animateTo(index);
-                        _syncHeaderWithActiveTab(index);
-                        setState(() {});
-                      },
-                      accentColor: colors.primary,
-                      height: 46.0,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+    return RitmoTabbedMorphingScaffold(
+      title: 'دفترچه و تجربه‌ها',
+      subtitle: totalActiveCount > 0
+          ? '${PersianDigits.toFa(totalActiveCount.toString())} یادداشت و ایده ذخیره‌شده'
+          : 'ثبت افکار، آموخته‌ها و الگوهای شخصی',
+      initialIndex: _activeTabIndex,
+      onTabChanged: (index) => setState(() => _activeTabIndex = index),
+      onBack: () {
+        RitmoHapticsPolicy.tap();
+        Navigator.maybePop(context);
+      },
+      floatingActionButton: _buildAdaptiveFab(context, colors),
+      scrollControllers: [_notesScrollController, ScrollController(), ScrollController()],
+      actions: [
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.sparkles,
+          iconColor: colors.primary,
+          isAiButton: true,
+          accentColor: colors.primary,
+          tooltip: 'دستیار هوشمند دفترچه',
+          onTap: _openAiAssistantSheet,
         ),
-      ),
+        const SizedBox(width: 8),
+        RitmoVibrancyActionButton(
+          icon: _isGridView ? CupertinoIcons.list_bullet : CupertinoIcons.square_grid_2x2_fill,
+          iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+          tooltip: _isGridView ? 'نمای فهرستی' : 'نمای شبکه‌ای',
+          onTap: () {
+            RitmoHapticsPolicy.selection();
+            setState(() => _isGridView = !_isGridView);
+          },
+        ),
+        const SizedBox(width: 8),
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.archivebox,
+          iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+          tooltip: 'سطل بازیافت و آرشیو',
+          onTap: () async {
+            RitmoHapticsPolicy.tap();
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const NoteTrashArchiveScreen(),
+              ),
+            );
+            if (mounted) await _loadNotes();
+          },
+        ),
+      ],
+      tabItems: [
+        RitmoTabItem(
+          title: 'یادداشت‌ها',
+          badge: totalActiveCount > 0
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    PersianDigits.toFa(totalActiveCount.toString()),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: colors.primary,
+                    ),
+                  ),
+                )
+              : null,
+          icon: CupertinoIcons.doc_text_fill,
+          value: 0,
+        ),
+        RitmoTabItem(
+          title: 'تجارب',
+          badge: _experiences.isNotEmpty
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    PersianDigits.toFa(_experiences.length.toString()),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: colors.primary,
+                    ),
+                  ),
+                )
+              : null,
+          icon: CupertinoIcons.lightbulb_fill,
+          value: 1,
+        ),
+        const RitmoTabItem(
+          title: 'مرور',
+          icon: CupertinoIcons.arrow_2_circlepath_circle_fill,
+          value: 2,
+        ),
+      ],
+      tabBuilders: [
+        (ctx, scrollController) => _buildNotesTab(ctx, colors, isDark, contentTopPadding, scrollController),
+        (ctx, scrollController) => _buildExperiencesTab(ctx, colors, isDark, contentTopPadding, scrollController),
+        (ctx, scrollController) => _buildReviewTab(ctx, colors, isDark, contentTopPadding, scrollController),
+      ],
     );
   }
 
@@ -554,6 +377,7 @@ class _NotebookScreenState extends State<NotebookScreen>
     RitmoColors colors,
     bool isDark,
     double contentTopPadding,
+    ScrollController scrollController,
   ) {
     final pinnedNotes = _notes.where((n) => n.isPinned).toList();
     final otherNotes = _notes.where((n) => !n.isPinned).toList();
@@ -570,7 +394,7 @@ class _NotebookScreenState extends State<NotebookScreen>
     final gratitudeCount = _countsByKind['GRATITUDE'] ?? 0;
 
     return CustomScrollView(
-      controller: _tabScrollControllers[0],
+      controller: scrollController,
       physics: const BouncingScrollPhysics(
         parent: AlwaysScrollableScrollPhysics(),
       ),
@@ -871,6 +695,7 @@ class _NotebookScreenState extends State<NotebookScreen>
     RitmoColors colors,
     bool isDark,
     double contentTopPadding,
+    ScrollController scrollController,
   ) {
     final insightsColor = context.modules.insights;
 
@@ -911,7 +736,7 @@ class _NotebookScreenState extends State<NotebookScreen>
     }
 
     return CustomScrollView(
-      controller: _tabScrollControllers[1],
+      controller: scrollController,
       physics: const BouncingScrollPhysics(
         parent: AlwaysScrollableScrollPhysics(),
       ),
@@ -1012,6 +837,7 @@ class _NotebookScreenState extends State<NotebookScreen>
     RitmoColors colors,
     bool isDark,
     double contentTopPadding,
+    ScrollController scrollController,
   ) {
     if (_isLoadingReview) {
       return Padding(
@@ -1021,7 +847,7 @@ class _NotebookScreenState extends State<NotebookScreen>
     }
 
     return ListView(
-      controller: _tabScrollControllers[2],
+      controller: scrollController,
       physics: const BouncingScrollPhysics(
         parent: AlwaysScrollableScrollPhysics(),
       ),
@@ -1836,7 +1662,7 @@ class _NotebookScreenState extends State<NotebookScreen>
 
   // --- Dynamic Adaptive FAB ---
   Widget _buildAdaptiveFab(BuildContext context, RitmoColors colors) {
-    final tabIndex = _tabController.index;
+    final tabIndex = _activeTabIndex;
 
     IconData fabIcon;
     String fabLabel;

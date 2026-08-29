@@ -37,25 +37,7 @@ class KonkurScreen extends StatefulWidget {
   State<KonkurScreen> createState() => _KonkurScreenState();
 }
 
-class _KonkurScreenState extends State<KonkurScreen> with TickerProviderStateMixin {
-  late TabController _tabController;
-  late AnimationController _headerMorphAnimCtrl;
-  Animation<double>? _headerMorphAnim;
-
-  // Multi-Tab Scroll Synchronization Controllers & State
-  final List<ScrollController> _tabScrollControllers = [
-    ScrollController(),
-    ScrollController(),
-    ScrollController(),
-    ScrollController(),
-  ];
-  final List<double> _tabOffsets = [0.0, 0.0, 0.0, 0.0];
-  final List<bool> _tabExpanded = [true, true, true, true];
-
-  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
-  final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
-  double _accumulatedUpScroll = 0.0;
-
+class _KonkurScreenState extends State<KonkurScreen> {
   // DB Data
   bool _isLoading = true;
   bool _setupDone = false;
@@ -77,113 +59,7 @@ class _KonkurScreenState extends State<KonkurScreen> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    _headerMorphAnimCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _headerMorphAnimCtrl.addListener(() {
-      if (_headerMorphAnim != null) {
-        _scrollOffset.value = _headerMorphAnim!.value;
-      }
-    });
-
-    _tabController = TabController(length: 4, vsync: this);
-    _tabController.addListener(() {
-      if (_tabController.indexIsChanging ||
-          _tabController.animation?.value == _tabController.index.toDouble()) {
-        _syncHeaderWithActiveTab(_tabController.index, animate: true);
-        if (mounted) setState(() {});
-      }
-    });
-    _tabController.animation?.addListener(() {
-      final value = _tabController.animation?.value ?? 0.0;
-      final roundIndex = value.round().clamp(0, 3);
-      if ((value - roundIndex).abs() < 0.05 && _tabController.index == roundIndex) {
-        _syncHeaderWithActiveTab(roundIndex, animate: true);
-      }
-    });
-
     _loadAllData();
-  }
-
-  @override
-  void dispose() {
-    _headerMorphAnimCtrl.dispose();
-    for (final controller in _tabScrollControllers) {
-      controller.dispose();
-    }
-    _tabController.dispose();
-    _scrollOffset.dispose();
-    _isTabsExpanded.dispose();
-    super.dispose();
-  }
-
-  void _syncHeaderWithActiveTab(int activeIndex, {bool animate = true}) {
-    if (activeIndex < 0 || activeIndex >= _tabOffsets.length) return;
-    final controller = _tabScrollControllers[activeIndex];
-    final targetOffset = controller.hasClients ? controller.offset : _tabOffsets[activeIndex];
-    _tabOffsets[activeIndex] = targetOffset;
-
-    final currentOffset = _scrollOffset.value;
-    final isExpanded = targetOffset <= 75.0 || _tabExpanded[activeIndex];
-    _isTabsExpanded.value = isExpanded;
-    _accumulatedUpScroll = 0.0;
-
-    if (animate && (targetOffset - currentOffset).abs() > 1.0) {
-      _headerMorphAnimCtrl.stop();
-      _headerMorphAnim = Tween<double>(
-        begin: currentOffset,
-        end: targetOffset,
-      ).animate(
-        CurvedAnimation(
-          parent: _headerMorphAnimCtrl,
-          curve: Curves.easeOutCubic,
-        ),
-      );
-      _headerMorphAnimCtrl.forward(from: 0.0);
-    } else {
-      _headerMorphAnimCtrl.stop();
-      _scrollOffset.value = targetOffset;
-    }
-  }
-
-  void _onTabScroll(int tabIndex, ScrollNotification notification) {
-    if (notification.metrics.axis != Axis.vertical) return;
-    final pixels = notification.metrics.pixels;
-    _tabOffsets[tabIndex] = pixels;
-
-    // Only update the active header if this scroll notification came from the currently visible tab
-    if (_tabController.index == tabIndex) {
-      if (_headerMorphAnimCtrl.isAnimating) {
-        _headerMorphAnimCtrl.stop();
-      }
-      _scrollOffset.value = pixels;
-
-      if (pixels <= 20) {
-        _accumulatedUpScroll = 0.0;
-        if (!_isTabsExpanded.value) {
-          _isTabsExpanded.value = true;
-          _tabExpanded[tabIndex] = true;
-        }
-      } else if (notification is ScrollUpdateNotification) {
-        final delta = notification.scrollDelta ?? 0.0;
-        if (delta > 1.0) {
-          _accumulatedUpScroll = 0.0;
-          if (pixels > 75 && _isTabsExpanded.value) {
-            _isTabsExpanded.value = false;
-            _tabExpanded[tabIndex] = false;
-          }
-        } else if (delta < -1.0) {
-          _accumulatedUpScroll += -delta;
-          if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
-            _isTabsExpanded.value = true;
-            _tabExpanded[tabIndex] = true;
-          }
-        }
-      } else if (notification is ScrollEndNotification) {
-        _accumulatedUpScroll = 0.0;
-      }
-    }
   }
 
   Future<void> _seedAndReload(KonkurField field) async {
@@ -625,231 +501,214 @@ class _KonkurScreenState extends State<KonkurScreen> with TickerProviderStateMix
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.paddingOf(context).top;
     final contentTopPadding = topPadding + 190.0;
+    final fieldStr = _settings['konkur_field'] ?? 'RIYAZI';
+    final field = KonkurField.fromString(fieldStr);
+    final fieldColor = _colorForField(field);
+    final days = _engineOutput?.daysUntilExam ?? -1;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: colors.bg,
-        body: Stack(
-          children: [
-            // Layer 1: Body Content (NotificationListener for Instant Quick-Return Header)
-            Positioned.fill(
-              child: _isLoading
-                  ? Padding(
-                      padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 80),
-                      child: const Column(
-                        children: [
-                          RitmoSkeletonCard(height: 180),
-                          SizedBox(height: 24),
-                          RitmoSkeletonList(itemCount: 3, itemHeight: 70),
-                        ],
-                      ),
-                    )
-                  : _subjects.isEmpty
-                      ? Padding(
-                          padding: EdgeInsets.only(top: contentTopPadding),
-                          child: _buildEmptyCurriculumState(context, colors),
-                        )
-                      : _engineOutput == null
-                          ? Center(
-                              child: Padding(
-                                padding: EdgeInsets.only(top: contentTopPadding),
-                                child: const Text('خطا در بارگذاری خروجی موتور کنکور'),
-                              ),
-                            )
-                          : TabBarView(
-                              controller: _tabController,
-                              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                              children: [
-                                // 1. TODAY / PLAN SECTION
-                                NotificationListener<ScrollNotification>(
-                                  onNotification: (n) {
-                                    _onTabScroll(0, n);
-                                    return false;
-                                  },
-                                  child: SingleChildScrollView(
-                                    controller: _tabScrollControllers[0],
-                                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                                    padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
-                                    child: Column(
-                                      children: [
-                                        _buildEnergyBanner(colors),
-                                        KonkurHero(
-                                          data: _engineOutput!,
-                                          onSetDateTap: _showSettingsSheet,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        _buildCarryOverBanner(),
-                                        KonkurTodaySection(
-                                          subjects: _subjects,
-                                          topics: _topics,
-                                          todayPlanItems: _engineOutput!.todayPlanItems,
-                                          onRefresh: _loadAllData,
-                                          energyContext: _energyContext,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-
-                                // 2. BUDGET / TOPICS SECTION
-                                NotificationListener<ScrollNotification>(
-                                  onNotification: (n) {
-                                    _onTabScroll(1, n);
-                                    return false;
-                                  },
-                                  child: SingleChildScrollView(
-                                    controller: _tabScrollControllers[1],
-                                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                                    padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
-                                    child: KonkurBudgetSection(
-                                      subjects: _subjects,
-                                      topics: _topics,
-                                      budgetCoverage: _engineOutput!.budgetCoverage,
-                                      perSubjectReadiness: _engineOutput!.perSubjectReadiness,
-                                      onRefresh: _loadAllData,
-                                    ),
-                                  ),
-                                ),
-
-                                // 3. EXAMS SECTION
-                                NotificationListener<ScrollNotification>(
-                                  onNotification: (n) {
-                                    _onTabScroll(2, n);
-                                    return false;
-                                  },
-                                  child: SingleChildScrollView(
-                                    controller: _tabScrollControllers[2],
-                                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                                    padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
-                                    child: KonkurExamsSection(
-                                      subjects: _subjects,
-                                      mockExams: _mockExams,
-                                      mockResults: _mockResults,
-                                      perSubjectTrend: _engineOutput!.perSubjectTrend,
-                                      onRefresh: _loadAllData,
-                                    ),
-                                  ),
-                                ),
-
-                                // 4. STATS SECTION
-                                NotificationListener<ScrollNotification>(
-                                  onNotification: (n) {
-                                    _onTabScroll(3, n);
-                                    return false;
-                                  },
-                                  child: SingleChildScrollView(
-                                    controller: _tabScrollControllers[3],
-                                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                                    padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
-                                    child: KonkurStatsSection(
-                                      subjects: _subjects,
-                                      data: _engineOutput!,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-            ),
-
-            // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: AnimatedBuilder(
-                animation: Listenable.merge([_scrollOffset, _isTabsExpanded]),
-                builder: (context, _) {
-                  final fieldStr = _settings['konkur_field'] ?? 'RIYAZI';
-                  final field = KonkurField.fromString(fieldStr);
-                  final fieldColor = _colorForField(field);
-                  final days = _engineOutput?.daysUntilExam ?? -1;
-
-                  return RitmoAppleMorphingGlassHeader(
-                    title: 'کنکور و مطالعه',
-                    subtitle: _engineOutput != null && days >= 0
-                        ? '${_labelForField(field)} • $days روز تا کنکور'
-                        : 'مدیریت جامع آزمون‌ها، بودجه‌بندی و هوش تحلیلی',
-                    scrollOffset: _scrollOffset.value,
-                    isTabsExpanded: _isTabsExpanded.value,
-                    collapseDistance: 55.0,
-                    onBack: () {
-                      if (Navigator.canPop(context)) {
-                        Navigator.pop(context);
-                      } else {
-                        _switchToStudyMode();
-                      }
-                    },
-                    actions: [
-                      RitmoVibrancyActionButton(
-                        icon: CupertinoIcons.sparkles,
-                        iconColor: colors.primary,
-                        isAiButton: true,
-                        accentColor: colors.primary,
-                        tooltip: 'دستیار هوش مصنوعی کنکور',
-                        onTap: _showAiAssistantSheet,
-                      ),
-                      const SizedBox(width: 8),
-                      RitmoVibrancyActionButton(
-                        icon: CupertinoIcons.square_grid_2x2_fill,
-                        iconColor: fieldColor,
-                        tooltip: 'سرفصل‌ها و رشته کنکور',
-                        onTap: _showFieldPicker,
-                      ),
-                      const SizedBox(width: 8),
-                      RitmoVibrancyActionButton(
-                        icon: CupertinoIcons.book_fill,
-                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                        tooltip: 'حالت مطالعه عادی',
-                        onTap: _switchToStudyMode,
-                      ),
-                      const SizedBox(width: 8),
-                      RitmoVibrancyActionButton(
-                        icon: CupertinoIcons.gear_alt_fill,
-                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                        tooltip: 'تنظیمات کنکور',
-                        onTap: _showSettingsSheet,
-                      ),
-                    ],
-                    tabs: RitmoGlassSegmentedControl<int>(
-                      items: const [
-                        RitmoTabItem(
-                          title: 'امروز',
-                          icon: CupertinoIcons.today_fill,
-                          value: 0,
-                        ),
-                        RitmoTabItem(
-                          title: 'بودجه‌بندی',
-                          icon: CupertinoIcons.chart_pie_fill,
-                          value: 1,
-                        ),
-                        RitmoTabItem(
-                          title: 'کارنامه',
-                          icon: CupertinoIcons.doc_checkmark_fill,
-                          value: 2,
-                        ),
-                        RitmoTabItem(
-                          title: 'آمار',
-                          icon: CupertinoIcons.chart_bar_square_fill,
-                          value: 3,
-                        ),
-                      ],
-                      selectedIndex: _tabController.index.clamp(0, 3),
-                      onTabChanged: (index) {
-                        _tabController.animateTo(index);
-                        _syncHeaderWithActiveTab(index);
-                        setState(() {});
-                      },
-                      accentColor: colors.primary,
-                      height: 46.0,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+    return RitmoTabbedMorphingScaffold(
+      title: 'کنکور و مطالعه',
+      subtitle: _engineOutput != null && days >= 0
+          ? '${_labelForField(field)} • $days روز تا کنکور'
+          : 'مدیریت جامع آزمون‌ها، بودجه‌بندی و هوش تحلیلی',
+      onBack: () {
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        } else {
+          _switchToStudyMode();
+        }
+      },
+      actions: [
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.sparkles,
+          iconColor: colors.primary,
+          isAiButton: true,
+          accentColor: colors.primary,
+          tooltip: 'دستیار هوش مصنوعی کنکور',
+          onTap: _showAiAssistantSheet,
         ),
-      ),
+        const SizedBox(width: 8),
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.square_grid_2x2_fill,
+          iconColor: fieldColor,
+          tooltip: 'سرفصل‌ها و رشته کنکور',
+          onTap: _showFieldPicker,
+        ),
+        const SizedBox(width: 8),
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.book_fill,
+          iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+          tooltip: 'حالت مطالعه عادی',
+          onTap: _switchToStudyMode,
+        ),
+        const SizedBox(width: 8),
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.gear_alt_fill,
+          iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+          tooltip: 'تنظیمات کنکور',
+          onTap: _showSettingsSheet,
+        ),
+      ],
+      tabItems: const [
+        RitmoTabItem(
+          title: 'امروز',
+          icon: CupertinoIcons.today_fill,
+          value: 0,
+        ),
+        RitmoTabItem(
+          title: 'بودجه‌بندی',
+          icon: CupertinoIcons.chart_pie_fill,
+          value: 1,
+        ),
+        RitmoTabItem(
+          title: 'کارنامه',
+          icon: CupertinoIcons.doc_checkmark_fill,
+          value: 2,
+        ),
+        RitmoTabItem(
+          title: 'آمار',
+          icon: CupertinoIcons.chart_bar_square_fill,
+          value: 3,
+        ),
+      ],
+      tabBuilders: [
+        // 1. TODAY / PLAN SECTION
+        (ctx, scrollController) => _isLoading
+            ? Padding(
+                padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 80),
+                child: const Column(
+                  children: [
+                    RitmoSkeletonCard(height: 180),
+                    SizedBox(height: 24),
+                    RitmoSkeletonList(itemCount: 3, itemHeight: 70),
+                  ],
+                ),
+              )
+            : _subjects.isEmpty
+                ? Padding(
+                    padding: EdgeInsets.only(top: contentTopPadding),
+                    child: _buildEmptyCurriculumState(context, colors),
+                  )
+                : _engineOutput == null
+                    ? Center(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: contentTopPadding),
+                          child: const Text('خطا در بارگذاری خروجی موتور کنکور'),
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        controller: scrollController,
+                        physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          contentTopPadding,
+                          16,
+                          100,
+                        ),
+                        child: Column(
+                          children: [
+                            _buildEnergyBanner(colors),
+                            KonkurHero(
+                              data: _engineOutput!,
+                              onSetDateTap: _showSettingsSheet,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildCarryOverBanner(),
+                            KonkurTodaySection(
+                              subjects: _subjects,
+                              topics: _topics,
+                              todayPlanItems: _engineOutput!.todayPlanItems,
+                              onRefresh: _loadAllData,
+                              energyContext: _energyContext,
+                            ),
+                          ],
+                        ),
+                      ),
+
+        // 2. BUDGET / TOPICS SECTION
+        (ctx, scrollController) => _subjects.isEmpty
+            ? Padding(
+                padding: EdgeInsets.only(top: contentTopPadding),
+                child: _buildEmptyCurriculumState(context, colors),
+              )
+            : _engineOutput == null
+                ? const SizedBox.shrink()
+                : SingleChildScrollView(
+                    controller: scrollController,
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      contentTopPadding,
+                      16,
+                      100,
+                    ),
+                    child: KonkurBudgetSection(
+                      subjects: _subjects,
+                      topics: _topics,
+                      budgetCoverage: _engineOutput!.budgetCoverage,
+                      perSubjectReadiness:
+                          _engineOutput!.perSubjectReadiness,
+                      onRefresh: _loadAllData,
+                    ),
+                  ),
+
+        // 3. EXAMS SECTION
+        (ctx, scrollController) => _subjects.isEmpty
+            ? Padding(
+                padding: EdgeInsets.only(top: contentTopPadding),
+                child: _buildEmptyCurriculumState(context, colors),
+              )
+            : _engineOutput == null
+                ? const SizedBox.shrink()
+                : SingleChildScrollView(
+                    controller: scrollController,
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      contentTopPadding,
+                      16,
+                      100,
+                    ),
+                    child: KonkurExamsSection(
+                      subjects: _subjects,
+                      mockExams: _mockExams,
+                      mockResults: _mockResults,
+                      perSubjectTrend: _engineOutput!.perSubjectTrend,
+                      onRefresh: _loadAllData,
+                    ),
+                  ),
+
+        // 4. STATS SECTION
+        (ctx, scrollController) => _subjects.isEmpty
+            ? Padding(
+                padding: EdgeInsets.only(top: contentTopPadding),
+                child: _buildEmptyCurriculumState(context, colors),
+              )
+            : _engineOutput == null
+                ? const SizedBox.shrink()
+                : SingleChildScrollView(
+                    controller: scrollController,
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      contentTopPadding,
+                      16,
+                      100,
+                    ),
+                    child: KonkurStatsSection(
+                      subjects: _subjects,
+                      data: _engineOutput!,
+                    ),
+                  ),
+      ],
     );
   }
 }

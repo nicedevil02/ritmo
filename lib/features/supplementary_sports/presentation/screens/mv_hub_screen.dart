@@ -26,34 +26,14 @@ class MvHubScreen extends StatefulWidget {
   State<MvHubScreen> createState() => _MvHubScreenState();
 }
 
-class _MvHubScreenState extends State<MvHubScreen> with SingleTickerProviderStateMixin {
+class _MvHubScreenState extends State<MvHubScreen> {
   late final MvHubController _controller;
   int _selectedTabIndex = 0;
-
-  late AnimationController _headerMorphAnimCtrl;
-  Animation<double>? _headerMorphAnim;
-
-  final List<double> _tabOffsets = [0.0, 0.0, 0.0];
-  final List<bool> _tabExpanded = [true, true, true];
-
-  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
-  final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
-  double _accumulatedUpScroll = 0.0;
   String? _heroAnimationAsset;
 
   @override
   void initState() {
     super.initState();
-    _headerMorphAnimCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _headerMorphAnimCtrl.addListener(() {
-      if (_headerMorphAnim != null) {
-        _scrollOffset.value = _headerMorphAnim!.value;
-      }
-    });
-
     _controller = widget.controller ?? MvHubController();
     _controller.addListener(_onControllerUpdated);
     _controller.loadAllData();
@@ -61,81 +41,12 @@ class _MvHubScreenState extends State<MvHubScreen> with SingleTickerProviderStat
 
   @override
   void dispose() {
-    _headerMorphAnimCtrl.dispose();
-    _scrollOffset.dispose();
-    _isTabsExpanded.dispose();
     if (widget.controller == null) {
       _controller.dispose();
     } else {
       _controller.removeListener(_onControllerUpdated);
     }
     super.dispose();
-  }
-
-  void _syncHeaderWithActiveTab(int activeIndex, {bool animate = true}) {
-    if (activeIndex < 0 || activeIndex >= _tabOffsets.length) return;
-    final targetOffset = _tabOffsets[activeIndex];
-
-    final currentOffset = _scrollOffset.value;
-    final isExpanded = targetOffset <= 75.0 || _tabExpanded[activeIndex];
-    _isTabsExpanded.value = isExpanded;
-    _accumulatedUpScroll = 0.0;
-
-    if (animate && (targetOffset - currentOffset).abs() > 1.0) {
-      _headerMorphAnimCtrl.stop();
-      _headerMorphAnim = Tween<double>(
-        begin: currentOffset,
-        end: targetOffset,
-      ).animate(
-        CurvedAnimation(
-          parent: _headerMorphAnimCtrl,
-          curve: Curves.easeOutCubic,
-        ),
-      );
-      _headerMorphAnimCtrl.forward(from: 0.0);
-    } else {
-      _headerMorphAnimCtrl.stop();
-      _scrollOffset.value = targetOffset;
-    }
-  }
-
-  void _onTabScroll(int tabIndex, ScrollNotification notification) {
-    if (notification.metrics.axis != Axis.vertical) return;
-    final pixels = notification.metrics.pixels;
-    _tabOffsets[tabIndex] = pixels;
-
-    // Only update the active header if this scroll notification came from the currently visible tab
-    if (_selectedTabIndex == tabIndex) {
-      if (_headerMorphAnimCtrl.isAnimating) {
-        _headerMorphAnimCtrl.stop();
-      }
-      _scrollOffset.value = pixels;
-
-      if (pixels <= 20) {
-        _accumulatedUpScroll = 0.0;
-        if (!_isTabsExpanded.value) {
-          _isTabsExpanded.value = true;
-          _tabExpanded[tabIndex] = true;
-        }
-      } else if (notification is ScrollUpdateNotification) {
-        final delta = notification.scrollDelta ?? 0.0;
-        if (delta > 1.0) {
-          _accumulatedUpScroll = 0.0;
-          if (pixels > 75 && _isTabsExpanded.value) {
-            _isTabsExpanded.value = false;
-            _tabExpanded[tabIndex] = false;
-          }
-        } else if (delta < -1.0) {
-          _accumulatedUpScroll += -delta;
-          if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
-            _isTabsExpanded.value = true;
-            _tabExpanded[tabIndex] = true;
-          }
-        }
-      } else if (notification is ScrollEndNotification) {
-        _accumulatedUpScroll = 0.0;
-      }
-    }
   }
 
   late final MvKindUseCase _kindUseCase = MvKindUseCase(_controller.kindRepo);
@@ -372,8 +283,6 @@ class _MvHubScreenState extends State<MvHubScreen> with SingleTickerProviderStat
       );
     }
 
-    final colors = context.ritmoColors;
-
     final todayIso = MvCalendar.formatDateIso(DateTime.now());
     final currentSlot =
         _controller.weekSlots
@@ -392,227 +301,175 @@ class _MvHubScreenState extends State<MvHubScreen> with SingleTickerProviderStat
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.paddingOf(context).top;
     final contentTopPadding = topPadding + 190.0;
+    const accentColor = Color(0xFF10B981);
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      body: Stack(
-        children: [
-          // Layer 1: Body Content
-          Positioned.fill(
-            child: IndexedStack(
-              index: _selectedTabIndex,
-              children: [
-                // Tab 0: امروز
-                NotificationListener<ScrollNotification>(
-                  onNotification: (n) {
-                    _onTabScroll(0, n);
-                    return false;
-                  },
-                  child: MvTodayTab(
-                    weekSlots: _controller.weekSlots,
-                    todaySlot: currentSlot,
-                    topPadding: contentTopPadding,
-                    readinessDecision:
-                        _controller.readinessDecision ??
-                        const MvDecision<MvReadinessTier>(
-                          value: MvReadinessTier.full,
-                          reasonFa: '',
-                        ),
-                    budgetProgress:
-                        _controller.budgetProgress ??
-                        const MvWeeklyBudgetProgress(
-                          moderateEquivalentMinutes: 0,
-                          rawMetMinutes: 0,
-                          strengthDays: 0,
-                          targetMin: 150,
-                          targetOptimal: 300,
-                          strengthDaysTarget: 2,
-                        ),
-                    bodyMapDistribution:
-                        _controller.bodyMapDistribution ??
-                        const MvBodyMapDistribution(muscleSessionCounts: {}),
-                    heroAnimationAsset: _heroAnimationAsset,
-                    kindUseCase: _kindUseCase,
-                    onStartSession: () => _handleStartOrResumeSession(currentSlot),
-                    onContinueSession: () => _handleStartOrResumeSession(currentSlot),
-                    isSessionInProgress: _controller.activeSession != null,
-                    onSlotUpdated: _controller.updateSlot,
-                    onCheckinSaved: _controller.saveCheckin,
-                    onQuickLogSaved: _controller.saveQuickLog,
-                    onDateSelected: _controller.selectDate,
-                  ),
+    return RitmoTabbedMorphingScaffold(
+      title: l10n.mv_hub_title,
+      subtitle: 'حرکات اصلاحی، گرم‌کردن، کشش و تمرینات روزانه',
+      accentColor: accentColor,
+      useIndexedStack: true,
+      initialIndex: _selectedTabIndex,
+      onTabChanged: (index) => setState(() => _selectedTabIndex = index),
+      onBack: () => Navigator.maybePop(context),
+      actions: [
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.sparkles,
+          iconColor: accentColor,
+          isAiButton: true,
+          accentColor: accentColor,
+          tooltip: l10n.mv_coach_tooltip,
+          onTap: () {
+            MvAiCoachSheet.show(
+              context: context,
+              profile: _controller.profile,
+              currentSlot: currentSlot,
+            );
+          },
+        ),
+        const SizedBox(width: 8),
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.square_grid_2x2,
+          iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+          tooltip: l10n.mv_library_tooltip,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    MvLibraryScreen(allExercises: _controller.allExercises),
+              ),
+            );
+          },
+        ),
+        const SizedBox(width: 8),
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.lock_shield,
+          iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+          tooltip: l10n.mv_commitments_title,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MvCommitmentsScreen(
+                  controller: _controller,
                 ),
-
-                // Tab 1: هفته
-                NotificationListener<ScrollNotification>(
-                  onNotification: (n) {
-                    _onTabScroll(1, n);
-                    return false;
+              ),
+            );
+          },
+        ),
+        const SizedBox(width: 8),
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.settings,
+          iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+          tooltip: l10n.mv_settings_tooltip,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MvSettingsScreen(
+                  initialProfile: _controller.profile,
+                  controller: _controller,
+                  onProfileSaved: (p) async {
+                    await _controller.saveProfile(p);
                   },
-                  child: MvWeekTab(
-                    weekSlots: _controller.weekSlots,
-                    cycleWeek: _controller.cycleWeek,
-                    commitments: _controller.commitments,
-                    kindUseCase: _kindUseCase,
-                    topPadding: contentTopPadding,
-                    onSlotUpdated: _controller.updateSlot,
-                    onRegenerateWeek: _controller.regenerateWeek,
-                    onOpenCommitments: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => MvCommitmentsScreen(
-                            controller: _controller,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  onRegenerateProgram: _controller.regenerateWeek,
                 ),
+              ),
+            );
+          },
+        ),
+      ],
+      tabItems: [
+        RitmoTabItem(
+          title: l10n.mv_tab_today,
+          icon: CupertinoIcons.sun_max_fill,
+          value: 0,
+        ),
+        RitmoTabItem(
+          title: l10n.mv_tab_week,
+          icon: CupertinoIcons.calendar,
+          value: 1,
+        ),
+        RitmoTabItem(
+          title: l10n.mv_tab_progress,
+          icon: CupertinoIcons.chart_bar_alt_fill,
+          value: 2,
+        ),
+      ],
+      tabBuilders: [
+        // Tab 0: امروز
+        (ctx, scrollController) => MvTodayTab(
+          weekSlots: _controller.weekSlots,
+          todaySlot: currentSlot,
+          topPadding: contentTopPadding,
+          readinessDecision:
+              _controller.readinessDecision ??
+              const MvDecision<MvReadinessTier>(
+                value: MvReadinessTier.full,
+                reasonFa: '',
+              ),
+          budgetProgress:
+              _controller.budgetProgress ??
+              const MvWeeklyBudgetProgress(
+                moderateEquivalentMinutes: 0,
+                rawMetMinutes: 0,
+                strengthDays: 0,
+                targetMin: 150,
+                targetOptimal: 300,
+                strengthDaysTarget: 2,
+              ),
+          bodyMapDistribution:
+              _controller.bodyMapDistribution ??
+              const MvBodyMapDistribution(muscleSessionCounts: {}),
+          heroAnimationAsset: _heroAnimationAsset,
+          kindUseCase: _kindUseCase,
+          onStartSession: () => _handleStartOrResumeSession(currentSlot),
+          onContinueSession: () => _handleStartOrResumeSession(currentSlot),
+          isSessionInProgress: _controller.activeSession != null,
+          onSlotUpdated: _controller.updateSlot,
+          onCheckinSaved: _controller.saveCheckin,
+          onQuickLogSaved: _controller.saveQuickLog,
+          onDateSelected: _controller.selectDate,
+        ),
 
-                // Tab 2: پیشرفت
-                NotificationListener<ScrollNotification>(
-                  onNotification: (n) {
-                    _onTabScroll(2, n);
-                    return false;
-                  },
-                  child: MvProgressTab(
-                    continuousActiveWeeks: _controller.continuousActiveWeeks,
-                    totalSessionsCount: _controller.totalSessionsCount,
-                    totalMetMinutes: _controller.budgetProgress?.currentMetMinutes ?? 0,
-                    weeklyBudget: _controller.budgetProgress,
-                    loadSnapshot: _controller.loadSnapshot,
-                    insights: _controller.insights,
-                    personalRecords: _controller.prs,
-                    activeCampaign: _controller.activeCampaign,
-                    onCreateCampaign: _controller.saveCampaign,
-                    topPadding: contentTopPadding,
-                    bodyMapDistribution:
-                        _controller.bodyMapDistribution ??
-                        const MvBodyMapDistribution(muscleSessionCounts: {}),
-                  ),
+        // Tab 1: هفته
+        (ctx, scrollController) => MvWeekTab(
+          weekSlots: _controller.weekSlots,
+          cycleWeek: _controller.cycleWeek,
+          commitments: _controller.commitments,
+          kindUseCase: _kindUseCase,
+          topPadding: contentTopPadding,
+          onSlotUpdated: _controller.updateSlot,
+          onRegenerateWeek: _controller.regenerateWeek,
+          onOpenCommitments: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MvCommitmentsScreen(
+                  controller: _controller,
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
+        ),
 
-          // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: AnimatedBuilder(
-              animation: Listenable.merge([_scrollOffset, _isTabsExpanded]),
-              builder: (context, _) {
-                const accentColor = Color(0xFF10B981);
-
-                return RitmoAppleMorphingGlassHeader(
-                  title: l10n.mv_hub_title,
-                  subtitle: 'حرکات اصلاحی، گرم‌کردن، کشش و تمرینات روزانه',
-                  scrollOffset: _scrollOffset.value,
-                  isTabsExpanded: _isTabsExpanded.value,
-                  collapseDistance: 55.0,
-                  onBack: () => Navigator.maybePop(context),
-                  actions: [
-                    RitmoVibrancyActionButton(
-                      icon: CupertinoIcons.sparkles,
-                      iconColor: accentColor,
-                      isAiButton: true,
-                      accentColor: accentColor,
-                      tooltip: l10n.mv_coach_tooltip,
-                      onTap: () {
-                        MvAiCoachSheet.show(
-                          context: context,
-                          profile: _controller.profile,
-                          currentSlot: currentSlot,
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    RitmoVibrancyActionButton(
-                      icon: CupertinoIcons.square_grid_2x2,
-                      iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                      tooltip: l10n.mv_library_tooltip,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                MvLibraryScreen(allExercises: _controller.allExercises),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    RitmoVibrancyActionButton(
-                      icon: CupertinoIcons.lock_shield,
-                      iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                      tooltip: l10n.mv_commitments_title,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => MvCommitmentsScreen(
-                              controller: _controller,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    RitmoVibrancyActionButton(
-                      icon: CupertinoIcons.settings,
-                      iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                      tooltip: l10n.mv_settings_tooltip,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => MvSettingsScreen(
-                              initialProfile: _controller.profile,
-                              controller: _controller,
-                              onProfileSaved: (p) async {
-                                await _controller.saveProfile(p);
-                              },
-                              onRegenerateProgram: _controller.regenerateWeek,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                  tabs: RitmoGlassSegmentedControl<int>(
-                    items: [
-                      RitmoTabItem(
-                        title: l10n.mv_tab_today,
-                        icon: CupertinoIcons.sun_max_fill,
-                        value: 0,
-                      ),
-                      RitmoTabItem(
-                        title: l10n.mv_tab_week,
-                        icon: CupertinoIcons.calendar,
-                        value: 1,
-                      ),
-                      RitmoTabItem(
-                        title: l10n.mv_tab_progress,
-                        icon: CupertinoIcons.chart_bar_alt_fill,
-                        value: 2,
-                      ),
-                    ],
-                    selectedIndex: _selectedTabIndex.clamp(0, 2),
-                    onTabChanged: (index) {
-                      _syncHeaderWithActiveTab(index, animate: true);
-                      setState(() => _selectedTabIndex = index);
-                    },
-                    accentColor: accentColor,
-                    height: 46.0,
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+        // Tab 2: پیشرفت
+        (ctx, scrollController) => MvProgressTab(
+          continuousActiveWeeks: _controller.continuousActiveWeeks,
+          totalSessionsCount: _controller.totalSessionsCount,
+          totalMetMinutes: _controller.budgetProgress?.currentMetMinutes ?? 0,
+          weeklyBudget: _controller.budgetProgress,
+          loadSnapshot: _controller.loadSnapshot,
+          insights: _controller.insights,
+          personalRecords: _controller.prs,
+          activeCampaign: _controller.activeCampaign,
+          onCreateCampaign: _controller.saveCampaign,
+          topPadding: contentTopPadding,
+          bodyMapDistribution:
+              _controller.bodyMapDistribution ??
+              const MvBodyMapDistribution(muscleSessionCounts: {}),
+        ),
+      ],
     );
   }
 }

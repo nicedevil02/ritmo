@@ -445,6 +445,20 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           const SizedBox(height: 10),
 
           _buildReferenceSheetsShowcase(colors, isDark),
+          const SizedBox(height: 24),
+
+          // ── ۱۰. هدر کپسولی شناور اپل و اسکفولد چندتبی مرجع (Apple Morphing Header & Tabbed Scaffold) ──
+          _buildSectionTitle(
+            number: '۱۰',
+            widgetClass: 'RitmoTabbedMorphingScaffold & Header',
+            title: 'اسکفولد و هدر داینامیک کپسولی اپل (Morphing Header Scaffold)',
+            usage: 'الگوی استاندارد و اجباری برای تمامی صفحات دارای تب (تب‌بار کپسولی شیشه‌ای، اسکرول مستقل هر تب و انیمیشن انتقال ۳۰۰ میلی‌ثانیه‌ای).',
+            features: 'ترنزیشن فیزیکی کپسولی ۳۰۰ میلی‌ثانیه با منحنی easeOutCubic، واکنش اسکرول سریع (Quick-Return)، تفکیک کامل آفست اسکرول تب‌ها، و کشسانی اووراسکرول.',
+            rule: 'برای تمام صفحات چندتبی ریتمو منحصراً از RitmoTabbedMorphingScaffold استفاده شود و از نوشتن کنترلرهای تکراری خودداری گردد.',
+          ),
+          const SizedBox(height: 10),
+
+          _buildTabbedMorphingHeaderShowcase(colors, isDark),
           const SizedBox(height: 32),
         ],
       ),
@@ -1289,5 +1303,212 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
       ),
     );
   }
+
+  Widget _buildTabbedMorphingHeaderShowcase(RitmoColors colors, bool isDark) {
+    return RitmoCard.neumorphic(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          RitmoCardHeader(
+            title: 'موتور هماهنگ‌کننده چندتبی ریتمو',
+            subtitle: 'RitmoTabbedMorphingScaffold (Single Source of Truth)',
+            icon: CupertinoIcons.rectangle_stack_badge_person_crop,
+            iconColor: colors.primary,
+            trailing: RitmoCardBadge(
+              label: 'مرجع رسمی اپل',
+              color: colors.primary,
+              icon: CupertinoIcons.sparkles,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'این ساختار مادر تمام جزئیات فیزیک اسکرول، محاسبه آفست اختصاصی هر تب، همگام‌سازی کپسول هدر، انیمیشن انتقال ۳۰۰ میلی‌ثانیه‌ای (Curves.easeOutCubic) و رفتارهای واکنشی Quick-Return را به شکل ۱۰۰٪ متمرکز پیاده‌سازی می‌کند.',
+            style: TextStyle(
+              fontSize: 12.5,
+              height: 1.6,
+              color: colors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildFeatureTag('انیمیشن مورف ۳۰۰ms', colors),
+              _buildFeatureTag('آستانه ۲۸px کوئیک‌ریترن', colors),
+              _buildFeatureTag('تفکیک آفست هر تب', colors),
+              _buildFeatureTag('فیزیک کشسانی فنری اپل', colors),
+              _buildFeatureTag('سازگاری با IndexedStack', colors),
+            ],
+          ),
+          const SizedBox(height: 16),
+          RitmoNeuButton(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const _TabbedMorphingHeaderDemoScreen(),
+                ),
+              );
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  CupertinoIcons.play_circle_fill,
+                  size: 20,
+                  color: colors.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'اجرای دمو زنده و سندباکس تعاملی هدر',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: colors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureTag(String label, RitmoColors colors) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: colors.primary.withValues(alpha: 0.2),
+          width: 0.8,
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: colors.primary,
+        ),
+      ),
+    );
+  }
 }
+
+/// صفحه دمو و سندباکس تعاملی برای تست زنده RitmoTabbedMorphingScaffold
+class _TabbedMorphingHeaderDemoScreen extends StatelessWidget {
+  const _TabbedMorphingHeaderDemoScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return RitmoTabbedMorphingScaffold(
+      title: 'دموی هدر کپسولی اپل',
+      subtitle: 'تست زنده انیمیشن ۳۰۰ms مورف و اسکرول سریع',
+      actions: [
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.sparkles,
+          iconColor: colors.primary,
+          tooltip: 'اکشن نمونه',
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('دکمه اکشن هوش مصنوعی لمس شد')),
+            );
+          },
+        ),
+      ],
+      tabItems: const [
+        RitmoTabItem(
+          title: 'کاوش و تحلیل',
+          icon: CupertinoIcons.chart_bar_alt_fill,
+          value: 0,
+        ),
+        RitmoTabItem(
+          title: 'آمار زنده',
+          icon: CupertinoIcons.waveform_path_ecg,
+          value: 1,
+        ),
+        RitmoTabItem(
+          title: 'تنظیمات نمونه',
+          icon: CupertinoIcons.gear_alt_fill,
+          value: 2,
+        ),
+      ],
+      tabBuilders: [
+        // تب اول: لیست بلند برای اسکرول عمیق
+        (ctx, scrollController) => ListView.builder(
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(14, 190, 14, 80),
+              itemCount: 20,
+              itemBuilder: (ctx, i) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: RitmoCard.neumorphic(
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: colors.primary.withValues(alpha: 0.2),
+                      child: Text(
+                        PersianDigits.toFa((i + 1).toString()),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
+                        ),
+                      ),
+                    ),
+                    title: Text('کارت تحلیلی شماره ${PersianDigits.toFa((i + 1).toString())}'),
+                    subtitle: const Text('برای جمع شدن هدر به سمت پایین اسکرول کنید'),
+                  ),
+                ),
+              ),
+            ),
+
+        // تب دوم: اسکرول کوتاه در بالای صفحه
+        (ctx, scrollController) => ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(14, 190, 14, 80),
+              children: [
+                RitmoCard.neumorphic(
+                  child: Column(
+                    children: [
+                      RitmoCardHeader(
+                        title: 'وضعیت در بالای صفحه (Resting)',
+                        subtitle: 'این تب در بالای صفحه قرار دارد',
+                        icon: CupertinoIcons.info_circle_fill,
+                        iconColor: colors.success,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'اگر در تب اول اسکرول کرده باشید و به این تب بیایید، هدر با انیمیشن روان ۳۰۰ میلی‌ثانیه‌ای به حالت باز (Expanded) تبدیل می‌شود.',
+                        style: TextStyle(fontSize: 13, height: 1.6),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+        // تب سوم: تنظیمات نمونه
+        (ctx, scrollController) => ListView.builder(
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(14, 190, 14, 80),
+              itemCount: 8,
+              itemBuilder: (ctx, i) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: RitmoCard.neumorphic(
+                  child: ListTile(
+                    leading: const Icon(CupertinoIcons.slider_horizontal_3),
+                    title: Text('تنظیم شماره ${PersianDigits.toFa((i + 1).toString())}'),
+                    trailing: const Icon(CupertinoIcons.chevron_left, size: 16),
+                  ),
+                ),
+              ),
+            ),
+      ],
+    );
+  }
+}
+
 

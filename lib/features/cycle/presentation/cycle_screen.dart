@@ -70,8 +70,7 @@ class _CycleScreenContent extends StatefulWidget {
   State<_CycleScreenContent> createState() => _CycleScreenContentState();
 }
 
-class _CycleScreenContentState extends State<_CycleScreenContent>
-    with TickerProviderStateMixin {
+class _CycleScreenContentState extends State<_CycleScreenContent> {
   bool _isLoading = true;
   Map<String, String> _settings = {};
   List<Map<String, dynamic>> _periods = [];
@@ -90,29 +89,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent>
   Jalali _calendarMonth = Jalali.fromDateTime(CycleClock.now);
   final GlobalKey _calendarKey = GlobalKey();
 
-  late AnimationController _headerMorphAnimCtrl;
-  Animation<double>? _headerMorphAnim;
-  final ScrollController _scrollController = ScrollController();
-  final List<double> _tabOffsets = [0.0, 0.0, 0.0, 0.0];
-  final List<bool> _tabExpanded = [true, true, true, true];
-
-  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
-  final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
-  double _accumulatedUpScroll = 0.0;
-
   @override
   void initState() {
     super.initState();
-    _headerMorphAnimCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _headerMorphAnimCtrl.addListener(() {
-      if (_headerMorphAnim != null) {
-        _scrollOffset.value = _headerMorphAnim!.value;
-      }
-    });
-
     _calendarMonth = Jalali.fromDateTime(CycleClock.now);
     CycleStateNotifier.instance.addListener(_onStateNotifierChanged);
     _loadData();
@@ -120,84 +99,15 @@ class _CycleScreenContentState extends State<_CycleScreenContent>
 
   @override
   void dispose() {
-    _headerMorphAnimCtrl.dispose();
-    _scrollController.dispose();
     CycleStateNotifier.instance.removeListener(_onStateNotifierChanged);
-    _scrollOffset.dispose();
-    _isTabsExpanded.dispose();
     super.dispose();
   }
 
   void _onTabChanged(int newIndex) {
     if (_activeTab == newIndex) return;
-    final currentOffset = _scrollController.hasClients ? _scrollController.offset : _tabOffsets[_activeTab];
-    _tabOffsets[_activeTab] = currentOffset;
-
-    final targetOffset = _tabOffsets[newIndex];
-    final isExpanded = targetOffset <= 75.0 || _tabExpanded[newIndex];
-    _isTabsExpanded.value = isExpanded;
-    _accumulatedUpScroll = 0.0;
-
     setState(() {
       _activeTab = newIndex;
     });
-
-    if (_scrollController.hasClients) {
-      _scrollController.jumpTo(targetOffset);
-    }
-
-    if ((targetOffset - currentOffset).abs() > 1.0) {
-      _headerMorphAnimCtrl.stop();
-      _headerMorphAnim = Tween<double>(
-        begin: currentOffset,
-        end: targetOffset,
-      ).animate(
-        CurvedAnimation(
-          parent: _headerMorphAnimCtrl,
-          curve: Curves.easeOutCubic,
-        ),
-      );
-      _headerMorphAnimCtrl.forward(from: 0.0);
-    } else {
-      _headerMorphAnimCtrl.stop();
-      _scrollOffset.value = targetOffset;
-    }
-  }
-
-  void _onScroll(ScrollNotification notification) {
-    if (notification.metrics.axis != Axis.vertical) return;
-    final pixels = notification.metrics.pixels;
-    _tabOffsets[_activeTab] = pixels;
-
-    if (_headerMorphAnimCtrl.isAnimating) {
-      _headerMorphAnimCtrl.stop();
-    }
-    _scrollOffset.value = pixels;
-
-    if (pixels <= 20) {
-      _accumulatedUpScroll = 0.0;
-      if (!_isTabsExpanded.value) {
-        _isTabsExpanded.value = true;
-        _tabExpanded[_activeTab] = true;
-      }
-    } else if (notification is ScrollUpdateNotification) {
-      final delta = notification.scrollDelta ?? 0.0;
-      if (delta > 1.0) {
-        _accumulatedUpScroll = 0.0;
-        if (pixels > 75 && _isTabsExpanded.value) {
-          _isTabsExpanded.value = false;
-          _tabExpanded[_activeTab] = false;
-        }
-      } else if (delta < -1.0) {
-        _accumulatedUpScroll += -delta;
-        if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
-          _isTabsExpanded.value = true;
-          _tabExpanded[_activeTab] = true;
-        }
-      }
-    } else if (notification is ScrollEndNotification) {
-      _accumulatedUpScroll = 0.0;
-    }
   }
 
   void _onStateNotifierChanged() {
@@ -915,341 +825,422 @@ class _CycleScreenContentState extends State<_CycleScreenContent>
       );
     }
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: CycleAnimatedBackground(
-              phase: _engineOutput?.currentPhase ?? CyclePhase.follicular,
-              isDark: isDark,
-              isPregnancy: isPregnancyActive,
-            ),
+    final contentTopPadding = topPadding + (isPregnancyActive ? 104.0 : 190.0);
+
+    if (isPregnancyActive) {
+      return RitmoTabbedMorphingScaffold(
+        title: 'دوران بارداری',
+        background: CycleAnimatedBackground(
+          phase: _engineOutput?.currentPhase ?? CyclePhase.follicular,
+          isDark: isDark,
+          isPregnancy: true,
+        ),
+        accentColor: _getActivePhaseColor(context),
+        onBack: () => Navigator.pop(context),
+        actions: [
+          RitmoVibrancyActionButton(
+            icon: CupertinoIcons.sparkles,
+            iconColor: _getActivePhaseColor(context),
+            isAiButton: true,
+            accentColor: _getActivePhaseColor(context),
+            tooltip: 'دستیار هوشمند چرخه',
+            onTap: _openAiAssistant,
           ),
-          Positioned.fill(
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (notification) {
-                _onScroll(notification);
-                return false;
-              },
-              child: isPregnancyActive
-                  ? (hasValidPregnancyDates
-                      ? PregnancyLockGate(
-                          settings: _settings,
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              top: topPadding + 84.0,
-                            ),
-                            child: CyclePregnancyModeView(
-                              pregnancyStartDate: _settings['preg_start_date']!,
-                              pregnancyDueDate: _settings['preg_due_date']!,
-                              onDeactivated: () async {
-                                final db =
-                                    await DatabaseHelper.instance.database;
-                                await PregnancySettings.setPregnancyActive(
-                                  false,
-                                  db: db,
-                                );
-                                await _loadData();
-                              },
-                              settings: _settings,
-                              dayLogs: _dayLogs,
-                              engineOutput: _engineOutput,
-                            ),
-                          ),
-                        )
-                      : Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(14.0),
-                              child: RitmoSheetGlassCard(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        CupertinoIcons
-                                            .exclamationmark_triangle_fill,
-                                        size: 48,
-                                        color: colors.warning,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        'اطلاعات بارداری ناقص است',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: colors.textPrimary,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'برای محاسبه دقیق سن بارداری و دسترسی به امکانات، لطفاً اطلاعات راه‌اندازی را تکمیل کنید.',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: colors.textSecondary,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 20),
-                                      ElevatedButton.icon(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: colors.primary,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 24,
-                                            vertical: 12,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                          ),
-                                        ),
-                                        icon: const Icon(
-                                          CupertinoIcons.pencil,
-                                        ),
-                                        label: const Text(
-                                          'تکمیل راه‌اندازی بارداری',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        onPressed: _openPregnancyOnboarding,
-                                      ),
-                                    ],
+          const SizedBox(width: 8),
+          RitmoVibrancyActionButton(
+            icon: CupertinoIcons.gear_alt_fill,
+            iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+            tooltip: 'تنظیمات چرخه',
+            onTap: _openSettingsSheet,
+          ),
+        ],
+        tabItems: const [
+          RitmoTabItem(
+            title: 'بارداری',
+            icon: CupertinoIcons.heart_fill,
+            value: 0,
+          ),
+        ],
+        tabBuilders: [
+          (ctx, scrollController) => hasValidPregnancyDates
+              ? PregnancyLockGate(
+                  settings: _settings,
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                    padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, bottomPadding + 14.0),
+                    child: CyclePregnancyModeView(
+                      pregnancyStartDate: _settings['preg_start_date']!,
+                      pregnancyDueDate: _settings['preg_due_date']!,
+                      onDeactivated: () async {
+                        final db = await DatabaseHelper.instance.database;
+                        await PregnancySettings.setPregnancyActive(
+                          false,
+                          db: db,
+                        );
+                        await _loadData();
+                      },
+                      settings: _settings,
+                      dayLogs: _dayLogs,
+                      engineOutput: _engineOutput,
+                    ),
+                  ),
+                )
+              : Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(14.0),
+                      child: RitmoSheetGlassCard(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                CupertinoIcons.exclamationmark_triangle_fill,
+                                size: 48,
+                                color: colors.warning,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'اطلاعات بارداری ناقص است',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: colors.textPrimary,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'برای محاسبه دقیق سن بارداری و دسترسی به امکانات، لطفاً اطلاعات راه‌اندازی را تکمیل کنید.',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: colors.textSecondary,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 20),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: colors.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
+                                icon: const Icon(
+                                  CupertinoIcons.pencil,
+                                ),
+                                label: const Text(
+                                  'تکمیل راه‌اندازی بارداری',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                onPressed: _openPregnancyOnboarding,
                               ),
-                            ),
+                            ],
                           ),
-                        ))
-                  : Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: ListView(
-                        controller: _scrollController,
-                        physics: const BouncingScrollPhysics(
-                          parent: AlwaysScrollableScrollPhysics(),
                         ),
-                        padding: EdgeInsets.fromLTRB(
-                          10,
-                          topPadding + (isPregnancyActive ? 104.0 : 190.0),
-                          10,
-                          bottomPadding + 14.0,
-                        ),
-                        children: [
-                          if (_activeTab == 0) ...[
-                            CycleOverviewTab(
-                              engineOutput: _engineOutput,
-                              periods: _periods,
-                              settings: _settings,
-                              forgottenPeriod: _forgottenPeriod,
-                              symptomStats: _symptomStats,
-                              activePhaseColor: _getActivePhaseColor(context),
-                              isTogglingPeriod: _isTogglingPeriod,
-                              onTogglePeriodToday: _togglePeriodToday,
-                              onOpenDailyLog: _openLogTodaySheet,
-                              onCloseForgottenPeriod: _closeForgottenPeriod,
-                              onEditPeriod: (p) =>
-                                  _openAddEditPeriodSheet(period: p),
-                              pendingConfirmation: _pendingConfirmation,
-                              onOpenConfirmation: _pendingConfirmation != null
-                                  ? () => _openConfirmationSheet(
-                                      _pendingConfirmation!,
-                                    )
-                                  : null,
-                              onNavigateToCalendar: () {
-                                if (_activeTab != 0) {
-                                  _onTabChanged(0);
-                                }
-                                WidgetsBinding.instance
-                                    .addPostFrameCallback((_) {
-                                  final calCtx = _calendarKey.currentContext;
-                                  if (calCtx != null) {
-                                    Scrollable.ensureVisible(
-                                      calCtx,
-                                      duration:
-                                          const Duration(milliseconds: 650),
-                                      curve: Curves.easeInOutCubic,
-                                      alignment: 0.05,
-                                    );
-                                  }
-                                });
-                              },
-                              onOpenSos: () => CycleSosSection.showSosModal(
+                      ),
+                    ),
+                  ),
+                ),
+        ],
+      );
+    }
+
+    return RitmoTabbedMorphingScaffold(
+      title: 'چرخه بدن',
+      subtitle: _engineOutput != null
+          ? '${_getPhaseTitle(_engineOutput!.currentPhase)} • روز ${RitmoNumber.toFa(_engineOutput!.dayOfCycle)} چرخه'
+          : 'ردیاب هوشمند سلامت و الگوهای هورمونی',
+      background: CycleAnimatedBackground(
+        phase: _engineOutput?.currentPhase ?? CyclePhase.follicular,
+        isDark: isDark,
+        isPregnancy: false,
+      ),
+      accentColor: _getActivePhaseColor(context),
+      initialIndex: _activeTab,
+      onTabChanged: (index) => setState(() => _activeTab = index),
+      onBack: () => Navigator.pop(context),
+      actions: [
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.sparkles,
+          iconColor: _getActivePhaseColor(context),
+          isAiButton: true,
+          accentColor: _getActivePhaseColor(context),
+          tooltip: 'دستیار هوشمند چرخه',
+          onTap: _openAiAssistant,
+        ),
+        const SizedBox(width: 8),
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.gear_alt_fill,
+          iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+          tooltip: 'تنظیمات چرخه',
+          onTap: _openSettingsSheet,
+        ),
+      ],
+      customTabsBuilder: (context, activeIndex, onTabChanged) => CycleSegmentedTabs(
+        activeTab: activeIndex,
+        onTabChanged: onTabChanged,
+        settings: _settings,
+        activeThemeColor: _getActivePhaseColor(context),
+      ),
+      tabItems: const [
+        RitmoTabItem(
+          title: 'نمای کلی',
+          icon: CupertinoIcons.sparkles,
+          value: 0,
+        ),
+        RitmoTabItem(
+          title: 'روندها',
+          icon: CupertinoIcons.chart_bar_alt_fill,
+          value: 1,
+        ),
+        RitmoTabItem(
+          title: 'همبستگی',
+          icon: CupertinoIcons.waveform_path,
+          value: 2,
+        ),
+        RitmoTabItem(
+          title: 'قضای روزه',
+          icon: CupertinoIcons.moon_fill,
+          value: 3,
+        ),
+      ],
+      tabBuilders: [
+        // Tab 0: نمای کلی
+        (ctx, scrollController) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: ListView(
+            controller: scrollController,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            padding: EdgeInsets.fromLTRB(
+              10,
+              contentTopPadding,
+              10,
+              bottomPadding + 14.0,
+            ),
+            children: [
+              CycleOverviewTab(
+                engineOutput: _engineOutput,
+                periods: _periods,
+                settings: _settings,
+                forgottenPeriod: _forgottenPeriod,
+                symptomStats: _symptomStats,
+                activePhaseColor: _getActivePhaseColor(context),
+                isTogglingPeriod: _isTogglingPeriod,
+                onTogglePeriodToday: _togglePeriodToday,
+                onOpenDailyLog: _openLogTodaySheet,
+                onCloseForgottenPeriod: _closeForgottenPeriod,
+                onEditPeriod: (p) =>
+                    _openAddEditPeriodSheet(period: p),
+                pendingConfirmation: _pendingConfirmation,
+                onOpenConfirmation: _pendingConfirmation != null
+                    ? () => _openConfirmationSheet(
+                        _pendingConfirmation!,
+                      )
+                    : null,
+                onNavigateToCalendar: () {
+                  if (_activeTab != 0) {
+                    _onTabChanged(0);
+                  }
+                  WidgetsBinding.instance
+                      .addPostFrameCallback((_) {
+                    final calCtx = _calendarKey.currentContext;
+                    if (calCtx != null) {
+                      Scrollable.ensureVisible(
+                        calCtx,
+                        duration:
+                            const Duration(milliseconds: 650),
+                        curve: Curves.easeInOutCubic,
+                        alignment: 0.05,
+                      );
+                    }
+                  });
+                },
+                onOpenSos: () => CycleSosSection.showSosModal(
+                  context,
+                  engineOutput: _engineOutput,
+                  dayLogs: _dayLogs,
+                  settings: _settings,
+                  phase: _engineOutput?.currentPhase ??
+                      CyclePhase.follicular,
+                ),
+                predictionConfidence: _predictionConfidence,
+                dataQualityReport: _dataQualityReport,
+                onOpenDataTab: () => _onTabChanged(1),
+                insightCards: [
+                  if (_burdenScore != null && _adaptiveAdvice != null)
+                    CycleBurdenCard(
+                      burden: _burdenScore!,
+                      advice: _adaptiveAdvice!,
+                      phase: _engineOutput?.currentPhase ??
+                          CyclePhase.follicular,
+                      onOpenGuide: _engineOutput != null
+                          ? () => CycleSosSection.showSosModal(
                                 context,
                                 engineOutput: _engineOutput,
                                 dayLogs: _dayLogs,
                                 settings: _settings,
-                                phase: _engineOutput?.currentPhase ??
-                                    CyclePhase.follicular,
-                              ),
-                              predictionConfidence: _predictionConfidence,
-                              dataQualityReport: _dataQualityReport,
-                              onOpenDataTab: () => _onTabChanged(1),
-                              insightCards: [
-                                if (_burdenScore != null && _adaptiveAdvice != null)
-                                  CycleBurdenCard(
-                                    burden: _burdenScore!,
-                                    advice: _adaptiveAdvice!,
-                                    phase: _engineOutput?.currentPhase ??
-                                        CyclePhase.follicular,
-                                    onOpenGuide: _engineOutput != null
-                                        ? () => CycleSosSection.showSosModal(
-                                              context,
-                                              engineOutput: _engineOutput,
-                                              dayLogs: _dayLogs,
-                                              settings: _settings,
-                                              phase: _engineOutput!.currentPhase,
-                                            )
-                                        : null,
-                                  ),
-                                if (_personalForecasts.isNotEmpty)
-                                  CyclePersonalForecastCard(
-                                    forecasts: _personalForecasts,
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            CycleCalendarView(
-                              key: _calendarKey,
-                              calendarMonth: _calendarMonth,
-                              onMonthChanged: (m) async {
-                                setState(() => _calendarMonth = m);
-                                final lastDayOfMonth = Jalali(
-                                  m.year,
-                                  m.month,
-                                  m.monthLength,
-                                ).toDateTime();
-                                await CycleStateNotifier.instance
-                                    .ensureHorizonCovers(lastDayOfMonth);
-                              },
-                              periods: _periods,
-                              dayLogs: _dayLogs,
-                              engineOutput: _engineOutput,
-                              settings: _settings,
-                              activePhaseColor: _getActivePhaseColor(context),
-                              onDayTapped: (day, mark) {
-                                if (mark.kind == CycleDayKind.predictedPeriod ||
-                                    mark.kind ==
-                                        CycleDayKind.predictionWindow ||
-                                    mark.kind == CycleDayKind.ovulation ||
-                                    mark.kind == CycleDayKind.fertileWindow ||
-                                    mark.kind == CycleDayKind.pms) {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor: Colors.transparent,
-                                    builder: (ctx) =>
-                                        CyclePredictionDetailSheet(
-                                          selectedDate: day,
-                                          mark: mark,
-                                          engineOutput: _engineOutput,
-                                          symptomForecasts: _personalForecasts,
-                                          onRecordPeriodFromDate: (d) =>
-                                              _openAddEditPeriodSheet(
-                                                initialStartDate: d,
-                                              ),
-                                        ),
-                                  );
-                                } else {
-                                  _openLogTodaySheet(day);
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            CycleHistoryList(
-                              periods: _periods,
-                              onAddNewPeriod: () => _openAddEditPeriodSheet(),
-                              onEditPeriod: (p) =>
-                                  _openAddEditPeriodSheet(period: p),
-                              onDeletePeriod: _deletePeriod,
-                            ),
-                          ] else if (_activeTab == 1) ...[
-                            if (_engineOutput != null)
-                              CycleTrendsSection(engineOutput: _engineOutput!),
-                          ] else if (_activeTab == 2) ...[
-                            const CycleCorrelationSection(),
-                          ] else if (_activeTab == 3) ...[
-                            CycleFastingDebtView(
-                              fastingDebts: _fastingDebts,
-                              settings: _settings,
-                              onToggleSync: (enabled) async {
-                                final db =
-                                    await DatabaseHelper.instance.database;
-                                await db.insert(
-                                  'app_settings',
-                                  {
-                                    'key': 'cycle_send_fasting_debt_to_worship',
-                                    'value': enabled.toString(),
-                                    'updatedAt':
-                                        CycleClock.nowMillisecondsSinceEpoch,
-                                  },
-                                  conflictAlgorithm: ConflictAlgorithm.replace,
-                                );
-                                await _loadData();
-                              },
-                              onReloadData: _loadData,
-                            ),
-                          ],
-                        ],
-                      ),
+                                phase: _engineOutput!.currentPhase,
+                              )
+                          : null,
                     ),
-            ),
+                  if (_personalForecasts.isNotEmpty)
+                    CyclePersonalForecastCard(
+                      forecasts: _personalForecasts,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              CycleCalendarView(
+                key: _calendarKey,
+                calendarMonth: _calendarMonth,
+                onMonthChanged: (m) async {
+                  setState(() => _calendarMonth = m);
+                  final lastDayOfMonth = Jalali(
+                    m.year,
+                    m.month,
+                    m.monthLength,
+                  ).toDateTime();
+                  await CycleStateNotifier.instance
+                      .ensureHorizonCovers(lastDayOfMonth);
+                },
+                periods: _periods,
+                dayLogs: _dayLogs,
+                engineOutput: _engineOutput,
+                settings: _settings,
+                activePhaseColor: _getActivePhaseColor(context),
+                onDayTapped: (day, mark) {
+                  if (mark.kind == CycleDayKind.predictedPeriod ||
+                      mark.kind ==
+                          CycleDayKind.predictionWindow ||
+                      mark.kind == CycleDayKind.ovulation ||
+                      mark.kind == CycleDayKind.fertileWindow ||
+                      mark.kind == CycleDayKind.pms) {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (ctx) =>
+                          CyclePredictionDetailSheet(
+                            selectedDate: day,
+                            mark: mark,
+                            engineOutput: _engineOutput,
+                            symptomForecasts: _personalForecasts,
+                            onRecordPeriodFromDate: (d) =>
+                                _openAddEditPeriodSheet(
+                                  initialStartDate: d,
+                                ),
+                          ),
+                    );
+                  } else {
+                    _openLogTodaySheet(day);
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              CycleHistoryList(
+                periods: _periods,
+                onAddNewPeriod: () => _openAddEditPeriodSheet(),
+                onEditPeriod: (p) =>
+                    _openAddEditPeriodSheet(period: p),
+                onDeletePeriod: _deletePeriod,
+              ),
+            ],
           ),
+        ),
 
-          // 3. Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: AnimatedBuilder(
-              animation: Listenable.merge([_scrollOffset, _isTabsExpanded]),
-              builder: (context, _) {
-                return RitmoAppleMorphingGlassHeader(
-                  title: isPregnancyActive ? 'دوران بارداری' : 'چرخه بدن',
-                  subtitle: isPregnancyActive
-                      ? null
-                      : (_engineOutput != null
-                          ? '${_getPhaseTitle(_engineOutput!.currentPhase)} • روز ${RitmoNumber.toFa(_engineOutput!.dayOfCycle)} چرخه'
-                          : 'ردیاب هوشمند سلامت و الگوهای هورمونی'),
-                  scrollOffset: _scrollOffset.value,
-                  isTabsExpanded: _isTabsExpanded.value,
-                  collapseDistance: 55.0,
-                  onBack: () => Navigator.pop(context),
-                  actions: [
-                    RitmoVibrancyActionButton(
-                      icon: CupertinoIcons.sparkles,
-                      iconColor: _getActivePhaseColor(context),
-                      isAiButton: true,
-                      accentColor: _getActivePhaseColor(context),
-                      tooltip: 'دستیار هوشمند چرخه',
-                      onTap: _openAiAssistant,
-                    ),
-                    const SizedBox(width: 8),
-                    RitmoVibrancyActionButton(
-                      icon: CupertinoIcons.gear_alt_fill,
-                      iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                      tooltip: 'تنظیمات چرخه',
-                      onTap: _openSettingsSheet,
-                    ),
-                  ],
-                  tabs: isPregnancyActive
-                      ? null
-                      : CycleSegmentedTabs(
-                          activeTab: _activeTab,
-                          onTabChanged: _onTabChanged,
-                          settings: _settings,
-                          activeThemeColor:
-                              _getActivePhaseColor(context),
-                        ),
-                );
-              },
+        // Tab 1: روندها
+        (ctx, scrollController) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: ListView(
+            controller: scrollController,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
             ),
+            padding: EdgeInsets.fromLTRB(
+              10,
+              contentTopPadding,
+              10,
+              bottomPadding + 14.0,
+            ),
+            children: [
+              if (_engineOutput != null)
+                CycleTrendsSection(engineOutput: _engineOutput!),
+            ],
           ),
-        ],
-      ),
+        ),
+
+        // Tab 2: همبستگی
+        (ctx, scrollController) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: ListView(
+            controller: scrollController,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            padding: EdgeInsets.fromLTRB(
+              10,
+              contentTopPadding,
+              10,
+              bottomPadding + 14.0,
+            ),
+            children: const [
+              CycleCorrelationSection(),
+            ],
+          ),
+        ),
+
+        // Tab 3: قضای روزه
+        (ctx, scrollController) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: ListView(
+            controller: scrollController,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            padding: EdgeInsets.fromLTRB(
+              10,
+              contentTopPadding,
+              10,
+              bottomPadding + 14.0,
+            ),
+            children: [
+              CycleFastingDebtView(
+                fastingDebts: _fastingDebts,
+                settings: _settings,
+                onToggleSync: (enabled) async {
+                  final db =
+                      await DatabaseHelper.instance.database;
+                  await db.insert(
+                    'app_settings',
+                    {
+                      'key': 'cycle_send_fasting_debt_to_worship',
+                      'value': enabled.toString(),
+                      'updatedAt':
+                          CycleClock.nowMillisecondsSinceEpoch,
+                    },
+                    conflictAlgorithm: ConflictAlgorithm.replace,
+                  );
+                  await _loadData();
+                },
+                onReloadData: _loadData,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

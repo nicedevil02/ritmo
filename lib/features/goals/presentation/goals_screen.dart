@@ -24,32 +24,13 @@ class GoalsScreen extends StatefulWidget {
   State<GoalsScreen> createState() => _GoalsScreenState();
 }
 
-class _GoalsScreenState extends State<GoalsScreen> with TickerProviderStateMixin {
+class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late GoalsController _controller;
-  late AnimationController _headerMorphAnimCtrl;
-  Animation<double>? _headerMorphAnim;
-
-  final List<double> _tabOffsets = [0.0, 0.0];
-  final List<bool> _tabExpanded = [true, true];
-
-  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
-  final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
-  double _accumulatedUpScroll = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _headerMorphAnimCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _headerMorphAnimCtrl.addListener(() {
-      if (_headerMorphAnim != null) {
-        _scrollOffset.value = _headerMorphAnim!.value;
-      }
-    });
-
     _controller = GoalsController();
     _controller.init();
     _controller.addListener(_onControllerChanged);
@@ -57,18 +38,7 @@ class _GoalsScreenState extends State<GoalsScreen> with TickerProviderStateMixin
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       _controller.setTabIndex(_tabController.index);
-      if (_tabController.indexIsChanging ||
-          _tabController.animation?.value == _tabController.index.toDouble()) {
-        _syncHeaderWithActiveTab(_tabController.index, animate: true);
-        if (mounted) setState(() {});
-      }
-    });
-    _tabController.animation?.addListener(() {
-      final value = _tabController.animation?.value ?? 0.0;
-      final roundIndex = value.round().clamp(0, 1);
-      if ((value - roundIndex).abs() < 0.05 && _tabController.index == roundIndex) {
-        _syncHeaderWithActiveTab(roundIndex, animate: true);
-      }
+      if (mounted) setState(() {});
     });
   }
 
@@ -76,7 +46,6 @@ class _GoalsScreenState extends State<GoalsScreen> with TickerProviderStateMixin
     if (mounted) {
       if (_tabController.index != _controller.selectedTabIndex) {
         _tabController.animateTo(_controller.selectedTabIndex);
-        _syncHeaderWithActiveTab(_controller.selectedTabIndex, animate: true);
       }
       setState(() {});
     }
@@ -84,79 +53,10 @@ class _GoalsScreenState extends State<GoalsScreen> with TickerProviderStateMixin
 
   @override
   void dispose() {
-    _headerMorphAnimCtrl.dispose();
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
     _tabController.dispose();
-    _scrollOffset.dispose();
-    _isTabsExpanded.dispose();
     super.dispose();
-  }
-
-  void _syncHeaderWithActiveTab(int activeIndex, {bool animate = true}) {
-    if (activeIndex < 0 || activeIndex >= _tabOffsets.length) return;
-    final targetOffset = _tabOffsets[activeIndex];
-
-    final currentOffset = _scrollOffset.value;
-    final isExpanded = targetOffset <= 75.0 || _tabExpanded[activeIndex];
-    _isTabsExpanded.value = isExpanded;
-    _accumulatedUpScroll = 0.0;
-
-    if (animate && (targetOffset - currentOffset).abs() > 1.0) {
-      _headerMorphAnimCtrl.stop();
-      _headerMorphAnim = Tween<double>(
-        begin: currentOffset,
-        end: targetOffset,
-      ).animate(
-        CurvedAnimation(
-          parent: _headerMorphAnimCtrl,
-          curve: Curves.easeOutCubic,
-        ),
-      );
-      _headerMorphAnimCtrl.forward(from: 0.0);
-    } else {
-      _headerMorphAnimCtrl.stop();
-      _scrollOffset.value = targetOffset;
-    }
-  }
-
-  void _onTabScroll(int tabIndex, ScrollNotification notification) {
-    if (notification.metrics.axis != Axis.vertical) return;
-    final pixels = notification.metrics.pixels;
-    _tabOffsets[tabIndex] = pixels;
-
-    // Only update the active header if this scroll notification came from the currently visible tab
-    if (_tabController.index == tabIndex) {
-      if (_headerMorphAnimCtrl.isAnimating) {
-        _headerMorphAnimCtrl.stop();
-      }
-      _scrollOffset.value = pixels;
-
-      if (pixels <= 20) {
-        _accumulatedUpScroll = 0.0;
-        if (!_isTabsExpanded.value) {
-          _isTabsExpanded.value = true;
-          _tabExpanded[tabIndex] = true;
-        }
-      } else if (notification is ScrollUpdateNotification) {
-        final delta = notification.scrollDelta ?? 0.0;
-        if (delta > 1.0) {
-          _accumulatedUpScroll = 0.0;
-          if (pixels > 75 && _isTabsExpanded.value) {
-            _isTabsExpanded.value = false;
-            _tabExpanded[tabIndex] = false;
-          }
-        } else if (delta < -1.0) {
-          _accumulatedUpScroll += -delta;
-          if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
-            _isTabsExpanded.value = true;
-            _tabExpanded[tabIndex] = true;
-          }
-        }
-      } else if (notification is ScrollEndNotification) {
-        _accumulatedUpScroll = 0.0;
-      }
-    }
   }
 
   Future<void> _handleToggleStep(GoalStep step, String goalId) async {
@@ -327,68 +227,55 @@ class _GoalsScreenState extends State<GoalsScreen> with TickerProviderStateMixin
 
     final viewState = _controller.state;
     if (viewState is GoalsFailed) {
-      return Directionality(
-        textDirection: TextDirection.rtl,
-        child: Scaffold(
-          backgroundColor: colors.bg,
-          body: Stack(
-            children: [
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.all(24),
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: colors.card,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: colors.warning.withValues(alpha: 0.3)),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.warning_amber_rounded, size: 48, color: colors.warning),
-                      const SizedBox(height: 16),
-                      Text(
-                        'خطا در بارگذاری اهداف و برنامه‌ها',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        viewState.error.toString(),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        ),
-                        icon: const Icon(Icons.refresh, size: 18),
-                        label: const Text('تلاش مجدد', style: TextStyle(fontWeight: FontWeight.bold)),
-                        onPressed: () => _controller.reload(force: true),
-                      ),
-                    ],
-                  ),
-                ),
+      return RitmoTabbedMorphingScaffold(
+        title: 'اهداف و برنامه‌ها',
+        subtitle: 'مدیریت استراتژیک، زنجیره عادت‌ها و دستیابی به رویاها',
+        onBack: () => Navigator.maybePop(context),
+        tabItems: const [
+          RitmoTabItem(title: 'خطا', icon: Icons.error_outline, value: 0),
+        ],
+        tabBuilders: [
+          (ctx, scrollController) => Center(
+            child: Container(
+              margin: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: colors.card,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: colors.warning.withValues(alpha: 0.3)),
               ),
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: _buildMorphingHeader(
-                  context: context,
-                  colors: colors,
-                  isDarkMode: isDarkMode,
-                  completedGoals: [],
-                  stepsByGoal: {},
-                  showTabs: false,
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.warning_amber_rounded, size: 48, color: colors.warning),
+                  const SizedBox(height: 16),
+                  Text(
+                    'خطا در بارگذاری اهداف و برنامه‌ها',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    viewState.error.toString(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('تلاش مجدد', style: TextStyle(fontWeight: FontWeight.bold)),
+                    onPressed: () => _controller.reload(force: true),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       );
     }
 
@@ -403,221 +290,152 @@ class _GoalsScreenState extends State<GoalsScreen> with TickerProviderStateMixin
     final courses = readyState?.courses ?? [];
     final engineOutput = readyState?.engineOutput;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: colors.bg,
-        body: Stack(
-          children: [
-            // Layer 1: Body Content
-            Positioned.fill(
-              child: isLoading
-                  ? Padding(
-                      padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 80),
-                      child: const RitmoSkeletonList(itemCount: 3),
-                    )
-                  : TabBarView(
-                      controller: _tabController,
-                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                      children: [
-                        // Tab 0: Planning Horizons
-                        NotificationListener<ScrollNotification>(
-                          onNotification: (n) {
-                            _onTabScroll(0, n);
-                            return false;
-                          },
-                          child: PlanningScreen(
-                            embedded: true,
-                            upcomingTimeline: engineOutput?.upcomingTimeline ?? [],
-                            topPadding: contentTopPadding,
-                          ),
-                        ),
-
-                        // Tab 1: Goals Card List or Tree View
-                        NotificationListener<ScrollNotification>(
-                          onNotification: (n) {
-                            _onTabScroll(1, n);
-                            return false;
-                          },
-                          child: _controller.showTreeView
-                              ? GoalsTreeSection(
-                                  header: Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: _buildHeroSection(
-                                      activeGoals,
-                                      stepsByGoal,
-                                      engineOutput,
-                                      colors,
-                                      isDarkMode,
-                                    ),
-                                  ),
-                                  topPadding: contentTopPadding,
-                                  goals: activeGoals,
-                                  stepsByGoal: stepsByGoal,
-                                  progressMap: engineOutput?.goalProgress ?? {},
-                                  routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
-                                  routines: routines,
-                                  onRefresh: () => _controller.reload(force: true),
-                                  onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
-                                  onDeleteGoal: (goalId) async {
-                                    await GoalsRepository.instance.deleteGoal(goalId);
-                                  },
-                                  onEditGoal: (goal) {
-                                    _showCreateGoalSheet(editGoal: goal);
-                                  },
-                                )
-                              : GoalsCardListSection(
-                                  header: Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: _buildHeroSection(
-                                      activeGoals,
-                                      stepsByGoal,
-                                      engineOutput,
-                                      colors,
-                                      isDarkMode,
-                                    ),
-                                  ),
-                                  topPadding: contentTopPadding,
-                                  goals: goals,
-                                  stepsByGoal: stepsByGoal,
-                                  progressMap: engineOutput?.goalProgress ?? {},
-                                  routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
-                                  routines: routines,
-                                  courses: courses,
-                                  onRefresh: () => _controller.reload(force: true),
-                                  onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
-                                  onDeleteGoal: (goalId) async {
-                                    await GoalsRepository.instance.deleteGoal(goalId);
-                                  },
-                                  onEditGoal: (goal) {
-                                    _showCreateGoalSheet(editGoal: goal);
-                                  },
-                                ),
-                        ),
-                      ],
-                    ),
-            ),
-
-            // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: _buildMorphingHeader(
-                context: context,
-                colors: colors,
-                isDarkMode: isDarkMode,
-                completedGoals: completedGoals,
-                stepsByGoal: stepsByGoal,
-                showTabs: true,
-              ),
-            ),
-          ],
+    return RitmoTabbedMorphingScaffold(
+      title: 'اهداف و برنامه‌ها',
+      subtitle: 'مدیریت استراتژیک، زنجیره عادت‌ها و دستیابی به رویاها',
+      externalTabController: _tabController,
+      onBack: () => Navigator.maybePop(context),
+      actions: [
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.sparkles,
+          iconColor: colors.primary,
+          isAiButton: true,
+          accentColor: colors.primary,
+          tooltip: 'دستیار هوشمند برنامه‌ریزی',
+          onTap: _showAiAssistantSheet,
         ),
-      ),
-    );
-  }
-
-  Widget _buildMorphingHeader({
-    required BuildContext context,
-    required RitmoColors colors,
-    required bool isDarkMode,
-    required List<Goal> completedGoals,
-    required Map<String, List<GoalStep>> stepsByGoal,
-    bool showTabs = true,
-  }) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_scrollOffset, _isTabsExpanded]),
-      builder: (context, _) {
-        return RitmoAppleMorphingGlassHeader(
-          title: 'اهداف و برنامه‌ها',
-          subtitle: 'مدیریت استراتژیک، زنجیره عادت‌ها و دستیابی به رویاها',
-          scrollOffset: _scrollOffset.value,
-          isTabsExpanded: _isTabsExpanded.value,
-          collapseDistance: 55.0,
-          onBack: () => Navigator.maybePop(context),
-          actions: [
-            RitmoVibrancyActionButton(
-              icon: CupertinoIcons.sparkles,
-              iconColor: colors.primary,
-              isAiButton: true,
-              accentColor: colors.primary,
-              tooltip: 'دستیار هوشمند برنامه‌ریزی',
-              onTap: _showAiAssistantSheet,
-            ),
-            const SizedBox(width: 8),
-            RitmoVibrancyActionButton(
-              icon: CupertinoIcons.add,
-              iconColor: isDarkMode ? Colors.white : const Color(0xFF1D2129),
-              tooltip: _tabController.index == 0 ? 'افزودن تعهد جدید' : 'ثبت هدف جدید',
-              onTap: () {
-                if (_tabController.index == 0) {
-                  CreateCommitmentSheet.show(
-                    context,
-                    onSaved: () => _controller.reload(force: true),
-                  );
-                } else {
-                  _showCreateGoalSheet();
-                }
-              },
-            ),
-            const SizedBox(width: 8),
-            PopupMenuButton<String>(
-              padding: EdgeInsets.zero,
-              tooltip: 'گزینه‌ها',
-              onSelected: (val) {
-                if (val == 'archive') {
-                  _showArchiveSheet(completedGoals, stepsByGoal);
-                } else if (val == 'toggle_view') {
-                  _controller.toggleViewMode(!_controller.showTreeView);
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'toggle_view',
-                  child: Text(
-                    _controller.showTreeView ? 'نمای کارت نتیجه‌محور' : 'نمای درختی اهداف',
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'archive',
-                  child: Text('آرشیو اهداف'),
-                ),
-              ],
-              child: RitmoVibrancyActionButton(
-                icon: CupertinoIcons.ellipsis_vertical,
-                iconColor: isDarkMode ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                onTap: () {},
+        const SizedBox(width: 8),
+        RitmoVibrancyActionButton(
+          icon: CupertinoIcons.add,
+          iconColor: isDarkMode ? Colors.white : const Color(0xFF1D2129),
+          tooltip: _tabController.index == 0 ? 'افزودن تعهد جدید' : 'ثبت هدف جدید',
+          onTap: () {
+            if (_tabController.index == 0) {
+              CreateCommitmentSheet.show(
+                context,
+                onSaved: () => _controller.reload(force: true),
+              );
+            } else {
+              _showCreateGoalSheet();
+            }
+          },
+        ),
+        const SizedBox(width: 8),
+        PopupMenuButton<String>(
+          padding: EdgeInsets.zero,
+          tooltip: 'گزینه‌ها',
+          onSelected: (val) {
+            if (val == 'archive') {
+              _showArchiveSheet(completedGoals, stepsByGoal);
+            } else if (val == 'toggle_view') {
+              _controller.toggleViewMode(!_controller.showTreeView);
+            }
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'toggle_view',
+              child: Text(
+                _controller.showTreeView ? 'نمای کارت نتیجه‌محور' : 'نمای درختی اهداف',
               ),
             ),
+            const PopupMenuItem(
+              value: 'archive',
+              child: Text('آرشیو اهداف'),
+            ),
           ],
-          tabs: showTabs
-              ? RitmoGlassSegmentedControl<int>(
-                  items: const [
-                    RitmoTabItem(
-                      title: 'هفتهٔ من',
-                      icon: CupertinoIcons.calendar_today,
-                      value: 0,
+          child: RitmoVibrancyActionButton(
+            icon: CupertinoIcons.ellipsis_vertical,
+            iconColor: isDarkMode ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+            onTap: () {},
+          ),
+        ),
+      ],
+      tabItems: const [
+        RitmoTabItem(
+          title: 'هفتهٔ من',
+          icon: CupertinoIcons.calendar_today,
+          value: 0,
+        ),
+        RitmoTabItem(
+          title: 'اهداف',
+          icon: CupertinoIcons.flag_fill,
+          value: 1,
+        ),
+      ],
+      tabBuilders: [
+        // Tab 0: Planning Horizons
+        (ctx, scrollController) => isLoading
+            ? Padding(
+                padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 80),
+                child: const RitmoSkeletonList(itemCount: 3),
+              )
+            : PlanningScreen(
+                embedded: true,
+                upcomingTimeline: engineOutput?.upcomingTimeline ?? [],
+                topPadding: contentTopPadding,
+              ),
+
+        // Tab 1: Goals Card List or Tree View
+        (ctx, scrollController) => isLoading
+            ? Padding(
+                padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 80),
+                child: const RitmoSkeletonList(itemCount: 3),
+              )
+            : _controller.showTreeView
+                ? GoalsTreeSection(
+                    header: Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildHeroSection(
+                        activeGoals,
+                        stepsByGoal,
+                        engineOutput,
+                        colors,
+                        isDarkMode,
+                      ),
                     ),
-                    RitmoTabItem(
-                      title: 'اهداف',
-                      icon: CupertinoIcons.flag_fill,
-                      value: 1,
+                    topPadding: contentTopPadding,
+                    goals: activeGoals,
+                    stepsByGoal: stepsByGoal,
+                    progressMap: engineOutput?.goalProgress ?? {},
+                    routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
+                    routines: routines,
+                    onRefresh: () => _controller.reload(force: true),
+                    onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
+                    onDeleteGoal: (goalId) async {
+                      await GoalsRepository.instance.deleteGoal(goalId);
+                    },
+                    onEditGoal: (goal) {
+                      _showCreateGoalSheet(editGoal: goal);
+                    },
+                  )
+                : GoalsCardListSection(
+                    header: Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildHeroSection(
+                        activeGoals,
+                        stepsByGoal,
+                        engineOutput,
+                        colors,
+                        isDarkMode,
+                      ),
                     ),
-                  ],
-                  selectedIndex: _tabController.index.clamp(0, 1),
-                  onTabChanged: (index) {
-                    _tabController.animateTo(index);
-                    _controller.setTabIndex(index);
-                    _syncHeaderWithActiveTab(index, animate: true);
-                    setState(() {});
-                  },
-                  accentColor: colors.primary,
-                  height: 46.0,
-                )
-              : null,
-        );
-      },
+                    topPadding: contentTopPadding,
+                    goals: goals,
+                    stepsByGoal: stepsByGoal,
+                    progressMap: engineOutput?.goalProgress ?? {},
+                    routineStatusMap: engineOutput?.linkedRoutineStatus ?? {},
+                    routines: routines,
+                    courses: courses,
+                    onRefresh: () => _controller.reload(force: true),
+                    onToggleStep: (step, goalId) => _handleToggleStep(step, goalId),
+                    onDeleteGoal: (goalId) async {
+                      await GoalsRepository.instance.deleteGoal(goalId);
+                    },
+                    onEditGoal: (goal) {
+                      _showCreateGoalSheet(editGoal: goal);
+                    },
+                  ),
+      ],
     );
   }
 

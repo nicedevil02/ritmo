@@ -194,15 +194,12 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet>
         ? (-_deviceHeading! * (math.pi / 180.0))
         : 0.0;
 
-    return Container(
+    return SizedBox(
       height: 520,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        children: [
+      child: RitmoGlassSheet(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          children: [
           // Drag Handle
           Container(
             width: 36,
@@ -512,6 +509,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet>
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

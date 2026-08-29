@@ -10,6 +10,7 @@ import 'package:ritmo/core/services/prayer_time_provider.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:ritmo/features/worship/logic/prayer_reminder_scheduler.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
@@ -245,12 +246,11 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoTheme.glassCardLight(
-        borderRadius: 28,
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.92),
-          ),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.92),
+        ),
+        child: RitmoGlassSheet(
           padding: EdgeInsets.fromLTRB(
             20,
             16,
@@ -944,27 +944,7 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
     required bool isDark,
     required List<Widget> children,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark
-            ? colors.surface
-            : colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colors.border.withValues(alpha: 0.6),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.2)
-                : colors.shadow.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return RitmoCard.neumorphic(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,

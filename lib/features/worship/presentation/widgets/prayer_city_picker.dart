@@ -494,12 +494,11 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
         padding: EdgeInsets.only(bottom: viewInsetsBottom),
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOutCubic,
-        child: RitmoTheme.glassCardLight(
-          borderRadius: 28,
-          child: Container(
-            constraints: BoxConstraints(
-              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.88),
-            ),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.88),
+          ),
+          child: RitmoGlassSheet(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

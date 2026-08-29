@@ -6,6 +6,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
@@ -196,39 +197,12 @@ class _MustahabSectionState extends State<MustahabSection> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(32),
-          color: isDark
-              ? colors.surface
-              : colors.surface,
-          border: Border.all(
-            color: isDark
-                ? colors.border
-                : colors.border,
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.28)
-                  : colors.shadow.withValues(alpha: 0.08),
-              blurRadius: 35,
-              spreadRadius: 0,
-              offset: const Offset(0, 12),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(32),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Integrated Header Inside the Card
-                Row(
+      child: RitmoCard.neumorphic(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Integrated Header Inside the Card
+            Row(
                   children: [
                     // right side: icon + title + subtitle
                     Expanded(
@@ -598,10 +572,8 @@ class _MustahabSectionState extends State<MustahabSection> {
           ],
         ),
       ),
-    ),
-  ),
-);
-}
+    );
+  }
 }
 
 class ManageMustahabSheet extends StatefulWidget {

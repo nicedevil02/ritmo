@@ -240,7 +240,7 @@ class _WorshipScreenState extends State<WorshipScreen>
                   },
                   child: (_isLoading && _worshipDay == null)
                       ? Padding(
-                          padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                          padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 100),
                           child: const RitmoSkeletonCard(height: 320),
                         )
                       : TabBarView(
@@ -251,7 +251,7 @@ class _WorshipScreenState extends State<WorshipScreen>
                             _WorshipTabKeepAlive(
                               child: ListView(
                                 physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                                padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                                padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 100),
                                 children: [
                                   if (_worshipDay != null) ...[
                                     // 1. PRAYER ARC HERO
@@ -317,7 +317,7 @@ class _WorshipScreenState extends State<WorshipScreen>
                             _WorshipTabKeepAlive(
                               child: ListView(
                                 physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                                padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                                padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 100),
                                 children: [
                                   // 1. SOLAR / LUNAR INTEGRATED CALENDAR
                                   WorshipSolarCalendar(
@@ -340,7 +340,7 @@ class _WorshipScreenState extends State<WorshipScreen>
                             _WorshipTabKeepAlive(
                               child: ListView(
                                 physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                                padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                                padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 100),
                                 children: [
                                   // DEBTS ("سامانه قضای نماز و روزه")
                                   WorshipDebtsSection(

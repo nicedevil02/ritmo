@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/worship/logic/worship_calendar_logic.dart';
 import 'package:ritmo/features/worship/logic/worship_occasions_data.dart';
 import 'package:ritmo/features/worship/presentation/widgets/worship_day_detail_panel.dart';
@@ -120,10 +121,8 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
         (d) => d.isToday && d.isCurrentMonth,
         orElse: () => _monthData.days.firstWhere((d) => d.isCurrentMonth),
       );
+      widget.onDaySelected?.call(_selectedDay);
     });
-    if (widget.onDaySelected != null) {
-      widget.onDaySelected!(_selectedDay);
-    }
   }
 
   void _selectFirstValidDay() {
@@ -131,9 +130,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
       (d) => d.isToday && d.isCurrentMonth,
       orElse: () => _monthData.days.firstWhere((d) => d.isCurrentMonth),
     );
-    if (widget.onDaySelected != null) {
-      widget.onDaySelected!(_selectedDay);
-    }
+    widget.onDaySelected?.call(_selectedDay);
   }
 
   void _onSelectDay(WorshipCalendarDay day) {
@@ -141,14 +138,13 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
     setState(() {
       _selectedDay = day;
     });
-    if (widget.onDaySelected != null) {
-      widget.onDaySelected!(day);
-    }
+    widget.onDaySelected?.call(day);
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isSelectedToday = _selectedDay.isToday && _selectedDay.isCurrentMonth;
 
     // Calculate displayed days: Full month or selected week row
     final selectedIdx = _monthData.days.indexWhere(
@@ -163,38 +159,12 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
         ? _monthData.days.sublist(weekStart, weekStart + 7)
         : _monthData.days;
 
-    final nowJ = Jalali.now();
-    final isSelectedToday = _selectedDay.isToday &&
-        _selectedDay.isCurrentMonth &&
-        _selectedYear == nowJ.year &&
-        _selectedMonth == nowJ.month;
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       children: [
         // Main Premium Solar Calendar Surface Card
-        Container(
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(32),
-            color: isDark ? colors.surface : colors.surface,
-            border: Border.all(
-              color: isDark ? colors.border : colors.border,
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.28)
-                    : colors.shadow.withValues(alpha: 0.08),
-                blurRadius: 35,
-                spreadRadius: 0,
-                offset: const Offset(0, 12),
-              ),
-            ],
-          ),
+        RitmoCard.neumorphic(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -368,6 +338,8 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
             ],
           ),
         ),
+
+        const SizedBox(height: 16),
 
         // Reactive Detail Panel for Selected Day
         WorshipDayDetailPanel(

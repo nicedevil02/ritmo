@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/features/worship/presentation/widgets/fullscreen_tasbih_sheet.dart';
 import 'package:ritmo/features/routines/presentation/widgets/confetti_widget.dart';
@@ -791,43 +792,19 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
 
     final maxCount = weeklyValues.fold<int>(1, (prev, elem) => elem > prev ? elem : prev);
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
-        color: isDark ? colors.surface : colors.surface,
-        border: Border.all(
-          color: isGoalMet
-              ? colors.success.withValues(alpha: isDark ? 0.5 : 0.6)
-              : (isDark ? colors.border : colors.border),
-          width: isGoalMet ? 1.5 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isGoalMet
-                ? colors.success.withValues(alpha: isDark ? 0.22 : 0.15)
-                : (isDark
-                    ? Colors.black.withValues(alpha: 0.28)
-                    : colors.shadow.withValues(alpha: 0.08)),
-            blurRadius: isGoalMet ? 38 : 35,
-            spreadRadius: isGoalMet ? 1 : 0,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
-        child: Stack(
-          children: [
-            // Ambient celebratory background halo when goal is met
-            if (isGoalMet)
-              Positioned(
-                right: -25,
-                top: 40,
-                child: IgnorePointer(
-                  child: Container(
-                    width: 190,
-                    height: 190,
+    return RitmoCard.neumorphic(
+      padding: EdgeInsets.zero,
+      child: Stack(
+        children: [
+          // Ambient celebratory background halo when goal is met
+          if (isGoalMet)
+            Positioned(
+              right: -25,
+              top: 40,
+              child: IgnorePointer(
+                child: Container(
+                  width: 190,
+                  height: 190,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
@@ -1314,9 +1291,8 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
               ),
           ],
         ),
-      ),
-    );
-  }
+      );
+    }
 
   Widget _buildDhikrCard(RitmoColors colors) {
     if (_dhikrs.isEmpty) return const SizedBox();
@@ -1341,34 +1317,10 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     final phrase =
         isZahra ? _zahraPhrases[_zahraStep] : activePractice.title;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
-        color: isDark
-            ? colors.surface
-            : colors.surface,
-        border: Border.all(
-          color: isDark
-              ? colors.border
-              : colors.border,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.28)
-                : colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 35,
-            spreadRadius: 0,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
-        child: Stack(
-          children: [
+    return RitmoCard.neumorphic(
+      padding: EdgeInsets.zero,
+      child: Stack(
+        children: [
             // ============================================================
             // BACKGROUND DECORATION
             // ============================================================
@@ -2037,9 +1989,8 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
           ),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
 
 TextStyle _stepLabelStyle({
   required bool isActive,

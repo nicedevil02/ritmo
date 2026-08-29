@@ -8,6 +8,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart' hide toPersianDigits;
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -269,12 +270,11 @@ class _WorshipReminderSettingsSheetState
       textDirection: TextDirection.rtl,
       child: FadeTransition(
         opacity: _fadeAnim,
-        child: RitmoTheme.glassCardLight(
-          borderRadius: 28,
-          child: Container(
-            constraints: BoxConstraints(
-              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
-            ),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+          ),
+          child: RitmoGlassSheet(
             padding: EdgeInsets.fromLTRB(
                 20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 16),
             child: Column(
@@ -395,16 +395,8 @@ class _WorshipReminderSettingsSheetState
     required Color cardBg,
     required Widget child,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.04)
-              : colors.border,
-        ),
-      ),
+    return RitmoCard.neumorphic(
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

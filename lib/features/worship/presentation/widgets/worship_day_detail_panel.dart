@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/worship/domain/prayer_target.dart';
 import 'package:ritmo/features/worship/logic/mafatih_weekly_acts.dart';
 import 'package:ritmo/features/worship/logic/worship_calendar_logic.dart';
@@ -395,36 +396,10 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
     final fullDateText =
         '$weekdayName، ${toPersianDigits(j.day.toString())} ${selectedDay.jalali.formatter.mN} ${toPersianDigits(j.year.toString())}  •  ${toPersianDigits(dt.day.toString())} $gMonthName  •  ${h.formatted}';
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 250),
-      child: Container(
+      child: RitmoCard.neumorphic(
         key: ValueKey('${j.year}-${j.month}-${j.day}'),
-        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(32),
-          color: isDark
-              ? colors.surface
-              : colors.surface,
-          border: Border.all(
-            color: isDark
-                ? colors.border
-                : colors.border,
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.28)
-                  : colors.shadow.withValues(alpha: 0.08),
-              blurRadius: 35,
-              spreadRadius: 0,
-              offset: const Offset(0, 12),
-            ),
-          ],
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

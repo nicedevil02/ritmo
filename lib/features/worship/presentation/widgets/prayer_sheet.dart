@@ -1,9 +1,9 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/completion/completion_gateway.dart';
 import 'package:ritmo/core/domain/completion/completion_request.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/worship/domain/prayer_log_quality.dart';
 import 'package:ritmo/features/worship/domain/prayer_target.dart';
 import 'package:ritmo/features/worship/logic/worship_cache_bus.dart';
@@ -114,248 +114,184 @@ class _PrayerSheetState extends State<PrayerSheet> {
     WorshipCacheBus.invalidateAll(dateStr: dateStr);
     nav.pop(true);
   }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
-    final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
-    const sheetRadius = BorderRadius.vertical(top: Radius.circular(32));
 
-    final content = Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Grab Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.border.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.target.titleFa,
-                        style: TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _startTime != null ? 'اذان: ${_formatTime(_startTime)}' : 'ثبت مستقیم با لمس گزینه',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: Icon(Icons.close_rounded, color: colors.textSecondary),
-                    style: IconButton.styleFrom(
-                      backgroundColor: colors.surfaceSunken.withValues(alpha: isDark ? 0.5 : 0.7),
-                      padding: const EdgeInsets.all(8),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              if (_isLoading)
-                Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: CircularProgressIndicator(color: colors.primary),
-                )
-              else ...[
-                if (_isExempt)
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.shield_rounded, color: colors.primary, size: 22),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'وضعیت معافیت شرعی فعال است',
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: colors.primary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'در این دوران خواندن نماز تکلیف شرعی ندارد.',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  color: colors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                if (_isFuture)
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info_outline_rounded, color: colors.primary, size: 22),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'هنوز وقت این نماز نرسیده است',
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: colors.primary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'زمان اذان: ${_formatTime(_startTime)}',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  color: colors.primary.withValues(alpha: 0.8),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                _buildOptionCard(
-                  context,
-                  quality: PrayerLogQuality.onTime,
-                  title: 'اول وقت (فضیلت)',
-                  subtitle: 'خوندن در بازه زمانی طلایی فضیلت اول وقت',
-                  icon: Icons.stars_rounded,
-                  accentColor: colors.success,
-                  isDisabled: _isFuture,
-                  disabledReason: 'وقت اذان نرسیده',
-                ),
-                const SizedBox(height: 10),
-                _buildOptionCard(
-                  context,
-                  quality: PrayerLogQuality.inTime,
-                  title: 'در وقت مقرر',
-                  subtitle: 'خوندن ادا قبل از پایان زمان شرعی',
-                  icon: Icons.check_circle_rounded,
-                  accentColor: colors.warning,
-                  isDisabled: _isFuture,
-                  disabledReason: 'وقت اذان نرسیده',
-                ),
-                const SizedBox(height: 10),
-                _buildOptionCard(
-                  context,
-                  quality: PrayerLogQuality.qada,
-                  title: 'نماز قضا',
-                  subtitle: _isDeadlinePassed
-                      ? 'ثبت به عنوان نماز قضاشده بعد از وقت'
-                      : 'هنوز وقت خواندن نماز باقیست (مهلت: ${_formatTime(_deadlineTime)})',
-                  icon: Icons.history_rounded,
-                  accentColor: colors.error,
-                  isDisabled: !_isDeadlinePassed,
-                  disabledReason: 'هنوز وقت خواندن نماز باقیست',
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-
-    final sheetBody = Directionality(
+    return Directionality(
       textDirection: TextDirection.rtl,
-      child: content,
-    );
-
-    if (!isGlass) {
-      return Container(
-        decoration: BoxDecoration(
-          color: colors.surfaceElevated,
-          borderRadius: sheetRadius,
-          border: Border.all(
-            color: isDark ? colors.border : colors.divider,
-            width: 1.0,
-          ),
-        ),
-        child: sheetBody,
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: sheetRadius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.glassTint,
-            borderRadius: sheetRadius,
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.18)
-                  : Colors.white.withValues(alpha: 0.70),
-              width: 1.0,
-            ),
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: sheetRadius,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withValues(
-                    alpha: isDark ? 0.08 : 0.20,
+      child: RitmoGlassSheet(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Grab Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                  Colors.white.withValues(alpha: 0.0),
+                ),
+                const SizedBox(height: 16),
+
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.target.titleFa,
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _startTime != null ? 'اذان: ${_formatTime(_startTime)}' : 'ثبت مستقیم با لمس گزینه',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(Icons.close_rounded, color: colors.textSecondary),
+                      style: IconButton.styleFrom(
+                        backgroundColor: colors.surfaceSunken.withValues(alpha: isDark ? 0.5 : 0.7),
+                        padding: const EdgeInsets.all(8),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                if (_isLoading)
+                  Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: CircularProgressIndicator(color: colors.primary),
+                  )
+                else ...[
+                  if (_isExempt)
+                    RitmoCard.neumorphicSunken(
+                      padding: const EdgeInsets.all(14),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Row(
+                        children: [
+                          Icon(Icons.shield_rounded, color: colors.primary, size: 22),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'وضعیت معافیت شرعی فعال است',
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'در این دوران خواندن نماز تکلیف شرعی ندارد.',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: colors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (_isFuture)
+                    RitmoCard.neumorphicSunken(
+                      padding: const EdgeInsets.all(14),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline_rounded, color: colors.primary, size: 22),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'هنوز وقت این نماز نرسیده است',
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'زمان اذان: ${_formatTime(_startTime)}',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: colors.primary.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  _buildOptionCard(
+                    context,
+                    quality: PrayerLogQuality.onTime,
+                    title: 'اول وقت (فضیلت)',
+                    subtitle: 'خوندن در بازه زمانی طلایی فضیلت اول وقت',
+                    icon: Icons.stars_rounded,
+                    accentColor: colors.success,
+                    isDisabled: _isFuture,
+                    disabledReason: 'وقت اذان نرسیده',
+                  ),
+                  const SizedBox(height: 10),
+                  _buildOptionCard(
+                    context,
+                    quality: PrayerLogQuality.inTime,
+                    title: 'در وقت مقرر',
+                    subtitle: 'خوندن ادا قبل از پایان زمان شرعی',
+                    icon: Icons.check_circle_rounded,
+                    accentColor: colors.warning,
+                    isDisabled: _isFuture,
+                    disabledReason: 'وقت اذان نرسیده',
+                  ),
+                  const SizedBox(height: 10),
+                  _buildOptionCard(
+                    context,
+                    quality: PrayerLogQuality.qada,
+                    title: 'نماز قضا',
+                    subtitle: _isDeadlinePassed
+                        ? 'ثبت به عنوان نماز قضاشده بعد از وقت'
+                        : 'هنوز وقت خواندن نماز باقیست (مهلت: ${_formatTime(_deadlineTime)})',
+                    icon: Icons.history_rounded,
+                    accentColor: colors.error,
+                    isDisabled: !_isDeadlinePassed,
+                    disabledReason: 'هنوز وقت خواندن نماز باقیست',
+                  ),
                 ],
-                stops: const [0.0, 0.45],
-              ),
+              ],
             ),
-            child: sheetBody,
           ),
         ),
       ),
@@ -373,82 +309,58 @@ class _PrayerSheetState extends State<PrayerSheet> {
     String? disabledReason,
   }) {
     final colors = context.colors;
-    final isDark = context.isDark;
     final effectiveColor = isDisabled ? colors.textTertiary : accentColor;
 
     return Opacity(
       opacity: isDisabled ? 0.5 : 1.0,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isDisabled ? null : () => _submitQuality(quality),
-          borderRadius: BorderRadius.circular(16),
-          splashColor: isDisabled ? null : accentColor.withValues(alpha: 0.15),
-          highlightColor: isDisabled ? null : accentColor.withValues(alpha: 0.08),
-          child: Ink(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: colors.surfaceSunken.withValues(alpha: isDark ? 0.45 : 0.65),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: effectiveColor.withValues(alpha: isDisabled ? 0.15 : 0.35),
-                width: 1.2,
+      child: RitmoCard.neumorphic(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        onTap: isDisabled ? null : () => _submitQuality(quality),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: effectiveColor.withValues(alpha: 0.15),
               ),
-              boxShadow: isDisabled ? null : [
-                BoxShadow(
-                  color: accentColor.withValues(alpha: 0.08),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+              child: Icon(
+                isDisabled ? Icons.lock_outline_rounded : icon,
+                color: effectiveColor,
+                size: 22,
+              ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: effectiveColor.withValues(alpha: 0.15),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: isDisabled ? colors.textTertiary : colors.textPrimary,
+                    ),
                   ),
-                  child: Icon(
-                    isDisabled ? Icons.lock_outline_rounded : icon,
-                    color: effectiveColor,
-                    size: 22,
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDisabled ? colors.textTertiary : colors.textSecondary,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: isDisabled ? colors.textTertiary : colors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDisabled ? colors.textTertiary : colors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  isDisabled ? Icons.lock_outline_rounded : Icons.arrow_back_ios_new_rounded,
-                  size: 14,
-                  color: colors.textTertiary,
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+            Icon(
+              isDisabled ? Icons.lock_outline_rounded : Icons.arrow_back_ios_new_rounded,
+              size: 14,
+              color: colors.textTertiary,
+            ),
+          ],
         ),
       ),
     );

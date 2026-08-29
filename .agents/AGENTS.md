@@ -24,3 +24,16 @@
 - After verifying changes with `flutter analyze`, commit the modified files with a clear, descriptive Git message.
 - **Targeted Staging Only**: ALWAYS stage only the specific files modified by the task (e.g. `git add path/to/file.dart`). NEVER run blanket staging commands like `git add .`, `git add -A`, or `git commit -a` so ongoing work by other concurrent agents or human dev is never polluted or committed prematurely.
 - **Strictly No Destructive Commands**: NEVER run `git reset --hard`, `git checkout .`, `git restore .`, or `git clean -fd` as they destroy uncommitted work from concurrent agents.
+
+## 6. Ritmo Canonical Reference System (Cards, Sheets & UI Primitives)
+When building, updating, or refactoring UI components across Ritmo, ALWAYS use the official canonical design primitives defined in `lib/core/widgets/ritmo/` and showcased in `lib/features/settings/presentation/cards_showcase_screen.dart`:
+- **Master Hero Dashboard Card**: Use `RitmoNeuMasterCard` for top active realm, 24h dial, and time-block hero widgets (maintains the 3.2s ambient breathing halo).
+- **Raised Module Cards**: Use `RitmoCard.neumorphic` with atomic sub-widgets (`RitmoCardHeader`, `RitmoCardTile`, `RitmoCardBadge`, `RitmoCardDivider`) for data modules and routines.
+- **Selectable / Toggle Cards**: Use `RitmoCard.neumorphic(isSelected: isSelected)` for multi-option selectors, cycle phases, and calendar day selection.
+- **Sunken / Inset Surfaces**: Use `RitmoCard.neumorphicSunken` for input containers, note boxes, previews, and deep concave wells.
+- **Tactile 3D Buttons**: Use `RitmoNeuButton` (with physical raised-to-sunken depression and haptic feedback) instead of flat material buttons.
+- **Sunken Progress Bars**: Use `RitmoNeuProgressBar` for goal progress, energy charge, habits, and time intervals.
+- **Loading Skeletons**: Use `RitmoCardSkeleton` during async/database/AI fetch to prevent layout shifts (Zero Layout Shift).
+- **Empty States**: Use `RitmoNeuEmptyCard` with sunken circle icon and clear Call-To-Action button for empty lists/data.
+- **Canonical Glass Sheets & Modals**: ALWAYS present bottom sheets via `RitmoGlassSheet` (live blur, ambient glow halo, Apple top drag handle) or `RitmoPickerSheet` for search/pickers. Never use flat default Material dialogs.
+

@@ -74,12 +74,25 @@ class WellbeingScreen extends StatefulWidget {
 }
 
 class _WellbeingScreenState extends State<WellbeingScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   bool _hasLoadedOnce = false;
   bool _loadFailed = false;
   bool _isDirty = false;
   int _loadToken = 0;
   int _selectedHorizonDays = 14;
+
+  late AnimationController _headerMorphAnimCtrl;
+  Animation<double>? _headerMorphAnim;
+
+  // Multi-Tab Scroll Synchronization Controllers & State
+  final List<ScrollController> _tabScrollControllers = [
+    ScrollController(),
+    ScrollController(),
+    ScrollController(),
+  ];
+  final List<double> _tabOffsets = [0.0, 0.0, 0.0];
+  final List<bool> _tabExpanded = [true, true, true];
+
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
   final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
   double _accumulatedUpScroll = 0.0;
@@ -126,11 +139,35 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   @override
   void initState() {
     super.initState();
+    _headerMorphAnimCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _headerMorphAnimCtrl.addListener(() {
+      if (_headerMorphAnim != null) {
+        _scrollOffset.value = _headerMorphAnim!.value;
+      }
+    });
+
     _tabController = TabController(
       length: 3,
       vsync: this,
       initialIndex: widget.initialSection.index.clamp(0, 2),
     );
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging ||
+          _tabController.animation?.value == _tabController.index.toDouble()) {
+        _syncHeaderWithActiveTab(_tabController.index, animate: true);
+        if (mounted) setState(() {});
+      }
+    });
+    _tabController.animation?.addListener(() {
+      final value = _tabController.animation?.value ?? 0.0;
+      final roundIndex = value.round().clamp(0, 2);
+      if ((value - roundIndex).abs() < 0.05 && _tabController.index == roundIndex) {
+        _syncHeaderWithActiveTab(roundIndex, animate: true);
+      }
+    });
 
     RitmoEvents.routineChanges.addListener(_requestReload);
 
@@ -147,24 +184,96 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_isDirty && mounted && ModalRoute.of(context)?.isCurrent == true) {
-      _isDirty = false;
-      _requestReload();
-    }
-  }
-
-  @override
   void dispose() {
+    _headerMorphAnimCtrl.dispose();
+    for (final controller in _tabScrollControllers) {
+      controller.dispose();
+    }
+    _tabController.dispose();
     _scrollOffset.dispose();
     _isTabsExpanded.dispose();
     _reloadDebounce?.cancel();
     _loadToken++;
     RitmoEvents.routineChanges.removeListener(_requestReload);
     _eventSub?.cancel();
-    _tabController.dispose();
     super.dispose();
+  }
+
+  void _syncHeaderWithActiveTab(int activeIndex, {bool animate = true}) {
+    if (activeIndex < 0 || activeIndex >= _tabOffsets.length) return;
+    final controller = _tabScrollControllers[activeIndex];
+    final targetOffset = controller.hasClients ? controller.offset : _tabOffsets[activeIndex];
+    _tabOffsets[activeIndex] = targetOffset;
+
+    final currentOffset = _scrollOffset.value;
+    final isExpanded = targetOffset <= 75.0 || _tabExpanded[activeIndex];
+    _isTabsExpanded.value = isExpanded;
+    _accumulatedUpScroll = 0.0;
+
+    if (animate && (targetOffset - currentOffset).abs() > 1.0) {
+      _headerMorphAnimCtrl.stop();
+      _headerMorphAnim = Tween<double>(
+        begin: currentOffset,
+        end: targetOffset,
+      ).animate(
+        CurvedAnimation(
+          parent: _headerMorphAnimCtrl,
+          curve: Curves.easeOutCubic,
+        ),
+      );
+      _headerMorphAnimCtrl.forward(from: 0.0);
+    } else {
+      _headerMorphAnimCtrl.stop();
+      _scrollOffset.value = targetOffset;
+    }
+  }
+
+  void _onTabScroll(int tabIndex, ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return;
+    final pixels = notification.metrics.pixels;
+    _tabOffsets[tabIndex] = pixels;
+
+    // Only update the active header if this scroll notification came from the currently visible tab
+    if (_tabController.index == tabIndex) {
+      if (_headerMorphAnimCtrl.isAnimating) {
+        _headerMorphAnimCtrl.stop();
+      }
+      _scrollOffset.value = pixels;
+
+      if (pixels <= 20) {
+        _accumulatedUpScroll = 0.0;
+        if (!_isTabsExpanded.value) {
+          _isTabsExpanded.value = true;
+          _tabExpanded[tabIndex] = true;
+        }
+      } else if (notification is ScrollUpdateNotification) {
+        final delta = notification.scrollDelta ?? 0.0;
+        if (delta > 1.0) {
+          _accumulatedUpScroll = 0.0;
+          if (pixels > 75 && _isTabsExpanded.value) {
+            _isTabsExpanded.value = false;
+            _tabExpanded[tabIndex] = false;
+          }
+        } else if (delta < -1.0) {
+          _accumulatedUpScroll += -delta;
+          if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
+            _isTabsExpanded.value = true;
+            _tabExpanded[tabIndex] = true;
+          }
+        }
+      } else if (notification is ScrollEndNotification) {
+        _accumulatedUpScroll = 0.0;
+      }
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_isDirty && mounted && ModalRoute.of(context)?.isCurrent == true) {
+      _isDirty = false;
+      _requestReload();
+    }
   }
 
   void _requestReload() {
@@ -663,47 +772,40 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       backgroundColor: colors.background,
       body: Stack(
         children: [
-          // Layer 1: Body Content (NotificationListener for Instant Quick-Return Header)
+          // Layer 1: Body Content
           Positioned.fill(
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (notification) {
-                if (notification.metrics.axis == Axis.vertical) {
-                  final pixels = notification.metrics.pixels;
-                  _scrollOffset.value = pixels;
-
-                  if (pixels <= 20) {
-                    _accumulatedUpScroll = 0.0;
-                    if (!_isTabsExpanded.value) _isTabsExpanded.value = true;
-                  } else if (notification is ScrollUpdateNotification) {
-                    final delta = notification.scrollDelta ?? 0.0;
-                    if (delta > 1.0) {
-                      // اسکرول پیوسته و بدون وقفه به سمت پایین
-                      _accumulatedUpScroll = 0.0;
-                      if (pixels > 75 && _isTabsExpanded.value) {
-                        _isTabsExpanded.value = false;
-                      }
-                    } else if (delta < -1.0) {
-                      // اسکرول رو به بالا با آستانه هوشمند برای حذف لرزش دست
-                      _accumulatedUpScroll += -delta;
-                      if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
-                        _isTabsExpanded.value = true;
-                      }
-                    }
-                  } else if (notification is ScrollEndNotification) {
-                    _accumulatedUpScroll = 0.0;
-                  }
-                }
-                return false;
-              },
-              child: TabBarView(
-                controller: _tabController,
-                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                children: [
-                  _WellbeingTabKeepAlive(child: _buildTodayTab(context, contentTopPadding)),
-                  _WellbeingTabKeepAlive(child: _buildSleepTab(context, contentTopPadding)),
-                  _WellbeingTabKeepAlive(child: _buildEnergyTab(context, contentTopPadding)),
-                ],
-              ),
+            child: TabBarView(
+              controller: _tabController,
+              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+              children: [
+                _WellbeingTabKeepAlive(
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (n) {
+                      _onTabScroll(0, n);
+                      return false;
+                    },
+                    child: _buildTodayTab(context, contentTopPadding),
+                  ),
+                ),
+                _WellbeingTabKeepAlive(
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (n) {
+                      _onTabScroll(1, n);
+                      return false;
+                    },
+                    child: _buildSleepTab(context, contentTopPadding),
+                  ),
+                ),
+                _WellbeingTabKeepAlive(
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (n) {
+                      _onTabScroll(2, n);
+                      return false;
+                    },
+                    child: _buildEnergyTab(context, contentTopPadding),
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -782,6 +884,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                     selectedIndex: _tabController.index.clamp(0, 2),
                     onTabChanged: (index) {
                       _tabController.animateTo(index);
+                      _syncHeaderWithActiveTab(index);
                       setState(() {});
                     },
                     accentColor: colors.primary,
@@ -804,6 +907,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     final snapshot = _insightSnapshot;
 
     return CustomScrollView(
+      controller: _tabScrollControllers[0],
       physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       slivers: [
         SliverPadding(
@@ -973,6 +1077,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
         return false;
       },
       child: CustomScrollView(
+        controller: _tabScrollControllers[1],
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         slivers: [
           SliverPadding(
@@ -1020,6 +1125,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
   Widget _buildEnergyTab(BuildContext context, [double topPadding = 16.0]) {
     return CustomScrollView(
+      controller: _tabScrollControllers[2],
       physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       slivers: [
         SliverPadding(

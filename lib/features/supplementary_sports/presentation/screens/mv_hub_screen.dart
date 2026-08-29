@@ -26,9 +26,16 @@ class MvHubScreen extends StatefulWidget {
   State<MvHubScreen> createState() => _MvHubScreenState();
 }
 
-class _MvHubScreenState extends State<MvHubScreen> {
+class _MvHubScreenState extends State<MvHubScreen> with SingleTickerProviderStateMixin {
   late final MvHubController _controller;
   int _selectedTabIndex = 0;
+
+  late AnimationController _headerMorphAnimCtrl;
+  Animation<double>? _headerMorphAnim;
+
+  final List<double> _tabOffsets = [0.0, 0.0, 0.0];
+  final List<bool> _tabExpanded = [true, true, true];
+
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
   final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
   double _accumulatedUpScroll = 0.0;
@@ -37,6 +44,16 @@ class _MvHubScreenState extends State<MvHubScreen> {
   @override
   void initState() {
     super.initState();
+    _headerMorphAnimCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _headerMorphAnimCtrl.addListener(() {
+      if (_headerMorphAnim != null) {
+        _scrollOffset.value = _headerMorphAnim!.value;
+      }
+    });
+
     _controller = widget.controller ?? MvHubController();
     _controller.addListener(_onControllerUpdated);
     _controller.loadAllData();
@@ -44,6 +61,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
 
   @override
   void dispose() {
+    _headerMorphAnimCtrl.dispose();
     _scrollOffset.dispose();
     _isTabsExpanded.dispose();
     if (widget.controller == null) {
@@ -52,6 +70,72 @@ class _MvHubScreenState extends State<MvHubScreen> {
       _controller.removeListener(_onControllerUpdated);
     }
     super.dispose();
+  }
+
+  void _syncHeaderWithActiveTab(int activeIndex, {bool animate = true}) {
+    if (activeIndex < 0 || activeIndex >= _tabOffsets.length) return;
+    final targetOffset = _tabOffsets[activeIndex];
+
+    final currentOffset = _scrollOffset.value;
+    final isExpanded = targetOffset <= 75.0 || _tabExpanded[activeIndex];
+    _isTabsExpanded.value = isExpanded;
+    _accumulatedUpScroll = 0.0;
+
+    if (animate && (targetOffset - currentOffset).abs() > 1.0) {
+      _headerMorphAnimCtrl.stop();
+      _headerMorphAnim = Tween<double>(
+        begin: currentOffset,
+        end: targetOffset,
+      ).animate(
+        CurvedAnimation(
+          parent: _headerMorphAnimCtrl,
+          curve: Curves.easeOutCubic,
+        ),
+      );
+      _headerMorphAnimCtrl.forward(from: 0.0);
+    } else {
+      _headerMorphAnimCtrl.stop();
+      _scrollOffset.value = targetOffset;
+    }
+  }
+
+  void _onTabScroll(int tabIndex, ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return;
+    final pixels = notification.metrics.pixels;
+    _tabOffsets[tabIndex] = pixels;
+
+    // Only update the active header if this scroll notification came from the currently visible tab
+    if (_selectedTabIndex == tabIndex) {
+      if (_headerMorphAnimCtrl.isAnimating) {
+        _headerMorphAnimCtrl.stop();
+      }
+      _scrollOffset.value = pixels;
+
+      if (pixels <= 20) {
+        _accumulatedUpScroll = 0.0;
+        if (!_isTabsExpanded.value) {
+          _isTabsExpanded.value = true;
+          _tabExpanded[tabIndex] = true;
+        }
+      } else if (notification is ScrollUpdateNotification) {
+        final delta = notification.scrollDelta ?? 0.0;
+        if (delta > 1.0) {
+          _accumulatedUpScroll = 0.0;
+          if (pixels > 75 && _isTabsExpanded.value) {
+            _isTabsExpanded.value = false;
+            _tabExpanded[tabIndex] = false;
+          }
+        } else if (delta < -1.0) {
+          _accumulatedUpScroll += -delta;
+          if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
+            _isTabsExpanded.value = true;
+            _tabExpanded[tabIndex] = true;
+          }
+        }
+      } else if (notification is ScrollEndNotification) {
+        _accumulatedUpScroll = 0.0;
+      }
+    }
   }
 
   late final MvKindUseCase _kindUseCase = MvKindUseCase(_controller.kindRepo);
@@ -315,41 +399,16 @@ class _MvHubScreenState extends State<MvHubScreen> {
         children: [
           // Layer 1: Body Content
           Positioned.fill(
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (notification) {
-                if (notification.metrics.axis == Axis.vertical) {
-                  final pixels = notification.metrics.pixels;
-                  _scrollOffset.value = pixels;
-
-                  if (pixels <= 20) {
-                    _accumulatedUpScroll = 0.0;
-                    if (!_isTabsExpanded.value) _isTabsExpanded.value = true;
-                  } else if (notification is ScrollUpdateNotification) {
-                    final delta = notification.scrollDelta ?? 0.0;
-                    if (delta > 1.0) {
-                      // اسکرول پیوسته و بدون وقفه به سمت پایین
-                      _accumulatedUpScroll = 0.0;
-                      if (pixels > 75 && _isTabsExpanded.value) {
-                        _isTabsExpanded.value = false;
-                      }
-                    } else if (delta < -1.0) {
-                      // اسکرول رو به بالا با آستانه هوشمند برای حذف لرزش دست
-                      _accumulatedUpScroll += -delta;
-                      if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
-                        _isTabsExpanded.value = true;
-                      }
-                    }
-                  } else if (notification is ScrollEndNotification) {
-                    _accumulatedUpScroll = 0.0;
-                  }
-                }
-                return false;
-              },
-              child: IndexedStack(
-                index: _selectedTabIndex,
-                children: [
-                  // Tab 0: امروز
-                  MvTodayTab(
+            child: IndexedStack(
+              index: _selectedTabIndex,
+              children: [
+                // Tab 0: امروز
+                NotificationListener<ScrollNotification>(
+                  onNotification: (n) {
+                    _onTabScroll(0, n);
+                    return false;
+                  },
+                  child: MvTodayTab(
                     weekSlots: _controller.weekSlots,
                     todaySlot: currentSlot,
                     topPadding: contentTopPadding,
@@ -382,9 +441,15 @@ class _MvHubScreenState extends State<MvHubScreen> {
                     onQuickLogSaved: _controller.saveQuickLog,
                     onDateSelected: _controller.selectDate,
                   ),
+                ),
 
-                  // Tab 1: هفته
-                  MvWeekTab(
+                // Tab 1: هفته
+                NotificationListener<ScrollNotification>(
+                  onNotification: (n) {
+                    _onTabScroll(1, n);
+                    return false;
+                  },
+                  child: MvWeekTab(
                     weekSlots: _controller.weekSlots,
                     cycleWeek: _controller.cycleWeek,
                     commitments: _controller.commitments,
@@ -403,9 +468,15 @@ class _MvHubScreenState extends State<MvHubScreen> {
                       );
                     },
                   ),
+                ),
 
-                  // Tab 2: پیشرفت
-                  MvProgressTab(
+                // Tab 2: پیشرفت
+                NotificationListener<ScrollNotification>(
+                  onNotification: (n) {
+                    _onTabScroll(2, n);
+                    return false;
+                  },
+                  child: MvProgressTab(
                     continuousActiveWeeks: _controller.continuousActiveWeeks,
                     totalSessionsCount: _controller.totalSessionsCount,
                     totalMetMinutes: _controller.budgetProgress?.currentMetMinutes ?? 0,
@@ -420,8 +491,8 @@ class _MvHubScreenState extends State<MvHubScreen> {
                         _controller.bodyMapDistribution ??
                         const MvBodyMapDistribution(muscleSessionCounts: {}),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
@@ -529,7 +600,10 @@ class _MvHubScreenState extends State<MvHubScreen> {
                       ),
                     ],
                     selectedIndex: _selectedTabIndex.clamp(0, 2),
-                    onTabChanged: (index) => setState(() => _selectedTabIndex = index),
+                    onTabChanged: (index) {
+                      _syncHeaderWithActiveTab(index, animate: true);
+                      setState(() => _selectedTabIndex = index);
+                    },
                     accentColor: accentColor,
                     height: 46.0,
                   ),

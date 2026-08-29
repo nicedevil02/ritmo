@@ -70,7 +70,8 @@ class _CycleScreenContent extends StatefulWidget {
   State<_CycleScreenContent> createState() => _CycleScreenContentState();
 }
 
-class _CycleScreenContentState extends State<_CycleScreenContent> {
+class _CycleScreenContentState extends State<_CycleScreenContent>
+    with TickerProviderStateMixin {
   bool _isLoading = true;
   Map<String, String> _settings = {};
   List<Map<String, dynamic>> _periods = [];
@@ -88,6 +89,13 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   CycleAdaptiveAdvice? _adaptiveAdvice;
   Jalali _calendarMonth = Jalali.fromDateTime(CycleClock.now);
   final GlobalKey _calendarKey = GlobalKey();
+
+  late AnimationController _headerMorphAnimCtrl;
+  Animation<double>? _headerMorphAnim;
+  final ScrollController _scrollController = ScrollController();
+  final List<double> _tabOffsets = [0.0, 0.0, 0.0, 0.0];
+  final List<bool> _tabExpanded = [true, true, true, true];
+
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
   final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
   double _accumulatedUpScroll = 0.0;
@@ -95,6 +103,16 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   @override
   void initState() {
     super.initState();
+    _headerMorphAnimCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _headerMorphAnimCtrl.addListener(() {
+      if (_headerMorphAnim != null) {
+        _scrollOffset.value = _headerMorphAnim!.value;
+      }
+    });
+
     _calendarMonth = Jalali.fromDateTime(CycleClock.now);
     CycleStateNotifier.instance.addListener(_onStateNotifierChanged);
     _loadData();
@@ -102,10 +120,84 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
   @override
   void dispose() {
+    _headerMorphAnimCtrl.dispose();
+    _scrollController.dispose();
     CycleStateNotifier.instance.removeListener(_onStateNotifierChanged);
     _scrollOffset.dispose();
     _isTabsExpanded.dispose();
     super.dispose();
+  }
+
+  void _onTabChanged(int newIndex) {
+    if (_activeTab == newIndex) return;
+    final currentOffset = _scrollController.hasClients ? _scrollController.offset : _tabOffsets[_activeTab];
+    _tabOffsets[_activeTab] = currentOffset;
+
+    final targetOffset = _tabOffsets[newIndex];
+    final isExpanded = targetOffset <= 75.0 || _tabExpanded[newIndex];
+    _isTabsExpanded.value = isExpanded;
+    _accumulatedUpScroll = 0.0;
+
+    setState(() {
+      _activeTab = newIndex;
+    });
+
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(targetOffset);
+    }
+
+    if ((targetOffset - currentOffset).abs() > 1.0) {
+      _headerMorphAnimCtrl.stop();
+      _headerMorphAnim = Tween<double>(
+        begin: currentOffset,
+        end: targetOffset,
+      ).animate(
+        CurvedAnimation(
+          parent: _headerMorphAnimCtrl,
+          curve: Curves.easeOutCubic,
+        ),
+      );
+      _headerMorphAnimCtrl.forward(from: 0.0);
+    } else {
+      _headerMorphAnimCtrl.stop();
+      _scrollOffset.value = targetOffset;
+    }
+  }
+
+  void _onScroll(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return;
+    final pixels = notification.metrics.pixels;
+    _tabOffsets[_activeTab] = pixels;
+
+    if (_headerMorphAnimCtrl.isAnimating) {
+      _headerMorphAnimCtrl.stop();
+    }
+    _scrollOffset.value = pixels;
+
+    if (pixels <= 20) {
+      _accumulatedUpScroll = 0.0;
+      if (!_isTabsExpanded.value) {
+        _isTabsExpanded.value = true;
+        _tabExpanded[_activeTab] = true;
+      }
+    } else if (notification is ScrollUpdateNotification) {
+      final delta = notification.scrollDelta ?? 0.0;
+      if (delta > 1.0) {
+        _accumulatedUpScroll = 0.0;
+        if (pixels > 75 && _isTabsExpanded.value) {
+          _isTabsExpanded.value = false;
+          _tabExpanded[_activeTab] = false;
+        }
+      } else if (delta < -1.0) {
+        _accumulatedUpScroll += -delta;
+        if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
+          _isTabsExpanded.value = true;
+          _tabExpanded[_activeTab] = true;
+        }
+      }
+    } else if (notification is ScrollEndNotification) {
+      _accumulatedUpScroll = 0.0;
+    }
   }
 
   void _onStateNotifierChanged() {
@@ -836,131 +928,107 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           Positioned.fill(
             child: NotificationListener<ScrollNotification>(
               onNotification: (notification) {
-                if (notification.metrics.axis == Axis.vertical) {
-                  final pixels = notification.metrics.pixels;
-                  _scrollOffset.value = pixels;
-
-                  if (pixels <= 20) {
-                    _accumulatedUpScroll = 0.0;
-                    if (!_isTabsExpanded.value) _isTabsExpanded.value = true;
-                  } else if (notification is ScrollUpdateNotification) {
-                    final delta = notification.scrollDelta ?? 0.0;
-                    if (delta > 1.0) {
-                      // اسکرول پیوسته و بدون وقفه به سمت پایین
-                      _accumulatedUpScroll = 0.0;
-                      if (pixels > 75 && _isTabsExpanded.value) {
-                        _isTabsExpanded.value = false;
-                      }
-                    } else if (delta < -1.0) {
-                      // اسکرول رو به بالا با آستانه هوشمند برای حذف لرزش دست
-                      _accumulatedUpScroll += -delta;
-                      if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
-                        _isTabsExpanded.value = true;
-                      }
-                    }
-                  } else if (notification is ScrollEndNotification) {
-                    _accumulatedUpScroll = 0.0;
-                  }
-                }
+                _onScroll(notification);
                 return false;
               },
               child: isPregnancyActive
                   ? (hasValidPregnancyDates
-                        ? PregnancyLockGate(
-                            settings: _settings,
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                top: topPadding + 84.0,
-                              ),
-                              child: CyclePregnancyModeView(
-                                pregnancyStartDate: _settings['preg_start_date']!,
-                                pregnancyDueDate: _settings['preg_due_date']!,
-                                onDeactivated: () async {
-                                  final db =
-                                      await DatabaseHelper.instance.database;
-                                  await PregnancySettings.setPregnancyActive(
-                                    false,
-                                    db: db,
-                                  );
-                                  await _loadData();
-                                },
-                                settings: _settings,
-                                dayLogs: _dayLogs,
-                                engineOutput: _engineOutput,
-                              ),
+                      ? PregnancyLockGate(
+                          settings: _settings,
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              top: topPadding + 84.0,
                             ),
-                          )
-                        : Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(14.0),
-                                child: RitmoSheetGlassCard(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          CupertinoIcons
-                                              .exclamationmark_triangle_fill,
-                                          size: 48,
-                                          color: colors.warning,
+                            child: CyclePregnancyModeView(
+                              pregnancyStartDate: _settings['preg_start_date']!,
+                              pregnancyDueDate: _settings['preg_due_date']!,
+                              onDeactivated: () async {
+                                final db =
+                                    await DatabaseHelper.instance.database;
+                                await PregnancySettings.setPregnancyActive(
+                                  false,
+                                  db: db,
+                                );
+                                await _loadData();
+                              },
+                              settings: _settings,
+                              dayLogs: _dayLogs,
+                              engineOutput: _engineOutput,
+                            ),
+                          ),
+                        )
+                      : Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(14.0),
+                              child: RitmoSheetGlassCard(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons
+                                            .exclamationmark_triangle_fill,
+                                        size: 48,
+                                        color: colors.warning,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'اطلاعات بارداری ناقص است',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: colors.textPrimary,
                                         ),
-                                        const SizedBox(height: 16),
-                                        Text(
-                                          'اطلاعات بارداری ناقص است',
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'برای محاسبه دقیق سن بارداری و دسترسی به امکانات، لطفاً اطلاعات راه‌اندازی را تکمیل کنید.',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: colors.textSecondary,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 20),
+                                      ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: colors.primary,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 24,
+                                            vertical: 12,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                          ),
+                                        ),
+                                        icon: const Icon(
+                                          CupertinoIcons.pencil,
+                                        ),
+                                        label: const Text(
+                                          'تکمیل راه‌اندازی بارداری',
                                           style: TextStyle(
-                                            fontSize: 18,
                                             fontWeight: FontWeight.bold,
-                                            color: colors.textPrimary,
                                           ),
-                                          textAlign: TextAlign.center,
                                         ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'برای محاسبه دقیق سن بارداری و دسترسی به امکانات، لطفاً اطلاعات راه‌اندازی را تکمیل کنید.',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: colors.textSecondary,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        const SizedBox(height: 20),
-                                        ElevatedButton.icon(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: colors.primary,
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 24,
-                                              vertical: 12,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
-                                            ),
-                                          ),
-                                          icon: const Icon(
-                                            CupertinoIcons.pencil,
-                                          ),
-                                          label: const Text(
-                                            'تکمیل راه‌اندازی بارداری',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          onPressed: _openPregnancyOnboarding,
-                                        ),
-                                      ],
-                                    ),
+                                        onPressed: _openPregnancyOnboarding,
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
                             ),
-                          ))
+                          ),
+                        ))
                   : Directionality(
                       textDirection: TextDirection.rtl,
                       child: ListView(
+                        controller: _scrollController,
                         physics: const BouncingScrollPhysics(
                           parent: AlwaysScrollableScrollPhysics(),
                         ),
@@ -993,7 +1061,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                   : null,
                               onNavigateToCalendar: () {
                                 if (_activeTab != 0) {
-                                  setState(() => _activeTab = 0);
+                                  _onTabChanged(0);
                                 }
                                 WidgetsBinding.instance
                                     .addPostFrameCallback((_) {
@@ -1019,8 +1087,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               ),
                               predictionConfidence: _predictionConfidence,
                               dataQualityReport: _dataQualityReport,
-                              onOpenDataTab: () =>
-                                  setState(() => _activeTab = 1),
+                              onOpenDataTab: () => _onTabChanged(1),
                               insightCards: [
                                 if (_burdenScore != null && _adaptiveAdvice != null)
                                   CycleBurdenCard(
@@ -1172,8 +1239,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       ? null
                       : CycleSegmentedTabs(
                           activeTab: _activeTab,
-                          onTabChanged: (index) =>
-                              setState(() => _activeTab = index),
+                          onTabChanged: _onTabChanged,
                           settings: _settings,
                           activeThemeColor:
                               _getActivePhaseColor(context),

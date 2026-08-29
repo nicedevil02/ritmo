@@ -37,8 +37,21 @@ class KonkurScreen extends StatefulWidget {
   State<KonkurScreen> createState() => _KonkurScreenState();
 }
 
-class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderStateMixin {
+class _KonkurScreenState extends State<KonkurScreen> with TickerProviderStateMixin {
   late TabController _tabController;
+  late AnimationController _headerMorphAnimCtrl;
+  Animation<double>? _headerMorphAnim;
+
+  // Multi-Tab Scroll Synchronization Controllers & State
+  final List<ScrollController> _tabScrollControllers = [
+    ScrollController(),
+    ScrollController(),
+    ScrollController(),
+    ScrollController(),
+  ];
+  final List<double> _tabOffsets = [0.0, 0.0, 0.0, 0.0];
+  final List<bool> _tabExpanded = [true, true, true, true];
+
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
   final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
   double _accumulatedUpScroll = 0.0;
@@ -64,16 +77,113 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
+    _headerMorphAnimCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _headerMorphAnimCtrl.addListener(() {
+      if (_headerMorphAnim != null) {
+        _scrollOffset.value = _headerMorphAnim!.value;
+      }
+    });
+
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging ||
+          _tabController.animation?.value == _tabController.index.toDouble()) {
+        _syncHeaderWithActiveTab(_tabController.index, animate: true);
+        if (mounted) setState(() {});
+      }
+    });
+    _tabController.animation?.addListener(() {
+      final value = _tabController.animation?.value ?? 0.0;
+      final roundIndex = value.round().clamp(0, 3);
+      if ((value - roundIndex).abs() < 0.05 && _tabController.index == roundIndex) {
+        _syncHeaderWithActiveTab(roundIndex, animate: true);
+      }
+    });
+
     _loadAllData();
   }
 
   @override
   void dispose() {
+    _headerMorphAnimCtrl.dispose();
+    for (final controller in _tabScrollControllers) {
+      controller.dispose();
+    }
     _tabController.dispose();
     _scrollOffset.dispose();
     _isTabsExpanded.dispose();
     super.dispose();
+  }
+
+  void _syncHeaderWithActiveTab(int activeIndex, {bool animate = true}) {
+    if (activeIndex < 0 || activeIndex >= _tabOffsets.length) return;
+    final controller = _tabScrollControllers[activeIndex];
+    final targetOffset = controller.hasClients ? controller.offset : _tabOffsets[activeIndex];
+    _tabOffsets[activeIndex] = targetOffset;
+
+    final currentOffset = _scrollOffset.value;
+    final isExpanded = targetOffset <= 75.0 || _tabExpanded[activeIndex];
+    _isTabsExpanded.value = isExpanded;
+    _accumulatedUpScroll = 0.0;
+
+    if (animate && (targetOffset - currentOffset).abs() > 1.0) {
+      _headerMorphAnimCtrl.stop();
+      _headerMorphAnim = Tween<double>(
+        begin: currentOffset,
+        end: targetOffset,
+      ).animate(
+        CurvedAnimation(
+          parent: _headerMorphAnimCtrl,
+          curve: Curves.easeOutCubic,
+        ),
+      );
+      _headerMorphAnimCtrl.forward(from: 0.0);
+    } else {
+      _headerMorphAnimCtrl.stop();
+      _scrollOffset.value = targetOffset;
+    }
+  }
+
+  void _onTabScroll(int tabIndex, ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return;
+    final pixels = notification.metrics.pixels;
+    _tabOffsets[tabIndex] = pixels;
+
+    // Only update the active header if this scroll notification came from the currently visible tab
+    if (_tabController.index == tabIndex) {
+      if (_headerMorphAnimCtrl.isAnimating) {
+        _headerMorphAnimCtrl.stop();
+      }
+      _scrollOffset.value = pixels;
+
+      if (pixels <= 20) {
+        _accumulatedUpScroll = 0.0;
+        if (!_isTabsExpanded.value) {
+          _isTabsExpanded.value = true;
+          _tabExpanded[tabIndex] = true;
+        }
+      } else if (notification is ScrollUpdateNotification) {
+        final delta = notification.scrollDelta ?? 0.0;
+        if (delta > 1.0) {
+          _accumulatedUpScroll = 0.0;
+          if (pixels > 75 && _isTabsExpanded.value) {
+            _isTabsExpanded.value = false;
+            _tabExpanded[tabIndex] = false;
+          }
+        } else if (delta < -1.0) {
+          _accumulatedUpScroll += -delta;
+          if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
+            _isTabsExpanded.value = true;
+            _tabExpanded[tabIndex] = true;
+          }
+        }
+      } else if (notification is ScrollEndNotification) {
+        _accumulatedUpScroll = 0.0;
+      }
+    }
   }
 
   Future<void> _seedAndReload(KonkurField field) async {
@@ -547,42 +657,18 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
                                 child: const Text('خطا در بارگذاری خروجی موتور کنکور'),
                               ),
                             )
-                          : NotificationListener<ScrollNotification>(
-                              onNotification: (notification) {
-                                if (notification.metrics.axis == Axis.vertical) {
-                                  final pixels = notification.metrics.pixels;
-                                  _scrollOffset.value = pixels;
-
-                                  if (pixels <= 20) {
-                                    _accumulatedUpScroll = 0.0;
-                                    if (!_isTabsExpanded.value) _isTabsExpanded.value = true;
-                                  } else if (notification is ScrollUpdateNotification) {
-                                    final delta = notification.scrollDelta ?? 0.0;
-                                    if (delta > 1.0) {
-                                      // اسکرول پیوسته و بدون وقفه به سمت پایین
-                                      _accumulatedUpScroll = 0.0;
-                                      if (pixels > 75 && _isTabsExpanded.value) {
-                                        _isTabsExpanded.value = false;
-                                      }
-                                    } else if (delta < -1.0) {
-                                      // اسکرول رو به بالا با آستانه هوشمند برای حذف لرزش دست
-                                      _accumulatedUpScroll += -delta;
-                                      if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
-                                        _isTabsExpanded.value = true;
-                                      }
-                                    }
-                                  } else if (notification is ScrollEndNotification) {
-                                    _accumulatedUpScroll = 0.0;
-                                  }
-                                }
-                                return false;
-                              },
-                              child: TabBarView(
-                                controller: _tabController,
-                                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                                children: [
-                                  // 1. TODAY / PLAN SECTION
-                                  SingleChildScrollView(
+                          : TabBarView(
+                              controller: _tabController,
+                              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                              children: [
+                                // 1. TODAY / PLAN SECTION
+                                NotificationListener<ScrollNotification>(
+                                  onNotification: (n) {
+                                    _onTabScroll(0, n);
+                                    return false;
+                                  },
+                                  child: SingleChildScrollView(
+                                    controller: _tabScrollControllers[0],
                                     physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                                     padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
                                     child: Column(
@@ -604,9 +690,16 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
                                       ],
                                     ),
                                   ),
+                                ),
 
-                                  // 2. BUDGET / TOPICS SECTION
-                                  SingleChildScrollView(
+                                // 2. BUDGET / TOPICS SECTION
+                                NotificationListener<ScrollNotification>(
+                                  onNotification: (n) {
+                                    _onTabScroll(1, n);
+                                    return false;
+                                  },
+                                  child: SingleChildScrollView(
+                                    controller: _tabScrollControllers[1],
                                     physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                                     padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
                                     child: KonkurBudgetSection(
@@ -617,9 +710,16 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
                                       onRefresh: _loadAllData,
                                     ),
                                   ),
+                                ),
 
-                                  // 3. EXAMS SECTION
-                                  SingleChildScrollView(
+                                // 3. EXAMS SECTION
+                                NotificationListener<ScrollNotification>(
+                                  onNotification: (n) {
+                                    _onTabScroll(2, n);
+                                    return false;
+                                  },
+                                  child: SingleChildScrollView(
+                                    controller: _tabScrollControllers[2],
                                     physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                                     padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
                                     child: KonkurExamsSection(
@@ -630,9 +730,16 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
                                       onRefresh: _loadAllData,
                                     ),
                                   ),
+                                ),
 
-                                  // 4. STATS SECTION
-                                  SingleChildScrollView(
+                                // 4. STATS SECTION
+                                NotificationListener<ScrollNotification>(
+                                  onNotification: (n) {
+                                    _onTabScroll(3, n);
+                                    return false;
+                                  },
+                                  child: SingleChildScrollView(
+                                    controller: _tabScrollControllers[3],
                                     physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                                     padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
                                     child: KonkurStatsSection(
@@ -640,8 +747,8 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
                                       data: _engineOutput!,
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
             ),
 
@@ -730,6 +837,7 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
                       selectedIndex: _tabController.index.clamp(0, 3),
                       onTabChanged: (index) {
                         _tabController.animateTo(index);
+                        _syncHeaderWithActiveTab(index);
                         setState(() {});
                       },
                       accentColor: colors.primary,

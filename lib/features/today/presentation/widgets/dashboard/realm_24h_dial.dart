@@ -656,7 +656,7 @@ class _NeuDialPainter extends CustomPainter {
     }
   }
 
-  /// نقطهٔ زمان جاری (سفید شفاف با هاله)
+  /// نقطهٔ زمان جاری (طراحی مهندسی دوحالته با کانتراست فوق‌العاده در تم روشن و تیره)
   void _paintNowDot(
     Canvas canvas,
     Offset center,
@@ -668,13 +668,46 @@ class _NeuDialPainter extends CustomPainter {
     final nowAngle = _minuteToAngle(nowMinute);
     final dotCenter = center + Offset(math.cos(nowAngle), math.sin(nowAngle)) * radius;
 
-    final dotGlow = Paint()
-      ..color = Colors.white.withValues(alpha: 0.6)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 * k);
-    canvas.drawCircle(dotCenter, stroke * 0.26, dotGlow);
+    if (isDarkMode) {
+      // ── تم تیره: هاله نوری درخشان + کادر تفکیک + مغزی سفید نئونی ──
+      final dotGlow = Paint()
+        ..color = Colors.white.withValues(alpha: 0.65)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4.5 * k);
+      canvas.drawCircle(dotCenter, stroke * 0.28, dotGlow);
 
-    final dot = Paint()..color = Colors.white;
-    canvas.drawCircle(dotCenter, stroke * 0.18, dot);
+      final rimPaint = Paint()
+        ..color = Colors.black.withValues(alpha: 0.55);
+      canvas.drawCircle(dotCenter, stroke * 0.21, rimPaint);
+
+      final corePaint = Paint()..color = Colors.white;
+      canvas.drawCircle(dotCenter, stroke * 0.17, corePaint);
+
+      final centerPin = Paint()..color = activeColor;
+      canvas.drawCircle(dotCenter, stroke * 0.07, centerPin);
+    } else {
+      // ── تم روشن: سایه عمیق فیزیکی + رینگ متضاد تیره + نگین سفید با پین فعال ──
+      final dropShadow = Paint()
+        ..color = Colors.black.withValues(alpha: 0.38)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4.0 * k);
+      canvas.drawCircle(dotCenter + Offset(0.6 * k, 1.4 * k), stroke * 0.23, dropShadow);
+
+      final contrastRim = Paint()
+        ..color = const Color(0xFF0F172A).withValues(alpha: 0.90);
+      canvas.drawCircle(dotCenter, stroke * 0.22, contrastRim);
+
+      final corePaint = Paint()..color = Colors.white;
+      canvas.drawCircle(dotCenter, stroke * 0.16, corePaint);
+
+      final centerPin = Paint()..color = activeColor;
+      canvas.drawCircle(dotCenter, stroke * 0.075, centerPin);
+
+      final specular = Paint()..color = Colors.white.withValues(alpha: 0.95);
+      canvas.drawCircle(
+        dotCenter - Offset(0.4 * k, 0.4 * k),
+        stroke * 0.045,
+        specular,
+      );
+    }
   }
 
   /// هاب مرکزی برجسته با ایموجی و نام قلمرو (هماهنگ با رنگ پس‌زمینه کارت)

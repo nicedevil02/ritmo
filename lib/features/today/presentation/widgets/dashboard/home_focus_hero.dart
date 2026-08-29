@@ -4,13 +4,14 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/ritmo_color.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/next_action_hero.dart';
 
 /// کارت هیروی «تمرکز اکنون» — متصل به سیستم کارت‌های مرجع نئومورفیک ریتمو.
 ///
-/// با حفظ کامل موتور رنگ‌های پویای دامنه‌ای (عبادت=سبز، ورزش=نارنجی، دارو=قرمز، خواب=بنفش، کار=آبی، عقب‌افتاده=کهربایی).
+/// با زمینه گرادیانت نوری زنده و رنگ‌های پویای دامنه‌ای (عبادت=سبز، ورزش=نارنجی، دارو=قرمز، خواب/مطالعه=بنفش، کار=آبی، عقب‌افتاده=کهربایی).
 class HomeFocusHero extends StatefulWidget {
   const HomeFocusHero({
     super.key,
@@ -70,11 +71,85 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
 
     final card = RitmoCard.neumorphic(
       borderRadius: radius,
-      borderColor: tone.withValues(alpha: isDark ? 0.38 : 0.28),
+      backgroundColor: Color.lerp(
+        isDark ? colors.card : Colors.white,
+        tone,
+        isDark ? 0.22 : 0.12,
+      ),
+      borderColor: tone.withValues(alpha: isDark ? 0.42 : 0.30),
       borderWidth: 1.2,
-      padding: const EdgeInsets.all(16),
+      customShadows: [
+        ...RitmoNeu.raisedShadows(isDark, blur: 14, distance: 4.5),
+        BoxShadow(
+          color: tone.withValues(alpha: isDark ? 0.28 : 0.18),
+          blurRadius: 28,
+          spreadRadius: -4,
+          offset: const Offset(0, 8),
+        ),
+      ],
+      padding: EdgeInsets.zero,
       enableSpring: true,
-      child: _content(context, colors, tone, isDark),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: LinearGradient(
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+              colors: [
+                tone.withValues(alpha: isDark ? 0.32 : 0.22),
+                (isDark ? colors.card : Colors.white)
+                    .withValues(alpha: isDark ? 0.45 : 0.85),
+              ],
+            ),
+          ),
+          child: Stack(
+            children: [
+              // هاله نوری گوشه بالا-راست
+              Positioned(
+                top: -36,
+                left: -24,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        tone.withValues(alpha: isDark ? 0.32 : 0.24),
+                        tone.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // هاله نوری ملایم پایین
+              Positioned(
+                bottom: -40,
+                right: -20,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        colors.primary.withValues(alpha: isDark ? 0.16 : 0.10),
+                        colors.primary.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: _content(context, colors, tone, isDark),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
 
     final semantic = Semantics(
@@ -97,9 +172,9 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
             borderRadius: radius,
             boxShadow: [
               BoxShadow(
-                color: tone.withValues(alpha: 0.08 + 0.12 * t),
-                blurRadius: 20 + 10 * t,
-                spreadRadius: -4,
+                color: tone.withValues(alpha: 0.12 + 0.18 * t),
+                blurRadius: 22 + 12 * t,
+                spreadRadius: -3,
               ),
             ],
           ),
@@ -418,26 +493,70 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
   }
 
   static Color _toneFor(RitmoColors colors, NextActionHeroData data) {
+    if (data.colorHex != null && data.colorHex!.trim().isNotEmpty) {
+      final parsed = RitmoColor.fromHex(data.colorHex);
+      if (parsed != Colors.transparent) return parsed;
+    }
     if (data.isMedicalAlert || data.type == HeroPriorityType.medicalSafety) {
       return colors.medicalRed;
     }
+    final tLower = data.title.toLowerCase();
     if (data.domain == AgendaDomain.prayer ||
         data.domain == AgendaDomain.mustahab ||
         data.domain == AgendaDomain.worshipDebt ||
         data.category == Category.religious ||
-        data.title.contains('نماز') ||
-        data.title.contains('قرآن') ||
-        data.title.contains('دعا')) {
+        tLower.contains('نماز') ||
+        tLower.contains('قرآن') ||
+        tLower.contains('دعا') ||
+        tLower.contains('اذان') ||
+        tLower.contains('صبحگاه') ||
+        tLower.contains('ظهر') ||
+        tLower.contains('عصر') ||
+        tLower.contains('مغرب') ||
+        tLower.contains('عشا') ||
+        tLower.contains('زیارت') ||
+        tLower.contains('مسجد') ||
+        tLower.contains('ذکر')) {
       return const Color(0xFF10B981); // Emerald Worship
     }
     if (data.domain == AgendaDomain.sport ||
         data.category == Category.fitness ||
-        data.title.contains('ورزش') ||
-        data.title.contains('تمرین')) {
+        tLower.contains('ورزش') ||
+        tLower.contains('تمرین') ||
+        tLower.contains('دویدن') ||
+        tLower.contains('شنا') ||
+        tLower.contains('باشگاه') ||
+        tLower.contains('پیاده‌روی') ||
+        tLower.contains('کشش')) {
       return const Color(0xFFF97316); // Exercise Orange
     }
-    if (data.domain == AgendaDomain.medicine || data.category == Category.medical) {
+    if (data.domain == AgendaDomain.medicine ||
+        data.category == Category.medical ||
+        tLower.contains('دارو') ||
+        tLower.contains('قرص') ||
+        tLower.contains('شربت') ||
+        tLower.contains('انسولین') ||
+        tLower.contains('پزشک')) {
       return colors.medicalRed;
+    }
+    if (data.category == Category.learning ||
+        data.category == Category.konkur ||
+        data.domain == AgendaDomain.course ||
+        data.domain == AgendaDomain.konkur ||
+        tLower.contains('درس') ||
+        tLower.contains('مطالعه') ||
+        tLower.contains('کتاب') ||
+        tLower.contains('کنکور')) {
+      return const Color(0xFF8B5CF6); // Purple / Deep Violet
+    }
+    if (data.category == Category.work ||
+        data.domain == AgendaDomain.task ||
+        data.domain == AgendaDomain.commitment ||
+        tLower.contains('کار') ||
+        tLower.contains('پروژه') ||
+        tLower.contains('کد') ||
+        tLower.contains('جلسه')) {
+      return const Color(0xFF2563EB); // Royal Focus Blue
     }
     if (data.type == HeroPriorityType.activeTimer) {
       return const Color(0xFF0EA5E9); // Cyan / Blue Active Timer
@@ -458,21 +577,41 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
     if (data.isMedicalAlert || data.type == HeroPriorityType.medicalSafety) {
       return CupertinoIcons.bandage_fill;
     }
+    final tLower = data.title.toLowerCase();
     if (data.domain == AgendaDomain.prayer ||
         data.domain == AgendaDomain.mustahab ||
         data.domain == AgendaDomain.worshipDebt ||
         data.category == Category.religious ||
-        data.title.contains('نماز') ||
-        data.title.contains('قرآن') ||
-        data.title.contains('دعا')) {
+        tLower.contains('نماز') ||
+        tLower.contains('قرآن') ||
+        tLower.contains('دعا') ||
+        tLower.contains('زیارت')) {
       return CupertinoIcons.sparkles;
     }
     if (data.domain == AgendaDomain.sport ||
-        data.category == Category.fitness) {
+        data.category == Category.fitness ||
+        tLower.contains('ورزش') ||
+        tLower.contains('تمرین') ||
+        tLower.contains('باشگاه')) {
       return CupertinoIcons.flame_fill;
     }
-    if (data.domain == AgendaDomain.medicine || data.category == Category.medical) {
+    if (data.domain == AgendaDomain.medicine ||
+        data.category == Category.medical ||
+        tLower.contains('دارو') ||
+        tLower.contains('قرص')) {
       return CupertinoIcons.bandage_fill;
+    }
+    if (data.category == Category.learning ||
+        data.domain == AgendaDomain.course ||
+        tLower.contains('درس') ||
+        tLower.contains('کتاب')) {
+      return CupertinoIcons.book_fill;
+    }
+    if (data.category == Category.work ||
+        data.domain == AgendaDomain.task ||
+        tLower.contains('کار') ||
+        tLower.contains('پروژه')) {
+      return CupertinoIcons.briefcase_fill;
     }
     if (data.isCurrentActive) return Icons.bolt_rounded;
     if (data.isOverdue) return CupertinoIcons.clock_fill;

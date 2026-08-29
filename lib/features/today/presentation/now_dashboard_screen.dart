@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -375,6 +374,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
         _isFirstLoad = false;
         _isLoading = false;
         _timelineItems = controller.timelineItems;
+        _completionsToday = controller.completionsToday;
+        _rhythmScore = controller.rhythmScore;
+        _rhythmScoreHasData = controller.rhythmScoreHasData;
         _settingsMap = controller.settingsMap;
         _activeZone = controller.activeZone;
         _realmState = controller.realmState;
@@ -599,29 +601,23 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
   /// پیشرفت واقعی مسیر امروز — اول از اسنپشات Agenda، در نبود آن از تایملاین.
   ({double ratio, int done, int remaining, int total}) _todayProgress() {
     final snapshot = _todaySnapshot;
-    final timelineDone = _timelineItems.where((i) => i['isCompleted'] == true).length;
-    final timelineTotal = _timelineItems.length;
-
     if (snapshot != null) {
-      final done = math.max(snapshot.completedCount, timelineDone);
-      final remaining = snapshot.remainingCount;
-      final total = done + remaining;
+      final total = snapshot.completedCount + snapshot.remainingCount;
       if (total > 0) {
         return (
-          ratio: done / total,
-          done: done,
-          remaining: remaining,
+          ratio: snapshot.completedCount / total,
+          done: snapshot.completedCount,
+          remaining: snapshot.remainingCount,
           total: total,
         );
       }
     }
-
-    final total = timelineTotal;
-    final done = timelineDone;
+    final total = _timelineItems.length;
+    final done = _timelineItems.where((i) => i['isCompleted'] == true).length;
     return (
       ratio: total == 0 ? 0.0 : done / total,
       done: done,
-      remaining: total > done ? total - done : 0,
+      remaining: total - done,
       total: total,
     );
   }

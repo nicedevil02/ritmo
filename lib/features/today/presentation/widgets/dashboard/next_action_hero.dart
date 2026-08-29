@@ -28,6 +28,7 @@ class NextActionHeroData {
     this.isOverdue = false,
     this.domain,
     this.category,
+    this.colorHex,
     this.previousTaskTitle,
     this.isPreviousTaskCompleted,
     this.nextTaskTitle,
@@ -46,6 +47,7 @@ class NextActionHeroData {
   final bool isOverdue;
   final AgendaDomain? domain;
   final Category? category;
+  final String? colorHex;
   final String? previousTaskTitle;
   final bool? isPreviousTaskCompleted;
   final String? nextTaskTitle;

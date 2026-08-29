@@ -96,7 +96,9 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
     final percent = (clamped * 100).round();
     final isCompleted = clamped >= 1.0 && widget.totalCount > 0;
 
-    final accentColor = isCompleted ? colors.success : colors.primary;
+    final Color accentColor = isCompleted
+        ? colors.success
+        : (clamped > 0 ? colors.primary : const Color(0xFF0284C7));
     final radius = BorderRadius.circular(22);
 
     final content = AnimatedSize(
@@ -104,35 +106,90 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
       curve: Curves.easeInOutCubic,
       child: RitmoCard.neumorphic(
         borderRadius: radius,
-        borderColor: accentColor.withValues(alpha: isDark ? 0.35 : 0.25),
+        backgroundColor: Color.lerp(
+          isDark ? colors.card : Colors.white,
+          accentColor,
+          isDark ? 0.20 : 0.12,
+        ),
+        borderColor: accentColor.withValues(alpha: isDark ? 0.40 : 0.28),
         borderWidth: 1.2,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        customShadows: [
+          ...RitmoNeu.raisedShadows(isDark, blur: 12, distance: 4),
+          BoxShadow(
+            color: accentColor.withValues(alpha: isDark ? 0.24 : 0.15),
+            blurRadius: 22,
+            spreadRadius: -4,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        padding: EdgeInsets.zero,
         enableSpring: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ردیف بالایی: عنوان مسیر، نشانگر درصد، تگ وضعیت و دکمه بازشو
-            _buildHeader(
-              context,
-              colors,
-              accentColor,
-              percent,
-              isCompleted,
-              isDark,
+        child: ClipRRect(
+          borderRadius: radius,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: [
+                  accentColor.withValues(alpha: isDark ? 0.28 : 0.18),
+                  (isDark ? colors.card : Colors.white)
+                      .withValues(alpha: isDark ? 0.45 : 0.85),
+                ],
+              ),
             ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -30,
+                  left: -20,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          accentColor.withValues(alpha: isDark ? 0.25 : 0.16),
+                          accentColor.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // ردیف بالایی: عنوان مسیر، نشانگر درصد، تگ وضعیت و دکمه بازشو
+                      _buildHeader(
+                        context,
+                        colors,
+                        accentColor,
+                        percent,
+                        isCompleted,
+                        isDark,
+                      ),
 
-            const SizedBox(height: 10),
+                      const SizedBox(height: 10),
 
-            // نوار پیشرفت چندلایه با انیمیشن روان و مارکرهای مرحله‌ای
-            _buildProgressBar(context, colors, accentColor, clamped, isDark),
+                      // نوار پیشرفت چندلایه با انیمیشن روان و مارکرهای مرحله‌ای
+                      _buildProgressBar(context, colors, accentColor, clamped, isDark),
 
-            // بخش گسترش‌یافته: جزئیات کارهای مسیر امروز (اکنون، بعدی، سپس / وقت آزاد)
-            if (_isExpanded) ...[
-              const SizedBox(height: RitmoSpacing.md),
-              _buildExpandedDetails(context, colors, accentColor, isDark),
-            ],
-          ],
+                      // بخش گسترش‌یافته: جزئیات کارهای مسیر امروز (اکنون، بعدی، سپس / وقت آزاد)
+                      if (_isExpanded) ...[
+                        const SizedBox(height: RitmoSpacing.md),
+                        _buildExpandedDetails(context, colors, accentColor, isDark),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/worship/domain/prayer_target.dart';
@@ -29,7 +28,9 @@ class WorshipScreen extends StatefulWidget {
   State<WorshipScreen> createState() => _WorshipScreenState();
 }
 
-class _WorshipScreenState extends State<WorshipScreen> {
+class _WorshipScreenState extends State<WorshipScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   WorshipDay? _worshipDay;
   bool _isLoading = true;
   bool _isNightPrayerEnabled = false;
@@ -37,10 +38,17 @@ class _WorshipScreenState extends State<WorshipScreen> {
   Timer? _debounceTimer;
   StreamSubscription<dynamic>? _eventSub;
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
+  final ValueNotifier<bool> _isTabsExpanded = ValueNotifier<bool>(true);
+  double _accumulatedUpScroll = 0.0;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
+
     _loadData();
     _eventSub = RitmoEventBus().onEvents.listen((event) {
       if (event.type == 'WorshipUpdated' ||
@@ -56,12 +64,13 @@ class _WorshipScreenState extends State<WorshipScreen> {
     });
   }
 
-
   @override
   void dispose() {
     _debounceTimer?.cancel();
     _eventSub?.cancel();
+    _tabController.dispose();
     _scrollOffset.dispose();
+    _isTabsExpanded.dispose();
     super.dispose();
   }
 
@@ -187,7 +196,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.paddingOf(context).top;
-    final contentTopPadding = topPadding + 130.0;
+    final contentTopPadding = topPadding + 190.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -197,120 +206,170 @@ class _WorshipScreenState extends State<WorshipScreen> {
           backgroundColor: Colors.transparent,
           body: Stack(
             children: [
-              // Layer 1: Body Content
+              // Layer 1: Body Content with Multi-Tab TabBarView
               Positioned.fill(
                 child: NotificationListener<ScrollNotification>(
                   onNotification: (notification) {
                     if (notification.metrics.axis == Axis.vertical) {
-                      _scrollOffset.value = notification.metrics.pixels;
+                      final pixels = notification.metrics.pixels;
+                      _scrollOffset.value = pixels;
+
+                      if (pixels <= 20) {
+                        _accumulatedUpScroll = 0.0;
+                        if (!_isTabsExpanded.value) _isTabsExpanded.value = true;
+                      } else if (notification is ScrollUpdateNotification) {
+                        final delta = notification.scrollDelta ?? 0.0;
+                        if (delta > 1.0) {
+                          // اسکرول پیوسته و بدون وقفه به سمت پایین
+                          _accumulatedUpScroll = 0.0;
+                          if (pixels > 75 && _isTabsExpanded.value) {
+                            _isTabsExpanded.value = false;
+                          }
+                        } else if (delta < -1.0) {
+                          // اسکرول رو به بالا با آستانه هوشمند برای حذف لرزش دست
+                          _accumulatedUpScroll += -delta;
+                          if (_accumulatedUpScroll > 28.0 && !_isTabsExpanded.value) {
+                            _isTabsExpanded.value = true;
+                          }
+                        }
+                      } else if (notification is ScrollEndNotification) {
+                        _accumulatedUpScroll = 0.0;
+                      }
                     }
                     return false;
                   },
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                    padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
-                    child: Column(
-                      children: [
-                        if (_isLoading && _worshipDay == null) ...[
-                          const RitmoSkeletonCard(height: 320),
-                          const SizedBox(height: 16),
-                        ] else if (_worshipDay != null) ...[
-                          // 1. PRAYER ARC HERO
-                          PrayerArcHero(
-                            day: _worshipDay!,
-                            onPracticeToggle: (practiceId, isDone) async {
-                              final dayDate = _worshipDay!.date;
-                              String group = 'FAJR';
-                              if (practiceId.contains('dhuhr') || practiceId.contains('asr')) group = 'DHUHR_ASR';
-                              if (practiceId.contains('maghrib') || practiceId.contains('isha')) group = 'MAGHRIB_ISHA';
+                  child: (_isLoading && _worshipDay == null)
+                      ? Padding(
+                          padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                          child: const RitmoSkeletonCard(height: 320),
+                        )
+                      : TabBarView(
+                          controller: _tabController,
+                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                          children: [
+                            // ─── TAB 0: امروز ───
+                            _WorshipTabKeepAlive(
+                              child: ListView(
+                                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                                padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                                children: [
+                                  if (_worshipDay != null) ...[
+                                    // 1. PRAYER ARC HERO
+                                    PrayerArcHero(
+                                      day: _worshipDay!,
+                                      onPracticeToggle: (practiceId, isDone) async {
+                                        final dayDate = _worshipDay!.date;
+                                        String group = 'FAJR';
+                                        if (practiceId.contains('dhuhr') || practiceId.contains('asr')) group = 'DHUHR_ASR';
+                                        if (practiceId.contains('maghrib') || practiceId.contains('isha')) group = 'MAGHRIB_ISHA';
 
-                              if (isDone) {
-                                final target = await PrayerTarget.fromGroupKey(group, dayDate);
-                                if (!context.mounted) return;
-                                final res = await PrayerSheet.show(context, target);
-                                if (res == true) {
-                                  _onDataChanged();
-                                }
-                              } else {
-                                final target = await PrayerTarget.fromGroupKey(group, dayDate);
-                                for (final pId in target.practiceIds) {
-                                  await WorshipEngine.instance.clearLog(practiceId: pId, date: dayDate);
-                                }
-                                _onDataChanged();
-                              }
-                            },
-                            onTravellerToggle: (isTraveller) async {
-                              final currentCtx = _worshipDay?.context;
-                              final dayDate = _worshipDay?.date ?? DateTime.now();
-                              final ctx = WorshipDayContext(
-                                date: currentCtx?.date ?? dayDate,
-                                isTraveller: isTraveller,
-                                prayerExempt: currentCtx?.prayerExempt ?? false,
-                                fastingExempt: isTraveller || (currentCtx?.fastingExempt ?? false),
-                                reason: isTraveller ? 'TRAVEL' : currentCtx?.reason,
-                              );
-                              await WorshipEngine.instance.setDayContext(ctx);
-                              _onDataChanged();
-                            },
-                            onOpenCityPicker: () => _openCityPicker(0),
-                          ),
-                          const SizedBox(height: 16),
+                                        if (isDone) {
+                                          final target = await PrayerTarget.fromGroupKey(group, dayDate);
+                                          if (!context.mounted) return;
+                                          final res = await PrayerSheet.show(context, target);
+                                          if (res == true) {
+                                            _onDataChanged();
+                                          }
+                                        } else {
+                                          final target = await PrayerTarget.fromGroupKey(group, dayDate);
+                                          for (final pId in target.practiceIds) {
+                                            await WorshipEngine.instance.clearLog(practiceId: pId, date: dayDate);
+                                          }
+                                          _onDataChanged();
+                                        }
+                                      },
+                                      onTravellerToggle: (isTraveller) async {
+                                        final currentCtx = _worshipDay?.context;
+                                        final dayDate = _worshipDay?.date ?? DateTime.now();
+                                        final ctx = WorshipDayContext(
+                                          date: currentCtx?.date ?? dayDate,
+                                          isTraveller: isTraveller,
+                                          prayerExempt: currentCtx?.prayerExempt ?? false,
+                                          fastingExempt: isTraveller || (currentCtx?.fastingExempt ?? false),
+                                          reason: isTraveller ? 'TRAVEL' : currentCtx?.reason,
+                                        );
+                                        await WorshipEngine.instance.setDayContext(ctx);
+                                        _onDataChanged();
+                                      },
+                                      onOpenCityPicker: () => _openCityPicker(0),
+                                    ),
+                                    const SizedBox(height: 16),
 
-                          // 2. NIGHT PRAYER RITUAL CARD
-                          if (_isNightPrayerEnabled) ...[
-                            NightPrayerCard(
-                              day: _worshipDay!,
-                              onComplete: _onDataChanged,
+                                    // 2. NIGHT PRAYER RITUAL CARD
+                                    if (_isNightPrayerEnabled) ...[
+                                      NightPrayerCard(
+                                        day: _worshipDay!,
+                                        onComplete: _onDataChanged,
+                                      ),
+                                      const SizedBox(height: 16),
+                                    ],
+
+                                    // 3. QURAN & DHIKR ("تلاوت و اذکار")
+                                    QuranDhikrSection(
+                                      onChanged: _onDataChanged,
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: 16),
+
+                            // ─── TAB 1: گاه‌شمار و اعمال ───
+                            _WorshipTabKeepAlive(
+                              child: ListView(
+                                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                                padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                                children: [
+                                  // 1. SOLAR / LUNAR INTEGRATED CALENDAR
+                                  WorshipSolarCalendar(
+                                    initialJalali: Jalali.now(),
+                                    hijriOffset: WorshipEngine.instance.hijriOffset,
+                                    qamariNightText: _getQamariNightText(),
+                                    onChanged: _onDataChanged,
+                                  ),
+                                  const SizedBox(height: 16),
+
+                                  // 2. SCHEDULED MUSTAHABAT ("مستحبات و اعمال هفتگی")
+                                  MustahabSection(
+                                    onChanged: _onDataChanged,
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // ─── TAB 2: قضا و جبران ───
+                            _WorshipTabKeepAlive(
+                              child: ListView(
+                                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                                padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+                                children: [
+                                  // DEBTS ("سامانه قضای نماز و روزه")
+                                  WorshipDebtsSection(
+                                    onChanged: _onDataChanged,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
-
-                          // 3. SOLAR / LUNAR INTEGRATED CALENDAR
-                          WorshipSolarCalendar(
-                            initialJalali: Jalali.now(),
-                            hijriOffset: WorshipEngine.instance.hijriOffset,
-                            qamariNightText: _getQamariNightText(),
-                            onChanged: _onDataChanged,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // 4. QURAN & DHIKR ("تلاوت و اذکار")
-                          QuranDhikrSection(
-                            onChanged: _onDataChanged,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // 5. SCHEDULED MUSTAHABAT ("مستحبات برنامه‌ریزی‌شده")
-                          MustahabSection(
-                            onChanged: _onDataChanged,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // 6. DEBTS ("جبران")
-                          WorshipDebtsSection(
-                            onChanged: _onDataChanged,
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-                      ],
-                    ),
-                  ),
+                        ),
                 ),
               ),
 
-              // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
+              // Layer 2: Apple Dynamic Large Title Morphing Glass Header with Quick-Return Liquid Tabs
               Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
                 child: AnimatedBuilder(
-                  animation: _scrollOffset,
+                  animation: Listenable.merge([_scrollOffset, _isTabsExpanded]),
                   builder: (context, _) {
                     return RitmoAppleMorphingGlassHeader(
                       title: 'عبادت و معنویت',
-                      subtitle: _worshipDay != null ? '$_cityName • ${_worshipDay!.hijri.formatted}' : 'اوقات شرعی، تقویم شمسی و قمری و اذکار',
+                      subtitle: _worshipDay != null
+                          ? '$_cityName • ${_worshipDay!.hijri.formatted}'
+                          : 'اوقات شرعی، تقویم شمسی و قمری و اذکار',
                       scrollOffset: _scrollOffset.value,
                       collapseDistance: 55.0,
+                      isTabsExpanded: _isTabsExpanded.value,
                       onBack: () => Navigator.maybePop(context),
                       actions: [
                         RitmoVibrancyActionButton(
@@ -336,6 +395,30 @@ class _WorshipScreenState extends State<WorshipScreen> {
                           onTap: _openWorshipSettings,
                         ),
                       ],
+                      tabs: RitmoGlassSegmentedControl<int>(
+                        items: const [
+                          RitmoTabItem(
+                            title: 'امروز',
+                            icon: CupertinoIcons.sun_max_fill,
+                            value: 0,
+                          ),
+                          RitmoTabItem(
+                            title: 'گاه‌شمار و اعمال',
+                            icon: CupertinoIcons.calendar,
+                            value: 1,
+                          ),
+                          RitmoTabItem(
+                            title: 'قضا و جبران',
+                            icon: CupertinoIcons.check_mark_circled_solid,
+                            value: 2,
+                          ),
+                        ],
+                        selectedIndex: _tabController.index.clamp(0, 2),
+                        onTabChanged: (index) {
+                          _tabController.animateTo(index);
+                          setState(() {});
+                        },
+                      ),
                     );
                   },
                 ),
@@ -345,5 +428,26 @@ class _WorshipScreenState extends State<WorshipScreen> {
         ),
       ),
     );
+  }
+}
+
+/// ویجت ایزوله‌سازی برای حفظ وضعیت تب‌ها و دستیابی به عملکرد ۱۲۰ فریم
+class _WorshipTabKeepAlive extends StatefulWidget {
+  const _WorshipTabKeepAlive({required this.child});
+  final Widget child;
+
+  @override
+  State<_WorshipTabKeepAlive> createState() => _WorshipTabKeepAliveState();
+}
+
+class _WorshipTabKeepAliveState extends State<_WorshipTabKeepAlive>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }

@@ -34,10 +34,10 @@ class RitmoFormSheetScaffold extends StatefulWidget {
     this.headerBottom,
     this.builder,
     this.contentPadding,
-    this.initialChildSize = 0.60,
+    this.initialChildSize = 0.94,
     this.minChildSize = 0.0,
     this.maxChildSize = 0.94,
-    this.snapSizes = const [0.60, 0.94],
+    this.snapSizes = const [0.0, 0.94],
     this.borderRadius = const BorderRadius.vertical(top: Radius.circular(28)),
     this.controller,
     this.deckAnimation,
@@ -91,10 +91,10 @@ class RitmoFormSheetScaffold extends StatefulWidget {
     Widget? child,
     Widget Function(BuildContext context, ScrollController scrollController)? builder,
     EdgeInsetsGeometry? contentPadding,
-    double initialChildSize = 0.60,
+    double initialChildSize = 0.94,
     double minChildSize = 0.0,
     double maxChildSize = 0.94,
-    List<double> snapSizes = const [0.60, 0.94],
+    List<double> snapSizes = const [0.0, 0.94],
     BorderRadius? borderRadius = const BorderRadius.vertical(top: Radius.circular(28)),
     DraggableScrollableController? controller,
     Animation<double>? deckAnimation,
@@ -325,7 +325,7 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
                         final currentSize = _sheetController.size;
                         final velocity = details.primaryVelocity ?? 0.0;
 
-                        if (velocity < -300 || (velocity <= 0 && currentSize > 0.72)) {
+                        if (velocity < -300 || (velocity <= 0 && currentSize > 0.75)) {
                           unawaited(_sheetController.animateTo(
                             widget.maxChildSize,
                             duration: const Duration(milliseconds: 280),
@@ -334,7 +334,7 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
                           return;
                         }
 
-                        if (velocity > 400 || currentSize < 0.48) {
+                        if (velocity > 350 || currentSize < 0.70) {
                           if (!widget.isDirty) {
                             _isDismissing = true;
                             Navigator.of(this.context).pop();
@@ -347,7 +347,7 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
                             Navigator.of(this.context).pop();
                           } else if (_sheetController.isAttached) {
                             unawaited(_sheetController.animateTo(
-                              widget.initialChildSize,
+                              widget.maxChildSize,
                               duration: const Duration(milliseconds: 250),
                               curve: Curves.easeOutCubic,
                             ));
@@ -356,7 +356,7 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
                         }
 
                         unawaited(_sheetController.animateTo(
-                          widget.initialChildSize,
+                          widget.maxChildSize,
                           duration: const Duration(milliseconds: 250),
                           curve: Curves.easeOutCubic,
                         ));

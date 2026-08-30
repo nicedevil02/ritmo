@@ -354,10 +354,17 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onVerticalDragEnd: (details) async {
-              if (details.primaryVelocity != null && details.primaryVelocity! > 180 && !_isDismissing) {
+              if (details.primaryVelocity != null && details.primaryVelocity! > 250 && !_isDismissing) {
                 if (!_isDirty) {
                   _isDismissing = true;
-                  Navigator.of(this.context).pop();
+                  if (_sheetController.isAttached) {
+                    await _sheetController.animateTo(
+                      0.0,
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOutCubic,
+                    );
+                  }
+                  if (mounted) Navigator.of(this.context).pop();
                   return;
                 }
                 final canDismiss = await _handleDiscardConfirmation();
@@ -484,9 +491,8 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
           Expanded(
             child: NotificationListener<ScrollNotification>(
               onNotification: (scrollInfo) {
-                if (scrollInfo is ScrollUpdateNotification &&
-                    scrollInfo.metrics.pixels < -35 &&
-                    (scrollInfo.scrollDelta ?? 0) < -4 &&
+                if (scrollInfo is ScrollEndNotification &&
+                    scrollInfo.metrics.pixels < -20 &&
                     !_isDismissing) {
                   if (!_isDirty) {
                     _isDismissing = true;
@@ -855,13 +861,13 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
         child: NotificationListener<DraggableScrollableNotification>(
           onNotification: (notification) {
             AppleCardDeckHost.activeForegroundSheetExtent.value = notification.extent;
-            if (notification.extent <= 0.48 && !_isDismissing) {
+            if (notification.extent <= 0.05 && !_isDismissing) {
               if (_isDirty) {
                 if (!_isConfirmationShowing) {
                   if (_sheetController.isAttached) {
                     unawaited(_sheetController.animateTo(
                       0.60,
-                      duration: const Duration(milliseconds: 200),
+                      duration: const Duration(milliseconds: 250),
                       curve: Curves.easeOutCubic,
                     ));
                   }
@@ -883,10 +889,11 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
           child: DraggableScrollableSheet(
             controller: _sheetController,
             initialChildSize: 0.60,
-            minChildSize: 0.20,
+            minChildSize: 0.0,
             maxChildSize: 0.95,
             snap: true,
             snapSizes: const [0.60, 0.95],
+            snapAnimationDuration: const Duration(milliseconds: 250),
             expand: false,
             builder: (context, scrollController) {
               return buildSheetContainer(scrollController);

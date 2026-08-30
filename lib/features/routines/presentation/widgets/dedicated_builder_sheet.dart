@@ -57,6 +57,9 @@ class DedicatedBuilderSheet extends StatelessWidget {
           icon: '✨',
           isDirty: controller.isDirty,
           isSubmitting: controller.isSaving,
+          initialChildSize: 0.94,
+          maxChildSize: 0.94,
+          snapSizes: const [0.0, 0.94],
           saveLabel: 'ذخیره',
           onSave: controller.title.trim().isEmpty || controller.isSaving
               ? null

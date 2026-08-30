@@ -142,7 +142,7 @@ class AppleCardDeckHost extends StatelessWidget {
   final Widget child;
   final Animation<double>? animation;
   final ValueNotifier<double>? foregroundExtentNotifier;
-  final double topCornerRadius; // 20.0
+  final double topCornerRadius; // 24.0
 
   /// Global reactive coordinator for foreground sheet extent (0.0 to 1.0)
   static final ValueNotifier<double> activeForegroundSheetExtent = ValueNotifier<double>(0.60);
@@ -152,7 +152,7 @@ class AppleCardDeckHost extends StatelessWidget {
     required this.child,
     this.animation,
     this.foregroundExtentNotifier,
-    this.topCornerRadius = 20.0,
+    this.topCornerRadius = 24.0,
   });
 
   @override
@@ -182,12 +182,14 @@ class AppleCardDeckHost extends StatelessWidget {
       final scale = 1.0 - (targetScaleDown * progress);
 
       final radius = topCornerRadius * progress;
+      final clipBorderRadius = BorderRadius.vertical(top: Radius.circular(radius));
 
       // Top Peek Y-Shift: -10px at 60% to -16px at 95%
       final targetShift = (10.0 + (6.0 * tExtent)) * scaleFactorBelow60;
       final translateY = -targetShift * progress;
 
-
+      // Visible-Only Scrim Height: exactly (1.0 - extent)
+      final visibleTopHeightFactor = (1.0 - (clampedExtent * progress)).clamp(0.0, 1.0);
 
       // Dynamic Scrim Density / Opacity based on foreground extent:
       // At 60%: standard nominal opacity (1.0x)
@@ -210,20 +212,41 @@ class AppleCardDeckHost extends StatelessWidget {
           scale: scale,
           alignment: Alignment.topCenter,
           child: ClipRRect(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
+            borderRadius: clipBorderRadius,
+            clipBehavior: Clip.antiAlias,
             child: Stack(
+              fit: StackFit.passthrough,
               children: [
                 staticChild,
 
-                // Uniform Dynamic Depth Scrim (Native Apple iOS HIG Card Deck Stacking)
-                // Covers the background card seamlessly with zero cut lines or split headers!
-                if (effectiveAlpha > 0.001)
-                  Positioned.fill(
+                // Occlusion-Aware Visible-Band Scrim with soft feathering & exact matching rounded corners
+                // ONLY dims the visible band above the foreground sheet,
+                // leaving the area behind the foreground sheet 100% pristine.
+                if (visibleTopHeightFactor > 0.001)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
                     child: IgnorePointer(
                       ignoring: true,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: dimColor,
+                      child: ClipRRect(
+                        borderRadius: clipBorderRadius,
+                        clipBehavior: Clip.antiAlias,
+                        child: Container(
+                          height: MediaQuery.of(context).size.height * visibleTopHeightFactor,
+                          decoration: BoxDecoration(
+                            borderRadius: clipBorderRadius,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                dimColor,
+                                dimColor,
+                                dimColor.withValues(alpha: 0.0),
+                              ],
+                              stops: const [0.0, 0.94, 1.0],
+                            ),
+                          ),
                         ),
                       ),
                     ),

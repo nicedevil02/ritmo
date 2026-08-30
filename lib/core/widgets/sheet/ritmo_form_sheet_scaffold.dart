@@ -40,6 +40,7 @@ class RitmoFormSheetScaffold extends StatefulWidget {
     this.snapSizes = const [0.60, 0.95],
     this.borderRadius = const BorderRadius.vertical(top: Radius.circular(28)),
     this.controller,
+    this.deckAnimation,
     this.onDiscardConfirmation,
     this.child,
   }) : assert(child != null || builder != null, 'حداقل یکی از child یا builder باید مقداردهی شود.');
@@ -67,6 +68,7 @@ class RitmoFormSheetScaffold extends StatefulWidget {
   final List<double> snapSizes;
   final BorderRadius? borderRadius;
   final DraggableScrollableController? controller;
+  final Animation<double>? deckAnimation;
   final Future<bool> Function()? onDiscardConfirmation;
 
   /// متد کمکی برای نمایش تمیز و استاندارد شیت فرم از هر کجای اپلیکیشن
@@ -95,6 +97,7 @@ class RitmoFormSheetScaffold extends StatefulWidget {
     List<double> snapSizes = const [0.60, 0.95],
     BorderRadius? borderRadius = const BorderRadius.vertical(top: Radius.circular(28)),
     DraggableScrollableController? controller,
+    Animation<double>? deckAnimation,
     AnimationController? transitionAnimationController,
     bool useSafeArea = true,
   }) {
@@ -127,6 +130,7 @@ class RitmoFormSheetScaffold extends StatefulWidget {
         snapSizes: snapSizes,
         borderRadius: borderRadius,
         controller: controller,
+        deckAnimation: deckAnimation,
         child: child,
       ),
     );
@@ -292,15 +296,18 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
             snapAnimationDuration: const Duration(milliseconds: 250),
             expand: false,
             builder: (context, scrollController) {
-              return RitmoGlassSheet(
-                borderRadius: widget.borderRadius,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 1. Pinned Header with Drag Physics
+              return AppleCardDeckHost(
+                animation: widget.deckAnimation,
+                topCornerRadius: widget.borderRadius?.topLeft.x ?? 28.0,
+                child: RitmoGlassSheet(
+                  borderRadius: widget.borderRadius,
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 1. Pinned Header with Drag Physics
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onVerticalDragUpdate: (details) {
@@ -497,8 +504,9 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
                   ],
                 ),
               ),
-            );
-          },
+            ),
+          );
+        },
           ),
         ),
       ),

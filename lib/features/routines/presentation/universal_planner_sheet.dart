@@ -114,6 +114,8 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
         context: context,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
+        useSafeArea: true,
+        transitionAnimationController: _childSheetAnimController,
         builder: (sheetCtx) {
           return AddCustomMustahabSheet(
             practice: prefill != null ? WorshipPractice(
@@ -141,6 +143,8 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
         context: context,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
+        useSafeArea: true,
+        transitionAnimationController: _childSheetAnimController,
         builder: (sheetCtx) {
           return CreateCourseSheet(
             initialValues: initialValues,
@@ -159,6 +163,8 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
         context: context,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
+        useSafeArea: true,
+        transitionAnimationController: _childSheetAnimController,
         builder: (sheetCtx) {
           return CreateGoalSheet(
             activeGoals: const [],
@@ -185,7 +191,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
       if (!mounted) return;
       DedicatedBuilderSheet.show(
         context: context,
-        title: '✨ ثبت رویداد جدید',
+        title: 'ثبت رویداد جدید',
         subtitle: 'تنظیمات زمان و مشخصات رویداد در مسیر زندگی',
         controller: _controller,
         formWidget: GenericStep2Form(controller: _controller),
@@ -201,7 +207,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
       if (!mounted) return;
       DedicatedBuilderSheet.show(
         context: context,
-        title: '✨ ثبت یادآور جدید',
+        title: 'ثبت یادآور جدید',
         subtitle: 'تنظیم زمان و یادآوری هشدار ساده',
         controller: _controller,
         formWidget: SimpleReminderForm(controller: _controller),
@@ -238,7 +244,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
       if (!mounted) return;
       DedicatedBuilderSheet.show(
         context: context,
-        title: '✨ ساخت روتین عمومی',
+        title: 'ساخت روتین عمومی',
         subtitle: 'برنامه‌ریزی، زمان‌بندی و تکرار روتین جدید',
         controller: _controller,
         formWidget: GenericStep2Form(controller: _controller),
@@ -282,6 +288,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
           isEditing: _controller.isEditing,
           isDirty: _controller.isDirty && !_controller.showSuccessAnim,
           isSubmitting: _controller.isSaving,
+          deckAnimation: _childSheetAnimController,
           saveLabel: _controller.isEditing ? 'ذخیره' : 'ثبت کار',
           onSave: () => _controller.save(context),
           builder: (context, scrollController) {

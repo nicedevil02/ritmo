@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -103,53 +101,6 @@ class RitmoGlassActionSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
-    final isGlass = context.isGlassEnabled;
-    final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
-    final materialSpec = context.materials.regular;
-    final isOpaque = !isGlass || highContrast;
-
-    Widget buildGlassBox({required Widget child, BorderRadius? borderRadius}) {
-      final br = borderRadius ?? BorderRadius.circular(20);
-      final container = Container(
-        decoration: BoxDecoration(
-          color: isOpaque
-              ? colors.surfaceElevated
-              : (isDark
-                  ? const Color(0xFF161B26).withValues(alpha: 0.88)
-                  : Colors.white.withValues(alpha: 0.90)),
-          borderRadius: br,
-          border: Border.all(
-            color: isOpaque
-                ? (isDark ? colors.border : colors.divider)
-                : (isDark
-                    ? Colors.white.withValues(alpha: 0.12)
-                    : Colors.white.withValues(alpha: 0.95)),
-            width: 1.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.14),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: child,
-      );
-
-      if (isOpaque) return container;
-
-      return ClipRRect(
-        borderRadius: br,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: materialSpec.sigma,
-            sigmaY: materialSpec.sigma,
-          ),
-          child: container,
-        ),
-      );
-    }
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -161,8 +112,11 @@ class RitmoGlassActionSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Upper Main Actions Card
-              buildGlassBox(
+              // Upper Main Actions Glass Capsule
+              RitmoGlassSheet(
+                borderRadius: BorderRadius.circular(22),
+                enableAmbientGlow: true,
+                enableSpecularSheen: true,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -177,7 +131,7 @@ class RitmoGlassActionSheet extends StatelessWidget {
                                 title!,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 14.5,
                                   fontWeight: FontWeight.w900,
                                   fontFamily: 'Vazirmatn',
                                   color: colors.textPrimary,
@@ -250,9 +204,11 @@ class RitmoGlassActionSheet extends StatelessWidget {
 
               const SizedBox(height: 8),
 
-              // Bottom Separate Cancel Capsule
-              buildGlassBox(
+              // Bottom Separate Cancel Glass Capsule
+              RitmoGlassSheet(
                 borderRadius: BorderRadius.circular(18),
+                enableAmbientGlow: false,
+                enableSpecularSheen: true,
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
@@ -265,7 +221,7 @@ class RitmoGlassActionSheet extends StatelessWidget {
                       child: Text(
                         cancelLabel,
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 15.5,
                           fontWeight: FontWeight.w900,
                           fontFamily: 'Vazirmatn',
                           color: colors.primary,

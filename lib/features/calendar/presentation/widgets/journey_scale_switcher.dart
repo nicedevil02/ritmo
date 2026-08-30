@@ -129,7 +129,7 @@ class JourneyScaleSwitcher extends StatelessWidget {
                               fontFamily: 'Vazirmatn',
                               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                               color: isSelected
-                                  ? (isDark ? Colors.white : const Color(0xFF1E293B))
+                                  ? (isDark ? Colors.white : const Color(0xFF0F172A))
                                   : (isDark ? const Color(0xFF8E9BAE) : const Color(0xFF64748B)),
                             ),
                           ),
@@ -283,7 +283,7 @@ class _OverflowScaleButton extends StatelessWidget {
                       fontSize: 11.5,
                       fontFamily: 'Vazirmatn',
                       fontWeight: FontWeight.w800,
-                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      color: colors.primary,
                     ),
                   ),
                 )

@@ -670,10 +670,10 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
     bool showWarningDot = false,
   }) {
     final isActive = _query.lens == lens;
-    final activeTextColor = isDark ? Colors.white : const Color(0xFF1E293B);
+    final activeTextColor = isDark ? Colors.white : const Color(0xFF0F172A);
     final inactiveTextColor = isDark ? const Color(0xFF8E9BAE) : const Color(0xFF64748B);
 
-    final fullLabel = badgeText != null ? '$label ($badgeText)' : label;
+    final fullLabel = badgeText != null ? '$label $badgeText' : label;
 
     return GestureDetector(
       onTap: () {
@@ -729,6 +729,17 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (showWarningDot) ...[
+              Container(
+                width: 5.5,
+                height: 5.5,
+                margin: const EdgeInsets.only(left: 4),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF59E0B),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
             Text(
               fullLabel,
               style: TextStyle(
@@ -738,17 +749,6 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                 color: isActive ? activeTextColor : inactiveTextColor,
               ),
             ),
-            if (showWarningDot) ...[
-              const SizedBox(width: 5),
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF59E0B),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
           ],
         ),
       ),

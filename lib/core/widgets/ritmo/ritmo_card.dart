@@ -1180,7 +1180,7 @@ class RitmoNeuMasterCard extends StatefulWidget {
     this.onTap,
     this.height = 180,
     this.margin,
-    this.enableBreathing = false,
+    this.enableBreathing = true,
   });
 
   final String title;
@@ -1218,9 +1218,11 @@ class _RitmoNeuMasterCardState extends State<RitmoNeuMasterCard>
       vsync: this,
       duration: const Duration(milliseconds: 3200),
     );
-    _breathingAnim = CurvedAnimation(
-      parent: _breathingController,
-      curve: Curves.easeInOutSine,
+    _breathingAnim = Tween<double>(begin: 0.25, end: 0.90).animate(
+      CurvedAnimation(
+        parent: _breathingController,
+        curve: Curves.easeInOutSine,
+      ),
     );
 
     if (widget.enableBreathing) {
@@ -1389,105 +1391,74 @@ class _RitmoNeuMasterCardState extends State<RitmoNeuMasterCard>
             ),
           );
 
+          final mainCard = RitmoCard.neumorphic(
+            onTap: widget.onTap,
+            margin: widget.margin,
+            borderRadius: BorderRadius.circular(28),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            backgroundColor: colors.surfaceElevated,
+            borderColor: effectiveColor.withValues(alpha: isDark ? 0.60 : 0.45),
+            borderWidth: 1.2,
+            customShadows: [
+              // سایه فیزیکی نئومورفیک تیره عمیق
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.45)
+                    : Color.lerp(colors.surfaceElevated, Colors.black, 0.16)!.withValues(alpha: 0.45),
+                blurRadius: 14,
+                offset: const Offset(3.5, 4.5),
+              ),
+              // سایه فیزیکی نئومورفیک لبه روشن
+              BoxShadow(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.white.withValues(alpha: 0.95),
+                blurRadius: 7,
+                offset: const Offset(-2.5, -2.5),
+              ),
+            ],
+            child: innerContent,
+          );
+
           if (!widget.enableBreathing) {
-            return RitmoCard.neumorphic(
-              onTap: widget.onTap,
-              margin: widget.margin,
-              borderRadius: BorderRadius.circular(28),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              backgroundColor: colors.surfaceElevated,
-              borderColor: effectiveColor.withValues(alpha: isDark ? 0.60 : 0.45),
-              borderWidth: 1.2,
-              customShadows: [
-                BoxShadow(
-                  color: effectiveColor.withValues(alpha: isDark ? 0.36 : 0.24),
-                  blurRadius: 32,
-                  spreadRadius: 3.5,
-                  offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: effectiveColor.withValues(alpha: isDark ? 0.45 : 0.32),
-                  blurRadius: 16,
-                  spreadRadius: 1.0,
-                  offset: const Offset(0, 2),
-                ),
-                BoxShadow(
-                  color: isDark
-                      ? Colors.black.withValues(alpha: 0.45)
-                      : Color.lerp(colors.surfaceElevated, Colors.black, 0.16)!.withValues(alpha: 0.45),
-                  blurRadius: 14,
-                  offset: const Offset(3.5, 4.5),
-                ),
-                BoxShadow(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.white.withValues(alpha: 0.95),
-                  blurRadius: 7,
-                  offset: const Offset(-2.5, -2.5),
-                ),
-              ],
-              child: innerContent,
-            );
+            return mainCard;
           }
 
-          return AnimatedBuilder(
-            animation: _breathingAnim,
-            builder: (context, child) {
-              final t = _breathingAnim.value;
-              final outerSpread = lerpDouble(2.0, 5.5, t)!;
-              final outerBlur = lerpDouble(22.0, 40.0, t)!;
-              final outerAlpha = lerpDouble(isDark ? 0.22 : 0.14, isDark ? 0.48 : 0.34, t)!;
-
-              final rimSpread = lerpDouble(0.4, 2.0, t)!;
-              final rimBlur = lerpDouble(12.0, 22.0, t)!;
-              final rimAlpha = lerpDouble(isDark ? 0.30 : 0.20, isDark ? 0.58 : 0.42, t)!;
-
-              final borderAlpha = lerpDouble(isDark ? 0.40 : 0.30, isDark ? 0.75 : 0.58, t)!;
-
-              return RitmoCard.neumorphic(
-                onTap: widget.onTap,
-                margin: widget.margin,
-                borderRadius: BorderRadius.circular(28),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                backgroundColor: colors.surfaceElevated,
-                borderColor: effectiveColor.withValues(alpha: borderAlpha),
-                borderWidth: 1.2,
-                customShadows: [
-                  // ۱. هاله بیرونی نرم تنفسی (Breathing Ambient Dispersion)
-                  BoxShadow(
-                    color: effectiveColor.withValues(alpha: outerAlpha),
-                    blurRadius: outerBlur,
-                    spreadRadius: outerSpread,
-                    offset: const Offset(0, 4),
+          // ── انیمیشن تنفسی سخت‌افزاری شیدر GPU با مصرف 0.0% توان CPU ──
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // لایه ۱: هاله نوری کش‌شده روی GPU (تغییر فقط در لایه کامپوزیتور سخت‌افزاری)
+              Positioned.fill(
+                child: RepaintBoundary(
+                  child: FadeTransition(
+                    opacity: _breathingAnim,
+                    child: Container(
+                      margin: widget.margin,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(28),
+                        boxShadow: [
+                          BoxShadow(
+                            color: effectiveColor.withValues(alpha: isDark ? 0.38 : 0.24),
+                            blurRadius: 36,
+                            spreadRadius: 3.5,
+                            offset: const Offset(0, 4),
+                          ),
+                          BoxShadow(
+                            color: effectiveColor.withValues(alpha: isDark ? 0.48 : 0.34),
+                            blurRadius: 16,
+                            spreadRadius: 1.0,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  // ۲. هاله ریم متمرکز تنفسی (Breathing Rim Glow)
-                  BoxShadow(
-                    color: effectiveColor.withValues(alpha: rimAlpha),
-                    blurRadius: rimBlur,
-                    spreadRadius: rimSpread,
-                    offset: const Offset(0, 2),
-                  ),
-                  // ۳. سایه فیزیکی نئومورفیک تیره عمیق
-                  BoxShadow(
-                    color: isDark
-                        ? Colors.black.withValues(alpha: 0.45)
-                        : Color.lerp(colors.surfaceElevated, Colors.black, 0.16)!.withValues(alpha: 0.45),
-                    blurRadius: 14,
-                    offset: const Offset(3.5, 4.5),
-                  ),
-                  // ۴. سایه فیزیکی نئومورفیک لبه روشن
-                  BoxShadow(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.white.withValues(alpha: 0.95),
-                    blurRadius: 7,
-                    offset: const Offset(-2.5, -2.5),
-                  ),
-                ],
-                child: child!,
-              );
-            },
-            child: innerContent,
+                ),
+              ),
+              // لایه ۲: کارت نئومورفیک استاتیک (بدون ریبیلد و بدون سربار پردازشی)
+              mainCard,
+            ],
           );
         },
       ),

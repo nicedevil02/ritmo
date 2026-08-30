@@ -32,7 +32,6 @@ class DedicatedBuilderSheet extends StatelessWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       backgroundColor: Colors.transparent,
       transitionAnimationController: transitionAnimationController,
       builder: (_) => DedicatedBuilderSheet(

@@ -1520,7 +1520,6 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => ShowcaseRealmEditFormSheet(
         onSave: (realm, schedules) async {

@@ -49,7 +49,6 @@ class UniversalPlannerSheet extends StatefulWidget {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => UniversalPlannerSheet(
         routineToEdit: routineToEdit,
@@ -65,7 +64,7 @@ class UniversalPlannerSheet extends StatefulWidget {
 }
 
 class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with SingleTickerProviderStateMixin {
-  late PlannerController _controller;
+  late final PlannerController _controller;
   final PageController _pageController = PageController();
   late AnimationController _childSheetAnimController;
 
@@ -114,7 +113,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
         context: context,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
-        useSafeArea: true,
         transitionAnimationController: _childSheetAnimController,
         builder: (sheetCtx) {
           return AddCustomMustahabSheet(
@@ -143,7 +141,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
         context: context,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
-        useSafeArea: true,
         transitionAnimationController: _childSheetAnimController,
         builder: (sheetCtx) {
           return CreateCourseSheet(
@@ -163,7 +160,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
         context: context,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
-        useSafeArea: true,
         transitionAnimationController: _childSheetAnimController,
         builder: (sheetCtx) {
           return CreateGoalSheet(

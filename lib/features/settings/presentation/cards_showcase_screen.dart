@@ -26,20 +26,21 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
   int _counter = 0;
   int _selectedSegmentIndex = 0;
   Timer? _ticker;
-  DateTime _now = DateTime.now();
+  final ValueNotifier<DateTime> _nowNotifier = ValueNotifier(DateTime.now());
   RealmMode _activeShowcaseMode = RealmMode.normal;
 
   @override
   void initState() {
     super.initState();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _now = DateTime.now());
+      _nowNotifier.value = DateTime.now();
     });
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
+    _nowNotifier.dispose();
     super.dispose();
   }
 
@@ -772,17 +773,24 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
       remainingTime: toPersianDigits('۰۵:۵۶:۱۶'),
       activeColor: activeColor,
       height: 180,
-      gaugeWidget: Realm24hDial(
-        size: 116,
-        activeZoneId: 'sleep',
-        activeZoneColor: activeColor,
-        activeZoneIcon: '🌙',
-        activeZoneName: 'خواب و ریکاوری',
-        schedules: sampleSchedules,
-        realms: sampleRealms,
-        isDarkMode: isDark,
-        now: _now,
-        showHourLabels: false,
+      gaugeWidget: RepaintBoundary(
+        child: ValueListenableBuilder<DateTime>(
+          valueListenable: _nowNotifier,
+          builder: (context, currentNow, _) {
+            return Realm24hDial(
+              size: 116,
+              activeZoneId: 'sleep',
+              activeZoneColor: activeColor,
+              activeZoneIcon: '🌙',
+              activeZoneName: 'خواب و ریکاوری',
+              schedules: sampleSchedules,
+              realms: sampleRealms,
+              isDarkMode: isDark,
+              now: currentNow,
+              showHourLabels: false,
+            );
+          },
+        ),
       ),
       actionButtonText: 'مدیریت قلمرو',
       onActionTap: () => _openShowcase24hSheet(context, colors, isDark),

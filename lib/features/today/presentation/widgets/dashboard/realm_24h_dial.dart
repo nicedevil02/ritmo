@@ -320,24 +320,27 @@ class Realm24hDial extends StatelessWidget {
     final effectiveSunken = surfaceSunkenColor ?? colors.surfaceSunken;
     final effectiveText = textColor ?? colors.textPrimary;
 
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        size: Size.square(size),
-        isComplex: true,
-        painter: _NeuDialPainter(
-          segments: segments,
-          now: current,
-          activeColor: activeZoneColor,
-          activeZoneIcon: activeZoneIcon,
-          activeZoneName: activeZoneName ?? 'خواب',
-          isDarkMode: isDarkMode,
-          showHourLabels: showHourLabels,
-          usePersianDigits: usePersianDigits,
-          surfaceColor: effectiveSurface,
-          surfaceSunkenColor: effectiveSunken,
-          textColor: effectiveText,
+    return RepaintBoundary(
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: CustomPaint(
+          size: Size.square(size),
+          isComplex: true,
+          willChange: true,
+          painter: _NeuDialPainter(
+            segments: segments,
+            now: current,
+            activeColor: activeZoneColor,
+            activeZoneIcon: activeZoneIcon,
+            activeZoneName: activeZoneName ?? 'خواب',
+            isDarkMode: isDarkMode,
+            showHourLabels: showHourLabels,
+            usePersianDigits: usePersianDigits,
+            surfaceColor: effectiveSurface,
+            surfaceSunkenColor: effectiveSunken,
+            textColor: effectiveText,
+          ),
         ),
       ),
     );

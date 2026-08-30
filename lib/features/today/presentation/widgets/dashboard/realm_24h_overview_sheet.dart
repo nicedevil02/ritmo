@@ -128,11 +128,14 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
     _schedules = List.from(widget.schedules);
     _realmState = widget.realmState;
     _loadData();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+    _ticker = Timer.periodic(const Duration(seconds: 15), (_) {
       if (mounted) {
-        setState(() {
-          _now = DateTime.now();
-        });
+        final newNow = DateTime.now();
+        if (newNow.minute != _now.minute) {
+          setState(() {
+            _now = newNow;
+          });
+        }
       }
     });
   }
@@ -212,7 +215,6 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.transparent,
       transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(
         initialSchedules: initialSchedules,
@@ -234,7 +236,6 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.transparent,
       transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(
         initialRealm: realm,

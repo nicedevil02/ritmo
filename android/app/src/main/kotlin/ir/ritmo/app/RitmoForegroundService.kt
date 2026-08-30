@@ -72,13 +72,13 @@ class RitmoForegroundService : Service() {
 
     private var wakeLock: android.os.PowerManager.WakeLock? = null
 
-    private fun acquireWakeLock() {
+    private fun acquireWakeLock(timeoutMs: Long = 300_000L) {
         if (wakeLock == null) {
             val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
             wakeLock = powerManager.newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "Ritmo:ForegroundServiceWakeLock")
         }
         if (wakeLock?.isHeld == false) {
-            wakeLock?.acquire()
+            wakeLock?.acquire(timeoutMs)
         }
     }
 
@@ -137,14 +137,18 @@ class RitmoForegroundService : Service() {
                     lastZoneIds = ids
                 }
                 
-                acquireWakeLock()
+                // Status notifications in Android do not need CPU wakelock; release it so CPU can sleep
+                releaseWakeLock()
                 startStatusForeground()
             } else if (action == ACTION_START_TIMER) {
-                acquireWakeLock()
                 mode = "TIMER"
                 timerTitle = intent.getStringExtra("title") ?: "روتین"
                 durationSeconds = intent.getIntExtra("durationSeconds", 0)
                 elapsedSeconds = intent.getIntExtra("elapsedSeconds", 0)
+
+                // Only acquire temporary wakelock bounded by remaining timer duration
+                val remainingMs = ((durationSeconds - elapsedSeconds + 30) * 1000L).coerceIn(10_000L, 7_200_000L)
+                acquireWakeLock(remainingMs)
 
                 startTimerForeground()
                 handler.removeCallbacks(timerRunnable)

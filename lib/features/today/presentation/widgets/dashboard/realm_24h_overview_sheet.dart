@@ -787,12 +787,12 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
             }
           },
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Column(
               children: [
                 Center(
                   child: Container(
-                    width: 40,
+                    width: 38,
                     height: 4.5,
                     decoration: BoxDecoration(
                       color: colors.textTertiary.withValues(alpha: 0.35),
@@ -802,34 +802,72 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
                 ),
                 const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'گاه‌شمار شبانه‌روز',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: colors.textPrimary,
+                    // Leading (Right in RTL) Spacer for 100% Symmetrical Balance
+                    const SizedBox(width: 32, height: 32),
+
+                    // Center: Symmetrical Title & Subtitle with Icon
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'گاه‌شمار شبانه‌روز',
+                                style: TextStyle(
+                                  fontSize: 16.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: colors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Text('🧭', style: TextStyle(fontSize: 15)),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'نمای ۲۴ ساعته، توازن زمان و جریان قلمروها',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontFamily: 'Vazirmatn',
-                            color: colors.textSecondary,
+                          const SizedBox(height: 2),
+                          Text(
+                            'نمای ۲۴ ساعته، توازن زمان و جریان قلمروها',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontFamily: 'Vazirmatn',
+                              color: colors.textSecondary,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(CupertinoIcons.xmark_circle_fill, size: 24),
-                      color: colors.textSecondary,
+
+                    // Trailing (Left in RTL): Apple Glass Tactile Close Button
+                    GestureDetector(
+                      onTap: () {
+                        RitmoHaptics.tap();
+                        Navigator.of(context).pop();
+                      },
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.10)
+                              : Colors.black.withValues(alpha: 0.06),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.14)
+                                : Colors.black.withValues(alpha: 0.08),
+                            width: 0.75,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          CupertinoIcons.xmark,
+                          size: 14,
+                          color: colors.textSecondary,
+                        ),
+                      ),
                     ),
                   ],
                 ),

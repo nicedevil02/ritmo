@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
@@ -298,9 +299,13 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
     }
   }
 
+  bool _isConfirmationShowing = false;
+
   Future<bool> _handleDiscardConfirmation() async {
     if (!_isDirty || _isSubmitting) return true;
+    if (_isConfirmationShowing) return false;
 
+    _isConfirmationShowing = true;
     final shouldDiscard = await RitmoGlassActionSheet.showDiscard(
       context: context,
       title: 'تغییرات ذخیره نشده‌اند',
@@ -308,6 +313,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
       discardLabel: 'حذف تغییرات',
       continueEditingLabel: 'ادامه ویرایش',
     );
+    _isConfirmationShowing = false;
 
     return shouldDiscard ?? false;
   }
@@ -330,43 +336,60 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Apple Grabber Handle & Pinned Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
-                  child: Container(
-                    width: 38,
-                    height: 4.5,
-                    decoration: BoxDecoration(
-                      color: colors.textPrimary.withValues(alpha: 0.22),
-                      borderRadius: BorderRadius.circular(3),
+          // 1. Apple Grabber Handle & Pinned Header with Swipe-to-Dismiss Interceptor
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onVerticalDragEnd: (details) async {
+              if (details.primaryVelocity != null && details.primaryVelocity! > 180) {
+                final canDismiss = await _handleDiscardConfirmation();
+                if (!mounted) return;
+                if (canDismiss) {
+                  Navigator.of(this.context).pop();
+                } else if (_sheetController.isAttached) {
+                  unawaited(_sheetController.animateTo(
+                    0.60,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOutCubic,
+                  ));
+                }
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 38,
+                      height: 4.5,
+                      decoration: BoxDecoration(
+                        color: colors.textPrimary.withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Leading (Right in RTL): Cancel action with Discard Guard
-                    TextButton(
-                      onPressed: _onCancelPressed,
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        'انصراف',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: colors.textSecondary,
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Leading (Right in RTL): Cancel action with Discard Guard
+                      TextButton(
+                        onPressed: _onCancelPressed,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          'انصراف',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textSecondary,
+                          ),
                         ),
                       ),
-                    ),
 
                     // Center: Modal Title + Live Morphing Preview Chip (Item 3)
                     Row(
@@ -429,25 +452,41 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                               ),
                             ),
                           ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-
           Divider(height: 1, color: isDark ? colors.border : colors.divider),
 
           // 2. Scrollable Form Content (Connected with DraggableScrollableSheet controller)
           Expanded(
-            child: SingleChildScrollView(
-              controller: scrollController,
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-                top: 14,
-                left: 16,
-                right: 16,
-              ),
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (scrollInfo) {
+                if (scrollInfo is ScrollUpdateNotification &&
+                    scrollInfo.metrics.pixels < -35 &&
+                    (scrollInfo.scrollDelta ?? 0) < -4 &&
+                    _isDirty &&
+                    !_isConfirmationShowing) {
+                  _handleDiscardConfirmation().then((canDismiss) {
+                    if (!mounted) return;
+                    if (canDismiss) {
+                      Navigator.of(this.context).pop();
+                    }
+                  });
+                }
+                return false;
+              },
+              child: SingleChildScrollView(
+                controller: scrollController,
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                  top: 14,
+                  left: 16,
+                  right: 16,
+                ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -761,8 +800,9 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
               ),
             ),
           ),
-        ],
-      );
+        ),
+      ],
+    );
 
       return RitmoGlassSheet(
         borderRadius: sheetRadius,
@@ -783,21 +823,44 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
         onPopInvokedWithResult: (didPop, result) async {
           if (didPop) return;
           final canDismiss = await _handleDiscardConfirmation();
-          if (canDismiss && context.mounted) {
-            Navigator.pop(context);
+          if (canDismiss && mounted) {
+            Navigator.of(this.context).pop();
           }
         },
-        child: DraggableScrollableSheet(
-          controller: _sheetController,
-          initialChildSize: 0.60,
-          minChildSize: 0.35,
-          maxChildSize: 0.95,
-          snap: true,
-          snapSizes: const [0.60, 0.95],
-          expand: false,
-          builder: (context, scrollController) {
-            return buildSheetContainer(scrollController);
+        child: NotificationListener<DraggableScrollableNotification>(
+          onNotification: (notification) {
+            if (notification.extent <= 0.42 && !_isConfirmationShowing) {
+              if (_isDirty) {
+                _handleDiscardConfirmation().then((canDismiss) {
+                  if (!mounted) return;
+                  if (canDismiss) {
+                    Navigator.of(this.context).pop();
+                  } else if (_sheetController.isAttached) {
+                    unawaited(_sheetController.animateTo(
+                      0.60,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOutCubic,
+                    ));
+                  }
+                });
+              } else if (notification.extent <= 0.36 && mounted) {
+                Navigator.of(this.context).pop();
+              }
+            }
+            return false;
           },
+          child: DraggableScrollableSheet(
+            controller: _sheetController,
+            initialChildSize: 0.60,
+            minChildSize: 0.35,
+            maxChildSize: 0.95,
+            snap: true,
+            snapSizes: const [0.60, 0.95],
+            expand: false,
+            builder: (context, scrollController) {
+              return buildSheetContainer(scrollController);
+            },
+          ),
         ),
       ),
     );

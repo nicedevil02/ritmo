@@ -100,6 +100,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
   bool _isSuggestionDismissed = false;
 
   late AnimationController _childSheetAnimController;
+  late final DraggableScrollableController _sheetController;
   Timer? _ticker;
   DateTime _now = DateTime.now();
   late int _selectedWeekday; // 1: Mon ... 7: Sun
@@ -120,6 +121,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
   void initState() {
     super.initState();
     _selectedWeekday = _now.weekday;
+    _sheetController = DraggableScrollableController();
     _childSheetAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
@@ -569,6 +571,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
 
   @override
   void dispose() {
+    _sheetController.dispose();
     _childSheetAnimController.dispose();
     _ticker?.cancel();
     super.dispose();
@@ -775,185 +778,201 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
 
     const sheetRadius = BorderRadius.vertical(top: Radius.circular(32));
 
-    final sheetContent = Column(
-      children: [
-        // Top Drag Handle & Title (Swipe down to dismiss)
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onVerticalDragEnd: (details) {
-            if (details.primaryVelocity != null && details.primaryVelocity! > 250 && !_isDismissing) {
-              _isDismissing = true;
-              Navigator.of(context).pop();
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Column(
-              children: [
-                Center(
-                  child: Container(
-                    width: 38,
-                    height: 4.5,
-                    decoration: BoxDecoration(
-                      color: colors.textTertiary.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    // Leading (Right in RTL) Spacer for 100% Symmetrical Balance
-                    const SizedBox(width: 32, height: 32),
-
-                    // Center: Symmetrical Title & Subtitle with Icon
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'گاه‌شمار شبانه‌روز',
-                                style: TextStyle(
-                                  fontSize: 16.5,
-                                  fontWeight: FontWeight.w900,
-                                  color: colors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              const Text('🧭', style: TextStyle(fontSize: 15)),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'نمای ۲۴ ساعته، توازن زمان و جریان قلمروها',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontFamily: 'Vazirmatn',
-                              color: colors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Trailing (Left in RTL): Apple Glass Tactile Close Button
-                    GestureDetector(
-                      onTap: () {
-                        RitmoHaptics.tap();
-                        Navigator.of(context).pop();
-                      },
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.10)
-                              : Colors.black.withValues(alpha: 0.06),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.14)
-                                : Colors.black.withValues(alpha: 0.08),
-                            width: 0.75,
-                          ),
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(
-                          CupertinoIcons.xmark,
-                          size: 14,
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        Divider(height: 1, color: colors.divider),
-
-        // Scrollable Content with Apple HIG Pull-to-Dismiss at Top Edge
-        Expanded(
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (scrollInfo) {
-              if (_isDismissing) return false;
-              if (scrollInfo is ScrollEndNotification &&
-                  scrollInfo.metrics.pixels < -30) {
-                _isDismissing = true;
-                Navigator.of(context).pop();
-                return true;
-              }
-              if (scrollInfo is OverscrollNotification &&
-                  scrollInfo.overscroll < -12 &&
-                  scrollInfo.velocity < -200) {
-                _isDismissing = true;
-                Navigator.of(context).pop();
-                return true;
-              }
-              return false;
-            },
-            child: ListView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-              children: [
-                // 1. Weekday Selector
-                _buildWeekdaySelector(isDark, colors, isGlass),
-
-                const SizedBox(height: 18),
-
-                // 2. Interactive 24h Chronometer Piece
-                _buildInteractiveDialSection(
-                  isDark,
-                  colors,
-                  isGlass,
-                  inspectStatus,
-                  isScrubbing,
-                  inspectMinute,
-                ),
-
-                const SizedBox(height: 16),
-
-                // 3. 24-Hour Day Balance Bar (توزیع ساعات شبانه‌روز)
-                _buildDayBalanceSection(isDark, colors, isGlass, blocks),
-
-                const SizedBox(height: 20),
-
-                // 4. Chronological Day Timeline Stream & Realm Management
-                _buildTimelineStreamHeader(isDark, colors),
-                const SizedBox(height: 10),
-
-                // Smart Sleep Suggestion Banner
-                _buildSleepSuggestionCard(isDark, colors),
-
-                ...blocks.map((block) => _buildTimelineBlockCard(isDark, colors, isGlass, block, activeNowMinute)),
-
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: AppleCardDeckHost(
         animation: _childSheetAnimController,
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.90,
-          ),
-          child: RitmoGlassSheet(
-            borderRadius: sheetRadius,
-            child: sheetContent,
+        child: NotificationListener<DraggableScrollableNotification>(
+          onNotification: (notification) {
+            if (notification.extent < 0.20 && !_isDismissing) {
+              _isDismissing = true;
+              Navigator.of(context).pop();
+            }
+            return false;
+          },
+          child: DraggableScrollableSheet(
+            controller: _sheetController,
+            initialChildSize: 0.90,
+            minChildSize: 0.0,
+            maxChildSize: 0.90,
+            snap: true,
+            snapSizes: const [0.0, 0.90],
+            snapAnimationDuration: const Duration(milliseconds: 250),
+            builder: (context, scrollController) {
+              return RitmoGlassSheet(
+                borderRadius: sheetRadius,
+                child: Column(
+                  children: [
+                    // Top Drag Handle & Title (Swipe down to dismiss)
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onVerticalDragUpdate: (details) {
+                        if (_isDismissing || !_sheetController.isAttached) return;
+                        final screenHeight = MediaQuery.of(context).size.height;
+                        if (screenHeight <= 0) return;
+                        final deltaFraction = -details.delta.dy / screenHeight;
+                        final newSize = (_sheetController.size + deltaFraction).clamp(0.0, 0.90);
+                        _sheetController.jumpTo(newSize);
+                      },
+                      onVerticalDragEnd: (details) async {
+                        if (_isDismissing || !_sheetController.isAttached) return;
+                        final currentSize = _sheetController.size;
+                        final velocity = details.primaryVelocity ?? 0.0;
+                        if (velocity > 350 || currentSize < 0.65) {
+                          _isDismissing = true;
+                          if (_sheetController.isAttached) {
+                            await _sheetController.animateTo(
+                              0.0,
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeOutCubic,
+                            );
+                          }
+                          if (mounted) Navigator.of(this.context).pop();
+                          return;
+                        }
+                        unawaited(_sheetController.animateTo(
+                          0.90,
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOutCubic,
+                        ));
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                        child: Column(
+                          children: [
+                            Center(
+                              child: Container(
+                                width: 38,
+                                height: 4.5,
+                                decoration: BoxDecoration(
+                                  color: colors.textTertiary.withValues(alpha: 0.35),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                // Leading (Right in RTL) Spacer for 100% Symmetrical Balance
+                                const SizedBox(width: 32, height: 32),
+
+                                // Center: Symmetrical Title & Subtitle with Icon
+                                Expanded(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'گاه‌شمار شبانه‌روز',
+                                            style: TextStyle(
+                                              fontSize: 16.5,
+                                              fontWeight: FontWeight.w900,
+                                              color: colors.textPrimary,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          const Text('🧭', style: TextStyle(fontSize: 15)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'نمای ۲۴ ساعته، توازن زمان و جریان قلمروها',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontFamily: 'Vazirmatn',
+                                          color: colors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Trailing (Left in RTL): Apple Glass Tactile Close Button
+                                GestureDetector(
+                                  onTap: () {
+                                    RitmoHaptics.tap();
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.10)
+                                          : Colors.black.withValues(alpha: 0.06),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isDark
+                                            ? Colors.white.withValues(alpha: 0.14)
+                                            : Colors.black.withValues(alpha: 0.08),
+                                        width: 0.75,
+                                      ),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Icon(
+                                      CupertinoIcons.xmark,
+                                      size: 14,
+                                      color: colors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    Divider(height: 1, color: colors.divider),
+
+                    // Scrollable Content connected to DraggableScrollableSheet
+                    Expanded(
+                      child: ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                        children: [
+                          // 1. Weekday Selector
+                          _buildWeekdaySelector(isDark, colors, isGlass),
+
+                          const SizedBox(height: 18),
+
+                          // 2. Interactive 24h Chronometer Piece
+                          _buildInteractiveDialSection(
+                            isDark,
+                            colors,
+                            isGlass,
+                            inspectStatus,
+                            isScrubbing,
+                            inspectMinute,
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // 3. 24-Hour Day Balance Bar (توزیع ساعات شبانه‌روز)
+                          _buildDayBalanceSection(isDark, colors, isGlass, blocks),
+
+                          const SizedBox(height: 20),
+
+                          // 4. Chronological Day Timeline Stream & Realm Management
+                          _buildTimelineStreamHeader(isDark, colors),
+                          const SizedBox(height: 10),
+
+                          // Smart Sleep Suggestion Banner
+                          _buildSleepSuggestionCard(isDark, colors),
+
+                          ...blocks.map((block) => _buildTimelineBlockCard(isDark, colors, isGlass, block, activeNowMinute)),
+
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),

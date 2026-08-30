@@ -40,15 +40,6 @@ When building, updating, or refactoring UI components across Ritmo, ALWAYS use t
 - **Apple Liquid Glass Segmented Switcher**: Use `RitmoGlassSegmentedControl` for 2-4 item timeframe switchers (daily/weekly/monthly) and horizontal tabbed filters.
 - **Luminous Status Indicators**: Use `RitmoLuminousDot` and `RitmoStatusBadge` (with dual-glow neon halo) for real-time connection, status, and AI indicators.
 
-### 6.1. Complete 6-Layer Sheet & Window Transformation Protocol
-When instructed to connect, sync, or upgrade any Sheet, Window, or Modal in any feature module (e.g. Goals, Routines, Habits, Calendar), the agent MUST execute all 6 layers completely without skipping any internal element:
-1. **Layer 1: Modal Host Scaffolding**: Ensure `showModalBottomSheet` uses `isScrollControlled: true`, `backgroundColor: Colors.transparent`, `barrierColor: Colors.black.withValues(alpha: 0.55)`, and the root widget is `RitmoGlassSheet` (with Apple drag handle and 28pt top radius).
-2. **Layer 2: Concave Wells & Previews**: Transform every input box, summary container, note preview, or stats box from raw `Container` to `RitmoCard.neumorphicSunken`.
-3. **Layer 3: Selectors & Chips**: Transform every duration chip, level selector, category tile, or toggle button into `RitmoCard.neumorphic(isSelected: isSelected)` or `RitmoGlassSegmentedControl` with `RitmoHaptics.selection()`.
-4. **Layer 4: Progress & Status**: Replace default indicators with `RitmoNeuProgressBar` (with Persian numbers) and `RitmoCardBadge` / `RitmoStatusBadge`.
-5. **Layer 5: Tactile Actions**: Ensure all action buttons use `RitmoNeuButton` or `RitmoPrimaryButton` with `RitmoHaptics.tap()`.
-6. **Layer 6: Unsaved Guards & Alerts**: Replace any raw `AlertDialog` or unstyled exit confirmation with `RitmoGlassDialog.show(...)`.
-
 ## 7. 60/120 FPS Performance & Frame Budgeting
 - **`const` Widget Trees**: Always use `const` constructors for static widgets, paddings, decorations, and icons to minimize rebuild cycles.
 - **Zero Heavy Computations in `build()`**: Never execute parsing, heavy loops, regex evaluations, or unmemoized date formatters inside widget `build()` methods; compute in state managers/cubits or memoize.

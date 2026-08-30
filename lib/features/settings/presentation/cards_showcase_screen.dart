@@ -440,7 +440,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
             title: 'پنجره‌ها و شیت‌های شیشه‌ای مرجع ریتمو (Reference Sheets)',
             usage: 'تنها روش استاندارد و مجاز باز کردن باتم‌شیت‌ها، دیالوگ‌ها و انتخابگرها در سراسر اپلیکیشن.',
             features: 'بلور زنده اکوسیستم اپل (BackdropFilter)، هاله نوری پالت، دستگیره کشیدن به پایین و گوشه‌های گرد ۲۸ پیکسل.',
-            rule: 'هرگز از showDialog تخت متریال استفاده نکنید؛ همیشه از RitmoGlassSheet یا RitmoPickerSheet استفاده شود.',
+            rule: 'پروتکل تبدیل ۶ لایه شیت‌ها: ۱) اسکفولد باتم‌شیت شیشه‌ای شفاف، ۲) فیلدها و پیش‌نمایش‌های مقعر فرورفته (neumorphicSunken)، ۳) چیپ‌ها و انتخابگرهای نئومورفیک انتخابی (isSelected)، ۴) نوارهای پیشرفت فرورفته با اعداد فارسی (RitmoNeuProgressBar)، ۵) دکمه‌های لمسی ۳ بعدی (RitmoNeuButton)، ۶) دیالوگ‌های تایید خروج شیشه‌ای (RitmoGlassDialog).',
           ),
           const SizedBox(height: 10),
 
@@ -793,6 +793,75 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
   Widget _buildReferenceSheetsShowcase(RitmoColors colors, bool isDark) {
     return Column(
       children: [
+        // کارت جامع راهنمای پروتکل ۶ لایه تبدیل پنجره‌ها و شیت‌ها
+        RitmoCard.neumorphicSunken(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(CupertinoIcons.checkmark_shield_fill, size: 18, color: colors.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'پروتکل ۶ لایه تبدیل کامل شیت‌ها و پنجره‌ها (AI Transformation Guide)',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: 'Vazirmatn',
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'هنگام اتصال یا به‌روزرسانی هر شیت در ماژول‌ها، هوش مصنوعی و توسعه‌دهنده موظف به اجرای تمام ۶ لایه زیر هستند:',
+                style: TextStyle(fontSize: 11.5, color: colors.textSecondary, height: 1.5),
+              ),
+              const SizedBox(height: 10),
+              _buildProtocolStep(
+                number: '۱',
+                title: 'اسکفولد شیشه‌ای و دستگیره (Host Scaffolding)',
+                desc: 'استفاده از isScrollControlled: true و backgroundColor: Colors.transparent با روت RitmoGlassSheet (دستگیره اپل و گوشه ۲۸pt).',
+                colors: colors,
+              ),
+              _buildProtocolStep(
+                number: '۲',
+                title: 'چاهک‌های فرورفته (Concave Wells)',
+                desc: 'تبدیل فیلدهای ورودی، یادداشت‌ها و پیش‌نمایش‌های زنده به RitmoCard.neumorphicSunken.',
+                colors: colors,
+              ),
+              _buildProtocolStep(
+                number: '۳',
+                title: 'سلکتورها و چیپ‌ها (Selectors & Chips)',
+                desc: 'تبدیل انتخابگرهای سطح و چیپ‌های زمان به RitmoCard.neumorphic(isSelected) با RitmoHaptics.selection().',
+                colors: colors,
+              ),
+              _buildProtocolStep(
+                number: '۴',
+                title: 'نوارهای پیشرفت و وضعیت (Progress & Badges)',
+                desc: 'استفاده از RitmoNeuProgressBar (با اعداد فارسی) و بج‌های کانونی RitmoCardBadge.',
+                colors: colors,
+              ),
+              _buildProtocolStep(
+                number: '۵',
+                title: 'دکمه‌های لمسی ۳ بعدی (Tactile Actions)',
+                desc: 'استفاده از RitmoNeuButton یا RitmoPrimaryButton با فیدبک فیزیکی و RitmoHaptics.tap().',
+                colors: colors,
+              ),
+              _buildProtocolStep(
+                number: '۶',
+                title: 'تأییدیه تغییرات ذخیره‌نشده (Unsaved Guards)',
+                desc: 'جایگزینی هرگونه AlertDialog با RitmoGlassDialog.show(...) همراه با آیکون و دکمه‌های ۳ بعدی.',
+                colors: colors,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
         _buildSheetLaunchTile(
           title: '[RitmoGlassSheet] شیت انتخاب حالت قلمرو',
           subtitle: 'الگوی استاندارد انتخاب وضعیت‌های سه‌گانه (عادی، تمرکز، بی‌صدا) با هپتیک',
@@ -829,6 +898,53 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           onTap: () => _openShowcaseEditFormSheet(context),
         ),
       ],
+    );
+  }
+
+  Widget _buildProtocolStep({
+    required String number,
+    required String title,
+    required String desc,
+    required RitmoColors colors,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              number,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: colors.primary,
+                fontFamily: 'Vazirmatn',
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: TextStyle(fontSize: 11, fontFamily: 'Vazirmatn', height: 1.45, color: colors.textSecondary),
+                children: [
+                  TextSpan(
+                    text: '$title: ',
+                    style: TextStyle(fontWeight: FontWeight.w800, color: colors.textPrimary),
+                  ),
+                  TextSpan(text: desc),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

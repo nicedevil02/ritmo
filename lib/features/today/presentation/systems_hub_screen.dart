@@ -1448,39 +1448,64 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
               ),
             ),
 
-            // Floating Status Pill (Top-Left corner)
-            Positioned(
-              top: 8,
-              left: 8,
-              child: _buildStatusPill(status, isDarkMode),
-            ),
+            // Floating Warning / Setup Pill (Top-Left corner, only for setupRequired or locked)
+            if (status == ModuleStatus.setupRequired || status == ModuleStatus.locked)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: _buildStatusPill(status, isDarkMode),
+              ),
 
-            // Floating Icon Badge with Glass Aura (Top-Right corner)
+            // Floating Top-Right: Integrated Glass Icon + Status Indicator
             Positioned(
               top: 8,
               right: 8,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(16),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
-                    padding: const EdgeInsets.all(5.5),
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4.5),
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
                       color: (isDarkMode ? const Color(0xFF0F172A) : Colors.white)
-                          .withValues(alpha: 0.70),
+                          .withValues(alpha: 0.72),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: iconColor.withValues(alpha: 0.45),
+                        color: (isDarkMode ? Colors.white : Colors.black)
+                            .withValues(alpha: 0.08),
                         width: 0.85,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: iconColor.withValues(alpha: 0.35),
+                          color: iconColor.withValues(alpha: 0.25),
                           blurRadius: 6,
                         ),
                       ],
                     ),
-                    child: Icon(icon, size: 13.5, color: iconColor),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icon, size: 13.5, color: iconColor),
+                        if (status == ModuleStatus.active) ...[
+                          const SizedBox(width: 4.5),
+                          Container(
+                            width: 5.5,
+                            height: 5.5,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFF10B981),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0xFF10B981),
+                                  blurRadius: 4,
+                                  spreadRadius: 0.5,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ),

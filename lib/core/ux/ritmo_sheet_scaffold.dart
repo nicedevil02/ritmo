@@ -185,9 +185,6 @@ class AppleCardDeckHost extends StatelessWidget {
       final targetShift = (10.0 + (6.0 * tExtent)) * scaleFactorBelow60;
       final translateY = progress <= 0.0 ? 0.0 : -targetShift * progress;
 
-      // Visible-Only Scrim Height: exactly (1.0 - extent)
-      final visibleTopHeightFactor = (1.0 - (clampedExtent * progress)).clamp(0.0, 1.0);
-
       // Dynamic Scrim Density / Opacity based on foreground extent:
       // At 60%: standard nominal opacity (1.0x)
       // At 95%: deep focus opacity (1.50x, +50% density)
@@ -221,35 +218,16 @@ class AppleCardDeckHost extends StatelessWidget {
               children: [
                 staticChild,
 
-                // 1. Occlusion-Aware Visible-Band Scrim with soft feathering & exact matching rounded corners
-                // ONLY dims the visible band above the foreground sheet,
-                // leaving the area behind the foreground sheet 100% pristine.
-                if (progress > 0.001 && visibleTopHeightFactor > 0.001)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
+                // 1. Uniform Apple Dimming Scrim with locked 30px rounded corners
+                // Dims the underlying card uniformly with zero coordinate-space offsets.
+                if (progress > 0.001)
+                  Positioned.fill(
                     child: IgnorePointer(
                       ignoring: true,
                       child: ClipRRect(
                         borderRadius: clipBorderRadius,
                         clipBehavior: Clip.antiAlias,
-                        child: Container(
-                          height: MediaQuery.of(context).size.height * visibleTopHeightFactor,
-                          decoration: BoxDecoration(
-                            borderRadius: clipBorderRadius,
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                dimColor,
-                                dimColor,
-                                dimColor.withValues(alpha: 0.0),
-                              ],
-                              stops: const [0.0, 0.94, 1.0],
-                            ),
-                          ),
-                        ),
+                        child: ColoredBox(color: dimColor),
                       ),
                     ),
                   ),

@@ -122,6 +122,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
     super.initState();
     _selectedWeekday = _now.weekday;
     _sheetController = DraggableScrollableController();
+    _sheetController.addListener(_onSheetDragListener);
     _childSheetAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
@@ -141,6 +142,14 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
         }
       }
     });
+  }
+
+  void _onSheetDragListener() {
+    if (_isDismissing || !_sheetController.isAttached) return;
+    if (_sheetController.size < 0.30) {
+      _isDismissing = true;
+      Navigator.of(context).pop();
+    }
   }
 
   Future<void> _loadData() async {
@@ -216,7 +225,6 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       backgroundColor: Colors.transparent,
       transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(
@@ -237,7 +245,6 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       backgroundColor: Colors.transparent,
       transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(
@@ -571,6 +578,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
 
   @override
   void dispose() {
+    _sheetController.removeListener(_onSheetDragListener);
     _sheetController.dispose();
     _childSheetAnimController.dispose();
     _ticker?.cancel();
@@ -780,62 +788,49 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: AppleCardDeckHost(
-        animation: _childSheetAnimController,
-        child: NotificationListener<DraggableScrollableNotification>(
-          onNotification: (notification) {
-            if (notification.extent < 0.20 && !_isDismissing) {
-              _isDismissing = true;
-              Navigator.of(context).pop();
-            }
-            return false;
-          },
-          child: DraggableScrollableSheet(
-            controller: _sheetController,
-            initialChildSize: 0.90,
-            minChildSize: 0.0,
-            maxChildSize: 0.90,
-            snap: true,
-            snapSizes: const [0.0, 0.90],
-            snapAnimationDuration: const Duration(milliseconds: 250),
-            builder: (context, scrollController) {
-              return RitmoGlassSheet(
+      child: DraggableScrollableSheet(
+        controller: _sheetController,
+        initialChildSize: 0.90,
+        minChildSize: 0.0,
+        maxChildSize: 0.90,
+        snap: true,
+        snapSizes: const [0.0, 0.90],
+        snapAnimationDuration: const Duration(milliseconds: 250),
+        builder: (context, scrollController) {
+            return AppleCardDeckHost(
+              animation: _childSheetAnimController,
+              topCornerRadius: 32.0,
+              child: RitmoGlassSheet(
                 borderRadius: sheetRadius,
-                child: Column(
-                  children: [
-                    // Top Drag Handle & Title (Swipe down to dismiss)
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onVerticalDragUpdate: (details) {
-                        if (_isDismissing || !_sheetController.isAttached) return;
-                        final screenHeight = MediaQuery.of(context).size.height;
-                        if (screenHeight <= 0) return;
-                        final deltaFraction = -details.delta.dy / screenHeight;
-                        final newSize = (_sheetController.size + deltaFraction).clamp(0.0, 0.90);
-                        _sheetController.jumpTo(newSize);
-                      },
-                      onVerticalDragEnd: (details) async {
-                        if (_isDismissing || !_sheetController.isAttached) return;
-                        final currentSize = _sheetController.size;
-                        final velocity = details.primaryVelocity ?? 0.0;
-                        if (velocity > 350 || currentSize < 0.65) {
-                          _isDismissing = true;
-                          if (_sheetController.isAttached) {
-                            await _sheetController.animateTo(
-                              0.0,
-                              duration: const Duration(milliseconds: 200),
-                              curve: Curves.easeOutCubic,
-                            );
+                child: ClipRect(
+                  child: Column(
+                    children: [
+                      // Top Drag Handle & Title (Swipe down to dismiss)
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onVerticalDragUpdate: (details) {
+                          if (_isDismissing || !_sheetController.isAttached) return;
+                          final screenHeight = MediaQuery.of(context).size.height;
+                          if (screenHeight <= 0) return;
+                          final deltaFraction = -details.delta.dy / screenHeight;
+                          final newSize = (_sheetController.size + deltaFraction).clamp(0.0, 0.90);
+                          _sheetController.jumpTo(newSize);
+                        },
+                        onVerticalDragEnd: (details) {
+                          if (_isDismissing || !_sheetController.isAttached) return;
+                          final currentSize = _sheetController.size;
+                          final velocity = details.primaryVelocity ?? 0.0;
+                          if (velocity > 350 || currentSize < 0.65) {
+                            _isDismissing = true;
+                            Navigator.of(this.context).pop();
+                            return;
                           }
-                          if (mounted) Navigator.of(this.context).pop();
-                          return;
-                        }
-                        unawaited(_sheetController.animateTo(
-                          0.90,
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeOutCubic,
-                        ));
-                      },
+                          unawaited(_sheetController.animateTo(
+                            0.90,
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOutCubic,
+                          ));
+                        },
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                         child: Column(
@@ -971,10 +966,10 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
                     ),
                   ],
                 ),
-              );
-            },
-          ),
-        ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

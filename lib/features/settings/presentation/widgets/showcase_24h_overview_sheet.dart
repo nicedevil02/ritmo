@@ -94,7 +94,6 @@ class _Showcase24hOverviewSheetState extends State<Showcase24hOverviewSheet>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       backgroundColor: Colors.transparent,
       transitionAnimationController: _childSheetAnimController,
       builder: (_) => ShowcaseRealmEditFormSheet(

@@ -177,7 +177,6 @@ class _RealmManagementSheetState extends State<RealmManagementSheet>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       backgroundColor: Colors.transparent,
       transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(
@@ -207,7 +206,6 @@ class _RealmManagementSheetState extends State<RealmManagementSheet>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       backgroundColor: Colors.transparent,
       transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(
@@ -225,7 +223,6 @@ class _RealmManagementSheetState extends State<RealmManagementSheet>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       backgroundColor: Colors.transparent,
       transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(

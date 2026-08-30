@@ -1766,6 +1766,40 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 10),
+          RitmoNeuButton(
+            onTap: () async {
+              final res = await RitmoGlassActionSheet.showDiscard(
+                context: context,
+                title: 'تغییرات ذخیره نشده‌اند',
+                message: 'آیا از خروج و حذف تغییرات فرم اطمینان دارید؟',
+                discardLabel: 'حذف تغییرات',
+                continueEditingLabel: 'ادامه ویرایش',
+              );
+              if (!mounted || res == null) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(res ? 'تغییرات با موفقیت حذف شدند 🗑️' : 'ویرایش ادامه یافت ✍️'),
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.square_stack_3d_up, size: 16, color: colors.warning),
+                const SizedBox(width: 6),
+                Text(
+                  'اکشن‌شیت تایید خروج اپل (Action Sheet از پایین)',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: colors.warning,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

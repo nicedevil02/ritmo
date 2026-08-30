@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
@@ -302,14 +301,12 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
   Future<bool> _handleDiscardConfirmation() async {
     if (!_isDirty || _isSubmitting) return true;
 
-    final shouldDiscard = await RitmoGlassDialog.show(
-      context,
+    final shouldDiscard = await RitmoGlassActionSheet.showDiscard(
+      context: context,
       title: 'تغییرات ذخیره نشده‌اند',
-      content: 'آیا از خروج و حذف تغییرات اطمینان دارید؟',
-      confirmLabel: 'حذف تغییرات',
-      cancelLabel: 'ادامه ویرایش',
-      isDestructive: true,
-      icon: CupertinoIcons.exclamationmark_triangle_fill,
+      message: 'آیا از خروج و حذف تغییرات اطمینان دارید؟',
+      discardLabel: 'حذف تغییرات',
+      continueEditingLabel: 'ادامه ویرایش',
     );
 
     return shouldDiscard ?? false;

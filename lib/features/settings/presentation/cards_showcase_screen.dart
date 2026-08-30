@@ -1186,70 +1186,42 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                           ),
                         ),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: activeColor.withValues(alpha: isDark ? 0.20 : 0.12),
-                                border: Border.all(
-                                  color: activeColor.withValues(alpha: isDark ? 0.35 : 0.20),
-                                  width: 1,
-                                ),
+                            // Leading (Right in RTL): Cancel action
+                            TextButton(
+                              onPressed: () {
+                                RitmoHaptics.tap();
+                                Navigator.of(sheetContext).pop();
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: const Text('🌙', style: TextStyle(fontSize: 20)),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'حالت قلمرو «خواب و ریکاوری»',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w900,
-                                      fontFamily: 'Vazirmatn',
-                                      color: colors.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'نحوه رفتار روتین‌ها و دریافت اعلان‌ها را تنظیم کنید',
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      fontFamily: 'Vazirmatn',
-                                      color: colors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            InkWell(
-                              borderRadius: BorderRadius.circular(16),
-                              onTap: () => Navigator.of(sheetContext).pop(),
-                              child: Container(
-                                width: 32,
-                                height: 32,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.08)
-                                      : Colors.black.withValues(alpha: 0.05),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  CupertinoIcons.xmark,
-                                  size: 15,
+                              child: Text(
+                                'انصراف',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Vazirmatn',
                                   color: colors.textSecondary,
                                 ),
                               ),
                             ),
+                            Text(
+                              'حالت قلمرو «خواب و ریکاوری»',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                                fontFamily: 'Vazirmatn',
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 44),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 18),
                         _buildShowcaseModeOptionItem(
                           title: 'حالت عادی',
                           subtitle: 'همه روتین‌ها بدون محدودیت اجرا می‌شوند',
@@ -1258,7 +1230,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                           icon: CupertinoIcons.sparkles,
                           color: activeColor,
                           onSelect: () {
-                            HapticFeedback.selectionClick();
+                            RitmoHaptics.selection();
                             setState(() => _activeShowcaseMode = RealmMode.normal);
                             Navigator.of(sheetContext).pop();
                           },
@@ -1272,7 +1244,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                           icon: CupertinoIcons.flame_fill,
                           color: activeColor,
                           onSelect: () {
-                            HapticFeedback.selectionClick();
+                            RitmoHaptics.selection();
                             setState(() => _activeShowcaseMode = RealmMode.focus);
                             Navigator.of(sheetContext).pop();
                           },
@@ -1286,7 +1258,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                           icon: CupertinoIcons.bell_slash_fill,
                           color: activeColor,
                           onSelect: () {
-                            HapticFeedback.selectionClick();
+                            RitmoHaptics.selection();
                             setState(() => _activeShowcaseMode = RealmMode.silent);
                             Navigator.of(sheetContext).pop();
                           },
@@ -1316,104 +1288,65 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
     final colors = context.colors;
     final isDark = context.isDark;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onSelect,
-        borderRadius: BorderRadius.circular(18),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? color.withValues(alpha: isDark ? 0.18 : 0.10)
-                : (isDark ? colors.surfaceElevated.withValues(alpha: 0.60) : colors.surfaceElevated),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
+    return RitmoCard.neumorphic(
+      isSelected: isSelected,
+      onTap: onSelect,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
               color: isSelected
-                  ? color.withValues(alpha: isDark ? 0.65 : 0.45)
-                  : (isDark ? colors.border.withValues(alpha: 0.22) : colors.divider),
-              width: isSelected ? 1.4 : 1.0,
+                  ? color.withValues(alpha: isDark ? 0.25 : 0.18)
+                  : (isDark
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : Colors.black.withValues(alpha: 0.04)),
             ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: color.withValues(alpha: isDark ? 0.25 : 0.12),
-                      blurRadius: 12,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]
-                : null,
+            child: Icon(
+              icon,
+              size: 18,
+              color: isSelected ? color : colors.textSecondary,
+            ),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: isSelected
-                      ? color.withValues(alpha: isDark ? 0.25 : 0.18)
-                      : (isDark
-                          ? Colors.white.withValues(alpha: 0.06)
-                          : Colors.black.withValues(alpha: 0.04)),
-                ),
-                child: Icon(
-                  icon,
-                  size: 18,
-                  color: isSelected ? color : colors.textSecondary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
-                        fontFamily: 'Vazirmatn',
-                        color: isSelected
-                            ? (isDark ? Color.lerp(color, Colors.white, 0.75)! : Color.lerp(color, Colors.black, 0.30)!)
-                            : colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontFamily: 'Vazirmatn',
-                        color: colors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (isSelected)
-                Icon(
-                  CupertinoIcons.checkmark_alt_circle_fill,
-                  size: 20,
-                  color: color,
-                )
-              else
-                Container(
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: colors.textSecondary.withValues(alpha: 0.30),
-                      width: 1.5,
-                    ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                    fontFamily: 'Vazirmatn',
+                    color: isSelected
+                        ? (isDark ? Color.lerp(color, Colors.white, 0.75)! : Color.lerp(color, Colors.black, 0.30)!)
+                        : colors.textPrimary,
                   ),
                 ),
-            ],
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontFamily: 'Vazirmatn',
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+          if (isSelected)
+            Icon(
+              CupertinoIcons.checkmark_alt_circle_fill,
+              size: 20,
+              color: color,
+            ),
+        ],
       ),
     );
   }

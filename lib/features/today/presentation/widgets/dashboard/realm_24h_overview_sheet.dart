@@ -247,36 +247,20 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
   }
 
   void _confirmDeleteRealm(RealmData realm) async {
-    await HapticFeedback.heavyImpact();
+    RitmoHaptics.tap();
     if (!mounted) return;
     final connectedCount = _routineCounts[realm.id] ?? 0;
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: Text('حذف قلمرو «${realm.name}»'),
-            content: Text(
-              connectedCount > 0
-                  ? 'این قلمرو به $connectedCount روتین متصل است. با حذف آن، روتین‌ها به زمان آزاد منتقل می‌شوند. آیا مطمئنید؟'
-                  : 'آیا از حذف این قلمرو اطمینان دارید؟ تمام زمان‌بندی‌های آن حذف خواهند شد.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('انصراف'),
-              ),
-              FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('حذف قلمرو'),
-              ),
-            ],
-          ),
-        );
-      },
+    final confirm = await RitmoGlassDialog.show(
+      context,
+      title: 'حذف قلمرو «${realm.name}»',
+      content: connectedCount > 0
+          ? 'این قلمرو به $connectedCount روتین متصل است. با حذف آن، روتین‌ها به زمان آزاد منتقل می‌شوند. آیا مطمئنید؟'
+          : 'آیا از حذف این قلمرو اطمینان دارید؟ تمام زمان‌بندی‌های آن حذف خواهند شد.',
+      confirmLabel: 'حذف قلمرو',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
+      icon: CupertinoIcons.trash_fill,
     );
 
     if (confirm == true) {
@@ -287,76 +271,104 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
   }
 
   void _showRealmActionsMenu(RealmData realm) {
-    HapticFeedback.selectionClick();
+    RitmoHaptics.selection();
     final colors = context.colors;
-    final isDark = context.isDark;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (ctx) {
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            decoration: BoxDecoration(
-              color: colors.surfaceElevated,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              border: Border.all(color: isDark ? colors.border : colors.divider),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colors.textTertiary.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(2),
+          child: RitmoGlassSheet(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Text(realm.icon, style: const TextStyle(fontSize: 22)),
+                      const SizedBox(width: 8),
+                      Text(
+                        realm.name,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: colors.textPrimary,
+                          fontFamily: 'Vazirmatn',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  RitmoCard.neumorphic(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _openEditSheet(realm);
+                    },
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    child: Row(
+                      children: [
+                        Icon(CupertinoIcons.pencil, color: colors.primary, size: 20),
+                        const SizedBox(width: 12),
+                        Text(
+                          'ویرایش و زمان‌بندی قلمرو',
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Text(realm.icon, style: const TextStyle(fontSize: 22)),
-                    const SizedBox(width: 8),
-                    Text(
-                      realm.name,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: colors.textPrimary,
-                      ),
+                  const SizedBox(height: 8),
+                  RitmoCard.neumorphic(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _openManualActivationSheet(realm);
+                    },
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    child: Row(
+                      children: [
+                        const Icon(CupertinoIcons.timer, color: Color(0xFF10B981), size: 20),
+                        const SizedBox(width: 12),
+                        Text(
+                          'فعال‌سازی دستی (تایمر فوری)',
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                ListTile(
-                  leading: Icon(CupertinoIcons.pencil, color: colors.primary),
-                  title: Text('ویرایش و زمان‌بندی قلمرو', style: TextStyle(color: colors.textPrimary)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _openEditSheet(realm);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(CupertinoIcons.timer, color: Color(0xFF10B981)),
-                  title: const Text('فعال‌سازی دستی (تایمر فوری)'),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _openManualActivationSheet(realm);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(CupertinoIcons.trash, color: Colors.redAccent),
-                  title: const Text('حذف قلمرو', style: TextStyle(color: Colors.redAccent)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _confirmDeleteRealm(realm);
-                  },
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 8),
+                  RitmoCard.neumorphic(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _confirmDeleteRealm(realm);
+                    },
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    child: const Row(
+                      children: [
+                        Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 20),
+                        SizedBox(width: 12),
+                        Text(
+                          'حذف قلمرو',
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

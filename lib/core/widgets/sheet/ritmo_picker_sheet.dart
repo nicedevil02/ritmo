@@ -103,88 +103,129 @@ class _RitmoPickerSheetState<T> extends State<RitmoPickerSheet<T>> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          widget.title,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: colors.textPrimary,
-          ),
+        // Top Navigation Bar (Apple HIG Sheet Header)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextButton(
+              onPressed: () {
+                RitmoHaptics.tap();
+                Navigator.pop(context);
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'انصراف',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Vazirmatn',
+                  color: colors.textSecondary,
+                ),
+              ),
+            ),
+            Text(
+              widget.title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Vazirmatn',
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(width: 44),
+          ],
         ),
 
         if (widget.enableSearch) ...[
           const SizedBox(height: 12),
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'جست‌وجو...',
-              prefixIcon: const Icon(CupertinoIcons.search, size: 18),
-              filled: true,
-              fillColor: colors.surface,
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+          RitmoCard.neumorphicSunken(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+            borderRadius: BorderRadius.circular(14),
+            child: TextField(
+              controller: _searchController,
+              style: TextStyle(fontSize: 13, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+              decoration: InputDecoration(
+                hintText: 'جست‌وجو...',
+                hintStyle: TextStyle(fontSize: 13, color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                prefixIcon: Icon(CupertinoIcons.search, size: 16, color: colors.textSecondary),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
           ),
         ],
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
         ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 320),
           child: ListView.separated(
             shrinkWrap: true,
             itemCount: _filteredOptions.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 6),
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final opt = _filteredOptions[index];
               final isSelected = widget.initialValue == opt.value;
 
-              return ListTile(
-                onTap: () => Navigator.pop(context, opt.value),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                tileColor: isSelected
-                    ? colors.primary.withValues(alpha: 0.12)
-                    : colors.surface,
-                leading: opt.icon != null
-                    ? Icon(
+              return RitmoCard.neumorphic(
+                isSelected: isSelected,
+                onTap: () {
+                  RitmoHaptics.selection();
+                  Navigator.pop(context, opt.value);
+                },
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                borderRadius: BorderRadius.circular(14),
+                child: Row(
+                  children: [
+                    if (opt.icon != null) ...[
+                      Icon(
                         opt.icon,
-                        color: isSelected
-                            ? colors.primary
-                            : colors.textSecondary,
-                      )
-                    : null,
-                title: Text(
-                  opt.label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                    color: isSelected ? colors.primary : colors.textPrimary,
-                  ),
-                ),
-                subtitle: opt.subtitle != null
-                    ? Text(
-                        opt.subtitle!,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.textSecondary,
-                        ),
-                      )
-                    : null,
-                trailing: isSelected
-                    ? Icon(
-                        CupertinoIcons.check_mark,
+                        color: isSelected ? colors.primary : colors.textSecondary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            opt.label,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                              fontFamily: 'Vazirmatn',
+                              color: isSelected ? colors.primary : colors.textPrimary,
+                            ),
+                          ),
+                          if (opt.subtitle != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              opt.subtitle!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontFamily: 'Vazirmatn',
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (isSelected)
+                      Icon(
+                        CupertinoIcons.checkmark_alt_circle_fill,
                         color: colors.primary,
                         size: 18,
-                      )
-                    : null,
+                      ),
+                  ],
+                ),
               );
             },
           ),

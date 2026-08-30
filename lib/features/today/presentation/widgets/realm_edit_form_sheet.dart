@@ -302,30 +302,14 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
   Future<bool> _handleDiscardConfirmation() async {
     if (!_isDirty || _isSubmitting) return true;
 
-    final shouldDiscard = await showCupertinoModalPopup<bool>(
-      context: context,
-      builder: (ctx) => CupertinoActionSheet(
-        title: const Text(
-          'تغییرات ذخیره نشده‌اند',
-          style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
-        ),
-        message: const Text(
-          'آیا از خروج و حذف تغییرات اطمینان دارید؟',
-          style: TextStyle(fontFamily: 'Vazirmatn'),
-        ),
-        actions: [
-          CupertinoActionSheetAction(
-            isDestructiveAction: true,
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('حذف تغییرات', style: TextStyle(fontFamily: 'Vazirmatn')),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          isDefaultAction: true,
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('ادامه ویرایش', style: TextStyle(fontFamily: 'Vazirmatn')),
-        ),
-      ),
+    final shouldDiscard = await RitmoGlassDialog.show(
+      context,
+      title: 'تغییرات ذخیره نشده‌اند',
+      content: 'آیا از خروج و حذف تغییرات اطمینان دارید؟',
+      confirmLabel: 'حذف تغییرات',
+      cancelLabel: 'ادامه ویرایش',
+      isDestructive: true,
+      icon: CupertinoIcons.exclamationmark_triangle_fill,
     );
 
     return shouldDiscard ?? false;

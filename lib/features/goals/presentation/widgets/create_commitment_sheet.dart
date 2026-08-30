@@ -1,8 +1,8 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -161,9 +161,7 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = context.isDark;
     final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
     final weekDays = PlanningWeek.dayKeysOfWeekContaining(DateTime.now());
 
@@ -331,27 +329,20 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                 runSpacing: 8,
                 children: [15, 30, 45, 60, 90, 120].map((mins) {
                   final isSel = _effortMinutes == mins;
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(10),
-                    onTap: () => setState(() => _effortMinutes = mins),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSel
-                            ? colors.primary
-                            : (isGlass ? colors.surfaceSunken.withValues(alpha: 0.5) : colors.card),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: isSel ? colors.primary : colors.border.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Text(
-                        '${PersianDigits.toPersian(mins.toString())} دقیقه',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                          color: isSel ? Colors.white : colors.textPrimary,
-                        ),
+                  return RitmoCard.neumorphic(
+                    isSelected: isSel,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    onTap: () {
+                      RitmoHaptics.selection();
+                      setState(() => _effortMinutes = mins);
+                    },
+                    child: Text(
+                      '${toPersianDigits(mins.toString())} دقیقه',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSel ? FontWeight.w900 : FontWeight.w600,
+                        fontFamily: 'Vazirmatn',
+                        color: isSel ? colors.primary : colors.textPrimary,
                       ),
                     ),
                   );
@@ -548,59 +539,12 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
       ),
     );
 
-    final sheetBody = Directionality(
+    return Directionality(
       textDirection: TextDirection.rtl,
-      child: Material(
-        type: MaterialType.transparency,
+      child: RitmoGlassSheet(
+        borderRadius: sheetRadius,
+        padding: EdgeInsets.zero,
         child: content,
-      ),
-    );
-
-    if (!isGlass) {
-      return Container(
-        decoration: BoxDecoration(
-          color: colors.surfaceElevated,
-          borderRadius: sheetRadius,
-          border: Border.all(
-            color: isDark ? colors.border : colors.divider,
-            width: 1.0,
-          ),
-        ),
-        child: sheetBody,
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: sheetRadius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.glassTint,
-            borderRadius: sheetRadius,
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.18)
-                  : Colors.white.withValues(alpha: 0.70),
-              width: 1.0,
-            ),
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: sheetRadius,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                  Colors.white.withValues(alpha: 0.0),
-                ],
-                stops: const [0.0, 0.45],
-              ),
-            ),
-            child: sheetBody,
-          ),
-        ),
       ),
     );
   }

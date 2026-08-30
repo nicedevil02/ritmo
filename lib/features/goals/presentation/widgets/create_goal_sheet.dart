@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +8,8 @@ import 'package:ritmo/core/services/feature_limits.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/courses/presentation/courses_screen.dart';
 import 'package:ritmo/features/goals/logic/goals_repository.dart';
 import 'package:ritmo/features/goals/models/goal_models.dart';
@@ -533,8 +534,6 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
-    final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
@@ -608,71 +607,12 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
           ],
         );
 
-        final sheetBody = Directionality(
+        return Directionality(
           textDirection: TextDirection.rtl,
-          child: Material(
-            type: MaterialType.transparency,
+          child: RitmoGlassSheet(
+            borderRadius: sheetRadius,
+            padding: EdgeInsets.zero,
             child: content,
-          ),
-        );
-
-        if (!isGlass) {
-          return Container(
-            decoration: BoxDecoration(
-              color: colors.surfaceElevated,
-              borderRadius: sheetRadius,
-              border: Border.all(
-                color: isDark ? colors.border : colors.divider,
-                width: 1.0,
-              ),
-            ),
-            child: sheetBody,
-          );
-        }
-
-        return ClipRRect(
-          borderRadius: sheetRadius,
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.glassTint,
-                borderRadius: sheetRadius,
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.10)
-                      : Colors.white.withValues(alpha: 0.70),
-                  width: 1.0,
-                ),
-              ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: sheetRadius,
-                  gradient: isDark
-                      ? LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.14),
-                            Colors.white.withValues(alpha: 0.04),
-                            Colors.white.withValues(alpha: 0.0),
-                          ],
-                          stops: const [0.0, 0.03, 0.45],
-                        )
-                      : LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.75),
-                            Colors.white.withValues(alpha: 0.20),
-                            Colors.white.withValues(alpha: 0.0),
-                          ],
-                          stops: const [0.0, 0.03, 0.45],
-                        ),
-                ),
-                child: sheetBody,
-              ),
-            ),
           ),
         );
       },
@@ -732,13 +672,8 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
     final typeLabel = GoalLevel.fromString(_selectedGoalType).label;
     final dateStr = _targetDate != null ? formatShamsiDate(_targetDate!.toIso8601String().substring(0, 10)) : 'بدون مهلت';
 
-    return Container(
+    return RitmoCard.neumorphicSunken(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.primary.withValues(alpha: 0.15)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -746,10 +681,15 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'پیش‌نمایش هدف',
-                style: TextStyle(fontSize: 10, color: colors.primary, fontWeight: FontWeight.bold),
+                'پیش‌نمایش زنده هدف',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  color: colors.primary,
+                  fontFamily: 'Vazirmatn',
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              Icon(CupertinoIcons.eye, size: 12, color: colors.primary),
+              Icon(CupertinoIcons.eye, size: 12.5, color: colors.primary),
             ],
           ),
           const SizedBox(height: 6),
@@ -759,32 +699,34 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
               Expanded(
                 child: Text(
                   title,
-                  style: TextStyle(fontSize: 14, color: colors.textPrimary, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    color: colors.textPrimary,
+                    fontFamily: 'Vazirmatn',
+                    fontWeight: FontWeight.w800,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  typeLabel,
-                  style: TextStyle(fontSize: 10, color: colors.primary, fontWeight: FontWeight.bold),
-                ),
+              RitmoCardBadge(
+                label: typeLabel,
+                color: colors.primary,
               ),
             ],
           ),
           const SizedBox(height: 6),
           Row(
             children: [
-              Icon(CupertinoIcons.calendar, size: 11, color: colors.textSecondary),
+              Icon(CupertinoIcons.calendar, size: 11.5, color: colors.textSecondary),
               const SizedBox(width: 4),
               Text(
                 'مهلت: $dateStr',
-                style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: colors.textSecondary,
+                  fontFamily: 'Vazirmatn',
+                ),
               ),
             ],
           ),
@@ -878,12 +820,13 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String?>(
                 value: _selectedParentGoalId,
-                isExpanded: true,
                 dropdownColor: colors.card,
-                hint: const Text('انتخاب هدف والد', style: TextStyle(fontSize: 13, color: Colors.white30)),
+                isExpanded: true,
+                hint: const Text('بدون هدف والد (هدف ریشه)', style: TextStyle(fontSize: 13)),
                 items: [
                   const DropdownMenuItem<String?>(
-                    child: Text('بدون والد', style: TextStyle(fontSize: 13)),
+                    value: null,
+                    child: Text('بدون هدف والد (هدف ریشه)', style: TextStyle(fontSize: 13)),
                   ),
                   ...widget.activeGoals
                       .where((g) => g.id != widget.goalToEdit?.id)
@@ -926,27 +869,22 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
 
   Widget _buildLevelChipButton(String typeKey, String label, RitmoColors colors) {
     final isSelected = _selectedGoalType == typeKey;
-    return GestureDetector(
+    return RitmoCard.neumorphic(
+      isSelected: isSelected,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       onTap: () {
-        HapticFeedback.lightImpact();
+        RitmoHaptics.selection();
         setState(() {
           _selectedGoalType = typeKey;
         });
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? colors.primary : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(10),
-          border: isSelected ? null : Border.all(color: Colors.white10),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.white : colors.textSecondary,
-          ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12.5,
+          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+          fontFamily: 'Vazirmatn',
+          color: isSelected ? colors.primary : colors.textSecondary,
         ),
       ),
     );

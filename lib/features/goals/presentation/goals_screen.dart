@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/analytics/goals_engine.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/goals/logic/goals_controller.dart';
 import 'package:ritmo/features/goals/logic/goals_repository.dart';
@@ -133,28 +135,38 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
         snap: true,
         snapSizes: const [0.60, 0.94],
         builder: (context, scrollController) {
-          return RitmoTheme.glassCardLight(
-            child: Directionality(
-              textDirection: TextDirection.rtl,
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: RitmoGlassSheet(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              padding: EdgeInsets.zero,
               child: Column(
                 children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 12, bottom: 8),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2),
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 12, bottom: 8),
+                      width: 38,
+                      height: 4.5,
+                      decoration: BoxDecoration(
+                        color: context.colors.textSecondary.withValues(alpha: isDark ? 0.30 : 0.22),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
                       'آرشیو اهداف تکمیل شده',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.colors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: 'Vazirmatn',
+                        color: context.colors.textPrimary,
+                      ),
                     ),
                   ),
-                  const Divider(color: Colors.white10),
+                  Divider(color: context.colors.border.withValues(alpha: 0.15)),
                   Expanded(
                     child: GoalsArchiveSection(
                       completedGoals: completedGoals,
@@ -458,84 +470,91 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
         }
       }
 
-      return RitmoTheme.glassCardLight(
-        color: colors.primary.withValues(alpha: isDarkMode ? 0.08 : 0.12),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              // Left: Progress Ring
-              SizedBox(
-                width: 68,
-                height: 68,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: progress,
-                      strokeWidth: 5,
-                      valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
-                      backgroundColor: Colors.white10,
+      return RitmoCard.neumorphic(
+        padding: const EdgeInsets.all(18),
+        onTap: () {
+          RitmoHaptics.tap();
+          _showCreateGoalSheet(editGoal: polarisGoal);
+        },
+        child: Row(
+          children: [
+            // Left: Progress Ring
+            SizedBox(
+              width: 68,
+              height: 68,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 5.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
+                    backgroundColor: colors.surfaceSunken.withValues(alpha: 0.5),
+                  ),
+                  Text(
+                    '${toPersianDigits(percent.toString())}٪',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      fontFamily: 'Vazirmatn',
+                      color: colors.textPrimary,
                     ),
-                    Text(
-                      '$percent٪',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        color: colors.textPrimary,
-                        ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 18),
-              
-              // Right: Goal Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'ستاره قطبی فعال',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
+            ),
+            const SizedBox(width: 18),
+
+            // Right: Goal Details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      RitmoCardBadge(
+                        label: 'ستاره قطبی فعال',
                         color: colors.primary,
-                        ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      polarisGoal.title,
-                      style: TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w900,
-                        color: colors.textPrimary,
-                        ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      deadlineSummary,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: colors.textSecondary,
-                        ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      momentum > 0 ? 'این هفته ${toPersianDigits(momentum)} گام جلو رفتی 🚀' : 'این هفته هنوز گامی برنداشتی؛ شروع کن!',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: colors.success,
-                        fontWeight: FontWeight.bold,
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    polarisGoal.title,
+                    style: TextStyle(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w900,
+                      fontFamily: 'Vazirmatn',
+                      color: colors.textPrimary,
                     ),
-                  ],
-                ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    deadlineSummary,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: colors.textSecondary,
+                      fontFamily: 'Vazirmatn',
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    momentum > 0
+                        ? 'این هفته ${toPersianDigits(momentum)} گام جلو رفتی 🚀'
+                        : 'این هفته هنوز گامی برنداشتی؛ شروع کن!',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: colors.success,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Vazirmatn',
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
@@ -548,12 +567,17 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Text(
             'یک هدف جدید انتخاب کنید:',
-            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Vazirmatn',
+              color: colors.textPrimary,
+            ),
           ),
         ),
         const SizedBox(height: 8),
         SizedBox(
-          height: 100,
+          height: 104,
           child: ListView(
             scrollDirection: Axis.horizontal,
             reverse: true, // RTL horizontal list view scroll direction
@@ -580,14 +604,10 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
     return Container(
       width: 180,
       margin: const EdgeInsets.only(left: 12),
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.border.withValues(alpha: 0.3)),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+      child: RitmoCard.neumorphic(
+        padding: const EdgeInsets.all(12),
         onTap: () {
+          RitmoHaptics.tap();
           _showCreateGoalSheet(templateData: {
             'title': title,
             'description': desc,
@@ -595,31 +615,37 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
             'steps': steps,
           });
         },
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                children: [
-                  Icon(icon, size: 14, color: colors.primary),
-                  const SizedBox(width: 6),
-                  Text(
-                    title,
-                    style: TextStyle(fontSize: 12.5, color: colors.textPrimary, fontWeight: FontWeight.bold),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 14, color: colors.primary),
+                const SizedBox(width: 6),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Vazirmatn',
                   ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              desc,
+              style: TextStyle(
+                fontSize: 10.5,
+                color: colors.textSecondary,
+                fontFamily: 'Vazirmatn',
               ),
-              const SizedBox(height: 6),
-              Text(
-                desc,
-                style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );

@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/goals/logic/planning_repository.dart';
 import 'package:ritmo/features/goals/logic/planning_review_calculator.dart';
 import 'package:ritmo/features/goals/logic/planning_review_repository.dart';
@@ -179,9 +179,6 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = context.isDark;
-    final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
     final content = Column(
@@ -225,13 +222,8 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
                 const SizedBox(height: 20),
 
                 // 1. Numerical Summary
-                Container(
+                RitmoCard.neumorphicSunken(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isGlass ? colors.surfaceSunken.withValues(alpha: 0.5) : colors.card,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: colors.border.withValues(alpha: 0.3)),
-                  ),
                   child: Column(
                     children: [
                       Row(
@@ -241,14 +233,16 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
                             'انجام‌شده:',
                             style: TextStyle(
                               fontSize: 13,
+                              fontFamily: 'Vazirmatn',
                               color: colors.textSecondary,
                             ),
                           ),
                           Text(
-                            '${PersianDigits.toPersian(_stats.completedMinutes.toString())} از ${PersianDigits.toPersian(_stats.plannedMinutes.toString())} دقیقه',
+                            '${toPersianDigits(_stats.completedMinutes.toString())} از ${toPersianDigits(_stats.plannedMinutes.toString())} دقیقه',
                             style: TextStyle(
                               fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w900,
+                              fontFamily: 'Vazirmatn',
                               color: colors.textPrimary,
                             ),
                           ),
@@ -263,23 +257,13 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
                               'دقت تخمین برنامه‌ریزی:',
                               style: TextStyle(
                                 fontSize: 13,
+                                fontFamily: 'Vazirmatn',
                                 color: colors.textSecondary,
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: colors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${PersianDigits.toPersian((_stats.calibrationScore! * 100).round().toString())}٪',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: colors.primary,
-                                ),
-                              ),
+                            RitmoCardBadge(
+                              label: '${toPersianDigits((_stats.calibrationScore! * 100).round().toString())}٪',
+                              color: colors.primary,
                             ),
                           ],
                         ),
@@ -290,20 +274,17 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
 
                 if (_frequentlyMovedTitles.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  Container(
+                  RitmoCard.neumorphicSunken(
                     padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'تعهدات با بیش از دو بار جابه‌جایی:',
                           style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w900,
+                            fontFamily: 'Vazirmatn',
                             color: colors.primary,
                           ),
                         ),
@@ -312,6 +293,7 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
                               '• $t (نیاز به بازنگری در اندازه یا زمان‌بندی)',
                               style: TextStyle(
                                 fontSize: 12,
+                                fontFamily: 'Vazirmatn',
                                 color: colors.textSecondary,
                               ),
                             )),
@@ -381,76 +363,23 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
       ],
     );
 
-    final sheetBody = Directionality(
+    return Directionality(
       textDirection: TextDirection.rtl,
-      child: Material(
-        type: MaterialType.transparency,
-        child: content,
-      ),
-    );
-
-    Widget containerWidget;
-    if (!isGlass) {
-      containerWidget = Container(
-        constraints: BoxConstraints(
-          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
         ),
-        decoration: BoxDecoration(
-          color: colors.surfaceElevated,
-          borderRadius: sheetRadius,
-          border: Border.all(
-            color: isDark ? colors.border : colors.divider,
-            width: 1.0,
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+          ),
+          child: RitmoGlassSheet(
+            borderRadius: sheetRadius,
+            padding: EdgeInsets.zero,
+            child: content,
           ),
         ),
-        child: sheetBody,
-      );
-    } else {
-      containerWidget = Container(
-        constraints: BoxConstraints(
-          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
-        ),
-        child: ClipRRect(
-          borderRadius: sheetRadius,
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.glassTint,
-                borderRadius: sheetRadius,
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.18)
-                      : Colors.white.withValues(alpha: 0.70),
-                  width: 1.0,
-                ),
-              ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: sheetRadius,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                      Colors.white.withValues(alpha: 0.0),
-                    ],
-                    stops: const [0.0, 0.45],
-                  ),
-                ),
-                child: sheetBody,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom,
       ),
-      child: containerWidget,
     );
   }
 

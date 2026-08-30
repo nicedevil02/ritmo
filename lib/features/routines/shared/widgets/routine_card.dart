@@ -4,7 +4,7 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/core/ux/ritmo_pressable.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo_swipeable_row.dart';
 
 class RoutineCard extends StatelessWidget {
@@ -35,7 +35,6 @@ class RoutineCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final m = context.metrics;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: m.spaceXs + 2),
@@ -45,24 +44,19 @@ class RoutineCard extends StatelessWidget {
           itemId: routine.id,
           onSwipeComplete: onComplete ?? onTap,
           onSwipeManage: onSwipeManage ?? onSnooze,
-          child: RitmoPressable(
-            onTap: onTap,
-            onLongPress: onLongPress,
-            child: Container(
-              decoration: BoxDecoration(
-                color: isCompleted
-                    ? colors.success.withValues(alpha: 0.08)
-                    : colors.card.withValues(alpha: isDarkMode ? 0.04 : 0.65),
-                borderRadius: BorderRadius.circular(m.radiusCard),
-                border: Border.all(
-                  color: isCompleted
-                      ? colors.success.withValues(alpha: 0.4)
-                      : colors.border.withValues(alpha: isDarkMode ? 0.3 : 0.5),
-                ),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: m.spaceLg, vertical: m.spaceMd + 2),
-                child: Row(
+          child: RitmoCard.neumorphic(
+            onTap: () {
+              RitmoHaptics.tap();
+              onTap();
+            },
+            onLongPress: onLongPress != null
+                ? () {
+                    RitmoHaptics.selection();
+                    onLongPress!();
+                  }
+                : null,
+            padding: EdgeInsets.symmetric(horizontal: m.spaceLg, vertical: m.spaceMd + 2),
+            child: Row(
                   children: [
                     // 1. Category vertical color indicator (pill)
                     Container(
@@ -159,10 +153,8 @@ class RoutineCard extends StatelessWidget {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
+        );
+      }
 
   String _getCategoryEmoji(String catId, String? customCategoryId) {
     if (catId == 'custom' || catId.startsWith('custom_')) {

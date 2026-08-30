@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/features/routines/presentation/planner_controller.dart';
 
@@ -133,39 +135,24 @@ class PlannerCategoryGrid extends StatelessWidget {
                         controller.selectedCategory == cat && 
                         controller.title.trim().isNotEmpty;
 
-                    return GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        controller.hasManuallySelectedCategory = true;
-                        controller.selectCategory(cat, context, type: type);
-                      },
-                      child: Opacity(
-                        opacity: isEnabled ? 1.0 : 0.55,
-                        child: Stack(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                              decoration: BoxDecoration(
-                                color: colors.card.withValues(alpha: isDark ? 0.45 : 0.75),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: isSuggested ? colors.goldAccent : color.withValues(alpha: 0.22),
-                                  width: isSuggested ? 1.8 : 1.2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: isSuggested ? colors.goldAccent.withValues(alpha: 0.15) : color.withValues(alpha: 0.08),
-                                    blurRadius: 8,
-                                    spreadRadius: 1,
-                                  )
-                                ],
-                              ),
-                              alignment: Alignment.center,
+                    return Opacity(
+                      opacity: isEnabled ? 1.0 : 0.55,
+                      child: Stack(
+                        children: [
+                          RitmoCard.neumorphic(
+                            isSelected: isSuggested,
+                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                            onTap: () {
+                              RitmoHaptics.selection();
+                              controller.hasManuallySelectedCategory = true;
+                              controller.selectCategory(cat, context, type: type);
+                            },
+                            child: Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(icon, size: 36, color: color),
+                                  Icon(icon, size: 34, color: color),
                                   const SizedBox(height: 8),
                                   Text(
                                     title,
@@ -174,45 +161,35 @@ class PlannerCategoryGrid extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontSize: 13.5,
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.textPrimary.withValues(alpha: 0.85),
+                                      fontWeight: FontWeight.w900,
+                                      fontFamily: 'Vazirmatn',
+                                      color: isSuggested ? colors.goldAccent : colors.textPrimary,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            if (isSuggested)
-                              Positioned(
-                                top: 6,
-                                right: 6,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                  decoration: BoxDecoration(
-                                    color: colors.goldAccent,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Text(
-                                    'پیشنهاد ✨',
-                                    style: TextStyle(
-                                      fontSize: 8,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
+                          ),
+                          if (isSuggested)
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: RitmoCardBadge(
+                                label: 'پیشنهاد ✨',
+                                color: colors.goldAccent,
                               ),
-                            if (!isEnabled)
-                              Positioned(
-                                top: 8,
-                                left: 8,
-                                child: Icon(
-                                  Icons.lock_rounded,
-                                  size: 13,
-                                  color: colors.textSecondary.withValues(alpha: 0.5),
-                                ),
+                            ),
+                          if (!isEnabled)
+                            Positioned(
+                              top: 8,
+                              left: 8,
+                              child: Icon(
+                                Icons.lock_rounded,
+                                size: 13,
+                                color: colors.textSecondary.withValues(alpha: 0.5),
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
                       ),
                     );
                   }(),

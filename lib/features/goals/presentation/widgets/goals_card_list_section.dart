@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 
 import 'package:ritmo/core/analytics/goals_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
 import 'package:ritmo/features/courses/presentation/course_detail_screen.dart';
 import 'package:ritmo/features/goals/logic/goals_repository.dart';
@@ -127,7 +129,6 @@ class GoalsCardListSection extends StatelessWidget {
 
   Widget _buildGoalCard(BuildContext context, Goal goal, RitmoColors colors) {
     final progress = progressMap[goal.id] ?? 0.0;
-    final percent = (progress * 100).toInt();
 
     // Get sub-goals
     final subGoals = goals.where((g) => g.parentGoalId == goal.id).toList();
@@ -139,158 +140,154 @@ class GoalsCardListSection extends StatelessWidget {
     final routineConnCount = _countRoutineConnections(goal, subGoals);
     final courseConnCount = courses.where((c) => c.linkedGoalId == goal.id).length;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.border.withValues(alpha: 0.35)),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: RitmoCard.neumorphic(
+        padding: const EdgeInsets.all(16),
         onTap: () {
+          RitmoHaptics.tap();
           _showGoalDetailsSheet(context, goal);
         },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      goal.title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                        ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildLevelChip(goal.goalType, colors),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Progress Bar
-              Row(
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: colors.border.withValues(alpha: 0.15),
-                        valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
-                        minHeight: 6,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '${toPersianDigits(percent)}٪',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header: Title & Level Badge
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    goal.title,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 15.5,
                       fontWeight: FontWeight.w900,
-                      color: colors.primary,
-                      ),
+                      fontFamily: 'Vazirmatn',
+                      color: colors.textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
+                ),
+                const SizedBox(width: 8),
+                _buildLevelChip(goal.goalType, colors),
+              ],
+            ),
+            const SizedBox(height: 12),
 
-              // Next Step
-              if (nextStep != null)
-                Row(
+            // Canonical Sunken 3D Progress Bar
+            RitmoNeuProgressBar(
+              progress: progress,
+              height: 10,
+              color: colors.primary,
+              showLabel: true,
+              label: 'پیشرفت کل',
+            ),
+            const SizedBox(height: 12),
+
+            // Next Step
+            if (nextStep != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: colors.surfaceSunken.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: colors.border.withValues(alpha: 0.2),
+                    width: 0.7,
+                  ),
+                ),
+                child: Row(
                   children: [
-                    Icon(CupertinoIcons.chevron_left_2, size: 12, color: colors.textSecondary),
+                    Icon(CupertinoIcons.chevron_left_2, size: 12, color: colors.primary),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         'گام بعدی: ${nextStep.title}',
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 12,
                           color: colors.textSecondary,
-                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Vazirmatn',
+                          fontWeight: FontWeight.w600,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
-                )
-              else
-                Row(
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: colors.success.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: colors.success.withValues(alpha: 0.2),
+                    width: 0.7,
+                  ),
+                ),
+                child: Row(
                   children: [
                     Icon(CupertinoIcons.check_mark_circled, size: 12, color: colors.success),
                     const SizedBox(width: 6),
                     Text(
                       'تمامی گام‌ها تکمیل شده‌اند 🎉',
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 12,
                         color: colors.success,
-                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Vazirmatn',
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
                 ),
-              const SizedBox(height: 8),
+              ),
 
-              // Connection Summary Row
-              if (routineConnCount > 0 || courseConnCount > 0) ...[
-                const Divider(color: Colors.white10, height: 16),
-                Row(
-                  children: [
-                    if (routineConnCount > 0) ...[
-                      Icon(CupertinoIcons.repeat, size: 11, color: colors.primary),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${toPersianDigits(routineConnCount)} روتین',
-                        style: TextStyle(fontSize: 11, color: colors.textSecondary, fontWeight: FontWeight.w600),
+            // Connection Summary Row
+            if (routineConnCount > 0 || courseConnCount > 0) ...[
+              const RitmoCardDivider(),
+              Row(
+                children: [
+                  if (routineConnCount > 0) ...[
+                    Icon(CupertinoIcons.repeat, size: 11.5, color: colors.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${toPersianDigits(routineConnCount.toString())} روتین',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colors.textSecondary,
+                        fontFamily: 'Vazirmatn',
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
-                    if (routineConnCount > 0 && courseConnCount > 0)
-                      Text('  ·  ', style: TextStyle(color: colors.textSecondary, fontSize: 11)),
-                    if (courseConnCount > 0) ...[
-                      Icon(CupertinoIcons.book, size: 11, color: colors.primary),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${toPersianDigits(courseConnCount)} دوره آموزش',
-                        style: TextStyle(fontSize: 11, color: colors.textSecondary, fontWeight: FontWeight.w600),
-                      ),
-                    ],
+                    ),
                   ],
-                ),
-              ],
+                  if (routineConnCount > 0 && courseConnCount > 0)
+                    Text('  ·  ', style: TextStyle(color: colors.textSecondary, fontSize: 11)),
+                  if (courseConnCount > 0) ...[
+                    Icon(CupertinoIcons.book, size: 11.5, color: colors.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${toPersianDigits(courseConnCount.toString())} دوره آموزش',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colors.textSecondary,
+                        fontFamily: 'Vazirmatn',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildLevelChip(GoalLevel level, RitmoColors colors) {
-    final chipBg = colors.primary.withValues(alpha: 0.1);
-    final chipText = colors.primary;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: chipBg,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        level.label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: chipText,
-        ),
-      ),
+    return RitmoCardBadge(
+      label: level.label,
+      color: colors.primary,
     );
   }
 
@@ -452,26 +449,33 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
         .where((c) => c.linkedGoalId == _currentGoal.id)
         .toList();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
       minChildSize: 0.5,
+      maxChildSize: 0.95,
       expand: false,
       snap: true,
-      snapSizes: const [0.85, 1.0],
+      snapSizes: const [0.85, 0.95],
       builder: (context, scrollController) {
-        return RitmoTheme.glassCardLight(
-          child: Directionality(
-            textDirection: TextDirection.rtl,
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: EdgeInsets.zero,
             child: Column(
               children: [
-                // Drag handle
-                Container(
-                  margin: const EdgeInsets.only(top: 12, bottom: 8),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
+                // Apple drag handle
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    width: 38,
+                    height: 4.5,
+                    decoration: BoxDecoration(
+                      color: colors.textSecondary.withValues(alpha: isDark ? 0.30 : 0.22),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
                   ),
                 ),
 

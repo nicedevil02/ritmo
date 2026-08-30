@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/courses/presentation/widgets/create_course_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/create_goal_sheet.dart';
 import 'package:ritmo/features/health/presentation/widgets/medication_form_sheet.dart';
@@ -18,7 +17,6 @@ import 'package:ritmo/features/routines/presentation/widgets/confetti_widget.dar
 import 'package:ritmo/features/routines/presentation/widgets/dedicated_builder_sheet.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_category_grid.dart';
-import 'package:ritmo/features/routines/presentation/widgets/planner_header.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_journey_preview.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_natural_input.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_submit_button.dart';
@@ -51,6 +49,7 @@ class UniversalPlannerSheet extends StatefulWidget {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => UniversalPlannerSheet(
         routineToEdit: routineToEdit,
@@ -276,158 +275,106 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
-        return PopScope(
-          canPop: !_controller.isDirty || _controller.showSuccessAnim,
-          onPopInvokedWithResult: (didPop, result) async {
-            if (didPop) return;
-            
-            final discard = await RitmoGlassDialog.show(
-              context,
-              title: 'دور انداختن تغییرات؟',
-              content: 'کار در حال ویرایش ذخیره نشده است. آیا می‌خواهید تغییرات را دور بیندازید؟',
-              confirmLabel: 'دور انداختن',
-              cancelLabel: 'ادامه ویرایش',
-              isDestructive: true,
-              icon: Icons.delete_outline_rounded,
-            );
-            
-            if (discard ?? false) {
-              if (context.mounted) {
-                _controller.title = '';
-                Navigator.of(context).pop();
-              }
-            }
-          },
-          child: Scaffold(
-            resizeToAvoidBottomInset: false,
-            backgroundColor: Colors.transparent,
-            body: AppleCardDeckHost(
-              animation: _childSheetAnimController,
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.45),
-                  alignment: Alignment.bottomCenter,
-                  child: GestureDetector(
-                    onTap: () {}, // Prevent dismissal when tapping inside the sheet
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.viewInsetsOf(context).bottom,
-                      ),
-                      child: Container(
-                        constraints: BoxConstraints(
-                          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
-                        ),
-                        child: RitmoGlassSheet(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                          padding: EdgeInsets.zero,
-                          child: Stack(
-                            children: [
-                              Column(
-                                children: [
-                                  // Header
-                                  PlannerHeader(controller: _controller),
-                                  const SizedBox(height: 10),
+        return RitmoFormSheetScaffold(
+          title: _controller.isEditing ? 'ویرایش کار' : 'کار جدید',
+          subtitle: _controller.isEditing ? 'تغییر جزئیات این کار' : 'ایجاد مستقیم کار جدید در مسیر زندگی',
+          icon: _controller.isEditing ? '✏️' : '✨',
+          isEditing: _controller.isEditing,
+          isDirty: _controller.isDirty && !_controller.showSuccessAnim,
+          isSubmitting: _controller.isSaving,
+          saveLabel: _controller.isEditing ? 'ذخیره' : 'ثبت کار',
+          onSave: () => _controller.save(context),
+          builder: (context, scrollController) {
+            return Stack(
+              children: [
+                SingleChildScrollView(
+                  controller: scrollController,
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                    top: 12,
+                    left: 16,
+                    right: 16,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (_controller.isEditing) ...[
+                        _buildEditHeaderCard(context),
+                        const SizedBox(height: 16),
+                        _buildDynamicSubsystemForm(),
+                        const SizedBox(height: 24),
+                        PlannerSubmitButton(controller: _controller),
+                        const SizedBox(height: 16),
+                      ] else ...[
+                        PlannerNaturalInput(controller: _controller),
+                        const SizedBox(height: 16),
+                        PlannerCategoryGrid(controller: _controller),
+                        const SizedBox(height: 24),
+                      ],
+                    ],
+                  ),
+                ),
 
-                                  // Step Content PageView or Single Edit Form
-                                  // Single-Screen Continuous Content
-                                  Expanded(
-                                    child: SingleChildScrollView(
-                                      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                                        children: [
-                                          if (_controller.isEditing) ...[
-                                            _buildEditHeaderCard(context),
-                                            const SizedBox(height: 16),
-                                            _buildDynamicSubsystemForm(),
-                                            const SizedBox(height: 24),
-                                          ] else ...[
-                                            PlannerNaturalInput(controller: _controller),
-                                            const SizedBox(height: 16),
-                                            PlannerCategoryGrid(controller: _controller),
-                                            const SizedBox(height: 24),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-
-                                  // Fixed Bottom section (Submit button for edit mode)
-                                  if (_controller.isEditing)
-                                    Padding(
-                                      padding: EdgeInsets.fromLTRB(14, 8, 14, 16 + MediaQuery.of(context).padding.bottom),
-                                      child: PlannerSubmitButton(controller: _controller),
-                                    ),
-                                ],
+                // Success Confetti overlay
+                if (_controller.showSuccessAnim)
+                  Positioned.fill(
+                    child: ColoredBox(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: const BoxDecoration(
+                                color: Color(0xff10B981),
+                                shape: BoxShape.circle,
                               ),
-
-                              // Success Confetti overlay
-                              if (_controller.showSuccessAnim)
-                                Positioned.fill(
-                                  child: ColoredBox(
-                                    color: Colors.black.withValues(alpha: 0.4),
-                                    child: Center(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Container(
-                                            width: 80,
-                                            height: 80,
-                                            decoration: const BoxDecoration(
-                                              color: Color(0xff10B981),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(Icons.check_rounded, color: Colors.white, size: 48),
-                                          ),
-                                          const SizedBox(height: 16),
-                                          Text(
-                                            _controller.isEditing
-                                                ? 'تغییرات کار با موفقیت ذخیره شد!'
-                                                : 'کار جدید به مسیر زندگی اضافه شد!',
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white.withValues(alpha: 0.2),
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                            child: Text(
-                                              '⏰ ${_controller.getTimeToStartLabel()}',
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          const SizedBox(
-                                            height: 100,
-                                            width: 300,
-                                            child: ConfettiWidget(),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                              child: const Icon(Icons.check_rounded, color: Colors.white, size: 48),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _controller.isEditing
+                                  ? 'تغییرات کار با موفقیت ذخیره شد!'
+                                  : 'کار جدید به مسیر زندگی اضافه شد!',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '⏰ ${_controller.getTimeToStartLabel()}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white,
                                 ),
-                            ],
-                          ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const SizedBox(
+                              height: 100,
+                              width: 300,
+                              child: ConfettiWidget(),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
-            ),
-          ),
+              ],
+            );
+          },
         );
       },
     );

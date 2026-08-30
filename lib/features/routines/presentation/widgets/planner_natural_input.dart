@@ -3,7 +3,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/routines/presentation/planner_controller.dart';
@@ -91,14 +90,13 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
     required BuildContext context,
   }) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2235).withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.02),
+        color: colors.textPrimary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.goldAccent.withValues(alpha: 0.4)),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.35)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -107,6 +105,7 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
             toPersianDigits(label),
             style: TextStyle(
               fontSize: 11.5,
+              fontWeight: FontWeight.w600,
               color: colors.textPrimary,
             ),
           ),
@@ -127,7 +126,7 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -139,11 +138,11 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
             duration: const Duration(milliseconds: 300),
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E2235).withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(20),
+              color: colors.textPrimary.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: colors.border.withValues(alpha: 0.15),
-                width: 1.5,
+                color: colors.textPrimary.withValues(alpha: 0.10),
+                width: 1.2,
               ),
             ),
             child: Row(
@@ -191,7 +190,7 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
                   GestureDetector(
                     onTap: () {
                       _debounce?.cancel();
-                      HapticFeedback.selectionClick();
+                      RitmoHaptics.selection();
                       widget.controller.onInputTextChanged(widget.controller.inputController.text, immediate: true);
                     },
                     child: Icon(Icons.check_circle_outline_rounded, color: colors.primary, size: 22),
@@ -209,10 +208,8 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF16192E).withValues(alpha: 0.75)
-                    : Colors.white.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(20),
+                color: colors.surfaceElevated.withValues(alpha: isDark ? 0.75 : 0.90),
+                borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                   color: colors.primary.withValues(alpha: 0.3),
                   width: 1.2,
@@ -279,7 +276,7 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
                         _buildChip(
                           label: _getTimeDateChipLabel(),
                           onDelete: () {
-                            HapticFeedback.lightImpact();
+                            RitmoHaptics.tap();
                             widget.controller.removeParsedEntity('time');
                           },
                           context: context,
@@ -288,7 +285,7 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
                         _buildChip(
                           label: _getRecurrenceChipLabel(),
                           onDelete: () {
-                            HapticFeedback.lightImpact();
+                            RitmoHaptics.tap();
                             widget.controller.removeParsedEntity('recurrence');
                           },
                           context: context,
@@ -297,7 +294,7 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
                         _buildChip(
                           label: _getDurationChipLabel(),
                           onDelete: () {
-                            HapticFeedback.lightImpact();
+                            RitmoHaptics.tap();
                             widget.controller.removeParsedEntity('duration');
                           },
                           context: context,
@@ -308,7 +305,7 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
                   // Slide-to-Save Quick Action
                   GestureDetector(
                     onTap: () {
-                      HapticFeedback.mediumImpact();
+                      RitmoHaptics.confirm();
                       widget.controller.save(context);
                     },
                     child: Container(

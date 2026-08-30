@@ -16,7 +16,7 @@ class MovementRegistrySource implements RegistrySource {
   @override
   Future<int> count({bool includeArchived = false}) async {
     final db = await DatabaseHelper.instance.database;
-    final res = await db.rawQuery('SELECT COUNT(*) as cnt FROM movement_kinds');
+    final res = await db.rawQuery('SELECT COUNT(*) as cnt FROM movement_kinds WHERE isCustom = 1');
     return Sqflite.firstIntValue(res) ?? 0;
   }
 
@@ -27,15 +27,13 @@ class MovementRegistrySource implements RegistrySource {
     bool includeArchived = false,
   }) async {
     final kinds = await MvKindRepository().getAll();
+    final customKinds = kinds.where((k) => k.isCustom).toList();
     final todayStr = DateTime.now().toIso8601String().split('T').first;
 
-    final sliced = kinds.skip(offset).take(limit).toList();
+    final sliced = customKinds.skip(offset).take(limit).toList();
 
     return sliced.map((k) {
-      final isCustom = k.isCustom;
-      final caps = isCustom
-          ? const RegistryCapabilities()
-          : const RegistryCapabilities.systemGenerated();
+      const caps = RegistryCapabilities();
 
       return RegistryEntry(
         id: 'movementKind:${k.code}',
@@ -43,7 +41,7 @@ class MovementRegistrySource implements RegistrySource {
         sourceId: k.code,
         title: k.titleFa,
         subtitle: '${k.family.titleFa} · ${k.primaryMetric.unitFa}',
-        scheduleSummary: isCustom ? 'حرکت سفارشی' : 'حرکت پیش‌فرض',
+        scheduleSummary: k.isCustom ? 'حرکت سفارشی' : 'حرکت پیش‌فرض',
         status: RegistryStatus.active,
         caps: caps,
         agendaProxy: AgendaItem(

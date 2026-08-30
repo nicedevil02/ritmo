@@ -1,15 +1,16 @@
-// lib/features/registry/presentation/all_plans_screen.dart
-
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/domain/agenda/action_router.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_empty_state.dart';
 import 'package:ritmo/features/registry/domain/registry_entry.dart';
 import 'package:ritmo/features/registry/domain/registry_health_issue.dart';
 import 'package:ritmo/features/registry/domain/registry_query.dart';
@@ -277,12 +278,13 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
           ),
         ),
 
-        // ─── FAB ───
+        // ─── Floating Action Button ───
         floatingActionButton: _query.lens == RegistryLens.items
             ? Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: FloatingActionButton.extended(
-                  onPressed: () {
+                child: GestureDetector(
+                  onTap: () {
+                    RitmoHapticsPolicy.tap();
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
@@ -291,16 +293,43 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                           UniversalPlannerSheet(onSaved: () => setState(() {})),
                     );
                   },
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 3,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(RitmoRadius.hero),
-                  ),
-                  icon: const Icon(Icons.add_rounded, size: 22),
-                  label: const Text(
-                    'افزودن برنامه',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E2430) : const Color(0xFF222834),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.12)
+                            : const Color(0xFF3B4454),
+                        width: 0.9,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark
+                              ? Colors.black.withValues(alpha: 0.50)
+                              : const Color(0xFF1E2430).withValues(alpha: 0.40),
+                          offset: const Offset(0, 4),
+                          blurRadius: 10,
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(CupertinoIcons.add, size: 19, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          'افزودن برنامه',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Vazirmatn',
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               )
@@ -314,6 +343,8 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
   // ═══════════════════════════════════════════
 
   Widget _buildHeader(ThemeData theme) {
+    final colors = context.colors;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         RitmoSpacing.lg,
@@ -323,14 +354,28 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
       ),
       child: Row(
         children: [
-          // Back button
-          IconButton(
-            icon: const Icon(Icons.arrow_forward_rounded, size: 22),
-            onPressed: () => Navigator.of(context).pop(),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          // 3D Tactile Back Button
+          GestureDetector(
+            onTap: () {
+              RitmoHapticsPolicy.tap();
+              Navigator.of(context).pop();
+            },
+            child: RitmoNeuSurface(
+              height: 36,
+              width: 36,
+              radius: 18,
+              sunken: false,
+              padding: EdgeInsets.zero,
+              child: Center(
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 20,
+                  color: colors.textPrimary,
+                ),
+              ),
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
 
           // Title + Subtitle
           Expanded(
@@ -340,19 +385,19 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                 Text(
                   'مخزن روتین‌ها',
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: theme.textTheme.bodyLarge?.color,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Vazirmatn',
+                    color: colors.textPrimary,
                   ),
                 ),
                 if (!_isLoading)
                   Text(
                     '${toPersianDigits(_entries.length.toString())} برنامه فعال',
                     style: TextStyle(
-                      fontSize: 13,
-                      color: theme.textTheme.bodySmall?.color?.withValues(
-                        alpha: 0.55,
-                      ),
+                      fontSize: 12.5,
+                      fontFamily: 'Vazirmatn',
+                      color: colors.textSecondary,
                     ),
                   ),
               ],
@@ -380,118 +425,113 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
   // ═══════════════════════════════════════════
 
   Widget _buildSearchBar(ThemeData theme, bool isDark) {
+    final colors = context.colors;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
-      child: SizedBox(
-        height: context.metrics.touchTarget,
-        child: TextField(
-          controller: _searchController,
-          onChanged: _onSearchChanged,
-          textDirection: TextDirection.rtl,
-          style: const TextStyle(fontSize: 14),
-          decoration: InputDecoration(
-            hintText: 'جست‌وجو در برنامه‌ها',
-            hintStyle: TextStyle(
-              fontSize: 13.5,
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
-            ),
-            prefixIcon: Icon(
-              Icons.search_rounded,
-              size: 20,
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
-            ),
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (_searchController.text.isNotEmpty)
-                  IconButton(
-                    icon: Icon(
-                      Icons.clear_rounded,
-                      size: 18,
-                      color: theme.textTheme.bodySmall?.color?.withValues(
-                        alpha: 0.4,
-                      ),
-                    ),
-                    onPressed: () {
-                      _searchController.clear();
-                      _onSearchChanged('');
-                    },
+      child: RitmoCard.neumorphicSunken(
+        borderRadius: BorderRadius.circular(16),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+        child: SizedBox(
+          height: 42,
+          child: Row(
+            children: [
+              Icon(
+                Icons.search_rounded,
+                size: 20,
+                color: colors.textTertiary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  textDirection: TextDirection.rtl,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontFamily: 'Vazirmatn',
+                    color: colors.textPrimary,
                   ),
-                // Sort / Filter icon inside search bar
-                Stack(
-                  children: [
-                    PopupMenuButton<PlanSortMode>(
-                      icon: Icon(
-                        Icons.tune_rounded,
-                        size: 20,
-                        color: _sortMode != PlanSortMode.displayOrder
-                            ? theme.colorScheme.primary
-                            : theme.textTheme.bodySmall?.color?.withValues(
-                                alpha: 0.4,
-                              ),
-                      ),
-                      tooltip: 'مرتب‌سازی',
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      onSelected: (mode) {
-                        setState(() {
-                          _sortMode = mode;
-                          _applySort();
-                        });
-                      },
-                      itemBuilder: _buildSortMenuItems,
+                  decoration: InputDecoration(
+                    hintText: 'جست‌وجو در برنامه‌ها',
+                    hintStyle: TextStyle(
+                      fontSize: 13.5,
+                      fontFamily: 'Vazirmatn',
+                      color: colors.textTertiary,
                     ),
-                    if (_activeFilterCount > 0)
-                      Positioned(
-                        top: 6,
-                        right: 6,
-                        child: Container(
-                          width: 16,
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            toPersianDigits(_activeFilterCount.toString()),
-                            style: const TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                  ),
+                ),
+              ),
+              if (_searchController.text.isNotEmpty)
+                IconButton(
+                  icon: Icon(
+                    Icons.clear_rounded,
+                    size: 18,
+                    color: colors.textTertiary,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  onPressed: () {
+                    _searchController.clear();
+                    _onSearchChanged('');
+                  },
+                ),
+              // Sort / Filter icon inside search bar
+              Stack(
+                children: [
+                  PopupMenuButton<PlanSortMode>(
+                    icon: Icon(
+                      Icons.tune_rounded,
+                      size: 20,
+                      color: _sortMode != PlanSortMode.displayOrder
+                          ? colors.primary
+                          : colors.textTertiary,
+                    ),
+                    tooltip: 'مرتب‌سازی',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    onSelected: (mode) {
+                      setState(() {
+                        _sortMode = mode;
+                        _applySort();
+                      });
+                    },
+                    itemBuilder: _buildSortMenuItems,
+                  ),
+                  if (_activeFilterCount > 0)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Container(
+                        width: 15,
+                        height: 15,
+                        decoration: BoxDecoration(
+                          color: colors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          toPersianDigits(_activeFilterCount.toString()),
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Vazirmatn',
+                            color: Colors.white,
                           ),
                         ),
                       ),
-                  ],
-                ),
-                const SizedBox(width: 4),
-              ],
-            ),
-            filled: true,
-            fillColor: isDark
-                ? theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.20)
-                : Colors.grey.shade100,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                width: 1,
+                    ),
+                ],
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -499,7 +539,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
   }
 
   List<PopupMenuEntry<PlanSortMode>> _buildSortMenuItems(BuildContext ctx) {
-    final theme = Theme.of(ctx);
+    final colors = ctx.colors;
     PopupMenuEntry<PlanSortMode> item(
       PlanSortMode mode,
       IconData icon,
@@ -513,13 +553,14 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
             Icon(
               icon,
               size: 18,
-              color: isActive ? theme.colorScheme.primary : null,
+              color: isActive ? colors.primary : null,
             ),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 fontSize: 13,
+                fontFamily: 'Vazirmatn',
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -557,12 +598,32 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
       child: Container(
-        padding: const EdgeInsets.all(4),
+        height: 38.0 * context.metrics.densityFactor,
+        padding: const EdgeInsets.all(3.5),
         decoration: BoxDecoration(
-          color: isDark
-              ? theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.20)
-              : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(14),
+          color: isDark ? const Color(0xFF131720) : const Color(0xFFE2E7EE),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : const Color(0xFFCAD2DC).withValues(alpha: 0.9),
+            width: 0.8,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.45)
+                  : const Color(0xFFB8C2CF).withValues(alpha: 0.55),
+              offset: const Offset(0, 1.5),
+              blurRadius: 3,
+            ),
+            if (!isDark)
+              const BoxShadow(
+                color: Colors.white,
+                offset: Offset(0, -1),
+                blurRadius: 1.5,
+              ),
+          ],
         ),
         child: Row(
           children: [
@@ -608,34 +669,54 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
     String? badgeText,
     bool showWarningDot = false,
   }) {
+    final colors = context.colors;
     final isActive = _query.lens == lens;
 
     return GestureDetector(
       onTap: () {
+        RitmoHaptics.selection();
         setState(() {
           _query = _query.copyWith(lens: lens);
         });
         _refreshData();
       },
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: RitmoMotion.state,
-        curve: RitmoMotion.enter,
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
-          color: isActive
-              ? (isDark
-                    ? theme.colorScheme.surfaceContainerHigh.withValues(
-                        alpha: 0.5,
-                      )
-                    : Colors.white)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          gradient: isActive
+              ? LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: isDark
+                      ? [
+                          const Color(0xFF2E3544),
+                          const Color(0xFF232936),
+                        ]
+                      : [
+                          Colors.white,
+                          const Color(0xFFF7F9FC),
+                        ],
+                )
+              : null,
+          color: isActive ? null : Colors.transparent,
+          borderRadius: BorderRadius.circular(12.5),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.white,
+                    offset: const Offset(-1, -1),
+                    blurRadius: 3,
+                  ),
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.5)
+                        : const Color(0xFFAEB8C6).withValues(alpha: 0.65),
+                    offset: const Offset(1.5, 2.5),
+                    blurRadius: 4.5,
                   ),
                 ]
               : null,
@@ -648,27 +729,30 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                fontSize: 12.5,
+                fontFamily: 'Vazirmatn',
+                fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
                 color: isActive
-                    ? theme.textTheme.bodyLarge?.color
-                    : theme.textTheme.bodyMedium?.color?.withValues(
-                        alpha: 0.55,
-                      ),
+                    ? colors.primary
+                    : (isDark ? const Color(0xFF8E9BAE) : const Color(0xFF64748B)),
               ),
             ),
             if (badgeText != null) ...[
               const SizedBox(width: 5),
-              Text(
-                badgeText,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: isActive
-                      ? theme.colorScheme.primary
-                      : theme.textTheme.bodySmall?.color?.withValues(
-                          alpha: 0.4,
-                        ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: isDark ? 0.25 : 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  badgeText,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Vazirmatn',
+                    color: colors.primary,
+                  ),
                 ),
               ),
             ],
@@ -695,7 +779,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
 
   Widget _buildDomainFilterChips(ThemeData theme, bool isDark) {
     return SizedBox(
-      height: CalendarGeometry.effectiveChipHeight(context),
+      height: 36,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
@@ -750,33 +834,51 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    const accentColor = Color(0xFF14B8A6); // Teal-500 muted
+    final colors = context.colors;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        RitmoHaptics.selection();
+        onTap();
+      },
       child: AnimatedContainer(
-        duration: RitmoMotion.state,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? accentColor.withValues(alpha: 0.10)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+              ? colors.primary.withValues(alpha: isDark ? 0.20 : 0.12)
+              : (isDark ? const Color(0xFF1B202B) : const Color(0xFFF1F5F9)),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? accentColor.withValues(alpha: 0.35)
-                : theme.dividerColor.withValues(alpha: 0.08),
-            width: 1,
+                ? colors.primary.withValues(alpha: isDark ? 0.60 : 0.40)
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : const Color(0xFFCBD5E1).withValues(alpha: 0.6)),
+            width: isSelected ? 1.2 : 0.8,
           ),
+          boxShadow: [
+            if (!isSelected)
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.25)
+                    : const Color(0xFFCBD5E1).withValues(alpha: 0.4),
+                offset: const Offset(0, 1),
+                blurRadius: 2,
+              ),
+          ],
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected
-                ? accentColor
-                : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontFamily: 'Vazirmatn',
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+              color: isSelected
+                  ? colors.primary
+                  : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+            ),
           ),
         ),
       ),
@@ -790,113 +892,51 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
   Widget _buildItemsList(ThemeData theme, bool isDark) {
     if (_entries.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.inbox_rounded,
-              size: 48,
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.25),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _query.searchText.isNotEmpty
-                  ? 'نتیجه‌ای یافت نشد'
-                  : 'هنوز برنامه‌ای ثبت نشده',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
-              ),
-            ),
-            if (_query.searchText.isEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                'با دکمه «افزودن برنامه» شروع کنید.',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: theme.textTheme.bodySmall?.color?.withValues(
-                    alpha: 0.3,
-                  ),
-                ),
-              ),
-            ],
-          ],
+        child: RitmoEmptyState(
+          icon: CupertinoIcons.tray,
+          title: _query.searchText.isNotEmpty
+              ? 'نتیجه‌ای یافت نشد'
+              : 'هنوز برنامه‌ای ثبت نشده',
+          description: _query.searchText.isNotEmpty
+              ? 'هیچ برنامه‌ای مطابق عبارت جستجو پیدا نشد.'
+              : 'با دکمه «افزودن برنامه» روتین‌های روزانه خود را اضافه کنید.',
         ),
       );
     }
 
     return ListView.builder(
       itemCount: _entries.length,
-      padding: const EdgeInsets.only(bottom: 88),
+      padding: const EdgeInsets.only(bottom: 88, top: 4),
       itemBuilder: (context, index) {
         final entry = _entries[index];
-        return Dismissible(
-          key: Key(entry.id),
-          direction: _isSelectionMode
-              ? DismissDirection.none
-              : DismissDirection.startToEnd,
-          background: Container(
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            margin: const EdgeInsets.symmetric(
-              horizontal: RitmoSpacing.lg,
-              vertical: 10.0 / 2,
-            ),
-            decoration: BoxDecoration(
-              color: const Color(0xFF64748B),
-              borderRadius: BorderRadius.circular(RitmoRadius.hero),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.archive_rounded, color: Colors.white),
-                SizedBox(width: 8),
-                Text(
-                  'بایگانی',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          confirmDismiss: (direction) async {
-            if (direction == DismissDirection.startToEnd) {
-              await _archiveEntry(entry);
-              return true;
-            }
-            return false;
-          },
-          child: RepaintBoundary(
-            child: RegistryRow(
-              entry: entry,
-              isSelected: _selectedIds.contains(entry.id),
-              isSelectionMode: _isSelectionMode,
-              onTap: () {
-                if (_isSelectionMode) {
-                  setState(() {
-                    if (_selectedIds.contains(entry.id)) {
-                      _selectedIds.remove(entry.id);
-                      if (_selectedIds.isEmpty) {
-                        _isSelectionMode = false;
-                      }
-                    } else {
-                      _selectedIds.add(entry.id);
-                    }
-                  });
-                } else {
-                  ActionRouter.open(context, item: entry.agendaProxy);
-                }
-              },
-              onLongPress: () {
+        return RepaintBoundary(
+          child: RegistryRow(
+            entry: entry,
+            isSelected: _selectedIds.contains(entry.id),
+            isSelectionMode: _isSelectionMode,
+            onTap: () {
+              if (_isSelectionMode) {
                 setState(() {
-                  _isSelectionMode = true;
-                  _selectedIds.add(entry.id);
+                  if (_selectedIds.contains(entry.id)) {
+                    _selectedIds.remove(entry.id);
+                    if (_selectedIds.isEmpty) {
+                      _isSelectionMode = false;
+                    }
+                  } else {
+                    _selectedIds.add(entry.id);
+                  }
                 });
-              },
-              onArchive: () => _archiveEntry(entry),
-            ),
+              } else {
+                ActionRouter.open(context, item: entry.agendaProxy);
+              }
+            },
+            onLongPress: () {
+              setState(() {
+                _isSelectionMode = true;
+                _selectedIds.add(entry.id);
+              });
+            },
+            onArchive: () => _archiveEntry(entry),
           ),
         );
       },

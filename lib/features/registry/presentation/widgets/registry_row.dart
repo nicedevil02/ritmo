@@ -1,17 +1,17 @@
-// lib/features/registry/presentation/widgets/registry_row.dart
-
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/action_router.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
+import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 import 'package:ritmo/features/registry/domain/registry_entry.dart';
 import 'package:ritmo/features/registry/presentation/widgets/registry_countdown_badge.dart';
 import 'package:ritmo/features/registry/presentation/widgets/registry_status_badge.dart';
 
-class RegistryRow extends StatefulWidget {
+class RegistryRow extends StatelessWidget {
   const RegistryRow({
     super.key,
     required this.entry,
@@ -32,141 +32,105 @@ class RegistryRow extends StatefulWidget {
   final VoidCallback? onTogglePause;
 
   @override
-  State<RegistryRow> createState() => _RegistryRowState();
-}
-
-class _RegistryRowState extends State<RegistryRow> {
-  bool _isPressed = false;
-
-  RegistryEntry get entry => widget.entry;
-
-  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final domainColor = entry.domain.color(context);
+    final colors = context.colors;
+    final domainCol = itemColor(context, entry.agendaProxy);
+    final icon = itemIcon(entry.agendaProxy);
     final isArchived = entry.status == RegistryStatus.archived;
-
-    // Determine if countdown is urgent (< 15 min remaining)
     final isUrgent = _checkUrgency();
 
-    Widget cardChild = GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
+    Widget cardChild = RitmoCard.neumorphic(
+      isSelected: isSelected,
+      borderColor: isSelected ? domainCol.withValues(alpha: 0.6) : null,
+      borderWidth: isSelected ? 1.5 : null,
       onTap: () {
-        if (widget.isSelectionMode) {
-          widget.onTap?.call();
+        if (isSelectionMode) {
+          onTap?.call();
         } else {
           ActionRouter.open(context, item: entry.agendaProxy);
         }
       },
       onLongPress: () {
         RitmoHaptics.confirm();
-        widget.onLongPress?.call();
+        onLongPress?.call();
       },
-      child: AnimatedScale(
-        scale: _isPressed ? 0.985 : 1.0,
-        duration: RitmoMotion.press,
-        curve: RitmoMotion.enter,
-        child: AnimatedContainer(
-          duration: RitmoMotion.state,
-          height: CalendarGeometry.registryCardHeight,
-          decoration: BoxDecoration(
-            color: widget.isSelected
-                ? domainColor.withValues(alpha: 0.10)
-                : (isDark
-                      ? theme.colorScheme.surfaceContainerHigh.withValues(
-                          alpha: 0.25,
-                        )
-                      : theme.cardColor),
-            borderRadius: BorderRadius.circular(RitmoRadius.hero),
-            border: Border.all(
-              color: widget.isSelected
-                  ? domainColor.withValues(alpha: 0.5)
-                  : theme.dividerColor.withValues(alpha: 0.06),
-              width: widget.isSelected ? 1.5 : 1.0,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      borderRadius: BorderRadius.circular(20),
+      child: Row(
+        children: [
+          // 3D Sunken Icon Well with Domain Glow
+          RitmoNeuSurface(
+            height: 42,
+            width: 42,
+            radius: 21,
+            sunken: true,
+            padding: EdgeInsets.zero,
+            glowColor: domainCol.withValues(alpha: 0.38),
+            child: Center(
+              child: Icon(icon, size: 20, color: domainCol),
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Row(
-            children: [
-              // Domain icon container (dynamic, rounded rect)
-              Container(
-                width: 40.0 * context.metrics.densityFactor,
-                height: 40.0 * context.metrics.densityFactor,
-                decoration: BoxDecoration(
-                  color: domainColor.withValues(alpha: isDark ? 0.12 : 0.08),
-                  borderRadius: BorderRadius.circular(RitmoRadius.iconButton),
+
+          const SizedBox(width: 12),
+
+          // Title + Schedule + Status row
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title
+                Text(
+                  _stripEmoji(entry.title),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Vazirmatn',
+                    color: isArchived
+                        ? colors.textTertiary
+                        : colors.textPrimary,
+                  ),
                 ),
-                child: Icon(entry.domain.icon, size: 20, color: domainColor),
-              ),
 
-              const SizedBox(width: 12),
+                const SizedBox(height: 3),
 
-              // Title + Schedule + Status row
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Schedule summary
+                Text(
+                  toPersianDigits(entry.scheduleSummary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.0,
+                    fontFamily: 'Vazirmatn',
+                    color: colors.textSecondary,
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                // Status badge + Countdown
+                Row(
                   children: [
-                    // Title
-                    Text(
-                      _stripEmoji(entry.title),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: isArchived
-                            ? theme.textTheme.bodyMedium?.color?.withValues(
-                                alpha: 0.45,
-                              )
-                            : theme.textTheme.bodyLarge?.color,
-                      ),
+                    RegistryStatusBadge(
+                      status: entry.status,
+                      reminderHealth: entry.reminderHealth,
+                      isUrgent: isUrgent,
                     ),
-
-                    const SizedBox(height: 4),
-
-                    // Schedule summary
-                    Text(
-                      entry.scheduleSummary,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: theme.textTheme.bodySmall?.color?.withValues(
-                          alpha: 0.55,
-                        ),
-                        height: 1.4,
-                      ),
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    // Status badge + Countdown
-                    Row(
-                      children: [
-                        RegistryStatusBadge(
-                          status: entry.status,
-                          reminderHealth: entry.reminderHealth,
-                          isUrgent: isUrgent,
-                        ),
-                        const SizedBox(width: 6),
-                        RegistryCountdownBadge(agendaItem: entry.agendaProxy),
-                      ],
-                    ),
+                    const SizedBox(width: 6),
+                    RegistryCountdownBadge(agendaItem: entry.agendaProxy),
                   ],
                 ),
-              ),
-
-              const SizedBox(width: 8),
-
-              // Three-dot menu
-              _buildOverflowMenu(context, theme),
-            ],
+              ],
+            ),
           ),
-        ),
+
+          const SizedBox(width: 8),
+
+          // Three-dot menu
+          _buildOverflowMenu(context, colors),
+        ],
       ),
     );
 
@@ -179,7 +143,7 @@ class _RegistryRowState extends State<RegistryRow> {
       return Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: RitmoSpacing.lg,
-          vertical: 10.0 / 2,
+          vertical: 5.0,
         ),
         child: cardChild,
       );
@@ -188,7 +152,7 @@ class _RegistryRowState extends State<RegistryRow> {
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
-        vertical: 10.0 / 2,
+        vertical: 5.0,
       ),
       child: Dismissible(
         key: ValueKey('entry_${entry.id}'),
@@ -204,11 +168,11 @@ class _RegistryRowState extends State<RegistryRow> {
           }
           return true;
         },
-        onDismissed: (_) => widget.onArchive?.call(),
+        onDismissed: (_) => onArchive?.call(),
         background: Container(
           decoration: BoxDecoration(
             color: const Color(0xFF64748B),
-            borderRadius: BorderRadius.circular(RitmoRadius.hero),
+            borderRadius: BorderRadius.circular(20),
           ),
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.only(left: 20),
@@ -219,6 +183,7 @@ class _RegistryRowState extends State<RegistryRow> {
                 'بایگانی',
                 style: TextStyle(
                   color: Colors.white,
+                  fontFamily: 'Vazirmatn',
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -232,28 +197,28 @@ class _RegistryRowState extends State<RegistryRow> {
     );
   }
 
-  Widget _buildOverflowMenu(BuildContext context, ThemeData theme) {
+  Widget _buildOverflowMenu(BuildContext context, RitmoColors colors) {
     return SizedBox(
-      width: 36,
-      height: 36,
+      width: 34,
+      height: 34,
       child: PopupMenuButton<String>(
         icon: Icon(
           Icons.more_vert_rounded,
-          size: 20,
-          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
+          size: 19,
+          color: colors.textTertiary,
         ),
         padding: EdgeInsets.zero,
-        iconSize: 20,
+        iconSize: 19,
         splashRadius: 18,
         position: PopupMenuPosition.under,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         onSelected: (action) {
           switch (action) {
             case 'edit':
               ActionRouter.open(context, item: entry.agendaProxy);
               break;
             case 'archive':
-              widget.onArchive?.call();
+              onArchive?.call();
               break;
           }
         },
@@ -265,7 +230,7 @@ class _RegistryRowState extends State<RegistryRow> {
                 children: [
                   Icon(Icons.edit_rounded, size: 18),
                   SizedBox(width: 8),
-                  Text('ویرایش', style: TextStyle(fontSize: 13)),
+                  Text('ویرایش', style: TextStyle(fontSize: 13, fontFamily: 'Vazirmatn')),
                 ],
               ),
             ),
@@ -276,7 +241,7 @@ class _RegistryRowState extends State<RegistryRow> {
                 children: [
                   Icon(Icons.archive_rounded, size: 18),
                   SizedBox(width: 8),
-                  Text('بایگانی', style: TextStyle(fontSize: 13)),
+                  Text('بایگانی', style: TextStyle(fontSize: 13, fontFamily: 'Vazirmatn')),
                 ],
               ),
             ),

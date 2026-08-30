@@ -1,11 +1,8 @@
-// lib/features/routines/presentation/universal_planner_sheet.dart
-
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_dialog.dart';
 import 'package:ritmo/features/courses/presentation/widgets/create_course_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/create_goal_sheet.dart';
 import 'package:ritmo/features/health/presentation/widgets/medication_form_sheet.dart';
@@ -288,37 +285,14 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
           onPopInvokedWithResult: (didPop, result) async {
             if (didPop) return;
             
-            final discard = await showDialog<bool>(
-              context: context,
-              builder: (ctx) => Directionality(
-                textDirection: TextDirection.rtl,
-                child: AlertDialog(
-                  backgroundColor: isDark ? const Color(0xFF16192E) : Colors.white,
-                  title: Text(
-                    'آیا مطمئن هستید؟',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                  content: Text(
-                    'کار در حال ویرایش ذخیره نشده است. آیا می‌خواهید تغییرات را دور بیندازید؟',
-                    style: TextStyle(
-                      color: colors.textSecondary,
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      child: const Text('ادامه ویرایش', style: TextStyle()),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('دور انداختن', style: TextStyle(color: Colors.red)),
-                    ),
-                  ],
-                ),
-              ),
+            final discard = await RitmoGlassDialog.show(
+              context,
+              title: 'دور انداختن تغییرات؟',
+              content: 'کار در حال ویرایش ذخیره نشده است. آیا می‌خواهید تغییرات را دور بیندازید؟',
+              confirmLabel: 'دور انداختن',
+              cancelLabel: 'ادامه ویرایش',
+              isDestructive: true,
+              icon: Icons.delete_outline_rounded,
             );
             
             if (discard ?? false) {
@@ -348,19 +322,9 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
                         constraints: BoxConstraints(
                           maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
                         ),
-                        decoration: BoxDecoration(
-                          color: colors.surfaceElevated.withValues(alpha: 0.94),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                          border: Border.all(
-                            color: colors.border,
-                          ),
-                        ),
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                        child: Material(
-                          color: Colors.transparent,
+                        child: RitmoGlassSheet(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                          padding: EdgeInsets.zero,
                           child: Stack(
                             children: [
                               Column(
@@ -368,29 +332,29 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
                                   // Header
                                   PlannerHeader(controller: _controller),
                                   const SizedBox(height: 10),
-      
+
                                   // Step Content PageView or Single Edit Form
                                   // Single-Screen Continuous Content
                                   Expanded(
                                     child: SingleChildScrollView(
                                       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                       child: Column(
-                                         crossAxisAlignment: CrossAxisAlignment.stretch,
-                                         children: [
-                                           if (_controller.isEditing) ...[
-                                             _buildEditHeaderCard(context),
-                                             const SizedBox(height: 16),
-                                             _buildDynamicSubsystemForm(),
-                                             const SizedBox(height: 24),
-                                           ] else ...[
-                                             PlannerNaturalInput(controller: _controller),
-                                             const SizedBox(height: 16),
-                                             PlannerCategoryGrid(controller: _controller),
-                                             const SizedBox(height: 24),
-                                           ],
-                                         ],
-                                       ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        children: [
+                                          if (_controller.isEditing) ...[
+                                            _buildEditHeaderCard(context),
+                                            const SizedBox(height: 16),
+                                            _buildDynamicSubsystemForm(),
+                                            const SizedBox(height: 24),
+                                          ] else ...[
+                                            PlannerNaturalInput(controller: _controller),
+                                            const SizedBox(height: 16),
+                                            PlannerCategoryGrid(controller: _controller),
+                                            const SizedBox(height: 24),
+                                          ],
+                                        ],
+                                      ),
                                     ),
                                   ),
 
@@ -447,34 +411,18 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
                                               ),
                                             ),
                                           ),
-                                            const SizedBox(height: 6),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white.withValues(alpha: 0.2),
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                              child: Text(
-                                                '⏰ ${_controller.getTimeToStartLabel()}',
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            const SizedBox(
-                                              height: 100,
-                                              width: 300,
-                                              child: ConfettiWidget(),
-                                            ),
-                                          ],
-                                        ),
+                                          const SizedBox(height: 8),
+                                          const SizedBox(
+                                            height: 100,
+                                            width: 300,
+                                            child: ConfettiWidget(),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
-                              ],
-                            ),
+                                ),
+                            ],
                           ),
                         ),
                       ),
@@ -484,11 +432,10 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
               ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Widget _buildEditHeaderCard(BuildContext context) {
     final colors = context.colors;

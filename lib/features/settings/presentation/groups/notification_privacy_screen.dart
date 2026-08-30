@@ -6,7 +6,6 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_section.dart';
 
 /// مرکز مدیریت حریم خصوصی، متن مبدل و امنیت اعلان‌ها

@@ -916,6 +916,112 @@ class RitmoCardBadge extends StatelessWidget {
   }
 }
 
+/// نقطه وضعیت درخشان نئونی با هاله نورانی (Luminous Status Dot)
+class RitmoLuminousDot extends StatelessWidget {
+  const RitmoLuminousDot({
+    super.key,
+    this.color = const Color(0xFF10B981),
+    this.size = 6.5,
+    this.hasGlow = true,
+  });
+
+  final Color color;
+  final double size;
+  final bool hasGlow;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color,
+        boxShadow: hasGlow
+            ? [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.85),
+                  blurRadius: size * 1.5,
+                  spreadRadius: size * 0.3,
+                ),
+                BoxShadow(
+                  color: color.withValues(alpha: 0.45),
+                  blurRadius: size * 2.5,
+                  spreadRadius: size * 0.8,
+                ),
+              ]
+            : null,
+      ),
+    );
+  }
+}
+
+/// بج وضعیت زنده با کپسول شیشه‌ای و نقطه نئونی (Luminous Status Badge)
+class RitmoStatusBadge extends StatelessWidget {
+  const RitmoStatusBadge({
+    super.key,
+    required this.label,
+    this.color = const Color(0xFF10B981),
+    this.onTap,
+  });
+
+  final String label;
+  final Color color;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = context.isDark;
+
+    final badge = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.40)
+            : Colors.white.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.15)
+              : Colors.white.withValues(alpha: 0.90),
+          width: 0.8,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: isDark ? 0.25 : 0.12),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          RitmoLuminousDot(color: color, size: 6),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Vazirmatn',
+              color: isDark ? Colors.white : const Color(0xFF1F2937),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (onTap != null) {
+      return GestureDetector(
+        onTap: onTap,
+        child: badge,
+      );
+    }
+    return badge;
+  }
+}
+
 /// خط جداکننده محو نئومورفیک (خط دوگانه شیاردار)
 class RitmoCardDivider extends StatelessWidget {
   const RitmoCardDivider({super.key, this.margin = const EdgeInsets.symmetric(vertical: 10)});

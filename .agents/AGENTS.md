@@ -35,7 +35,10 @@ When building, updating, or refactoring UI components across Ritmo, ALWAYS use t
 - **Sunken Progress Bars**: Use `RitmoNeuProgressBar` for goal progress, energy charge, habits, and time intervals.
 - **Loading Skeletons**: Use `RitmoCardSkeleton` during async/database/AI fetch to prevent layout shifts (Zero Layout Shift).
 - **Empty States**: Use `RitmoNeuEmptyCard` with sunken circle icon and clear Call-To-Action button for empty lists/data.
-- **Canonical Glass Sheets & Modals**: ALWAYS present bottom sheets via `RitmoGlassSheet` (live blur, ambient glow halo, Apple top drag handle) or `RitmoPickerSheet` for search/pickers. Never use flat default Material dialogs.
+- **Canonical Glass Sheets & Modals**: ALWAYS present bottom sheets via `RitmoGlassSheet` (live blur, ambient glow halo, Apple top drag handle) or `RitmoPickerSheet` for search/pickers.
+- **Canonical Glass Dialogs**: ALWAYS present confirmation/alert modals via `RitmoGlassDialog.show(...)` with sigma 20 live blur and tactile buttons. Never use raw, flat `AlertDialog` widgets.
+- **Apple Liquid Glass Segmented Switcher**: Use `RitmoGlassSegmentedControl` for 2-4 item timeframe switchers (daily/weekly/monthly) and horizontal tabbed filters.
+- **Luminous Status Indicators**: Use `RitmoLuminousDot` and `RitmoStatusBadge` (with dual-glow neon halo) for real-time connection, status, and AI indicators.
 
 ## 7. 60/120 FPS Performance & Frame Budgeting
 - **`const` Widget Trees**: Always use `const` constructors for static widgets, paddings, decorations, and icons to minimize rebuild cycles.

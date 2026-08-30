@@ -5,7 +5,6 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
 import 'package:ritmo/features/profile/presentation/ai_connection_screen.dart';
 import 'package:ritmo/features/profile/presentation/ai_memory_management_screen.dart';
 import 'package:ritmo/features/profile/presentation/widgets/psych_layer_settings_sheet.dart';

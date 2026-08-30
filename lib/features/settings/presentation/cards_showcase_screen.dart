@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/core/widgets/sheet/ritmo_picker_sheet.dart';
@@ -25,6 +24,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
   bool _taskDone = false;
   int _focusMinutes = 25;
   int _counter = 0;
+  int _selectedSegmentIndex = 0;
   Timer? _ticker;
   DateTime _now = DateTime.now();
   RealmMode _activeShowcaseMode = RealmMode.normal;
@@ -473,7 +473,49 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           const SizedBox(height: 10),
 
           _buildSingleMorphingHeaderShowcase(colors, isDark),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
+
+          // ── ۱۲. دیالوگ شیشه‌ای استاندارد (RitmoGlassDialog) ──
+          _buildSectionTitle(
+            number: '۱۲',
+            widgetClass: 'RitmoGlassDialog',
+            title: 'دیالوگ شیشه‌ای و پنجره تأییدیه کانونی (Glass Dialog)',
+            usage: 'برای دیالوگ‌های تایید خروج، حذف، اخطار، ریست اطلاعات و پیام‌های متمرکز کاربر.',
+            features: 'بلور زنده عمیق (sigma 20)، هاله و لبه‌های شیشه‌ای با انعکاس نور، دکمه‌های ۳ بعدی و فیدبک هپتیک اپل.',
+            rule: 'استفاده از AlertDialog پیش‌فرض مات متریال ممنوع است؛ همیشه از RitmoGlassDialog.show(...) استفاده کنید.',
+          ),
+          const SizedBox(height: 10),
+
+          _buildGlassDialogShowcase(colors, isDark),
+          const SizedBox(height: 24),
+
+          // ── ۱۳. کنترل و تب‌های چندگزینه‌ای مایع اپل (Apple Liquid Glass Segmented Control) ──
+          _buildSectionTitle(
+            number: '۱۳',
+            widgetClass: 'RitmoGlassSegmentedControl',
+            title: 'کنترل چندگزینه‌ای و تب‌بار مایع اپل (Segmented Control)',
+            usage: 'سوئیچ بین بازه‌های زمانی (روز/هفته/ماه)، فیلترهای لیست و انتخابگرهای چندحالته ماژول‌ها.',
+            features: 'شیار ترنسلوسنت فرورفته، کپسول شناور برجسته با هاله نوری اکسنت، انیمیشن فیزیکی لغزش نرم و هپتیک انتخاب.',
+            rule: 'برای تمام سوییچ‌های ۲ تا ۴ حالته افقی، از RitmoGlassSegmentedControl استفاده شود.',
+          ),
+          const SizedBox(height: 10),
+
+          _buildSegmentedControlShowcase(colors, isDark),
+          const SizedBox(height: 24),
+
+          // ── ۱۴. نشانگرها و بج‌های وضعیت درخشان (Luminous Status Indicators) ──
+          _buildSectionTitle(
+            number: '۱۴',
+            widgetClass: 'RitmoLuminousDot & RitmoStatusBadge',
+            title: 'نشانگرها و بج‌های وضعیت درخشان نئونی (Luminous Badges)',
+            usage: 'نمایش وضعیت زنده، اتصال دستیار هوش مصنوعی، چرخه‌های فعال و سامانه‌های در حال اجرا.',
+            features: 'نقطه نئونی با هاله نورانی دو لایه (Dual Glow) و کپسول کریستالی Ultra-Glass با لبه شیشه‌ای.',
+            rule: 'برای نمایش وضعیت‌های آنلاین/آفلاین/فعال همیشه از این پریمتیوهای استاندارد استفاده شود.',
+          ),
+          const SizedBox(height: 10),
+
+          _buildLuminousBadgeShowcase(colors, isDark),
+          const SizedBox(height: 36),
         ],
       ),
     );
@@ -1445,6 +1487,220 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlassDialogShowcase(RitmoColors colors, bool isDark) {
+    return RitmoCard.neumorphic(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          RitmoCardHeader(
+            title: 'دیالوگ‌های شیشه‌ای و تأییدیه هوشمند',
+            subtitle: 'RitmoGlassDialog (Single Source of Truth)',
+            icon: CupertinoIcons.shield_lefthalf_fill,
+            iconColor: colors.primary,
+            trailing: RitmoCardBadge(
+              label: 'بلور زنده sigma 20',
+              color: colors.primary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'این دیالوگ به عنوان جایگزین قطعی AlertDialogهای خام متریال، با انیمیشن ورود، بلور عمیق شیشه‌ای و دکمه‌های ۳ بعدی رندر می‌شود.',
+            style: TextStyle(
+              fontSize: 12.5,
+              height: 1.6,
+              color: colors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: RitmoNeuButton(
+                  onTap: () async {
+                    final res = await RitmoGlassDialog.show(
+                      context,
+                      title: 'تأیید اقدام مهم',
+                      content: 'آیا مایل به ذخیره‌سازی و اعمال تغییرات در سیستم هستید؟',
+                      confirmLabel: 'تأیید و ذخیره',
+                      cancelLabel: 'انصراف',
+                      icon: CupertinoIcons.checkmark_seal_fill,
+                    );
+                    if (!mounted || res == null) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(res ? 'اقدام با موفقیت تأیید شد ✅' : 'اقدام لغو گردید ❌'),
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(CupertinoIcons.checkmark_shield, size: 16, color: colors.primary),
+                      const SizedBox(width: 6),
+                      Text(
+                        'دیالوگ تأیید',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: colors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: RitmoNeuButton(
+                  onTap: () async {
+                    final res = await RitmoGlassDialog.show(
+                      context,
+                      title: 'حذف اطلاعات و بازنشانی',
+                      content: 'این عملیات غیرقابل بازگشت است. آیا از حذف دائمی این مورد اطمینان دارید؟',
+                      confirmLabel: 'حذف دائمی',
+                      cancelLabel: 'انصراف',
+                      isDestructive: true,
+                      icon: CupertinoIcons.trash_fill,
+                    );
+                    if (!mounted || res == null) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(res ? 'اطلاعات با موفقیت حذف شد 🗑️' : 'حذف لغو شد'),
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(CupertinoIcons.trash, size: 16, color: colors.error),
+                      const SizedBox(width: 6),
+                      Text(
+                        'دیالوگ هشدار/حذف',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: colors.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSegmentedControlShowcase(RitmoColors colors, bool isDark) {
+    return RitmoCard.neumorphic(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          RitmoCardHeader(
+            title: 'کنترل چندگزینه‌ای مایع اپل',
+            subtitle: 'RitmoGlassSegmentedControl (Liquid Glass)',
+            icon: CupertinoIcons.square_split_2x1,
+            iconColor: colors.primary,
+            trailing: RitmoCardBadge(
+              label: 'ترنسلوسنت + هپتیک',
+              color: colors.primary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'شیار محو ترنسلوسنت با پیل متحرک نوری شناور و فیزیک انیمیشن لغزش نرم اپل.',
+            style: TextStyle(
+              fontSize: 12.5,
+              height: 1.6,
+              color: colors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          RitmoGlassSegmentedControl<int>(
+            selectedIndex: _selectedSegmentIndex,
+            onTabChanged: (i) {
+              setState(() => _selectedSegmentIndex = i);
+            },
+            items: const [
+              RitmoTabItem(
+                title: 'روزانه',
+                icon: CupertinoIcons.calendar_today,
+                value: 0,
+              ),
+              RitmoTabItem(
+                title: 'هفتگی',
+                icon: CupertinoIcons.calendar,
+                value: 1,
+              ),
+              RitmoTabItem(
+                title: 'ماهانه',
+                icon: CupertinoIcons.calendar_badge_plus,
+                value: 2,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLuminousBadgeShowcase(RitmoColors colors, bool isDark) {
+    return RitmoCard.neumorphic(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          RitmoCardHeader(
+            title: 'نشانگرها و بج‌های وضعیت درخشان',
+            subtitle: 'RitmoLuminousDot & RitmoStatusBadge',
+            icon: CupertinoIcons.bolt_horizontal_circle_fill,
+            iconColor: colors.primary,
+            trailing: const RitmoCardBadge(
+              label: 'Neon Dual-Glow',
+              color: Color(0xFF10B981),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'نقطه‌های نئونی با هاله نورانی دو لایه برای نمایش بلادرنگ وضعیت سیستم‌ها و هوش مصنوعی.',
+            style: TextStyle(
+              fontSize: 12.5,
+              height: 1.6,
+              color: colors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              RitmoStatusBadge(
+                label: 'هوش مصنوعی فعال',
+                color: colors.primary,
+                onTap: () {},
+              ),
+              const RitmoStatusBadge(
+                label: 'سامانه متصل',
+                color: Color(0xFF10B981),
+              ),
+              const RitmoStatusBadge(
+                label: 'در حال شارژ انرژی',
+                color: Color(0xFFF59E0B),
+              ),
+              RitmoStatusBadge(
+                label: 'حالت اضطراری',
+                color: colors.error,
+              ),
+            ],
           ),
         ],
       ),

@@ -192,13 +192,13 @@ class AppleCardDeckHost extends StatelessWidget {
 
       // Dynamic Scrim Density / Opacity based on foreground extent:
       // At 60%: standard nominal opacity (1.0x)
-      // At 95%: deep focus opacity (1.25x)
+      // At 95%: deep focus opacity (1.50x, +50% density)
       // Pulled below 60% down to 0%: opacity fades linearly and melts away to 0.0!
       final double extentOpacityFactor;
       if (clampedExtent <= 0.60) {
         extentOpacityFactor = (clampedExtent / 0.60).clamp(0.0, 1.0);
       } else {
-        extentOpacityFactor = 1.0 + (0.25 * tExtent);
+        extentOpacityFactor = 1.0 + (0.50 * tExtent);
       }
 
       final baseAlpha = isDark ? 0.42 : 0.22;

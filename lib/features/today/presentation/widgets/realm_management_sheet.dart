@@ -429,21 +429,45 @@ class _RealmManagementSheetState extends State<RealmManagementSheet>
                   ),
                   const SizedBox(height: 12),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'مدیریت قلمروها',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
+                      // Leading (Right in RTL): Tactile Glass Close Button
+                      GestureDetector(
+                        onTap: () {
+                          RitmoHaptics.tap();
+                          Navigator.of(context).pop();
+                        },
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: colors.textPrimary.withValues(alpha: 0.07),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: colors.border.withValues(alpha: 0.15),
+                              width: 0.85,
+                            ),
                           ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            CupertinoIcons.xmark,
+                            size: 15,
+                            color: colors.textSecondary,
+                          ),
+                        ),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(CupertinoIcons.xmark_circle_fill, size: 22),
-                        color: colors.textTertiary,
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            'مدیریت قلمروها',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ),
                       ),
+                      const SizedBox(width: 34, height: 34),
                     ],
                   ),
                 ],

@@ -183,8 +183,35 @@ class _Showcase24hOverviewSheetState extends State<Showcase24hOverviewSheet>
                             const SizedBox(height: 12),
                             Row(
                               children: [
-                                // Symmetrical Balance Leading Spacer
-                                const SizedBox(width: 32, height: 32),
+                                // Leading (Right in RTL): Tactile Glass Close Button
+                                GestureDetector(
+                                  onTap: () {
+                                    RitmoHaptics.tap();
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Container(
+                                    width: 34,
+                                    height: 34,
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? colors.surfaceElevated.withValues(alpha: 0.85)
+                                          : colors.textPrimary.withValues(alpha: 0.07),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isDark
+                                            ? colors.border.withValues(alpha: 0.35)
+                                            : colors.border.withValues(alpha: 0.15),
+                                        width: 0.85,
+                                      ),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Icon(
+                                      CupertinoIcons.xmark,
+                                      size: 15,
+                                      color: colors.textSecondary,
+                                    ),
+                                  ),
+                                ),
 
                                 // Center: Symmetrical Title & Subtitle
                                 Expanded(
@@ -220,35 +247,8 @@ class _Showcase24hOverviewSheetState extends State<Showcase24hOverviewSheet>
                                   ),
                                 ),
 
-                                // Trailing: Tactile Glass Close Button
-                                GestureDetector(
-                                  onTap: () {
-                                    RitmoHaptics.tap();
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? Colors.white.withValues(alpha: 0.10)
-                                          : Colors.black.withValues(alpha: 0.06),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: isDark
-                                            ? Colors.white.withValues(alpha: 0.14)
-                                            : Colors.black.withValues(alpha: 0.08),
-                                        width: 0.75,
-                                      ),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Icon(
-                                      CupertinoIcons.xmark,
-                                      size: 14,
-                                      color: colors.textSecondary,
-                                    ),
-                                  ),
-                                ),
+                                // Trailing (Left in RTL): Symmetrical Balance Spacer
+                                const SizedBox(width: 34, height: 34),
                               ],
                             ),
                           ],

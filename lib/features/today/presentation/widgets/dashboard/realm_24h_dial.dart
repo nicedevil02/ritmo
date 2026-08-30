@@ -972,7 +972,7 @@ class _NeuDialPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _NeuDialPainter old) {
     return old.now.minute != now.minute ||
-        old.now.second != now.second ||
+        old.now.hour != now.hour ||
         old.segments.length != segments.length ||
         old.activeColor != activeColor ||
         old.activeZoneName != activeZoneName ||

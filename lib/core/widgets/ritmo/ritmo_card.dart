@@ -1456,8 +1456,8 @@ class _RitmoNeuMasterCardState extends State<RitmoNeuMasterCard>
                   ),
                 ),
               ),
-              // لایه ۲: کارت نئومورفیک استاتیک (بدون ریبیلد و بدون سربار پردازشی)
-              mainCard,
+              // لایه ۲: کارت نئومورفیک استاتیک (ایزوله‌شده در لایه رندر GPU بدون ریبیلد)
+              RepaintBoundary(child: mainCard),
             ],
           );
         },

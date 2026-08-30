@@ -350,11 +350,37 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Apple Grabber Handle & Pinned Header with Swipe-to-Dismiss Interceptor
+          // 1. Apple Grabber Handle & Pinned Header with 1:1 Live Drag Tracking & Snap Detents
           GestureDetector(
             behavior: HitTestBehavior.opaque,
+            onVerticalDragUpdate: (details) {
+              if (_isDismissing || !_sheetController.isAttached) return;
+              final screenHeight = MediaQuery.of(context).size.height;
+              if (screenHeight <= 0) return;
+
+              // Pulling up: dy < 0 -> deltaFraction > 0; Pulling down: dy > 0 -> deltaFraction < 0
+              final deltaFraction = -details.delta.dy / screenHeight;
+              final newSize = (_sheetController.size + deltaFraction).clamp(0.0, 0.95);
+              _sheetController.jumpTo(newSize);
+              AppleCardDeckHost.activeForegroundSheetExtent.value = newSize;
+            },
             onVerticalDragEnd: (details) async {
-              if (details.primaryVelocity != null && details.primaryVelocity! > 250 && !_isDismissing) {
+              if (_isDismissing || !_sheetController.isAttached) return;
+              final currentSize = _sheetController.size;
+              final velocity = details.primaryVelocity ?? 0.0;
+
+              // ۱. پرتاب به سمت بالا یا کشیدن بالاتر از ۷۲٪ ➔ اسنپ تمام‌صفحه (0.95)
+              if (velocity < -300 || (velocity <= 0 && currentSize > 0.72)) {
+                unawaited(_sheetController.animateTo(
+                  0.95,
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeOutCubic,
+                ));
+                return;
+              }
+
+              // ۲. پرتاب سریع به سمت پایین یا کشیدن زیر مرز ۴۸٪ ➔ بستن با گارد تاییدیه
+              if (velocity > 400 || currentSize < 0.48) {
                 if (!_isDirty) {
                   _isDismissing = true;
                   if (_sheetController.isAttached) {
@@ -379,7 +405,15 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                     curve: Curves.easeOutCubic,
                   ));
                 }
+                return;
               }
+
+              // ۳. استقرار طبیعی روی حالت نیمه‌صفحه پیش‌فرض (0.60)
+              unawaited(_sheetController.animateTo(
+                0.60,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+              ));
             },
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),

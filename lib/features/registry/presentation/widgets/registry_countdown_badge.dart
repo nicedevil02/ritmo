@@ -126,16 +126,17 @@ class _RegistryCountdownBadgeState extends State<RegistryCountdownBadge> {
       onTap: widget.onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2.5),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
           text,
           style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w600,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Vazirmatn',
             color: textColor,
           ),
         ),

@@ -368,7 +368,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
               padding: EdgeInsets.zero,
               child: Center(
                 child: Icon(
-                  Icons.arrow_forward_rounded,
+                  Icons.arrow_back_rounded,
                   size: 20,
                   color: colors.textPrimary,
                 ),
@@ -460,6 +460,8 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                       color: colors.textTertiary,
                     ),
                     isDense: true,
+                    filled: false,
+                    fillColor: Colors.transparent,
                     contentPadding: const EdgeInsets.symmetric(vertical: 10),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,

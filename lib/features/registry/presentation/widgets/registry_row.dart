@@ -54,69 +54,74 @@ class RegistryRow extends StatelessWidget {
         RitmoHaptics.confirm();
         onLongPress?.call();
       },
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      borderRadius: BorderRadius.circular(20),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      borderRadius: BorderRadius.circular(16),
       child: Row(
         children: [
           // 3D Sunken Icon Well with Domain Glow
           RitmoNeuSurface(
-            height: 42,
-            width: 42,
-            radius: 21,
+            height: 38,
+            width: 38,
+            radius: 19,
             sunken: true,
             padding: EdgeInsets.zero,
             glowColor: domainCol.withValues(alpha: 0.38),
             child: Center(
-              child: Icon(icon, size: 20, color: domainCol),
+              child: Icon(icon, size: 19, color: domainCol),
             ),
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
 
-          // Title + Schedule + Status row
+          // 2-Row Content: Line 1 (Title + Status Badge), Line 2 (Schedule + Countdown)
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Title
-                Text(
-                  _stripEmoji(entry.title),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Vazirmatn',
-                    color: isArchived
-                        ? colors.textTertiary
-                        : colors.textPrimary,
-                  ),
-                ),
-
-                const SizedBox(height: 3),
-
-                // Schedule summary
-                Text(
-                  toPersianDigits(entry.scheduleSummary),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12.0,
-                    fontFamily: 'Vazirmatn',
-                    color: colors.textSecondary,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                // Status badge + Countdown
+                // Top Row: Title + Status Badge
                 Row(
                   children: [
+                    Expanded(
+                      child: Text(
+                        _stripEmoji(entry.title),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Vazirmatn',
+                          color: isArchived
+                              ? colors.textTertiary
+                              : colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
                     RegistryStatusBadge(
                       status: entry.status,
                       reminderHealth: entry.reminderHealth,
                       isUrgent: isUrgent,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 3),
+
+                // Bottom Row: Schedule summary + Countdown
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        toPersianDigits(entry.scheduleSummary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontFamily: 'Vazirmatn',
+                          color: colors.textSecondary,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 6),
                     RegistryCountdownBadge(agendaItem: entry.agendaProxy),
@@ -126,7 +131,7 @@ class RegistryRow extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
 
           // Three-dot menu
           _buildOverflowMenu(context, colors),
@@ -143,7 +148,7 @@ class RegistryRow extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: RitmoSpacing.lg,
-          vertical: 5.0,
+          vertical: 3.5,
         ),
         child: cardChild,
       );
@@ -152,7 +157,7 @@ class RegistryRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
-        vertical: 5.0,
+        vertical: 3.5,
       ),
       child: Dismissible(
         key: ValueKey('entry_${entry.id}'),
@@ -172,7 +177,7 @@ class RegistryRow extends StatelessWidget {
         background: Container(
           decoration: BoxDecoration(
             color: const Color(0xFF64748B),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
           ),
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.only(left: 20),

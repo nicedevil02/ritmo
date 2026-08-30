@@ -27,7 +27,7 @@
 
 ## 6. Ritmo Canonical Reference System (Cards, Sheets & UI Primitives)
 When building, updating, or refactoring UI components across Ritmo, ALWAYS use the official canonical design primitives defined in `lib/core/widgets/ritmo/` and showcased in `lib/features/settings/presentation/cards_showcase_screen.dart`:
-- **Master Hero Dashboard Card**: Use `RitmoNeuMasterCard` for top active realm, 24h dial, and time-block hero widgets (maintains the 3.2s ambient breathing halo).
+- **Master Hero Dashboard Card**: Use `RitmoNeuMasterCard` for top active realm, 24h dial, and time-block hero widgets.
 - **Raised Module Cards**: Use `RitmoCard.neumorphic` with atomic sub-widgets (`RitmoCardHeader`, `RitmoCardTile`, `RitmoCardBadge`, `RitmoCardDivider`) for data modules and routines.
 - **Selectable / Toggle Cards**: Use `RitmoCard.neumorphic(isSelected: isSelected)` for multi-option selectors, cycle phases, and calendar day selection.
 - **Sunken / Inset Surfaces**: Use `RitmoCard.neumorphicSunken` for input containers, note boxes, previews, and deep concave wells.

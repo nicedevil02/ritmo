@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
 
 class RealmTemplate {
   const RealmTemplate({
@@ -157,10 +158,13 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
       }
     });
 
-    // Snap Haptics (Item 1)
+    AppleCardDeckHost.activeForegroundSheetExtent.value = 0.60;
+
+    // Snap Haptics & Reactive Sheet Deck Stack Coordination
     _sheetController.addListener(() {
       if (!_sheetController.isAttached) return;
       final currentSize = _sheetController.size;
+      AppleCardDeckHost.activeForegroundSheetExtent.value = currentSize;
       if ((_lastReportedSize < 0.77 && currentSize >= 0.77) ||
           (_lastReportedSize > 0.77 && currentSize <= 0.77)) {
         HapticFeedback.selectionClick();
@@ -197,6 +201,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
 
   @override
   void dispose() {
+    AppleCardDeckHost.activeForegroundSheetExtent.value = 0.60;
     _nameFocusNode.dispose();
     _sheetController.dispose();
     _nameController.dispose();
@@ -849,6 +854,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
         },
         child: NotificationListener<DraggableScrollableNotification>(
           onNotification: (notification) {
+            AppleCardDeckHost.activeForegroundSheetExtent.value = notification.extent;
             if (notification.extent <= 0.48 && !_isDismissing) {
               if (_isDirty) {
                 if (!_isConfirmationShowing) {

@@ -144,6 +144,9 @@ class AppleCardDeckHost extends StatelessWidget {
   final ValueNotifier<double>? foregroundExtentNotifier;
   final double topCornerRadius; // 20.0
 
+  /// Global reactive coordinator for foreground sheet extent (0.0 to 1.0)
+  static final ValueNotifier<double> activeForegroundSheetExtent = ValueNotifier<double>(0.60);
+
   const AppleCardDeckHost({
     super.key,
     required this.child,
@@ -168,21 +171,23 @@ class AppleCardDeckHost extends StatelessWidget {
         return staticChild;
       }
 
+      final clampedExtent = extent.clamp(0.0, 1.0);
+
       // Normalized progress between 60% and 95%
-      final clampedExtent = extent.clamp(0.60, 0.95);
       final tExtent = ((clampedExtent - 0.60) / (0.95 - 0.60)).clamp(0.0, 1.0);
 
-      // Continuous Lerp Scaling: 4.5% at 60% up to 8.0% at 95%
-      final targetScaleDown = 0.045 + (0.035 * tExtent); // 0.045 to 0.080
+      // Continuous Lerp Scaling: 4.5% at 60% up to 8.0% at 95%, smoothly returning to 0% if pulled down below 60%
+      final scaleFactorBelow60 = clampedExtent < 0.60 ? (clampedExtent / 0.60).clamp(0.0, 1.0) : 1.0;
+      final targetScaleDown = (0.045 + (0.035 * tExtent)) * scaleFactorBelow60;
       final scale = 1.0 - (targetScaleDown * progress);
 
       final radius = topCornerRadius * progress;
 
       // Top Peek Y-Shift: -10px at 60% to -16px at 95%
-      final targetShift = 10.0 + (6.0 * tExtent);
+      final targetShift = (10.0 + (6.0 * tExtent)) * scaleFactorBelow60;
       final translateY = -targetShift * progress;
 
-      // Visible-Only Scrim Height: (1.0 - extent)
+      // Visible-Only Scrim Height: exactly (1.0 - extent)
       final visibleTopHeightFactor = (1.0 - (clampedExtent * progress)).clamp(0.0, 1.0);
 
       final dimColor = isDark
@@ -200,7 +205,7 @@ class AppleCardDeckHost extends StatelessWidget {
               children: [
                 staticChild,
 
-                // Occlusion-Aware Visible-Band Scrim
+                // Occlusion-Aware Visible-Band Scrim with soft feathering
                 // ONLY dims the visible band above the foreground sheet,
                 // leaving the area behind the foreground sheet 100% pristine.
                 if (visibleTopHeightFactor > 0.001)
@@ -208,18 +213,23 @@ class AppleCardDeckHost extends StatelessWidget {
                     top: 0,
                     left: 0,
                     right: 0,
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        return IgnorePointer(
-                          ignoring: true,
-                          child: Container(
-                            height: MediaQuery.of(context).size.height * visibleTopHeightFactor,
-                            decoration: BoxDecoration(
-                              color: dimColor,
-                            ),
+                    child: IgnorePointer(
+                      ignoring: true,
+                      child: Container(
+                        height: MediaQuery.of(context).size.height * visibleTopHeightFactor,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              dimColor,
+                              dimColor,
+                              dimColor.withValues(alpha: 0.0),
+                            ],
+                            stops: const [0.0, 0.94, 1.0],
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -229,26 +239,13 @@ class AppleCardDeckHost extends StatelessWidget {
       );
     }
 
-    final notifier = foregroundExtentNotifier;
-    if (notifier != null) {
-      return ListenableBuilder(
-        listenable: Listenable.merge([effectiveAnim, notifier]),
-        builder: (context, _) {
-          return buildTransform(
-            effectiveAnim.value,
-            notifier.value,
-            child,
-          );
-        },
-      );
-    }
-
-    return AnimatedBuilder(
-      animation: effectiveAnim,
+    final notifier = foregroundExtentNotifier ?? activeForegroundSheetExtent;
+    return ListenableBuilder(
+      listenable: Listenable.merge([effectiveAnim, notifier]),
       builder: (context, _) {
         return buildTransform(
           effectiveAnim.value,
-          0.60,
+          notifier.value,
           child,
         );
       },

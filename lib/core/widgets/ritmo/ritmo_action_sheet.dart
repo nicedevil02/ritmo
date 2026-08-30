@@ -1,25 +1,28 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
-/// مدل اکشن‌های اکشن‌شیت شیشه‌ای ریتمو
+/// مدل اکشن‌های اکشن‌شیت رسمی اکوسیستم اپل (Apple HIG Action Sheet Item)
 class RitmoActionSheetItem {
   const RitmoActionSheetItem({
     required this.label,
     required this.onPressed,
     this.isDestructive = false,
     this.isDefault = false,
-    this.icon,
   });
 
   final String label;
   final VoidCallback onPressed;
   final bool isDestructive;
   final bool isDefault;
-  final IconData? icon;
 }
 
-/// اکشن‌شیت شیشه‌ای اختصاصی ریتمو — منطبق بر Apple HIG و متریال آرورا
+/// اکشن‌شیت رسمی اکوسیستم اپل (Apple HIG Action Sheet / Confirmation Dialog)
+///
+/// پیاده‌سازی ۱۰۰٪ نیتیو مطابق با دستورالعمل رسمی اپل (Apple Human Interface Guidelines):
+/// - ارائه از طریق `showCupertinoModalPopup` با انیمیشن فنری فیزیکی اپل.
+/// - ساختار دو کپسولی شناور با انحنای پیوسته (Continuous Smooth Corners).
+/// - بدون آیکون در دکمه‌ها (صرفاً تایپوگرافی تمیز و متمرکز مطابق با استاندارد iOS).
+/// - دکمه قرمز تخریبی (`Destructive`) در کپسول بالا و دکمه پیش‌فرض بولد در کپسول مستقل پایین.
 class RitmoGlassActionSheet extends StatelessWidget {
   const RitmoGlassActionSheet({
     super.key,
@@ -36,7 +39,7 @@ class RitmoGlassActionSheet extends StatelessWidget {
   final String cancelLabel;
   final VoidCallback? onCancel;
 
-  /// نمایش شیت تایید خروج و دور انداختن تغییرات ذخیره‌نشده (Discard Changes)
+  /// نمایش شیت تایید خروج و دور انداختن تغییرات ذخیره‌نشده (Discard Changes Action Sheet)
   static Future<bool?> showDiscard({
     required BuildContext context,
     String title = 'تغییرات ذخیره نشده‌اند',
@@ -45,35 +48,70 @@ class RitmoGlassActionSheet extends StatelessWidget {
     String continueEditingLabel = 'ادامه ویرایش',
   }) {
     RitmoHaptics.warning();
-    return showModalBottomSheet<bool>(
+    return showCupertinoModalPopup<bool>(
       context: context,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.55),
-      isScrollControlled: true,
-      builder: (ctx) => RitmoGlassActionSheet(
-        title: title,
-        message: message,
-        actions: [
-          RitmoActionSheetItem(
-            label: discardLabel,
-            isDestructive: true,
-            icon: CupertinoIcons.trash_fill,
+      barrierDismissible: true,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: CupertinoActionSheet(
+          title: title.isNotEmpty
+              ? Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                )
+              : null,
+          message: message.isNotEmpty
+              ? Text(
+                  message,
+                  style: const TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 12.5,
+                    height: 1.4,
+                  ),
+                )
+              : null,
+          actions: [
+            CupertinoActionSheetAction(
+              isDestructiveAction: true,
+              onPressed: () {
+                RitmoHaptics.tap();
+                Navigator.of(ctx).pop(true);
+              },
+              child: Text(
+                discardLabel,
+                style: const TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            isDefaultAction: true,
             onPressed: () {
               RitmoHaptics.tap();
-              Navigator.of(ctx).pop(true);
+              Navigator.of(ctx).pop(false);
             },
+            child: Text(
+              continueEditingLabel,
+              style: const TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ),
-        ],
-        cancelLabel: continueEditingLabel,
-        onCancel: () {
-          RitmoHaptics.tap();
-          Navigator.of(ctx).pop(false);
-        },
+        ),
       ),
     );
   }
 
-  /// متد عمومی باز کردن اکشن‌شیت شیشه‌ای
+  /// متد عمومی باز کردن اکشن‌شیت رسمی اپل
   static Future<T?> show<T>({
     required BuildContext context,
     String? title,
@@ -82,156 +120,124 @@ class RitmoGlassActionSheet extends StatelessWidget {
     String cancelLabel = 'انصراف',
   }) {
     RitmoHaptics.tap();
-    return showModalBottomSheet<T>(
+    return showCupertinoModalPopup<T>(
       context: context,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.55),
-      isScrollControlled: true,
-      builder: (ctx) => RitmoGlassActionSheet(
-        title: title,
-        message: message,
-        actions: actions,
-        cancelLabel: cancelLabel,
-        onCancel: () => Navigator.of(ctx).pop(),
+      barrierDismissible: true,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: CupertinoActionSheet(
+          title: title != null
+              ? Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                )
+              : null,
+          message: message != null
+              ? Text(
+                  message,
+                  style: const TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 12.5,
+                    height: 1.4,
+                  ),
+                )
+              : null,
+          actions: actions
+              .map(
+                (act) => CupertinoActionSheetAction(
+                  isDestructiveAction: act.isDestructive,
+                  isDefaultAction: act.isDefault,
+                  onPressed: () {
+                    RitmoHaptics.tap();
+                    act.onPressed();
+                  },
+                  child: Text(
+                    act.label,
+                    style: const TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+          cancelButton: CupertinoActionSheetAction(
+            isDefaultAction: true,
+            onPressed: () {
+              RitmoHaptics.tap();
+              Navigator.of(ctx).pop();
+            },
+            child: Text(
+              cancelLabel,
+              style: const TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    final isDark = context.isDark;
-
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Upper Main Actions Glass Capsule
-              RitmoGlassSheet(
-                borderRadius: BorderRadius.circular(22),
-                enableAmbientGlow: true,
-                enableSpecularSheen: true,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (title != null || message != null) ...[
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (title != null)
-                              Text(
-                                title!,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w900,
-                                  fontFamily: 'Vazirmatn',
-                                  color: colors.textPrimary,
-                                ),
-                              ),
-                            if (message != null) ...[
-                              const SizedBox(height: 6),
-                              Text(
-                                message!,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontFamily: 'Vazirmatn',
-                                  color: colors.textSecondary,
-                                  height: 1.45,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : colors.divider.withValues(alpha: 0.50),
-                      ),
-                    ],
-                    ...actions.map((action) {
-                      final itemColor = action.isDestructive
-                          ? colors.error
-                          : (action.isDefault ? colors.primary : colors.textPrimary);
-
-                      return Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: action.onPressed,
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            alignment: Alignment.center,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (action.icon != null) ...[
-                                  Icon(action.icon, size: 18, color: itemColor),
-                                  const SizedBox(width: 8),
-                                ],
-                                Text(
-                                  action.label,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: action.isDestructive || action.isDefault
-                                        ? FontWeight.w900
-                                        : FontWeight.w700,
-                                    fontFamily: 'Vazirmatn',
-                                    color: itemColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
+      child: CupertinoActionSheet(
+        title: title != null
+            ? Text(
+                title!,
+                style: const TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
                 ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Bottom Separate Cancel Glass Capsule
-              RitmoGlassSheet(
-                borderRadius: BorderRadius.circular(18),
-                enableAmbientGlow: false,
-                enableSpecularSheen: true,
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: onCancel ?? () => Navigator.of(context).pop(),
-                    borderRadius: BorderRadius.circular(18),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      alignment: Alignment.center,
-                      child: Text(
-                        cancelLabel,
-                        style: TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w900,
-                          fontFamily: 'Vazirmatn',
-                          color: colors.primary,
-                        ),
-                      ),
-                    ),
+              )
+            : null,
+        message: message != null
+            ? Text(
+                message!,
+                style: const TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 12.5,
+                  height: 1.4,
+                ),
+              )
+            : null,
+        actions: actions
+            .map(
+              (act) => CupertinoActionSheetAction(
+                isDestructiveAction: act.isDestructive,
+                isDefaultAction: act.isDefault,
+                onPressed: act.onPressed,
+                child: Text(
+                  act.label,
+                  style: const TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-            ],
+            )
+            .toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: onCancel ?? () => Navigator.of(context).pop(),
+          child: Text(
+            cancelLabel,
+            style: const TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
       ),

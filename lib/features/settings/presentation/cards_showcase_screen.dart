@@ -861,6 +861,64 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 12),
+
+        // کارت قوانین فیزیک و رفتارهای اکوسیستم اپل برای پنجره‌ها
+        RitmoCard.neumorphic(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(CupertinoIcons.device_phone_portrait, size: 18, color: colors.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'قوانین فیزیک و رفتار پنجره‌ها در اکوسیستم اپل (Apple HIG Rules)',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: 'Vazirmatn',
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'رفتارهای دینامیک و فیزیکی که تمام شیت‌ها و پنجره‌ها ملزم به رعایت آن هستند:',
+                style: TextStyle(fontSize: 11.5, color: colors.textSecondary, height: 1.5),
+              ),
+              const SizedBox(height: 10),
+              _buildAppleRuleRow(
+                icon: CupertinoIcons.arrow_up_left_arrow_down_right,
+                title: 'دتنت‌های دوگانه (۶۰٪ به ۹۰٪/۹۵٪)',
+                desc: 'باز شدن اولیه در ارتفاع ۶۰٪ (Medium Detent) و گسترش نرم به ۹۲٪-۹۵٪ (Large Detent) با درگ به بالا یا اسکرول محتوا.',
+                colors: colors,
+              ),
+              _buildAppleRuleRow(
+                icon: CupertinoIcons.keyboard,
+                title: 'انطباق خودکار با کیبورد (Keyboard Adaptive)',
+                desc: 'به محض باز شدن کیبورد، ارتفاع شیت به طور خودکار به حداکثر (Large Detent) افزایش می‌یابد تا فیلد ورودی و دکمه‌ها بالای کیبورد قرار گیرند.',
+                colors: colors,
+              ),
+              _buildAppleRuleRow(
+                icon: CupertinoIcons.square_stack_3d_up,
+                title: 'پنجره روی پنجره (Stacked Modals)',
+                desc: 'هنگام باز شدن شیت ثانویه (مانند انتخابگر)، شیت زیرین با افکت Card Stacking مقداری کوچک و مات می‌شود (Scale down به ۰.۹۴) تا از تداخل بصری جلوگیری شود.',
+                colors: colors,
+              ),
+              _buildAppleRuleRow(
+                icon: CupertinoIcons.hand_draw,
+                title: 'دستگیره اپل و سوایپ به پایین (Grabber & Dismiss)',
+                desc: 'دستگیره کپسولی در بالا برای جابجایی بین ارتفاع‌ها؛ در صورت وجود تغییرات ذخیره‌نشده، سوایپ به پایین متوقف شده و دیالوگ تایید شیشه‌ای نمایش می‌یابد.',
+                colors: colors,
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 14),
         _buildSheetLaunchTile(
           title: '[RitmoGlassSheet] شیت انتخاب حالت قلمرو',
@@ -927,6 +985,45 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                 fontFamily: 'Vazirmatn',
               ),
             ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: TextStyle(fontSize: 11, fontFamily: 'Vazirmatn', height: 1.45, color: colors.textSecondary),
+                children: [
+                  TextSpan(
+                    text: '$title: ',
+                    style: TextStyle(fontWeight: FontWeight.w800, color: colors.textPrimary),
+                  ),
+                  TextSpan(text: desc),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppleRuleRow({
+    required IconData icon,
+    required String title,
+    required String desc,
+    required RitmoColors colors,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 7),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, size: 14, color: colors.primary),
           ),
           const SizedBox(width: 8),
           Expanded(

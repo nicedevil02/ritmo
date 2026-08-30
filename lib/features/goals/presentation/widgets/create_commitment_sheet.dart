@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -33,21 +31,11 @@ class CreateCommitmentSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
-      enableDrag: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.60,
-        minChildSize: 0.40,
-        maxChildSize: 0.94,
-        snap: true,
-        snapSizes: const [0.60, 0.94],
-        expand: false,
-        builder: (context, scrollController) => CreateCommitmentSheet(
-          initialHorizon: initialHorizon,
-          initialDayKey: initialDayKey,
-          onSaved: onSaved,
-        ),
+      builder: (context) => CreateCommitmentSheet(
+        initialHorizon: initialHorizon,
+        initialDayKey: initialDayKey,
+        onSaved: onSaved,
       ),
     );
   }
@@ -162,69 +150,34 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isGlass = context.isGlassEnabled;
-    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
     final weekDays = PlanningWeek.dayKeysOfWeekContaining(DateTime.now());
 
-    final content = Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: SingleChildScrollView(
+    return RitmoFormSheetScaffold(
+      title: 'کار یا برنامهٔ جدید',
+      subtitle: 'برای امروز، این هفته یا این ماه برنامه‌ریزی کنید',
+      icon: '🎯',
+      isDirty: _titleController.text.trim().isNotEmpty,
+      isSubmitting: _isSaving,
+      initialChildSize: 0.94,
+      maxChildSize: 0.94,
+      snapSizes: const [0.0, 0.94],
+      saveLabel: 'ثبت',
+      onSave: _saveCommitment,
+      builder: (context, scrollController) {
+        return SingleChildScrollView(
+          controller: scrollController,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            top: 14,
+            left: 16,
+            right: 16,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: colors.textSecondary.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.add_task_rounded, color: colors.primary, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'کار یا برنامهٔ جدید',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          'برای امروز، این هفته یا این ماه برنامه‌ریزی کنید',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
               // 1. Horizon Picker
               CupertinoSlidingSegmentedControl<PlanningHorizon>(
                 groupValue: _horizon,
@@ -509,43 +462,10 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                   }).toList(),
                 ),
               ],
-
-              const SizedBox(height: 24),
-
-              // Submit Button
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: _isSaving ? null : _saveCommitment,
-                child: _isSaving
-                    ? const CupertinoActivityIndicator(color: Colors.white)
-                    : const Text(
-                        'ثبت در برنامه',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-              ),
             ],
           ),
-        ),
-      ),
-    );
-
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: RitmoGlassSheet(
-        borderRadius: sheetRadius,
-        padding: EdgeInsets.zero,
-        child: content,
-      ),
+        );
+      },
     );
   }
 

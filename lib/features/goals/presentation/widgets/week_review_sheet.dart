@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/goals/logic/planning_repository.dart';
 import 'package:ritmo/features/goals/logic/planning_review_calculator.dart';
 import 'package:ritmo/features/goals/logic/planning_review_repository.dart';
@@ -36,15 +35,13 @@ class WeekReviewSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
-      enableDrag: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.60,
-        minChildSize: 0.40,
+        initialChildSize: 0.94,
+        minChildSize: 0.0,
         maxChildSize: 0.94,
         snap: true,
-        snapSizes: const [0.60, 0.94],
+        snapSizes: const [0.0, 0.94],
         expand: false,
         builder: (context, scrollController) => WeekReviewSheet(
           cycle: cycle,
@@ -186,13 +183,80 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
         // Handle
         Center(
           child: Container(
-            width: 40,
-            height: 4,
+            width: 38,
+            height: 4.5,
             margin: const EdgeInsets.only(top: 12, bottom: 8),
             decoration: BoxDecoration(
-              color: colors.textSecondary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(2),
+              color: colors.textSecondary.withValues(alpha: 0.22),
+              borderRadius: BorderRadius.circular(3),
             ),
+          ),
+        ),
+
+        // Canonical Header Row
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Leading (Right in RTL): Circular Tactile Close (X) Button
+              GestureDetector(
+                onTap: () {
+                  RitmoHaptics.tap();
+                  Navigator.of(context).pop();
+                },
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? colors.surfaceElevated.withValues(alpha: 0.85)
+                        : colors.textPrimary.withValues(alpha: 0.07),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? colors.border.withValues(alpha: 0.35)
+                          : colors.border.withValues(alpha: 0.15),
+                      width: 0.85,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    CupertinoIcons.xmark,
+                    size: 15,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ),
+
+              // Center: Title + Subtitle
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'مرور و بازتاب پایان هفته 🌿',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'تحلیل و تنظیم ظرفیت هفته‌های آینده',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Trailing (Left in RTL): 34x34 spacer
+              const SizedBox(width: 34, height: 34),
+            ],
           ),
         ),
 
@@ -202,25 +266,6 @@ class _WeekReviewSheetState extends State<WeekReviewSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'مرور و بازتاب پایان هفته 🌿',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'بررسی واقع‌بینانهٔ برنامه برای یادگیری و تنظیم ظرفیت هفته‌های آینده.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colors.textSecondary,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
                 // 1. Numerical Summary
                 RitmoCard.neumorphicSunken(
                   padding: const EdgeInsets.all(16),

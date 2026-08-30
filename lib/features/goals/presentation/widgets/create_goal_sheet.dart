@@ -8,8 +8,6 @@ import 'package:ritmo/core/services/feature_limits.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/courses/presentation/courses_screen.dart';
 import 'package:ritmo/features/goals/logic/goals_repository.dart';
 import 'package:ritmo/features/goals/models/goal_models.dart';
@@ -538,45 +536,143 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.90,
-      minChildSize: 0.50,
-      maxChildSize: 0.96,
+      initialChildSize: 0.94,
+      minChildSize: 0.0,
+      maxChildSize: 0.94,
       expand: false,
       snap: true,
-      snapSizes: const [0.90, 0.96],
+      snapSizes: const [0.0, 0.94],
       builder: (context, scrollController) {
         final content = Column(
           children: [
-            // Drag handle
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                width: 38,
-                height: 4.5,
-                decoration: BoxDecoration(
-                  color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-            ),
-
-            // Wizard Progress Bar
+            // Top Grabber & Canonical Header Row
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Row(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildStepIndicator(0, 'چی؟', colors),
-                  _buildStepConnector(colors),
-                  _buildStepIndicator(1, 'کی؟', colors),
-                  _buildStepConnector(colors),
-                  _buildStepIndicator(2, 'چطور؟', colors),
+                  Center(
+                    child: Container(
+                      width: 38,
+                      height: 4.5,
+                      decoration: BoxDecoration(
+                        color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Leading (Right in RTL): Circular Tactile Close (X) Button
+                      GestureDetector(
+                        onTap: () {
+                          RitmoHaptics.tap();
+                          Navigator.of(context).pop();
+                        },
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? colors.surfaceElevated.withValues(alpha: 0.85)
+                                : colors.textPrimary.withValues(alpha: 0.07),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDark
+                                  ? colors.border.withValues(alpha: 0.35)
+                                  : colors.border.withValues(alpha: 0.15),
+                              width: 0.85,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            CupertinoIcons.xmark,
+                            size: 15,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ),
+
+                      // Center: Title + Wizard Step Indicators
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.goalToEdit != null ? 'ویرایش هدف' : 'هدف جدید',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildStepIndicator(0, 'چی؟', colors),
+                                _buildStepConnector(colors),
+                                _buildStepIndicator(1, 'کی؟', colors),
+                                _buildStepConnector(colors),
+                                _buildStepIndicator(2, 'چطور؟', colors),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Trailing (Left in RTL): Circular Tactile Save (✔) Button
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: (_titleController.text.trim().isEmpty || _isLoading)
+                              ? null
+                              : _saveGoal,
+                          borderRadius: BorderRadius.circular(17),
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: colors.primary,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colors.primary.withValues(alpha: 0.35),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(
+                                    CupertinoIcons.checkmark,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
 
             // Live Preview Card
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
               child: _buildLivePreviewCard(colors),
             ),
 

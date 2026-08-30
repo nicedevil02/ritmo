@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:ritmo/core/analytics/goals_engine.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/goals/logic/goals_controller.dart';
 import 'package:ritmo/features/goals/logic/goals_repository.dart';
@@ -45,11 +44,21 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
   }
 
   void _onControllerChanged() {
-    if (mounted) {
+    if (!mounted) return;
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    void applyUpdate() {
+      if (!mounted) return;
       if (_tabController.index != _controller.selectedTabIndex) {
         _tabController.animateTo(_controller.selectedTabIndex);
       }
       setState(() {});
+    }
+
+    if (phase == SchedulerPhase.persistentCallbacks ||
+        phase == SchedulerPhase.midFrameMicrotasks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => applyUpdate());
+    } else {
+      applyUpdate();
     }
   }
 
@@ -99,7 +108,6 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      useSafeArea: true,
       enableDrag: false,
       builder: (context) => CreateGoalSheet(
         activeGoals: activeGoals,
@@ -124,18 +132,17 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
-      enableDrag: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.60,
-        minChildSize: 0.40,
+        initialChildSize: 0.94,
+        minChildSize: 0.0,
         maxChildSize: 0.94,
         expand: false,
         snap: true,
-        snapSizes: const [0.60, 0.94],
+        snapSizes: const [0.0, 0.94],
         builder: (context, scrollController) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
+          final colors = context.colors;
           return Directionality(
             textDirection: TextDirection.rtl,
             child: RitmoGlassSheet(
@@ -149,24 +156,66 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                       width: 38,
                       height: 4.5,
                       decoration: BoxDecoration(
-                        color: context.colors.textSecondary.withValues(alpha: isDark ? 0.30 : 0.22),
+                        color: colors.textSecondary.withValues(alpha: isDark ? 0.30 : 0.22),
                         borderRadius: BorderRadius.circular(3),
                       ),
                     ),
                   ),
+
+                  // Canonical Header Row
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text(
-                      'آرشیو اهداف تکمیل شده',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        fontFamily: 'Vazirmatn',
-                        color: context.colors.textPrimary,
-                      ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Leading (Right in RTL): Circular Tactile Close (X) Button
+                        GestureDetector(
+                          onTap: () {
+                            RitmoHaptics.tap();
+                            Navigator.of(context).pop();
+                          },
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? colors.surfaceElevated.withValues(alpha: 0.85)
+                                  : colors.textPrimary.withValues(alpha: 0.07),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isDark
+                                    ? colors.border.withValues(alpha: 0.35)
+                                    : colors.border.withValues(alpha: 0.15),
+                                width: 0.85,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              CupertinoIcons.xmark,
+                              size: 15,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ),
+
+                        // Center: Title
+                        Text(
+                          'آرشیو اهداف تکمیل شده',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            fontFamily: 'Vazirmatn',
+                            color: colors.textPrimary,
+                          ),
+                        ),
+
+                        // Trailing (Left in RTL): 34x34 spacer
+                        const SizedBox(width: 34, height: 34),
+                      ],
                     ),
                   ),
-                  Divider(color: context.colors.border.withValues(alpha: 0.15)),
+
+                  Divider(color: colors.border.withValues(alpha: 0.15)),
                   Expanded(
                     child: GoalsArchiveSection(
                       completedGoals: completedGoals,

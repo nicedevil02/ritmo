@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -31,15 +29,13 @@ class WeekPlannerSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
-      enableDrag: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.60,
-        minChildSize: 0.40,
-        maxChildSize: 0.95,
+        initialChildSize: 0.94,
+        minChildSize: 0.0,
+        maxChildSize: 0.94,
         snap: true,
-        snapSizes: const [0.60, 0.95],
+        snapSizes: const [0.0, 0.94],
         expand: false,
         builder: (context, scrollController) =>
             WeekPlannerSheet(onSaved: onSaved),
@@ -458,8 +454,6 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
-    final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
     final content = Column(
@@ -474,6 +468,73 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
               color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
               borderRadius: BorderRadius.circular(3),
             ),
+          ),
+        ),
+
+        // Canonical Header Row
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Leading (Right in RTL): Circular Tactile Close (X) Button
+              GestureDetector(
+                onTap: () {
+                  RitmoHaptics.tap();
+                  Navigator.of(context).pop();
+                },
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? colors.surfaceElevated.withValues(alpha: 0.85)
+                        : colors.textPrimary.withValues(alpha: 0.07),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isDark
+                          ? colors.border.withValues(alpha: 0.35)
+                          : colors.border.withValues(alpha: 0.15),
+                      width: 0.85,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    CupertinoIcons.xmark,
+                    size: 15,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ),
+
+              // Center: Title + Subtitle
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'برنامه‌ریزی هوشمند هفته ✨',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'تخصیص ظرفیت و چیدمان الگوریتمی',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Trailing (Left in RTL): 34x34 spacer
+              const SizedBox(width: 34, height: 34),
+            ],
           ),
         ),
 
@@ -538,88 +599,23 @@ class _WeekPlannerSheetState extends State<WeekPlannerSheet> {
       ],
     );
 
-    final sheetBody = Directionality(
+    return Directionality(
       textDirection: TextDirection.rtl,
-      child: Material(
-        type: MaterialType.transparency,
-        child: content,
-      ),
-    );
-
-    Widget containerWidget;
-    if (!isGlass) {
-      containerWidget = Container(
-        constraints: BoxConstraints(
-          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
         ),
-        decoration: BoxDecoration(
-          color: colors.surfaceElevated,
-          borderRadius: sheetRadius,
-          border: Border.all(
-            color: isDark ? colors.border : colors.divider,
-            width: 1.0,
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+          ),
+          child: RitmoGlassSheet(
+            borderRadius: sheetRadius,
+            padding: EdgeInsets.zero,
+            child: content,
           ),
         ),
-        child: sheetBody,
-      );
-    } else {
-      containerWidget = Container(
-        constraints: BoxConstraints(
-          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
-        ),
-        child: ClipRRect(
-          borderRadius: sheetRadius,
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.glassTint,
-                borderRadius: sheetRadius,
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.10)
-                      : Colors.white.withValues(alpha: 0.70),
-                  width: 1.0,
-                ),
-              ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: sheetRadius,
-                  gradient: isDark
-                      ? LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.14),
-                            Colors.white.withValues(alpha: 0.04),
-                            Colors.white.withValues(alpha: 0.0),
-                          ],
-                          stops: const [0.0, 0.03, 0.45],
-                        )
-                      : LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.75),
-                            Colors.white.withValues(alpha: 0.20),
-                            Colors.white.withValues(alpha: 0.0),
-                          ],
-                          stops: const [0.0, 0.03, 0.45],
-                        ),
-                ),
-                child: sheetBody,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom,
       ),
-      child: containerWidget,
     );
   }
 

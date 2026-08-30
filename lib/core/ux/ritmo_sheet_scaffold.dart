@@ -187,8 +187,7 @@ class AppleCardDeckHost extends StatelessWidget {
       final targetShift = (10.0 + (6.0 * tExtent)) * scaleFactorBelow60;
       final translateY = -targetShift * progress;
 
-      // Visible-Only Scrim Height: exactly (1.0 - extent)
-      final visibleTopHeightFactor = (1.0 - (clampedExtent * progress)).clamp(0.0, 1.0);
+
 
       // Dynamic Scrim Density / Opacity based on foreground extent:
       // At 60%: standard nominal opacity (1.0x)
@@ -216,29 +215,15 @@ class AppleCardDeckHost extends StatelessWidget {
               children: [
                 staticChild,
 
-                // Occlusion-Aware Visible-Band Scrim with soft feathering
-                // ONLY dims the visible band above the foreground sheet,
-                // leaving the area behind the foreground sheet 100% pristine.
-                if (visibleTopHeightFactor > 0.001)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
+                // Uniform Dynamic Depth Scrim (Native Apple iOS HIG Card Deck Stacking)
+                // Covers the background card seamlessly with zero cut lines or split headers!
+                if (effectiveAlpha > 0.001)
+                  Positioned.fill(
                     child: IgnorePointer(
                       ignoring: true,
-                      child: Container(
-                        height: MediaQuery.of(context).size.height * visibleTopHeightFactor,
+                      child: DecoratedBox(
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              dimColor,
-                              dimColor,
-                              dimColor.withValues(alpha: 0.0),
-                            ],
-                            stops: const [0.0, 0.94, 1.0],
-                          ),
+                          color: dimColor,
                         ),
                       ),
                     ),

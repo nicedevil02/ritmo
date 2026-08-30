@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -53,9 +54,7 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return _AddMockExamSheet(
           subjects: widget.subjects,
@@ -66,16 +65,13 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
   }
 
   Future<void> _deleteExam(String examId) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('حذف کارنامه؟', style: TextStyle()),
-        content: const Text('آیا مطمئن هستید که می‌خواهید این کارنامه و تمام نتایج ثبت شده برای آن را حذف کنید؟', style: TextStyle()),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('انصراف', style: TextStyle())),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('حذف کارنامه', style: TextStyle(color: Colors.red))),
-        ],
-      ),
+    final confirm = await RitmoDialog.show(
+      context,
+      title: 'حذف کارنامه آزمون',
+      content: 'آیا مطمئن هستید که می‌خواهید این کارنامه و تمام نتایج ثبت شده برای آن را حذف کنید؟ این عمل غیرقابل بازگشت است.',
+      confirmLabel: 'حذف کارنامه',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
     if (confirm ?? false) {
       await KonkurRepository.instance.deleteMockExam(examId);
@@ -706,89 +702,173 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
     final jalali = Jalali.fromDateTime(_selectedDate);
     final dateDisplay = '${toPersianDigits(jalali.day)} ${jalali.formatter.mN} ${toPersianDigits(jalali.year)}';
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        top: 20,
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
       ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+      decoration: BoxDecoration(
+        color: isDark ? colors.surfaceElevated : colors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border.all(
+          color: isDark ? colors.border.withValues(alpha: 0.35) : colors.border.withValues(alpha: 0.15),
+          width: 0.85,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              decoration: BoxDecoration(
+                color: colors.border.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Symmetrical Header Row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  '📝 ثبت کارنامه آزمون سراسری/آزمایشی',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                // Leading (Right in RTL): Circular Tactile Close (X) Button
+                GestureDetector(
+                  onTap: () {
+                    RitmoHapticsPolicy.tap();
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? colors.surfaceElevated.withValues(alpha: 0.85)
+                          : colors.textPrimary.withValues(alpha: 0.07),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark
+                            ? colors.border.withValues(alpha: 0.35)
+                            : colors.border.withValues(alpha: 0.15),
+                        width: 0.85,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      CupertinoIcons.xmark,
+                      size: 15,
+                      color: colors.textSecondary,
+                    ),
+                  ),
                 ),
-                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+
+                // Center: Title
+                Expanded(
+                  child: Text(
+                    'ثبت کارنامه آزمون آزمایشی کنکور',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ),
+
+                // Trailing (Left in RTL): Circular Tactile Save (✔) Button
+                GestureDetector(
+                  onTap: () {
+                    RitmoHapticsPolicy.selection();
+                    _saveExam();
+                  },
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: colors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      CupertinoIcons.checkmark,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView(
-                children: [
-                  TextField(
-                    controller: _titleController,
-                    decoration: const InputDecoration(labelText: 'عنوان آزمون (مثلا: قلم‌چی مرحله ۳)', labelStyle: TextStyle()),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _providerController,
-                          decoration: const InputDecoration(labelText: 'برگزارکننده', labelStyle: TextStyle()),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextButton.icon(
-                          onPressed: _selectDate,
-                          icon: Icon(Icons.calendar_today, size: 16, color: colors.primary),
-                          label: Text(dateDisplay, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'عملکرد شما در هر درس:',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  ...widget.subjects.map((sub) => _buildSubjectInputRow(sub, colors)),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _noteController,
-                    maxLines: 2,
-                    decoration: const InputDecoration(labelText: 'یادداشت یا تحلیل کلی آزمون', labelStyle: TextStyle()),
-                  ),
-                ],
+          ),
+          const Divider(height: 1),
+
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                16,
+                20,
+                MediaQuery.of(context).viewInsets.bottom + 24,
               ),
+              children: [
+                TextField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(labelText: 'عنوان آزمون (مثلا: قلم‌چی مرحله ۳)', labelStyle: TextStyle()),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _providerController,
+                        decoration: const InputDecoration(labelText: 'برگزارکننده', labelStyle: TextStyle()),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextButton.icon(
+                        onPressed: _selectDate,
+                        icon: Icon(Icons.calendar_today, size: 16, color: colors.primary),
+                        label: Text(dateDisplay, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'عملکرد شما در هر درس:',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                ...widget.subjects.map((sub) => _buildSubjectInputRow(sub, colors)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _noteController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(labelText: 'یادداشت یا تحلیل کلی آزمون', labelStyle: TextStyle()),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _saveExam,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('✓ ثبت و محاسبه خودکار کارنامه', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _saveExam,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: colors.onPrimary,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('✓ ثبت و محاسبه خودکار کارنامه', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

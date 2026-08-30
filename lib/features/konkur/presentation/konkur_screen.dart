@@ -344,9 +344,7 @@ class _KonkurScreenState extends State<KonkurScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return _KonkurSettingsSheet(
           initialExamDateIso: _settings['konkur_exam_date'] ?? '',
@@ -356,22 +354,13 @@ class _KonkurScreenState extends State<KonkurScreen> {
           onOpenCurriculumPicker: _showFieldPicker,
           onSwitchToStudyMode: _switchToStudyMode,
           onReset: () async {
-            final confirm = await showDialog<bool>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text('ریست کامل اطلاعات کنکور؟', style: TextStyle(color: Colors.red)),
-                content: const Text(
-                  'آیا مطمئن هستید؟ این عمل تمام دروس، سرفصل‌ها، آزمون‌ها، اهداف روزانه و تنظیمات ماژول کنکور شما را پاک خواهد کرد. این عمل غیرقابل بازگشت است.',
-                  style: TextStyle(),
-                ),
-                actions: [
-                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('انصراف', style: TextStyle())),
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: const Text('بله، ریست کن', style: TextStyle(color: Colors.red)),
-                  ),
-                ],
-              ),
+            final confirm = await RitmoDialog.show(
+              context,
+              title: 'ریست کامل اطلاعات کنکور',
+              content: 'آیا مطمئن هستید؟ این عمل تمام دروس، سرفصل‌ها، آزمون‌ها، اهداف روزانه و تنظیمات ماژول کنکور شما را پاک خواهد کرد. این عمل غیرقابل بازگشت است.',
+              confirmLabel: 'بله، ریست کن',
+              cancelLabel: 'انصراف',
+              isDestructive: true,
             );
 
             if (confirm ?? false) {
@@ -783,31 +772,127 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
     var dateStr = 'انتخاب نشده';
     if (_selectedDate != null) {
       final jalali = Jalali.fromDateTime(_selectedDate!);
       dateStr = '${toPersianDigits(jalali.day)} ${jalali.formatter.mN} ${toPersianDigits(jalali.year)}';
     }
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 14,
-        right: 14,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        top: 20,
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? colors.surfaceElevated : colors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border.all(
+          color: isDark ? colors.border.withValues(alpha: 0.35) : colors.border.withValues(alpha: 0.15),
+          width: 0.85,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('⚙ تنظیمات ماژول کنکور', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-            ],
+          // Drag handle
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              decoration: BoxDecoration(
+                color: colors.border.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
+
+          // Symmetrical Header Row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Leading (Right in RTL): Circular Tactile Close (X) Button
+                GestureDetector(
+                  onTap: () {
+                    RitmoHapticsPolicy.tap();
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? colors.surfaceElevated.withValues(alpha: 0.85)
+                          : colors.textPrimary.withValues(alpha: 0.07),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark
+                            ? colors.border.withValues(alpha: 0.35)
+                            : colors.border.withValues(alpha: 0.15),
+                        width: 0.85,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      CupertinoIcons.xmark,
+                      size: 15,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ),
+
+                // Center: Title
+                Expanded(
+                  child: Text(
+                    'تنظیمات ماژول کنکور',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ),
+
+                // Trailing (Left in RTL): Circular Tactile Save (✔) Button
+                GestureDetector(
+                  onTap: () {
+                    RitmoHapticsPolicy.selection();
+                    _saveSettings();
+                  },
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: colors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      CupertinoIcons.checkmark,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                14,
+                12,
+                14,
+                MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
           ListTile(
             title: Text('تغییر به حالت عمومی درس و مطالعه', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.primary)),
             subtitle: Text('خروج از حالت اختصاصی کنکور و خروج به محیط عمومی مطالعه.', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
@@ -903,6 +988,10 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  ),
+],
+),
+);
+}
 }

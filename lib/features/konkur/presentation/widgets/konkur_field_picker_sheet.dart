@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/konkur/data/konkur_curriculum.dart';
@@ -18,69 +19,121 @@ class KonkurFieldPickerSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: colors.bg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border.all(color: colors.border),
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Handle indicator
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.textSecondary.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              Text(
-                'بارگذاری سرفصل‌های کنکور',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'رشته موردنظر را انتخاب کنید — مباحث کامل و اوزان آزمون اضافه می‌شود',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              ...KonkurField.values.map((field) => _buildFieldCard(context, field, colors)),
-
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => Navigator.pop(context, null),
-                child: Text(
-                  'انصراف',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: colors.textSecondary,
-                  ),
-                ),
-              ),
-            ],
+        decoration: BoxDecoration(
+          color: isDark ? colors.surfaceElevated : colors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border.all(
+            color: isDark ? colors.border.withValues(alpha: 0.35) : colors.border.withValues(alpha: 0.15),
+            width: 0.85,
           ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                decoration: BoxDecoration(
+                  color: colors.border.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+
+            // Symmetrical Header Row
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Leading (Right in RTL): Circular Tactile Close (X) Button
+                  GestureDetector(
+                    onTap: () {
+                      RitmoHapticsPolicy.tap();
+                      Navigator.pop(context, null);
+                    },
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? colors.surfaceElevated.withValues(alpha: 0.85)
+                            : colors.textPrimary.withValues(alpha: 0.07),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark
+                              ? colors.border.withValues(alpha: 0.35)
+                              : colors.border.withValues(alpha: 0.15),
+                          width: 0.85,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        CupertinoIcons.xmark,
+                        size: 15,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ),
+
+                  // Center: Title & Subtitle
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'بارگذاری سرفصل‌های کنکور',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'رشته تحصیلی خود را انتخاب کنید',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Trailing (Left in RTL): Symmetrical Spacer
+                  const SizedBox(width: 34, height: 34),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+
+            // Scrollable Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ...KonkurField.values.map((field) => _buildFieldCard(context, field, colors)),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

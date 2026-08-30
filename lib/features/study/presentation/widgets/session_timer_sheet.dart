@@ -162,71 +162,14 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
     }
   }
 
-  Future<bool?> _showCancelConfirmDialog(BuildContext context) async {
-    RitmoHapticsPolicy.warning();
-    final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? colors.surfaceElevated : colors.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: colors.border.withValues(alpha: 0.3)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.warning_amber_rounded, color: colors.error, size: 22),
-                  const SizedBox(width: 8),
-                  Text(
-                    'لغو مطالعه',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'آیا می‌خواهید این جلسه مطالعه را بدون ذخیره لغو کنید؟',
-                style: TextStyle(fontSize: 13, color: colors.textSecondary),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      RitmoHapticsPolicy.tap();
-                      Navigator.pop(ctx, false);
-                    },
-                    child: Text('ادامه مطالعه', style: TextStyle(color: colors.textSecondary)),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      RitmoHapticsPolicy.warning();
-                      Navigator.pop(ctx, true);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.error,
-                      foregroundColor: colors.onPrimary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text('بله، لغو شود', style: TextStyle(color: colors.onPrimary)),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+  Future<bool?> _showCancelConfirmDialog(BuildContext context) {
+    return RitmoDialog.show(
+      context,
+      title: 'لغو مطالعه',
+      content: 'آیا می‌خواهید این جلسه مطالعه را بدون ذخیره لغو کنید؟',
+      confirmLabel: 'لغو جلسه',
+      cancelLabel: 'ادامه مطالعه',
+      isDestructive: true,
     );
   }
 
@@ -339,37 +282,77 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
               ),
             ),
             const SizedBox(height: 16),
+            // Canonical Symmetrical Header Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.subject.name,
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (widget.topic != null)
-                        Text(
-                          widget.topic!.name,
-                          style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
-                  onPressed: () async {
+                // Leading (Right in RTL): Circular Tactile Close (X) Button
+                GestureDetector(
+                  onTap: () async {
+                    RitmoHapticsPolicy.tap();
                     final confirm = await _showCancelConfirmDialog(context);
                     if (confirm == true) {
                       await StudyTimerService.instance.cancelSession();
                       if (context.mounted) Navigator.pop(context);
                     }
                   },
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? colors.surfaceElevated.withValues(alpha: 0.85)
+                          : colors.textPrimary.withValues(alpha: 0.07),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark
+                            ? colors.border.withValues(alpha: 0.35)
+                            : colors.border.withValues(alpha: 0.15),
+                        width: 0.85,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      CupertinoIcons.xmark,
+                      size: 15,
+                      color: colors.textSecondary,
+                    ),
+                  ),
                 ),
+
+                // Center: Subject & Topic Title
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.subject.name,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (widget.topic != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.topic!.name,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.textSecondary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
+                // Trailing (Left in RTL): Symmetrical Spacer
+                const SizedBox(width: 34, height: 34),
               ],
             ),
             const SizedBox(height: 12),

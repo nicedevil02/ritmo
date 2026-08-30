@@ -39,57 +39,12 @@ class _StudySettingsSheetState extends State<StudySettingsSheet> {
     if (val == _konkurMode) return;
 
     if (!val) {
-      final colors = context.colors;
-      final isDark = context.isDark;
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDark ? colors.surfaceElevated : colors.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: colors.border.withValues(alpha: 0.3)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'خروج از حالت کنکور',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'سرفصل‌ها، آزمون‌ها و روزشمار کنکورت پاک نمی‌شن؛ فقط پنهان می‌شن و هر وقت خواستی برمی‌گردن.',
-                  style: TextStyle(fontSize: 13, color: colors.textSecondary),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primary,
-                        foregroundColor: colors.onPrimary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: Text('خروج از کنکور', style: TextStyle(color: colors.onPrimary)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
+      final confirm = await RitmoDialog.show(
+        context,
+        title: 'خروج از حالت کنکور',
+        content: 'سرفصل‌ها، آزمون‌ها و روزشمار کنکورت پاک نمی‌شن؛ فقط پنهان می‌شن و هر وقت خواستی برمی‌گردن.',
+        confirmLabel: 'خروج از کنکور',
+        cancelLabel: 'انصراف',
       );
       if (confirm != true) return;
     }
@@ -126,14 +81,55 @@ class _StudySettingsSheetState extends State<StudySettingsSheet> {
           ),
           const SizedBox(height: 16),
 
+          // Symmetrical Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('تنظیمات درس و مطالعه', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-              IconButton(
-                icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
-                onPressed: () => Navigator.pop(context),
+              // Leading (Right in RTL): Circular Tactile Close (X) Button
+              GestureDetector(
+                onTap: () {
+                  RitmoHapticsPolicy.tap();
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? colors.surfaceElevated.withValues(alpha: 0.85)
+                        : colors.textPrimary.withValues(alpha: 0.07),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isDark
+                          ? colors.border.withValues(alpha: 0.35)
+                          : colors.border.withValues(alpha: 0.15),
+                      width: 0.85,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    CupertinoIcons.xmark,
+                    size: 15,
+                    color: colors.textSecondary,
+                  ),
+                ),
               ),
+
+              // Center: Title
+              Expanded(
+                child: Text(
+                  'تنظیمات درس و مطالعه',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                ),
+              ),
+
+              // Trailing (Left in RTL): Symmetrical Spacer
+              const SizedBox(width: 34, height: 34),
             ],
           ),
           Divider(color: colors.divider, height: 16),

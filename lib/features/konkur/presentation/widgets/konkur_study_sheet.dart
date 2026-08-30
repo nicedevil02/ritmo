@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/konkur/logic/konkur_repository.dart';
@@ -327,69 +328,108 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
     final colors = context.colors;
 
     final subTopics = widget.topics.where((t) => t.subjectId == _selectedSubject?.id).toList();
-
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.9;
+    final isDark = context.isDark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        child: RitmoTheme.glassCardLight(
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              top: 12,
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+        ),
+        decoration: BoxDecoration(
+          color: isDark ? colors.surfaceElevated : colors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border.all(
+            color: isDark ? colors.border.withValues(alpha: 0.35) : colors.border.withValues(alpha: 0.15),
+            width: 0.85,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                decoration: BoxDecoration(
+                  color: colors.border.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+
+            // Symmetrical Header Row
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Center(
+                  // Leading (Right in RTL): Circular Tactile Close (X) Button
+                  GestureDetector(
+                    onTap: () {
+                      RitmoHapticsPolicy.tap();
+                      Navigator.pop(context);
+                    },
                     child: Container(
-                      width: 38,
-                      height: 4.5,
-                      margin: const EdgeInsets.only(bottom: 12),
+                      width: 34,
+                      height: 34,
                       decoration: BoxDecoration(
-                        color: colors.textPrimary.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.22),
-                        borderRadius: BorderRadius.circular(3),
+                        color: isDark
+                            ? colors.surfaceElevated.withValues(alpha: 0.85)
+                            : colors.textPrimary.withValues(alpha: 0.07),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark
+                              ? colors.border.withValues(alpha: 0.35)
+                              : colors.border.withValues(alpha: 0.15),
+                          width: 0.85,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        CupertinoIcons.xmark,
+                        size: 15,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text(
-                          'انصراف',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: colors.textSecondary,
-                          ),
-                        ),
+
+                  // Center: Title
+                  Expanded(
+                    child: Text(
+                      'ثبت فعالیت و تایمر مطالعه کنکور',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
                       ),
-                      Text(
-                        '⏱ ثبت فعالیت و تایمر مطالعه',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 48), // Balancing spacer
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
+
+                  // Trailing (Left in RTL): Symmetrical Spacer
+                  const SizedBox(width: 34, height: 34),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+
+            // Scrollable Content
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                  top: 12,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
           // Mode Toggle
           Row(
             children: [
@@ -684,6 +724,7 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
       ),
     ),
   ),
+],
 ),
 ),
 );

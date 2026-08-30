@@ -130,23 +130,13 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> with SingleTi
     String? nextReviewDate = topic.nextReviewDateIso;
 
     if (topic.mastery == StudyMastery.mastered) {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('بازنشانی وضعیت تسلط', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Text('آیا می‌خواهید وضعیت تسلط سرفصل «${topic.name}» به حالت اولیه بازگردد؟'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('انصراف'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: ctx.colors.error),
-              child: const Text('بازنشانی', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
+      final confirm = await RitmoDialog.show(
+        context,
+        title: 'بازنشانی وضعیت تسلط',
+        content: 'آیا می‌خواهید وضعیت تسلط سرفصل «${topic.name}» به حالت اولیه بازگردد؟',
+        confirmLabel: 'بازنشانی',
+        cancelLabel: 'انصراف',
+        isDestructive: true,
       );
       if (confirm != true) return;
       next = StudyMastery.notStarted;

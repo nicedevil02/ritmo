@@ -191,16 +191,13 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (dialogCtx) => AlertDialog(
-                    title: const Text('حذف درس؟', style: TextStyle()),
-                    content: Text('آیا مطمئن هستید که می‌خواهید درس "${sub.name}" و تمام مباحث زیرمجموعه آن را حذف کنید؟ این عمل غیرقابل بازگشت است.', style: const TextStyle()),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('انصراف', style: TextStyle())),
-                      TextButton(onPressed: () => Navigator.pop(dialogCtx, true), child: const Text('حذف کاملا', style: TextStyle(color: Colors.red))),
-                    ],
-                  ),
+                final confirm = await RitmoDialog.show(
+                  context,
+                  title: 'حذف درس کنکور',
+                  content: 'آیا مطمئن هستید که می‌خواهید درس "${sub.name}" و تمام مباحث زیرمجموعه آن را حذف کنید؟ این عمل غیرقابل بازگشت است.',
+                  confirmLabel: 'حذف کامل',
+                  cancelLabel: 'انصراف',
+                  isDestructive: true,
                 );
                 if (confirm ?? false) {
                   await KonkurRepository.instance.deleteSubject(sub.id);
@@ -421,16 +418,13 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (dialogCtx) => AlertDialog(
-                    title: const Text('حذف مبحث؟', style: TextStyle()),
-                    content: Text('آیا مطمئن هستید که می‌خواهید مبحث "${topic.name}" را حذف کنید؟', style: const TextStyle()),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('انصراف', style: TextStyle())),
-                      TextButton(onPressed: () => Navigator.pop(dialogCtx, true), child: const Text('حذف مبحث', style: TextStyle(color: Colors.red))),
-                    ],
-                  ),
+                final confirm = await RitmoDialog.show(
+                  context,
+                  title: 'حذف مبحث کنکور',
+                  content: 'آیا مطمئن هستید که می‌خواهید مبحث "${topic.name}" را حذف کنید؟',
+                  confirmLabel: 'حذف مبحث',
+                  cancelLabel: 'انصراف',
+                  isDestructive: true,
                 );
                 if (confirm ?? false) {
                   await KonkurRepository.instance.deleteTopic(topic.id);

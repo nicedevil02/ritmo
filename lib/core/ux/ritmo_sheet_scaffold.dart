@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
 /// Single unified primitive for bottom sheets across the application with Apple HIG detents.
 class RitmoSheetScaffold extends StatelessWidget {
@@ -136,26 +135,21 @@ class RitmoSheetScaffold extends StatelessWidget {
   }
 }
 
-/// Wraps any screen or navigation shell to provide the authentic Apple iOS 26 Card Deck
-/// background transformation (7% scale-down, 18dp rounded top corners, dimming overlay,
-/// parallax shift) when a modal sheet is pushed on top of it.
+/// Wraps any screen or navigation shell to provide the authentic Apple iOS Card Deck
+/// background transformation (4.5% scale-down at 60% up to 8.0% at 95%, 20dp rounded top corners,
+/// occlusion-aware visible-only dimming overlay, and upward peek translation) when a modal sheet is pushed on top.
 class AppleCardDeckHost extends StatelessWidget {
   final Widget child;
   final Animation<double>? animation;
-  final double scaleDownFactor; // 0.07 -> scale reaches 0.93
-  final double topCornerRadius; // 18.0
-  final double maxDimAlpha; // 0.25
-
-  final double shiftUpDistance; // 18.0pt upward shift for Apple deck peeking
+  final ValueNotifier<double>? foregroundExtentNotifier;
+  final double topCornerRadius; // 20.0
 
   const AppleCardDeckHost({
     super.key,
     required this.child,
     this.animation,
-    this.scaleDownFactor = 0.07,
+    this.foregroundExtentNotifier,
     this.topCornerRadius = 20.0,
-    this.maxDimAlpha = 0.25,
-    this.shiftUpDistance = 18.0,
   });
 
   @override
@@ -169,69 +163,95 @@ class AppleCardDeckHost extends StatelessWidget {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return AnimatedBuilder(
-      animation: effectiveAnim,
-      builder: (context, staticChild) {
-        final progress = effectiveAnim.value;
-        if (progress <= 0.0) {
-          return staticChild!;
-        }
+    Widget buildTransform(double progress, double extent, Widget staticChild) {
+      if (progress <= 0.0) {
+        return staticChild;
+      }
 
-        final scale = 1.0 - (scaleDownFactor * progress);
-        final radius = topCornerRadius * progress;
-        final translateY = -shiftUpDistance * progress;
+      // Normalized progress between 60% and 95%
+      final clampedExtent = extent.clamp(0.60, 0.95);
+      final tExtent = ((clampedExtent - 0.60) / (0.95 - 0.60)).clamp(0.0, 1.0);
 
-        // Option 3: Silver Frost Sheen (Clean Apple Frost with +10% intensity)
-        final frostGradient = isDark
-            ? LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withValues(alpha: (0.45 * progress).clamp(0.0, 1.0)),
-                  const Color(0xFF0F172A).withValues(alpha: (0.30 * progress).clamp(0.0, 1.0)),
-                  Colors.transparent,
-                ],
-                stops: const [0.0, 0.15, 0.50],
-              )
-            : LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withValues(alpha: (0.52 * progress).clamp(0.0, 1.0)),
-                  const Color(0xFFF1F5F9).withValues(alpha: (0.35 * progress).clamp(0.0, 1.0)),
-                  const Color(0xFFE2E8F0).withValues(alpha: (0.18 * progress).clamp(0.0, 1.0)),
-                  Colors.transparent,
-                ],
-                stops: const [0.0, 0.12, 0.35, 0.65],
-              );
+      // Continuous Lerp Scaling: 4.5% at 60% up to 8.0% at 95%
+      final targetScaleDown = 0.045 + (0.035 * tExtent); // 0.045 to 0.080
+      final scale = 1.0 - (targetScaleDown * progress);
 
-        return Transform.translate(
-          offset: Offset(0, translateY),
-          child: Transform.scale(
-            scale: scale,
-            alignment: Alignment.topCenter,
-            child: ClipRRect(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
-              child: Stack(
-                children: [
-                  staticChild!,
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      ignoring: true,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: frostGradient,
-                        ),
-                      ),
+      final radius = topCornerRadius * progress;
+
+      // Top Peek Y-Shift: -10px at 60% to -16px at 95%
+      final targetShift = 10.0 + (6.0 * tExtent);
+      final translateY = -targetShift * progress;
+
+      // Visible-Only Scrim Height: (1.0 - extent)
+      final visibleTopHeightFactor = (1.0 - (clampedExtent * progress)).clamp(0.0, 1.0);
+
+      final dimColor = isDark
+          ? Colors.black.withValues(alpha: (0.45 * progress).clamp(0.0, 1.0))
+          : Colors.black.withValues(alpha: (0.22 * progress).clamp(0.0, 1.0));
+
+      return Transform.translate(
+        offset: Offset(0, translateY),
+        child: Transform.scale(
+          scale: scale,
+          alignment: Alignment.topCenter,
+          child: ClipRRect(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
+            child: Stack(
+              children: [
+                staticChild,
+
+                // Occlusion-Aware Visible-Band Scrim
+                // ONLY dims the visible band above the foreground sheet,
+                // leaving the area behind the foreground sheet 100% pristine.
+                if (visibleTopHeightFactor > 0.001)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return IgnorePointer(
+                          ignoring: true,
+                          child: Container(
+                            height: MediaQuery.of(context).size.height * visibleTopHeightFactor,
+                            decoration: BoxDecoration(
+                              color: dimColor,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
           ),
+        ),
+      );
+    }
+
+    final notifier = foregroundExtentNotifier;
+    if (notifier != null) {
+      return ListenableBuilder(
+        listenable: Listenable.merge([effectiveAnim, notifier]),
+        builder: (context, _) {
+          return buildTransform(
+            effectiveAnim.value,
+            notifier.value,
+            child,
+          );
+        },
+      );
+    }
+
+    return AnimatedBuilder(
+      animation: effectiveAnim,
+      builder: (context, _) {
+        return buildTransform(
+          effectiveAnim.value,
+          0.60,
+          child,
         );
       },
-      child: child,
     );
   }
 }

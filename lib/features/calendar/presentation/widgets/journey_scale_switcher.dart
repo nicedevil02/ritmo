@@ -30,7 +30,6 @@ class JourneyScaleSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
@@ -130,7 +129,7 @@ class JourneyScaleSwitcher extends StatelessWidget {
                               fontFamily: 'Vazirmatn',
                               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                               color: isSelected
-                                  ? colors.primary
+                                  ? (isDark ? Colors.white : const Color(0xFF1E293B))
                                   : (isDark ? const Color(0xFF8E9BAE) : const Color(0xFF64748B)),
                             ),
                           ),
@@ -282,8 +281,9 @@ class _OverflowScaleButton extends StatelessWidget {
                     JourneyScaleSwitcher.scaleLabelFa(activeScale),
                     style: TextStyle(
                       fontSize: 11.5,
+                      fontFamily: 'Vazirmatn',
                       fontWeight: FontWeight.w800,
-                      color: colors.primary,
+                      color: isDark ? Colors.white : const Color(0xFF1E293B),
                     ),
                   ),
                 )

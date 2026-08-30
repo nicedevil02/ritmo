@@ -669,8 +669,11 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
     String? badgeText,
     bool showWarningDot = false,
   }) {
-    final colors = context.colors;
     final isActive = _query.lens == lens;
+    final activeTextColor = isDark ? Colors.white : const Color(0xFF1E293B);
+    final inactiveTextColor = isDark ? const Color(0xFF8E9BAE) : const Color(0xFF64748B);
+
+    final fullLabel = badgeText != null ? '$label ($badgeText)' : label;
 
     return GestureDetector(
       onTap: () {
@@ -727,35 +730,14 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              label,
+              fullLabel,
               style: TextStyle(
                 fontSize: 12.5,
                 fontFamily: 'Vazirmatn',
                 fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                color: isActive
-                    ? colors.primary
-                    : (isDark ? const Color(0xFF8E9BAE) : const Color(0xFF64748B)),
+                color: isActive ? activeTextColor : inactiveTextColor,
               ),
             ),
-            if (badgeText != null) ...[
-              const SizedBox(width: 5),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: isDark ? 0.25 : 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  badgeText,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Vazirmatn',
-                    color: colors.primary,
-                  ),
-                ),
-              ),
-            ],
             if (showWarningDot) ...[
               const SizedBox(width: 5),
               Container(

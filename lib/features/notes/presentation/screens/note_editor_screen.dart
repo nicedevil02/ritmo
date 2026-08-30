@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -396,46 +397,102 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final file = File(absPath);
     if (!await file.exists() || !mounted) return;
 
+    final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     await showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(RitmoSpacing.md),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              InteractiveViewer(
-                child: Image.file(file, cacheWidth: 1080, fit: BoxFit.contain),
-              ),
-              Container(
-                color: Colors.black87,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: RitmoSpacing.lg,
-                  vertical: RitmoSpacing.sm,
+      barrierColor: Colors.black.withValues(alpha: 0.70),
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(RitmoRadius.card),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF131722).withValues(alpha: 0.90)
+                      : Colors.white.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(RitmoRadius.card),
+                  border: Border.all(
+                    color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08),
+                  ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      att.fileName,
-                      style: Theme.of(
-                        ctx,
-                      ).textTheme.labelSmall?.copyWith(color: Colors.white),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 20,
+                    // Header Bar
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Leading (Right in RTL): Circular Tactile Close (X) Button
+                          GestureDetector(
+                            onTap: () {
+                              RitmoHapticsPolicy.tap();
+                              Navigator.pop(ctx);
+                            },
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? colors.surfaceElevated.withValues(alpha: 0.85)
+                                    : colors.textPrimary.withValues(alpha: 0.07),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isDark
+                                      ? colors.border.withValues(alpha: 0.35)
+                                      : colors.border.withValues(alpha: 0.15),
+                                  width: 0.85,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                CupertinoIcons.xmark,
+                                size: 14,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ),
+                          // Center: Filename
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Text(
+                                att.fileName,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: colors.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 32, height: 32),
+                        ],
                       ),
-                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                    Divider(color: colors.border.withValues(alpha: 0.2), height: 1),
+                    // Image Viewer
+                    Flexible(
+                      child: InteractiveViewer(
+                        clipBehavior: Clip.antiAlias,
+                        child: Image.file(file, cacheWidth: 1080, fit: BoxFit.contain),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -1424,13 +1481,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     await RitmoSheetScaffold.present(
       context: context,
       title: 'تاریخچه نسخه‌های یادداشت',
-      maxHeightFactor: 0.75,
+      maxHeightFactor: 0.94,
       childIsScrollable: true,
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: RitmoBreakpoints.sheetMaxHeight(ctx, factor: 0.75),
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(ctx, factor: 0.94),
           ),
           child: FutureBuilder<List<NoteRevision>>(
             future: NotesRepository.instance.listRevisions(_activeNote!.id),

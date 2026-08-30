@@ -16,19 +16,19 @@ class RitmoSheetScaffold extends StatelessWidget {
     required this.semanticsLabel,
     required this.child,
     this.isDismissible = true,
-    this.initialHeightFactor = 0.60,
+    this.initialHeightFactor = 0.94,
     this.maxHeightFactor = 0.94,
     this.scrollController,
   });
 
-  /// Present a bottom sheet using RitmoSheetScaffold with Apple Detents (60% -> 95%).
+  /// Present a bottom sheet using RitmoSheetScaffold with Ritmo Detents (94%).
   static Future<T?> present<T>({
     required BuildContext context,
     required String semanticsLabel,
     required WidgetBuilder builder,
     bool isDismissible = true,
-    double initialHeightFactor = 0.60,
-    double maxHeightFactor = 0.95,
+    double initialHeightFactor = 0.94,
+    double maxHeightFactor = 0.94,
     AnimationController? transitionAnimationController,
   }) {
     RitmoHaptics.sheetOpen();
@@ -48,18 +48,17 @@ class RitmoSheetScaffold extends StatelessWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      useSafeArea: true,
       enableDrag: true,
       isDismissible: isDismissible,
       transitionAnimationController: transitionAnimationController,
       builder: (ctx) => DraggableScrollableSheet(
         controller: controller,
         initialChildSize: initialHeightFactor.clamp(0.2, 1.0),
-        minChildSize: 0.35,
+        minChildSize: 0.0,
         maxChildSize: maxHeightFactor.clamp(0.5, 0.96),
         snap: true,
         snapSizes: [
-          initialHeightFactor.clamp(0.2, 1.0),
+          0.0,
           maxHeightFactor.clamp(0.5, 0.96),
         ],
         expand: false,
@@ -185,8 +184,8 @@ class AppleCardDeckHost extends StatelessWidget {
       final targetShift = (10.0 + (6.0 * tExtent)) * scaleFactorBelow60;
       final translateY = progress <= 0.0 ? 0.0 : -targetShift * progress;
 
-      // Visible-Only Scrim Height: extended down to perfectly align with foreground sheet
-      final visibleTopHeightFactor = (1.0 - (clampedExtent * progress) + 0.20).clamp(0.0, 1.0);
+      // Visible-Only Scrim Height: exactly (1.0 - extent)
+      final visibleTopHeightFactor = (1.0 - (clampedExtent * progress)).clamp(0.0, 1.0);
 
       // Dynamic Scrim Density / Opacity based on foreground extent:
       // At 60%: standard nominal opacity (1.0x)

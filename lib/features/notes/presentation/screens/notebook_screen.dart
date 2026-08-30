@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_chip.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_empty_state.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';

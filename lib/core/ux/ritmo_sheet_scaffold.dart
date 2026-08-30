@@ -142,7 +142,7 @@ class AppleCardDeckHost extends StatelessWidget {
   final Widget child;
   final Animation<double>? animation;
   final ValueNotifier<double>? foregroundExtentNotifier;
-  final double topCornerRadius; // 25.0
+  final double topCornerRadius; // 30.0
 
   /// Global reactive coordinator for foreground sheet extent (0.0 to 1.0)
   static final ValueNotifier<double> activeForegroundSheetExtent = ValueNotifier<double>(0.60);
@@ -152,7 +152,7 @@ class AppleCardDeckHost extends StatelessWidget {
     required this.child,
     this.animation,
     this.foregroundExtentNotifier,
-    this.topCornerRadius = 25.0,
+    this.topCornerRadius = 30.0,
   });
 
   @override

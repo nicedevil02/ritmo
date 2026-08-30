@@ -294,11 +294,13 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
             builder: (context, scrollController) {
               return RitmoGlassSheet(
                 borderRadius: widget.borderRadius,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 1. Pinned Header with Drag Physics
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. Pinned Header with Drag Physics
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onVerticalDragUpdate: (details) {
@@ -494,8 +496,9 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
                     ),
                   ],
                 ),
-              );
-            },
+              ),
+            );
+          },
           ),
         ),
       ),

@@ -136,9 +136,11 @@ class _Showcase24hOverviewSheetState extends State<Showcase24hOverviewSheet>
             topCornerRadius: 32.0,
             child: RitmoGlassSheet(
               borderRadius: sheetRadius,
-              child: ClipRect(
-                child: Column(
-                  children: [
+              child: Material(
+                type: MaterialType.transparency,
+                child: ClipRect(
+                  child: Column(
+                    children: [
                     // 1. Pinned Modal Header (Swipe down to dismiss)
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
@@ -336,11 +338,12 @@ class _Showcase24hOverviewSheetState extends State<Showcase24hOverviewSheet>
                 ),
               ),
             ),
-          );
-        },
-      ),
-    );
-  }
+          ),
+        );
+      },
+    ),
+  );
+}
 
   Widget _buildFilterSegmentSelector(bool isDark, RitmoColors colors, bool isGlass) {
     return Container(

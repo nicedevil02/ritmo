@@ -17,7 +17,6 @@ import 'package:ritmo/core/repositories/realm_repository.dart';
 import 'package:ritmo/core/utils/ritmo_color.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_24h_dial.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_24h_overview_sheet.dart';
 
@@ -64,31 +63,27 @@ class RealmDashboardCard extends StatefulWidget {
 
 class _RealmDashboardCardState extends State<RealmDashboardCard> {
   Timer? _ticker;
-  DateTime _now = DateTime.now();
+  final ValueNotifier<DateTime> _nowNotifier = ValueNotifier(DateTime.now());
   final RealmRepository _repository = RealmRepository();
 
   @override
   void initState() {
     super.initState();
-    // تیکر زنده هر ثانیه برای آپدیت ثانیه‌شمار باقی‌مانده و نقطهٔ زمان
+    // تیکر زنده هر ثانیه ایزوله شده روی ValueNotifier بدون فراخوانی setState
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        setState(() {
-          _now = DateTime.now();
-        });
-      }
+      _nowNotifier.value = DateTime.now();
     });
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
+    _nowNotifier.dispose();
     super.dispose();
   }
 
-  String _formatRemaining(ActiveRealmState state) {
+  String _formatRemaining(ActiveRealmState state, DateTime now) {
     if (state is ScheduledRealmState) {
-      final now = _now;
       final endParts = state.schedule.endTime.split(':');
       if (endParts.length >= 2) {
         final endH = int.tryParse(endParts[0]) ?? 0;
@@ -106,7 +101,7 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
         }
       }
     } else if (state is ManualRealmState) {
-      final diff = state.expireAt.difference(_now);
+      final diff = state.expireAt.difference(now);
       if (!diff.isNegative) {
         final h = diff.inHours.toString().padLeft(2, '0');
         final m = (diff.inMinutes % 60).toString().padLeft(2, '0');
@@ -117,12 +112,12 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
 
     // شمارش معکوس زنده در وضعیت زمان آزاد تا شروع قلمروی بعدی
     final next = ActiveRealmResolver.findNextSchedule(
-      _now,
+      now,
       widget.realms,
       widget.schedules,
     );
     if (next != null) {
-      final diff = next.scheduleStartDt.difference(_now);
+      final diff = next.scheduleStartDt.difference(now);
       if (!diff.isNegative) {
         final h = diff.inHours.toString().padLeft(2, '0');
         final m = (diff.inMinutes % 60).toString().padLeft(2, '0');
@@ -132,8 +127,8 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
     }
 
     // فالبک: شمارش معکوس تا پایان شبانه‌روز جاری
-    final endOfDay = DateTime(_now.year, _now.month, _now.day, 23, 59, 59);
-    final diff = endOfDay.difference(_now);
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final diff = endOfDay.difference(now);
     if (!diff.isNegative) {
       final h = diff.inHours.toString().padLeft(2, '0');
       final m = (diff.inMinutes % 60).toString().padLeft(2, '0');
@@ -226,7 +221,6 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
     final modeLabel = isOutOfZone ? 'شناور' : currentMode.label;
 
     final range = _resolveTimeRange();
-    final remainingStr = _formatRemaining(widget.realmState);
     final subtitle = _getRealmSubtitle(realmName);
 
     final String iconStr = widget.activeZoneIcon ?? '🌙';
@@ -246,37 +240,43 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
 
     final zoneId = widget.realmState.realmOrNull?.id ?? widget.activeZone?['id'] as String? ?? 'sleep';
 
-    return RitmoNeuMasterCard(
-      title: realmName,
-      subtitle: subtitle,
-      modeLabel: modeLabel,
-      onModeTap: isOutOfZone ? null : _openModeSelectionSheet,
-      activeChipLabel: chipName,
-      activeChipIcon: icon,
-      activeChipEmoji: iconStr,
-      statusLabel: isOutOfZone ? 'زمان آزاد' : 'قلمرو فعال',
-      timeRange: timeRangeStr,
-      remainingTime: toPersianDigits(remainingStr),
-      activeColor: activeColor,
-      gaugeWidget: Realm24hDial(
-        size: 116,
-        activeZoneId: zoneId,
-        activeZoneColor: activeColor,
-        activeZoneName: chipName,
-        activeZoneIcon: widget.activeZoneIcon,
-        schedules: widget.schedules,
-        realms: widget.realms,
-        isDarkMode: isDark,
-        now: _now,
-        surfaceColor: colors.surfaceElevated,
-        surfaceSunkenColor: colors.surfaceSunken,
-        textColor: colors.textPrimary,
-        showHourLabels: false,
-      ),
-      actionButtonText: 'مدیریت قلمرو',
-      onActionTap: _openManagementSheet,
-      onTap: _openManagementSheet,
-      height: widget.height,
+    return ValueListenableBuilder<DateTime>(
+      valueListenable: _nowNotifier,
+      builder: (context, currentNow, _) {
+        final remainingStr = _formatRemaining(widget.realmState, currentNow);
+        return RitmoNeuMasterCard(
+          title: realmName,
+          subtitle: subtitle,
+          modeLabel: modeLabel,
+          onModeTap: isOutOfZone ? null : _openModeSelectionSheet,
+          activeChipLabel: chipName,
+          activeChipIcon: icon,
+          activeChipEmoji: iconStr,
+          statusLabel: isOutOfZone ? 'زمان آزاد' : 'قلمرو فعال',
+          timeRange: timeRangeStr,
+          remainingTime: toPersianDigits(remainingStr),
+          activeColor: activeColor,
+          gaugeWidget: Realm24hDial(
+            size: 116,
+            activeZoneId: zoneId,
+            activeZoneColor: activeColor,
+            activeZoneName: chipName,
+            activeZoneIcon: widget.activeZoneIcon,
+            schedules: widget.schedules,
+            realms: widget.realms,
+            isDarkMode: isDark,
+            now: currentNow,
+            surfaceColor: colors.surfaceElevated,
+            surfaceSunkenColor: colors.surfaceSunken,
+            textColor: colors.textPrimary,
+            showHourLabels: false,
+          ),
+          actionButtonText: 'مدیریت قلمرو',
+          onActionTap: _openManagementSheet,
+          onTap: _openManagementSheet,
+          height: widget.height,
+        );
+      },
     );
   }
 

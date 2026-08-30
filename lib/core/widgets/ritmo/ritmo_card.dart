@@ -1180,7 +1180,7 @@ class RitmoNeuMasterCard extends StatefulWidget {
     this.onTap,
     this.height = 180,
     this.margin,
-    this.enableBreathing = true,
+    this.enableBreathing = false,
   });
 
   final String title;
@@ -1252,9 +1252,10 @@ class _RitmoNeuMasterCardState extends State<RitmoNeuMasterCard>
     final isDark = context.isDark;
     final effectiveColor = widget.activeColor ?? colors.primary;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: LayoutBuilder(
+    return RepaintBoundary(
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: LayoutBuilder(
         builder: (context, constraints) {
           final maxW = constraints.maxWidth.isFinite ? constraints.maxWidth : 380.0;
           final dialColWidth = (maxW * 0.38).clamp(118.0, 138.0);
@@ -1490,6 +1491,7 @@ class _RitmoNeuMasterCardState extends State<RitmoNeuMasterCard>
           );
         },
       ),
+    ),
     );
   }
 

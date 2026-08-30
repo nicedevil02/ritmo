@@ -181,7 +181,8 @@ class AppleCardDeckHost extends StatelessWidget {
       final targetScaleDown = (0.045 + (0.035 * tExtent)) * scaleFactorBelow60;
       final scale = 1.0 - (targetScaleDown * progress);
 
-      final radius = topCornerRadius * progress;
+      // Fixed Static Corner Radius (locked at 30px)
+      final radius = topCornerRadius;
       final clipBorderRadius = BorderRadius.vertical(top: Radius.circular(radius));
 
       // Top Peek Y-Shift: -10px at 60% to -16px at 95%

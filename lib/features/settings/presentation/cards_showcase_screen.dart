@@ -81,8 +81,8 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
             number: '۲',
             widgetClass: 'RitmoCard.neumorphic',
             title: 'کارت برجسته داشبورد و اجزای اتمیک (Raised Card)',
-            usage: 'ساختار پایه تمام کارت‌های اپلیکیشن (روتین‌ها، نبض سلامت، تحلیل‌های روزانه و خلاصه داده‌ها).',
-            features: 'سایه دوگانه متضاد در جهت نور ۱۳۵ درجه، فرورفتگی فیزیکی در زمان لمس (Depression Animation) و هپتیک اپل.',
+            usage: 'ساختار پایه تمام کارت‌های ریتمویکیشن (روتین‌ها، نبض سلامت، تحلیل‌های روزانه و خلاصه داده‌ها).',
+            features: 'سایه دوگانه متضاد در جهت نور ۱۳۵ درجه، فرورفتگی فیزیکی در زمان لمس (Depression Animation) و هپتیک ریتمو.',
             rule: 'از ویجت‌های کمکی RitmoCardHeader ،RitmoCardTile ،RitmoCardBadge و RitmoCardDivider درون این کارت استفاده کنید.',
           ),
           const SizedBox(height: 10),
@@ -93,7 +93,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('کارت نئومورفیک لمس شد (انیمیشن فرورفتگی + لرزش اپل)'),
+                  content: Text('کارت نئومورفیک لمس شد (انیمیشن فرورفتگی + لرزش ریتمو)'),
                   duration: Duration(seconds: 1),
                 ),
               );
@@ -439,8 +439,8 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
             number: '۹',
             widgetClass: 'RitmoGlassSheet & Modals',
             title: 'پنجره‌ها و شیت‌های شیشه‌ای مرجع ریتمو (Reference Sheets)',
-            usage: 'تنها روش استاندارد و مجاز باز کردن باتم‌شیت‌ها، دیالوگ‌ها و انتخابگرها در سراسر اپلیکیشن.',
-            features: 'بلور زنده اکوسیستم اپل (BackdropFilter)، هاله نوری پالت، دستگیره کشیدن به پایین و گوشه‌های گرد ۲۸ پیکسل.',
+            usage: 'تنها روش استاندارد و مجاز باز کردن باتم‌شیت‌ها، دیالوگ‌ها و انتخابگرها در سراسر ریتمویکیشن.',
+            features: 'بلور زنده اکوسیستم ریتمو (BackdropFilter)، هاله نوری پالت، دستگیره کشیدن به پایین و گوشه‌های گرد ۲۸ پیکسل.',
             rule: 'پروتکل تبدیل ۶ لایه شیت‌ها: ۱) اسکفولد باتم‌شیت شیشه‌ای شفاف، ۲) فیلدها و پیش‌نمایش‌های مقعر فرورفته (neumorphicSunken)، ۳) چیپ‌ها و انتخابگرهای نئومورفیک انتخابی (isSelected)، ۴) نوارهای پیشرفت فرورفته با اعداد فارسی (RitmoNeuProgressBar)، ۵) دکمه‌های لمسی ۳ بعدی (RitmoNeuButton)، ۶) دیالوگ‌های تایید خروج شیشه‌ای (RitmoGlassDialog).',
           ),
           const SizedBox(height: 10),
@@ -448,11 +448,11 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           _buildReferenceSheetsShowcase(colors, isDark),
           const SizedBox(height: 24),
 
-          // ── ۱۰. هدر کپسولی شناور اپل و اسکفولد چندتبی مرجع (Apple Morphing Header & Tabbed Scaffold) ──
+          // ── ۱۰. هدر کپسولی شناور ریتمو و اسکفولد چندتبی مرجع (Apple Morphing Header & Tabbed Scaffold) ──
           _buildSectionTitle(
             number: '۱۰',
             widgetClass: 'RitmoTabbedMorphingScaffold & Header',
-            title: 'اسکفولد و هدر داینامیک کپسولی اپل (Morphing Header Scaffold)',
+            title: 'اسکفولد و هدر داینامیک کپسولی ریتمو (Morphing Header Scaffold)',
             usage: 'الگوی استاندارد و اجباری برای تمامی صفحات دارای تب (تب‌بار کپسولی شیشه‌ای، اسکرول مستقل هر تب و انیمیشن انتقال ۳۰۰ میلی‌ثانیه‌ای).',
             features: 'ترنزیشن فیزیکی کپسولی ۳۰۰ میلی‌ثانیه با منحنی easeOutCubic، واکنش اسکرول سریع (Quick-Return)، تفکیک کامل آفست اسکرول تب‌ها، و کشسانی اووراسکرول.',
             rule: 'برای تمام صفحات چندتبی ریتمو منحصراً از RitmoTabbedMorphingScaffold استفاده شود و از نوشتن کنترلرهای تکراری خودداری گردد.',
@@ -462,11 +462,11 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           _buildTabbedMorphingHeaderShowcase(colors, isDark),
           const SizedBox(height: 24),
 
-          // ── ۱۱. اسکفولد تک‌صفحه‌ای مرجع با هدر مورفینگ اپل (Single Morphing Scaffold) ──
+          // ── ۱۱. اسکفولد تک‌صفحه‌ای مرجع با هدر مورفینگ ریتمو (Single Morphing Scaffold) ──
           _buildSectionTitle(
             number: '۱۱',
             widgetClass: 'RitmoSingleMorphingScaffold',
-            title: 'اسکفولد تک‌صفحه‌ای با هدر مورفینگ اپل (Single Morphing Scaffold)',
+            title: 'اسکفولد تک‌صفحه‌ای با هدر مورفینگ ریتمو (Single Morphing Scaffold)',
             usage: 'الگوی استاندارد برای تمام صفحات تک‌صفحه‌ای و طویل (مانند تنظیمات، سیستم‌ها و داشبورد اصلی امروز).',
             features: 'محاسبه خودکار پدینگ هوشمند، مدیریت ری‌اکتیو آفست اسکرول، پشتیبانی از آواتار/leading، دکمه‌های اکشن، FAB و Pull-To-Refresh.',
             rule: 'برای صفحات تک‌صفحه‌ای فاقد تب، منحصراً از RitmoSingleMorphingScaffold استفاده شود تا ساختار Stack و اسکرول یکدست باشد.',
@@ -482,7 +482,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
             widgetClass: 'RitmoGlassDialog',
             title: 'دیالوگ شیشه‌ای و پنجره تأییدیه کانونی (Glass Dialog)',
             usage: 'برای دیالوگ‌های تایید خروج، حذف، اخطار، ریست اطلاعات و پیام‌های متمرکز کاربر.',
-            features: 'بلور زنده عمیق (sigma 20)، هاله و لبه‌های شیشه‌ای با انعکاس نور، دکمه‌های ۳ بعدی و فیدبک هپتیک اپل.',
+            features: 'بلور زنده عمیق (sigma 20)، هاله و لبه‌های شیشه‌ای با انعکاس نور، دکمه‌های ۳ بعدی و فیدبک هپتیک ریتمو.',
             rule: 'استفاده از AlertDialog پیش‌فرض مات متریال ممنوع است؛ همیشه از RitmoGlassDialog.show(...) استفاده کنید.',
           ),
           const SizedBox(height: 10),
@@ -490,11 +490,11 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           _buildGlassDialogShowcase(colors, isDark),
           const SizedBox(height: 24),
 
-          // ── ۱۳. کنترل و تب‌های چندگزینه‌ای مایع اپل (Apple Liquid Glass Segmented Control) ──
+          // ── ۱۳. کنترل و تب‌های چندگزینه‌ای مایع ریتمو (Apple Liquid Glass Segmented Control) ──
           _buildSectionTitle(
             number: '۱۳',
             widgetClass: 'RitmoGlassSegmentedControl',
-            title: 'کنترل چندگزینه‌ای و تب‌بار مایع اپل (Segmented Control)',
+            title: 'کنترل چندگزینه‌ای و تب‌بار مایع ریتمو (Segmented Control)',
             usage: 'سوئیچ بین بازه‌های زمانی (روز/هفته/ماه)، فیلترهای لیست و انتخابگرهای چندحالته ماژول‌ها.',
             features: 'شیار ترنسلوسنت فرورفته، کپسول شناور برجسته با هاله نوری اکسنت، انیمیشن فیزیکی لغزش نرم و هپتیک انتخاب.',
             rule: 'برای تمام سوییچ‌های ۲ تا ۴ حالته افقی، از RitmoGlassSegmentedControl استفاده شود.',
@@ -833,7 +833,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
               _buildProtocolStep(
                 number: '۱',
                 title: 'اسکفولد شیشه‌ای و دستگیره (Host Scaffolding)',
-                desc: 'استفاده از isScrollControlled: true و backgroundColor: Colors.transparent با روت RitmoGlassSheet (دستگیره اپل و گوشه ۲۸pt).',
+                desc: 'استفاده از isScrollControlled: true و backgroundColor: Colors.transparent با روت RitmoGlassSheet (دستگیره ریتمو و گوشه ۲۸pt).',
                 colors: colors,
               ),
               _buildProtocolStep(
@@ -871,7 +871,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
         ),
         const SizedBox(height: 12),
 
-        // کارت قوانین فیزیک و رفتارهای اکوسیستم اپل برای پنجره‌ها
+        // کارت قوانین فیزیک و رفتارهای اکوسیستم ریتمو برای پنجره‌ها
         RitmoCard.neumorphic(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -883,7 +883,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'قوانین فیزیک و رفتار پنجره‌ها در اکوسیستم اپل (Apple HIG Rules)',
+                      'قوانین فیزیک و رفتار پنجره‌ها در اکوسیستم ریتمو (Apple HIG Rules)',
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w900,
@@ -962,10 +962,10 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
         ),
         const SizedBox(height: 10),
         _buildSheetLaunchTile(
-          title: '[Showcase24hOverviewSheet] شیت گاه‌شمار ۲۴ ساعته',
-          subtitle: 'نمای کامل ۲۴ ساعته با دایال شبانه‌روز، نوار توازن زمان و مدیریت بازه‌ها',
-          badge: 'گاه‌شمار کامل',
-          icon: CupertinoIcons.clock_fill,
+          title: '[Showcase24hOverviewSheet] شیت مرجع داشبورد و سنجه‌های تعاملی',
+          subtitle: 'لایه‌بندی استاندارد ریتمو با سنجه تعاملی، نوار توازن شاخص‌ها و ماژول‌های کارت',
+          badge: 'داشبورد مرجع',
+          icon: CupertinoIcons.rectangle_grid_2x2_fill,
           color: const Color(0xFF10B981),
           onTap: () => _openShowcase24hSheet(context, colors, isDark),
         ),
@@ -980,9 +980,9 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
         ),
         const SizedBox(height: 10),
         _buildSheetLaunchTile(
-          title: '[ShowcaseRealmEditFormSheet] شیت فرم تعریف و ویرایش',
-          subtitle: 'فرم استاندارد ورود اطلاعات با پالت رنگ، آیکون و زمان‌بندی هفتگی',
-          badge: 'فرم تعاملی',
+          title: '[ShowcaseRealmEditFormSheet] شیت مرجع فرم استاندارد ورود داده',
+          subtitle: 'فرم استاندارد ورودی‌های ریتمو با پالت توکن‌ها، آیکون، سطوح اولویت و گارد خروج',
+          badge: 'فرم استاندارد',
           icon: CupertinoIcons.square_pencil_fill,
           color: const Color(0xFFEC4899),
           onTap: () => _openShowcaseEditFormSheet(context),
@@ -1549,7 +1549,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
             icon: CupertinoIcons.rectangle_stack_badge_person_crop,
             iconColor: colors.primary,
             trailing: RitmoCardBadge(
-              label: 'مرجع رسمی اپل',
+              label: 'مرجع رسمی ریتمو',
               color: colors.primary,
               icon: CupertinoIcons.sparkles,
             ),
@@ -1571,7 +1571,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
               _buildFeatureTag('انیمیشن مورف ۳۰۰ms', colors),
               _buildFeatureTag('آستانه ۲۸px کوئیک‌ریترن', colors),
               _buildFeatureTag('تفکیک آفست هر تب', colors),
-              _buildFeatureTag('فیزیک کشسانی فنری اپل', colors),
+              _buildFeatureTag('فیزیک کشسانی فنری ریتمو', colors),
               _buildFeatureTag('سازگاری با IndexedStack', colors),
             ],
           ),
@@ -1615,14 +1615,14 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           RitmoCardHeader(
-            title: 'داربست تک‌صفحه‌ای با هدر مورفینگ اپل',
+            title: 'داربست تک‌صفحه‌ای با هدر مورفینگ ریتمو',
             subtitle: 'هسته متمرکز مدیریت اسکرول و هدر شیشه‌ای',
             icon: CupertinoIcons.rectangle_fill_on_rectangle_angled_fill,
             iconColor: colors.primary,
           ),
           const SizedBox(height: 12),
           const Text(
-            'این داربست تمام پیچیدگی‌های لایه‌بندی Stack، ردیابی آفست اسکرول، پدینگ بالای محتوا و هماهنگی با انیمیشن‌های فیزیکی اپل را برای صفحات تک‌صفحه‌ای حذف می‌کند.',
+            'این داربست تمام پیچیدگی‌های لایه‌بندی Stack، ردیابی آفست اسکرول، پدینگ بالای محتوا و هماهنگی با انیمیشن‌های فیزیکی ریتمو را برای صفحات تک‌صفحه‌ای حذف می‌کند.',
             style: TextStyle(fontSize: 13, height: 1.6),
           ),
           const SizedBox(height: 14),
@@ -1798,7 +1798,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
                 Icon(CupertinoIcons.square_stack_3d_up, size: 16, color: colors.warning),
                 const SizedBox(width: 6),
                 Text(
-                  'اکشن‌شیت تایید خروج اپل (Action Sheet از پایین)',
+                  'اکشن‌شیت تایید خروج ریتمو (Action Sheet از پایین)',
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w800,
@@ -1819,7 +1819,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           RitmoCardHeader(
-            title: 'کنترل چندگزینه‌ای مایع اپل',
+            title: 'کنترل چندگزینه‌ای مایع ریتمو',
             subtitle: 'RitmoGlassSegmentedControl (Liquid Glass)',
             icon: CupertinoIcons.square_split_2x1,
             iconColor: colors.primary,
@@ -1830,7 +1830,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            'شیار محو ترنسلوسنت با پیل متحرک نوری شناور و فیزیک انیمیشن لغزش نرم اپل.',
+            'شیار محو ترنسلوسنت با پیل متحرک نوری شناور و فیزیک انیمیشن لغزش نرم ریتمو.',
             style: TextStyle(
               fontSize: 12.5,
               height: 1.6,
@@ -1951,7 +1951,7 @@ class _TabbedMorphingHeaderDemoScreen extends StatelessWidget {
     final colors = context.colors;
 
     return RitmoTabbedMorphingScaffold(
-      title: 'دموی هدر کپسولی اپل',
+      title: 'دموی هدر کپسولی ریتمو',
       subtitle: 'تست زنده انیمیشن ۳۰۰ms مورف و اسکرول سریع',
       actions: [
         RitmoVibrancyActionButton(
@@ -2065,7 +2065,7 @@ class _SingleMorphingHeaderDemoScreen extends StatelessWidget {
 
     return RitmoSingleMorphingScaffold(
       title: 'دموی اسکفولد تک‌صفحه‌ای',
-      subtitle: 'هدر مورفینگ اپل، پدینگ خودکار و اسکرول پیوسته',
+      subtitle: 'هدر مورفینگ ریتمو، پدینگ خودکار و اسکرول پیوسته',
       onBack: () => Navigator.pop(context),
       onRefresh: () async {
         await Future.delayed(const Duration(milliseconds: 1200));
@@ -2112,6 +2112,7 @@ class _SingleMorphingHeaderDemoScreen extends StatelessWidget {
     );
   }
 }
+
 
 
 

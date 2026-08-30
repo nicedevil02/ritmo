@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
 
 class RealmTemplate {
   const RealmTemplate({
@@ -100,7 +98,6 @@ class RealmEditFormSheet extends StatefulWidget {
 class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
   late TextEditingController _nameController;
   late FocusNode _nameFocusNode;
-  late DraggableScrollableController _sheetController;
   late String _selectedIcon;
   late String _selectedColorHex;
   late RealmMode _selectedMode;
@@ -118,7 +115,6 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
   late TimeOfDay _initialStartTime;
   late TimeOfDay _initialEndTime;
 
-  double _lastReportedSize = 0.60;
   String? _nameError;
   String? _daysError;
   bool _isSubmitting = false;
@@ -150,27 +146,6 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
 
     _nameController = TextEditingController(text: r?.name ?? '');
     _nameFocusNode = FocusNode();
-    _sheetController = DraggableScrollableController();
-
-    _nameFocusNode.addListener(() {
-      if (_nameFocusNode.hasFocus) {
-        _expandSheetToMax();
-      }
-    });
-
-    AppleCardDeckHost.activeForegroundSheetExtent.value = 0.60;
-
-    // Snap Haptics & Reactive Sheet Deck Stack Coordination
-    _sheetController.addListener(() {
-      if (!_sheetController.isAttached) return;
-      final currentSize = _sheetController.size;
-      AppleCardDeckHost.activeForegroundSheetExtent.value = currentSize;
-      if ((_lastReportedSize < 0.77 && currentSize >= 0.77) ||
-          (_lastReportedSize > 0.77 && currentSize <= 0.77)) {
-        HapticFeedback.selectionClick();
-      }
-      _lastReportedSize = currentSize;
-    });
 
     _selectedIcon = r?.icon ?? '🎯';
     _selectedColorHex = r?.colorHex ?? '#6366F1';
@@ -201,21 +176,9 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
 
   @override
   void dispose() {
-    AppleCardDeckHost.activeForegroundSheetExtent.value = 0.60;
     _nameFocusNode.dispose();
-    _sheetController.dispose();
     _nameController.dispose();
     super.dispose();
-  }
-
-  void _expandSheetToMax() {
-    if (_sheetController.isAttached && _sheetController.size < 0.95) {
-      _sheetController.animateTo(
-        0.95,
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOutCubic,
-      );
-    }
   }
 
   TimeOfDay _parseTimeOfDay(String timeStr) {
@@ -259,12 +222,15 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
     });
 
     if (_nameError != null || _daysError != null) {
+      RitmoHaptics.error();
       return;
     }
 
     setState(() {
       _isSubmitting = true;
     });
+
+    RitmoHaptics.confirm();
 
     try {
       final realmId = widget.initialRealm?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
@@ -304,257 +270,35 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
     }
   }
 
-  bool _isConfirmationShowing = false;
-  bool _isDismissing = false;
-
-  Future<bool> _handleDiscardConfirmation() async {
-    if (!_isDirty || _isSubmitting) return true;
-    if (_isConfirmationShowing) return false;
-
-    _isConfirmationShowing = true;
-    final shouldDiscard = await RitmoGlassActionSheet.showDiscard(
-      context: context,
-      title: 'تغییرات ذخیره نشده‌اند',
-      message: 'آیا از خروج و حذف تغییرات اطمینان دارید؟',
-      discardLabel: 'حذف تغییرات',
-      continueEditingLabel: 'ادامه ویرایش',
-    );
-    _isConfirmationShowing = false;
-
-    return shouldDiscard ?? false;
-  }
-
-  void _onCancelPressed() async {
-    if (_isDismissing) return;
-    if (!_isDirty) {
-      _isDismissing = true;
-      Navigator.of(context).pop();
-      return;
-    }
-    final canDismiss = await _handleDiscardConfirmation();
-    if (!mounted) return;
-    if (canDismiss) {
-      _isDismissing = true;
-      Navigator.of(context).pop();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = context.isDark;
-    const sheetRadius = BorderRadius.vertical(top: Radius.circular(24));
+    final effectiveColor = Color(int.parse(_selectedColorHex.replaceAll('#', '0xFF')));
 
-    Widget buildSheetContainer(ScrollController scrollController) {
-      final sheetContent = Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Apple Grabber Handle & Pinned Header with 1:1 Live Drag Tracking & Snap Detents
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onVerticalDragUpdate: (details) {
-              if (_isDismissing || !_sheetController.isAttached) return;
-              final screenHeight = MediaQuery.of(context).size.height;
-              if (screenHeight <= 0) return;
-
-              // Pulling up: dy < 0 -> deltaFraction > 0; Pulling down: dy > 0 -> deltaFraction < 0
-              final deltaFraction = -details.delta.dy / screenHeight;
-              final newSize = (_sheetController.size + deltaFraction).clamp(0.0, 0.95);
-              _sheetController.jumpTo(newSize);
-              AppleCardDeckHost.activeForegroundSheetExtent.value = newSize;
-            },
-            onVerticalDragEnd: (details) async {
-              if (_isDismissing || !_sheetController.isAttached) return;
-              final currentSize = _sheetController.size;
-              final velocity = details.primaryVelocity ?? 0.0;
-
-              // ۱. پرتاب به سمت بالا یا کشیدن بالاتر از ۷۲٪ ➔ اسنپ تمام‌صفحه (0.95)
-              if (velocity < -300 || (velocity <= 0 && currentSize > 0.72)) {
-                unawaited(_sheetController.animateTo(
-                  0.95,
-                  duration: const Duration(milliseconds: 280),
-                  curve: Curves.easeOutCubic,
-                ));
-                return;
-              }
-
-              // ۲. پرتاب سریع به سمت پایین یا کشیدن زیر مرز ۴۸٪ ➔ بستن با گارد تاییدیه
-              if (velocity > 400 || currentSize < 0.48) {
-                if (!_isDirty) {
-                  _isDismissing = true;
-                  if (_sheetController.isAttached) {
-                    await _sheetController.animateTo(
-                      0.0,
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeOutCubic,
-                    );
-                  }
-                  if (mounted) Navigator.of(this.context).pop();
-                  return;
-                }
-                final canDismiss = await _handleDiscardConfirmation();
-                if (!mounted) return;
-                if (canDismiss) {
-                  _isDismissing = true;
-                  Navigator.of(this.context).pop();
-                } else if (_sheetController.isAttached) {
-                  unawaited(_sheetController.animateTo(
-                    0.60,
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOutCubic,
-                  ));
-                }
-                return;
-              }
-
-              // ۳. استقرار طبیعی روی حالت نیمه‌صفحه پیش‌فرض (0.60)
-              unawaited(_sheetController.animateTo(
-                0.60,
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOutCubic,
-              ));
-            },
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 38,
-                      height: 4.5,
-                      decoration: BoxDecoration(
-                        color: colors.textPrimary.withValues(alpha: 0.22),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Leading (Right in RTL): Cancel action with Discard Guard
-                      TextButton(
-                        onPressed: _onCancelPressed,
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text(
-                          'انصراف',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                      ),
-
-                    // Center: Modal Title + Live Morphing Preview Chip (Item 3)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeOutCubic,
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: Color(int.parse(_selectedColorHex.replaceAll('#', '0xFF'))),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Color(int.parse(_selectedColorHex.replaceAll('#', '0xFF'))).withValues(alpha: 0.4),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            _selectedIcon,
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          isEditing ? 'ویرایش قلمرو' : 'ساخت قلمرو جدید',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Trailing (Left in RTL): Save/Create action
-                    _isSubmitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : TextButton(
-                            onPressed: _validateAndSave,
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: Text(
-                              isEditing ? 'ذخیره' : 'ایجاد',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: colors.primary,
-                              ),
-                            ),
-                          ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+    return RitmoFormSheetScaffold(
+      title: isEditing ? 'ویرایش قلمرو' : 'ساخت قلمرو جدید',
+      subtitle: isEditing ? 'تغییر تنظیمات و زمان‌بندی این قلمرو' : 'تعریف قلمرو زیستی و زمان‌بندی روزانه',
+      icon: _selectedIcon,
+      iconBadgeColor: effectiveColor,
+      isEditing: isEditing,
+      isDirty: _isDirty,
+      isSubmitting: _isSubmitting,
+      saveLabel: isEditing ? 'ذخیره' : 'ایجاد',
+      onSave: _validateAndSave,
+      builder: (context, scrollController) {
+        return SingleChildScrollView(
+          controller: scrollController,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            top: 14,
+            left: 16,
+            right: 16,
           ),
-          Divider(height: 1, color: isDark ? colors.border : colors.divider),
-
-          // 2. Scrollable Form Content (Connected with DraggableScrollableSheet controller)
-          Expanded(
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (scrollInfo) {
-                if (scrollInfo is ScrollEndNotification &&
-                    scrollInfo.metrics.pixels < -20 &&
-                    !_isDismissing) {
-                  if (!_isDirty) {
-                    _isDismissing = true;
-                    Navigator.of(this.context).pop();
-                  } else if (!_isConfirmationShowing) {
-                    _handleDiscardConfirmation().then((canDismiss) {
-                      if (!mounted) return;
-                      if (canDismiss) {
-                        _isDismissing = true;
-                        Navigator.of(this.context).pop();
-                      }
-                    });
-                  }
-                }
-                return false;
-              },
-              child: SingleChildScrollView(
-                controller: scrollController,
-                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-                  top: 14,
-                  left: 16,
-                  right: 16,
-                ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
                   // Templates Bar (Visible on creation)
                   if (!isEditing) ...[
                     Text(
@@ -612,7 +356,6 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                         child: TextField(
                           controller: _nameController,
                           focusNode: _nameFocusNode,
-                          onTap: _expandSheetToMax,
                           style: TextStyle(fontSize: 14, color: colors.textPrimary),
                           decoration: InputDecoration(
                             hintText: 'مثلاً: کار عمیق، مطالعات شبانه...',
@@ -861,80 +604,10 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                             ),
                     ),
                   ),
-                ],
-              ),
-            ),
+            ],
           ),
-        ),
-      ],
-    );
-
-      return RitmoGlassSheet(
-        borderRadius: sheetRadius,
-        child: sheetContent,
-      );
-    }
-
-    if (MediaQuery.of(context).viewInsets.bottom > 0) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _expandSheetToMax();
-      });
-    }
-
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: PopScope(
-        canPop: !_isDirty || _isSubmitting,
-        onPopInvokedWithResult: (didPop, result) async {
-          if (didPop) return;
-          final canDismiss = await _handleDiscardConfirmation();
-          if (canDismiss && mounted) {
-            Navigator.of(this.context).pop();
-          }
-        },
-        child: NotificationListener<DraggableScrollableNotification>(
-          onNotification: (notification) {
-            AppleCardDeckHost.activeForegroundSheetExtent.value = notification.extent;
-            if (notification.extent <= 0.05 && !_isDismissing) {
-              if (_isDirty) {
-                if (!_isConfirmationShowing) {
-                  if (_sheetController.isAttached) {
-                    unawaited(_sheetController.animateTo(
-                      0.60,
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeOutCubic,
-                    ));
-                  }
-                  _handleDiscardConfirmation().then((canDismiss) {
-                    if (!mounted) return;
-                    if (canDismiss) {
-                      _isDismissing = true;
-                      Navigator.of(this.context).pop();
-                    }
-                  });
-                }
-              } else {
-                _isDismissing = true;
-                Navigator.of(this.context).pop();
-              }
-            }
-            return false;
-          },
-          child: DraggableScrollableSheet(
-            controller: _sheetController,
-            initialChildSize: 0.60,
-            minChildSize: 0.0,
-            maxChildSize: 0.95,
-            snap: true,
-            snapSizes: const [0.60, 0.95],
-            snapAnimationDuration: const Duration(milliseconds: 250),
-            expand: false,
-            builder: (context, scrollController) {
-              return buildSheetContainer(scrollController);
-            },
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 

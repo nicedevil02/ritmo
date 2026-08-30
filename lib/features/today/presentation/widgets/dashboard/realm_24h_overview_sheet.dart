@@ -790,11 +790,11 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
       textDirection: TextDirection.rtl,
       child: DraggableScrollableSheet(
         controller: _sheetController,
-        initialChildSize: 0.90,
+        initialChildSize: 0.94,
         minChildSize: 0.0,
-        maxChildSize: 0.90,
+        maxChildSize: 0.94,
         snap: true,
-        snapSizes: const [0.0, 0.90],
+        snapSizes: const [0.0, 0.94],
         snapAnimationDuration: const Duration(milliseconds: 250),
         builder: (context, scrollController) {
             return AppleCardDeckHost(
@@ -813,7 +813,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
                           final screenHeight = MediaQuery.of(context).size.height;
                           if (screenHeight <= 0) return;
                           final deltaFraction = -details.delta.dy / screenHeight;
-                          final newSize = (_sheetController.size + deltaFraction).clamp(0.0, 0.90);
+                          final newSize = (_sheetController.size + deltaFraction).clamp(0.0, 0.94);
                           _sheetController.jumpTo(newSize);
                         },
                         onVerticalDragEnd: (details) {
@@ -826,7 +826,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
                             return;
                           }
                           unawaited(_sheetController.animateTo(
-                            0.90,
+                            0.94,
                             duration: const Duration(milliseconds: 250),
                             curve: Curves.easeOutCubic,
                           ));

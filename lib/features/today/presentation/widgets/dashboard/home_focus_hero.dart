@@ -5,8 +5,6 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_color.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/next_action_hero.dart';
 
 /// کارت هیروی «تمرکز اکنون» — متصل به سیستم کارت‌های مرجع نئومورفیک ریتمو.
@@ -161,27 +159,33 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
     );
 
     final pulse = _pulse;
-    if (pulse == null) return semantic;
+    if (pulse == null) return RepaintBoundary(child: semantic);
 
-    return AnimatedBuilder(
-      animation: pulse,
-      builder: (context, child) {
-        final t = Curves.easeInOut.transform(pulse.value);
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            boxShadow: [
-              BoxShadow(
-                color: tone.withValues(alpha: 0.12 + 0.18 * t),
-                blurRadius: 22 + 12 * t,
-                spreadRadius: -3,
+    return RepaintBoundary(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: FadeTransition(
+              opacity: pulse,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: radius,
+                  boxShadow: [
+                    BoxShadow(
+                      color: tone.withValues(alpha: 0.28),
+                      blurRadius: 30,
+                      spreadRadius: -3,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
-          child: child,
-        );
-      },
-      child: semantic,
+          semantic,
+        ],
+      ),
     );
   }
 

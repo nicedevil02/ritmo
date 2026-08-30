@@ -2221,23 +2221,25 @@ class _RitmoCardSkeletonState extends State<RitmoCardSkeleton>
         ? effectivePadding.vertical
         : 28.0;
 
-    return RitmoCard.neumorphic(
-      margin: widget.margin,
-      borderRadius: widget.borderRadius ?? BorderRadius.circular(24),
-      padding: effectivePadding,
-      child: AnimatedBuilder(
-        animation: _animation,
-        builder: (context, child) {
-          final opacity = _animation.value;
-          final boneColor = isDark
-              ? Colors.white.withValues(alpha: opacity * 0.08)
-              : const Color(0xFFCAD4E2).withValues(alpha: opacity * 0.45);
+    return RepaintBoundary(
+      child: RitmoCard.neumorphic(
+        margin: widget.margin,
+        borderRadius: widget.borderRadius ?? BorderRadius.circular(24),
+        padding: effectivePadding,
+        child: AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            final opacity = _animation.value;
+            final boneColor = isDark
+                ? Colors.white.withValues(alpha: opacity * 0.08)
+                : const Color(0xFFCAD4E2).withValues(alpha: opacity * 0.45);
 
-          return SizedBox(
-            height: (widget.height - verticalPadding).clamp(24.0, double.infinity),
-            child: _buildAdaptiveContent(widget.height, boneColor),
-          );
-        },
+            return SizedBox(
+              height: (widget.height - verticalPadding).clamp(24.0, double.infinity),
+              child: _buildAdaptiveContent(widget.height, boneColor),
+            );
+          },
+        ),
       ),
     );
   }

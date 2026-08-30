@@ -190,9 +190,20 @@ class AppleCardDeckHost extends StatelessWidget {
       // Visible-Only Scrim Height: exactly (1.0 - extent)
       final visibleTopHeightFactor = (1.0 - (clampedExtent * progress)).clamp(0.0, 1.0);
 
-      final dimColor = isDark
-          ? Colors.black.withValues(alpha: (0.45 * progress).clamp(0.0, 1.0))
-          : Colors.black.withValues(alpha: (0.22 * progress).clamp(0.0, 1.0));
+      // Dynamic Scrim Density / Opacity based on foreground extent:
+      // At 60%: standard nominal opacity (1.0x)
+      // At 95%: deep focus opacity (1.25x)
+      // Pulled below 60% down to 0%: opacity fades linearly and melts away to 0.0!
+      final double extentOpacityFactor;
+      if (clampedExtent <= 0.60) {
+        extentOpacityFactor = (clampedExtent / 0.60).clamp(0.0, 1.0);
+      } else {
+        extentOpacityFactor = 1.0 + (0.25 * tExtent);
+      }
+
+      final baseAlpha = isDark ? 0.42 : 0.22;
+      final effectiveAlpha = (baseAlpha * progress * extentOpacityFactor).clamp(0.0, 1.0);
+      final dimColor = Colors.black.withValues(alpha: effectiveAlpha);
 
       return Transform.translate(
         offset: Offset(0, translateY),

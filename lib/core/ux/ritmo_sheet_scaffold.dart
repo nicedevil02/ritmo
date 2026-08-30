@@ -206,6 +206,11 @@ class AppleCardDeckHost extends StatelessWidget {
       final effectiveAlpha = (baseAlpha * progress * extentOpacityFactor).clamp(0.0, 1.0);
       final dimColor = Colors.black.withValues(alpha: effectiveAlpha);
 
+      final borderColor = isDark
+          ? const Color(0xFF94A3B8).withValues(alpha: (0.16 * progress).clamp(0.0, 1.0))
+          : Colors.white.withValues(alpha: (0.70 * progress).clamp(0.0, 1.0));
+      final borderWidth = isDark ? 0.9 : 1.0;
+
       return Transform.translate(
         offset: Offset(0, translateY),
         child: Transform.scale(
@@ -219,7 +224,7 @@ class AppleCardDeckHost extends StatelessWidget {
               children: [
                 staticChild,
 
-                // Occlusion-Aware Visible-Band Scrim with soft feathering & exact matching rounded corners
+                // 1. Occlusion-Aware Visible-Band Scrim with soft feathering & exact matching rounded corners
                 // ONLY dims the visible band above the foreground sheet,
                 // leaving the area behind the foreground sheet 100% pristine.
                 if (visibleTopHeightFactor > 0.001)
@@ -251,6 +256,23 @@ class AppleCardDeckHost extends StatelessWidget {
                       ),
                     ),
                   ),
+
+                // 2. Preserved Crisp Glass Rim & Border (renders ON TOP of scrim)
+                // Ensures the outer 1px white border and curve remain razor-sharp without dark occlusion artifacts.
+                Positioned.fill(
+                  child: IgnorePointer(
+                    ignoring: true,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: clipBorderRadius,
+                        border: Border.all(
+                          color: borderColor,
+                          width: borderWidth,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

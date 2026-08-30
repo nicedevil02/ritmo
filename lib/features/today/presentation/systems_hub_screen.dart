@@ -14,7 +14,6 @@ import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -432,24 +431,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     }
   }
 
-  int get _activeModulesCount {
-    int count = 0;
-    if (_isFemale && _cycleEnabled) count++;
-    if (_medicineEnabled) count++;
-    count++; // wellbeing is always active
-    if (_sportsEnabled || _supplementarySportsEnabled) count++;
-    if (_goalsStatus == ModuleStatus.active) count++;
-    if (_notesStatus == ModuleStatus.active) count++;
-    if (_coursesEnabled) count++;
-    if (_konkurStatus == ModuleStatus.active) count++;
-    if (_religionEnabled) count++;
-    if (_assistantStatus == ModuleStatus.active) count++;
-    count++; // insights is always active
-    return count;
-  }
-
-  int get _totalModulesCount => _isFemale ? 11 : 10;
-
   bool get _isFemale => CyclePrivacyGuard.isVisible(_settingsMap);
 
   @override
@@ -514,124 +495,11 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                   _buildSearchBar(colors),
                   const SizedBox(height: 14),
                 ],
-                _buildSystemsStatusBanner(colors, isDarkMode),
                 _buildModulesGrid(colors, isDarkMode),
               ],
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildSystemsStatusBanner(RitmoColors colors, bool isDarkMode) {
-    final activeCount = _activeModulesCount;
-    final totalCount = _totalModulesCount;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: RitmoCard.neumorphic(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          RitmoHapticsPolicy.tap();
-          _showModulesManagementSheet();
-        },
-        child: Row(
-          children: [
-            // 3D Sunken Icon Well
-            RitmoNeuSurface(
-              height: 40,
-              width: 40,
-              radius: 20,
-              sunken: true,
-              padding: EdgeInsets.zero,
-              glowColor: colors.primary.withValues(alpha: 0.35),
-              child: Center(
-                child: Icon(
-                  CupertinoIcons.square_grid_2x2,
-                  size: 19,
-                  color: colors.primary,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // Title & Status
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        'سامانه‌های هوشمند ریتمو',
-                        style: TextStyle(
-                          fontSize: 14.0,
-                          fontWeight: FontWeight.w900,
-                          fontFamily: 'Vazirmatn',
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF10B981),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${toPersianDigits(activeCount.toString())} سامانه فعال از مجموع ${toPersianDigits(totalCount.toString())} سامانه',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontFamily: 'Vazirmatn',
-                      color: colors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Action Pill
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: isDarkMode ? 0.20 : 0.10),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: colors.primary.withValues(alpha: 0.35),
-                  width: 0.8,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'مدیریت',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontFamily: 'Vazirmatn',
-                      fontWeight: FontWeight.w800,
-                      color: colors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_back_rounded,
-                    size: 13,
-                    color: colors.primary,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -712,56 +580,48 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
   }
 
   Widget _buildSearchBar(RitmoColors colors) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: RitmoCard.neumorphicSunken(
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        child: Row(
-          children: [
-            Icon(CupertinoIcons.search, size: 18, color: colors.textTertiary),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                onChanged: (val) {
-                  setState(() {
-                    _searchQuery = val;
-                  });
-                },
-                style: TextStyle(
-                  fontSize: 13,
-                  fontFamily: 'Vazirmatn',
-                  color: colors.textPrimary,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'جستجو در نام و توضیحات سیستم‌ها...',
-                  hintStyle: TextStyle(
-                    fontSize: 12.5,
-                    fontFamily: 'Vazirmatn',
-                    color: colors.textTertiary,
-                  ),
-                  isDense: true,
-                  filled: false,
-                  fillColor: Colors.transparent,
-                  border: InputBorder.none,
-                ),
+        border: Border.all(color: colors.border.withValues(alpha: 0.5)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          Icon(CupertinoIcons.search, color: colors.textSecondary, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              autofocus: true,
+              style: TextStyle(color: colors.textPrimary, fontSize: 13.5),
+              decoration: const InputDecoration(
+                hintText: 'جستجو در سیستم‌ها...',
+                hintStyle: TextStyle(color: Colors.white38, fontSize: 12),
+                border: InputBorder.none,
               ),
+              onChanged: (val) {
+                setState(() {
+                  _searchQuery = val.trim();
+                });
+              },
             ),
-            if (_searchQuery.isNotEmpty)
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _searchQuery = '';
-                  });
-                },
-                child: Icon(
-                  CupertinoIcons.clear_circled_solid,
-                  size: 18,
-                  color: colors.textTertiary,
-                ),
-              ),
-          ],
-        ),
+          ),
+          IconButton(
+            icon: Icon(
+              CupertinoIcons.xmark,
+              color: colors.textSecondary,
+              size: 18,
+            ),
+            onPressed: () {
+              setState(() {
+                _isSearching = false;
+                _searchQuery = '';
+              });
+            },
+          ),
+        ],
       ),
     );
   }
@@ -769,59 +629,81 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
   Widget _buildCategoryHeader(
     String title,
     Color accentColor,
-    int count,
-    RitmoColors colors,
-    bool isDarkMode,
-  ) {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 16,
-          decoration: BoxDecoration(
-            color: accentColor,
-            borderRadius: BorderRadius.circular(2),
-            boxShadow: [
-              BoxShadow(
-                color: accentColor.withValues(alpha: 0.6),
-                blurRadius: 6,
-                offset: const Offset(0, 1),
+    RitmoColors colors, {
+    int count = 0,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 4),
+      child: Row(
+        children: [
+          // 3D Luminous Domain Accent Pill
+          Container(
+            width: 4.5,
+            height: 16,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  accentColor,
+                  accentColor.withValues(alpha: 0.7),
+                ],
               ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 14.0,
-            fontWeight: FontWeight.w900,
-            fontFamily: 'Vazirmatn',
-            color: colors.textPrimary,
-          ),
-        ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-          decoration: BoxDecoration(
-            color: accentColor.withValues(alpha: isDarkMode ? 0.18 : 0.10),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: accentColor.withValues(alpha: 0.25),
-              width: 0.7,
+              borderRadius: BorderRadius.circular(3),
+              boxShadow: [
+                BoxShadow(
+                  color: accentColor.withValues(alpha: 0.5),
+                  blurRadius: 6,
+                  offset: const Offset(0, 1),
+                ),
+              ],
             ),
           ),
-          child: Text(
-            '${toPersianDigits(count.toString())} سامانه',
+          const SizedBox(width: 8),
+
+          // Title
+          Text(
+            title,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 14.5,
+              fontWeight: FontWeight.w900,
               fontFamily: 'Vazirmatn',
-              fontWeight: FontWeight.w700,
-              color: accentColor,
+              color: colors.textPrimary,
             ),
           ),
-        ),
-      ],
+
+          const SizedBox(width: 8),
+
+          // Counter Badge
+          if (count > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : Colors.black.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.05),
+                  width: 0.7,
+                ),
+              ),
+              child: Text(
+                '${toPersianDigits(count.toString())} سامانه',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Vazirmatn',
+                  color: colors.textSecondary,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -830,20 +712,24 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     required Color accentColor,
     required List<Widget> cards,
     required RitmoColors colors,
-    required bool isDarkMode,
   }) {
     if (cards.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildCategoryHeader(title, accentColor, cards.length, colors, isDarkMode),
+        _buildCategoryHeader(
+          title,
+          accentColor,
+          colors,
+          count: cards.length,
+        ),
         const SizedBox(height: 10),
         RitmoAdaptiveGrid(
           minTileWidth: 140,
           spacing: 12,
           maxColumns: 2,
           children: cards
-              .map((card) => AspectRatio(aspectRatio: 1.05, child: card))
+              .map((card) => AspectRatio(aspectRatio: 0.98, child: card))
               .toList(),
         ),
       ],
@@ -984,7 +870,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
       index: index,
       child: PressableGlassCard(
         onTap: item.onTap,
-        onLongPress: () => _showQuickModulePeekSheet(item),
+        onLongPress: () => _handleCardLongPressInGroupedMode(),
         child: _buildModuleCard(
           icon: item.icon,
           iconColor: item.iconColor,
@@ -998,179 +884,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
           overlayText: item.overlayText,
         ),
       ),
-    );
-  }
-
-  void _showQuickModulePeekSheet(_SystemModuleItem item) {
-    RitmoHaptics.confirm();
-    final colors = context.colors;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return RitmoGlassSheet(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.textTertiary.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Module Icon + Title + Status
-              Row(
-                children: [
-                  RitmoNeuSurface(
-                    height: 48,
-                    width: 48,
-                    radius: 24,
-                    sunken: true,
-                    glowColor: item.iconColor.withValues(alpha: 0.4),
-                    padding: EdgeInsets.zero,
-                    child: Center(
-                      child: Icon(item.icon, size: 24, color: item.iconColor),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.title,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                            fontFamily: 'Vazirmatn',
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        _buildStatusPill(item.status, isDarkMode),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 14),
-
-              // Description Box
-              RitmoCard.neumorphicSunken(
-                padding: const EdgeInsets.all(12),
-                borderRadius: BorderRadius.circular(14),
-                child: Text(
-                  item.description,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontFamily: 'Vazirmatn',
-                    height: 1.5,
-                    color: colors.textSecondary,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Primary Action: Open Module
-              GestureDetector(
-                onTap: () {
-                  Navigator.pop(ctx);
-                  item.onTap();
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: colors.primary,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.primary.withValues(alpha: 0.35),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text(
-                    'ورود به سامانه',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: 'Vazirmatn',
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              // Secondary Action: Module Management
-              GestureDetector(
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _showModulesManagementSheet();
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: isDarkMode ? 0.15 : 0.08),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: colors.primary.withValues(alpha: 0.25),
-                      width: 0.8,
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'مدیریت و فعال‌سازی ماژول‌ها',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Vazirmatn',
-                      color: colors.primary,
-                    ),
-                  ),
-                ),
-              ),
-
-              // Tertiary Action: Custom Reorder
-              if (_groupingEnabled) ...[
-                const SizedBox(height: 6),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _handleCardLongPressInGroupedMode();
-                  },
-                  child: Text(
-                    'تغییر چیدمان دستی کارت‌ها',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontFamily: 'Vazirmatn',
-                      color: colors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -1191,33 +904,27 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: colors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: colors.primary.withValues(alpha: 0.2),
-                width: 0.8,
-              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
-                Icon(
-                  CupertinoIcons.hand_draw,
-                  size: 18,
-                  color: colors.primary,
-                ),
+                Icon(CupertinoIcons.hand_draw, color: colors.primary, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'برای تغییر ترتیب کارت‌ها، انگشت خود را روی هر کارت نگه داشته و بکشید.',
+                    'کارت‌ها در حالت چیدمان آزاد هستند. برای جابجایی، انگشت خود را روی کارت نگه دارید و بکشید.',
                     style: TextStyle(
-                      fontSize: 12,
-                      fontFamily: 'Vazirmatn',
+                      fontSize: 11.5,
                       color: colors.textPrimary,
+                      height: 1.4,
                     ),
                   ),
                 ),
+                const SizedBox(width: 6),
                 TextButton(
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     backgroundColor: colors.primary.withValues(alpha: 0.12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     minimumSize: Size.zero,
@@ -1228,7 +935,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                     'گروه‌بندی خودکار',
                     style: TextStyle(
                       fontSize: 11.5,
-                      fontFamily: 'Vazirmatn',
                       color: colors.primary,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1237,22 +943,22 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                 const SizedBox(width: 4),
                 InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap: () async {
-                    setState(() {
-                      _showCustomOrderBanner = false;
-                    });
-                    try {
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setBool('systems_custom_order_banner_dismissed', true);
-                      final db = await DatabaseHelper.instance.database;
-                      final now = DateTime.now().millisecondsSinceEpoch;
-                      await db.insert('app_settings', {
-                        'key': 'systems_custom_order_banner_dismissed',
-                        'value': 'true',
-                        'updatedAt': now,
-                      }, conflictAlgorithm: ConflictAlgorithm.replace);
-                    } catch (_) {}
-                  },
+                    onTap: () async {
+                      setState(() {
+                        _showCustomOrderBanner = false;
+                      });
+                      try {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('systems_custom_order_banner_dismissed', true);
+                        final db = await DatabaseHelper.instance.database;
+                        final now = DateTime.now().millisecondsSinceEpoch;
+                        await db.insert('app_settings', {
+                          'key': 'systems_custom_order_banner_dismissed',
+                          'value': 'true',
+                          'updatedAt': now,
+                        }, conflictAlgorithm: ConflictAlgorithm.replace);
+                      } catch (_) {}
+                    },
                   child: Padding(
                     padding: const EdgeInsets.all(4),
                     child: Icon(
@@ -1270,9 +976,12 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
         // 2-Column Reorderable Grid
         RitmoAdaptiveGrid(
           minTileWidth: 140,
-          spacing: 12,
+          spacing: 10,
           maxColumns: 2,
-          children: items.map((item) {
+          children: items.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+
             return AspectRatio(
               aspectRatio: 1.05,
               child: DragTarget<String>(
@@ -1288,8 +997,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                       child: Transform.scale(
                         scale: 1.06,
                         child: SizedBox(
-                          width: (MediaQuery.of(context).size.width - 40) / 2,
-                          height: ((MediaQuery.of(context).size.width - 40) / 2) / 1.05,
+                          width: 170,
+                          height: 160,
                           child: _buildModuleCard(
                             icon: item.icon,
                             iconColor: item.iconColor,
@@ -1306,7 +1015,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                       ),
                     ),
                     childWhenDragging: Opacity(
-                      opacity: 0.35,
+                      opacity: 0.3,
                       child: _buildModuleCard(
                         icon: item.icon,
                         iconColor: item.iconColor,
@@ -1320,24 +1029,30 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                         overlayText: item.overlayText,
                       ),
                     ),
-                    child: AnimatedScale(
-                      scale: isHovered ? 1.04 : 1.0,
-                      duration: const Duration(milliseconds: 180),
-                      curve: Curves.easeOutCubic,
-                      child: PressableGlassCard(
-                        onTap: item.onTap,
-                        onLongPress: () => _showQuickModulePeekSheet(item),
-                        child: _buildModuleCard(
-                          icon: item.icon,
-                          iconColor: item.iconColor,
-                          title: item.title,
-                          description: item.description,
-                          status: item.status,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(22),
+                        border: isHovered
+                            ? Border.all(color: colors.primary, width: 2.2)
+                            : null,
+                      ),
+                      child: _buildAnimatedModuleCard(
+                        index: index,
+                        child: PressableGlassCard(
                           onTap: item.onTap,
-                          colors: colors,
-                          isDarkMode: isDarkMode,
-                          illustrationAsset: item.illustrationAsset,
-                          overlayText: item.overlayText,
+                          child: _buildModuleCard(
+                            icon: item.icon,
+                            iconColor: item.iconColor,
+                            title: item.title,
+                            description: item.description,
+                            status: item.status,
+                            onTap: item.onTap,
+                            colors: colors,
+                            isDarkMode: isDarkMode,
+                            illustrationAsset: item.illustrationAsset,
+                            overlayText: item.overlayText,
+                          ),
                         ),
                       ),
                     ),
@@ -1606,9 +1321,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
           accentColor: const Color(0xff3B82F6),
           cards: growthCards,
           colors: colors,
-          isDarkMode: isDarkMode,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
         // 2. هوشمندی و تحلیل
         _buildCategorySection(
@@ -1616,9 +1330,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
           accentColor: const Color(0xff06B6D4),
           cards: intelligenceCards,
           colors: colors,
-          isDarkMode: isDarkMode,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
         // 3. توازن و معنویت
         _buildCategorySection(
@@ -1626,9 +1339,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
           accentColor: const Color(0xffF59E0B),
           cards: spiritualityCards,
           colors: colors,
-          isDarkMode: isDarkMode,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
         // 4. سلامت و بیولوژی
         _buildCategorySection(
@@ -1636,7 +1348,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
           accentColor: const Color(0xff10B981),
           cards: healthCards,
           colors: colors,
-          isDarkMode: isDarkMode,
         ),
       ],
     );
@@ -1669,6 +1380,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     required String illustrationAsset,
     bool overlayText = false,
   }) {
+    // Use the specific illustration if it's one of the high-quality card backgrounds.
     final String imageAsset;
     if (illustrationAsset.contains('goals_card_top.png') ||
         illustrationAsset.contains('konkur_card_top.png') ||
@@ -1687,44 +1399,40 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
       imageAsset = 'assets/images/cycle_card_top.png';
     }
 
-    final Color statusColor;
-    switch (status) {
-      case ModuleStatus.active:
-        statusColor = const Color(0xFF10B981);
-      case ModuleStatus.inactive:
-        statusColor = const Color(0xFF9CA3AF);
-      case ModuleStatus.setupRequired:
-        statusColor = const Color(0xFFF59E0B);
-      case ModuleStatus.locked:
-        statusColor = const Color(0xFFEF4444);
-    }
-
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isDarkMode
               ? Colors.white.withValues(alpha: 0.12)
-              : Colors.black.withValues(alpha: 0.08),
-          width: 0.8,
+              : Colors.black.withValues(alpha: 0.07),
+          width: 0.85,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDarkMode ? 0.35 : 0.08),
-            blurRadius: 10,
+            color: isDarkMode
+                ? Colors.black.withValues(alpha: 0.45)
+                : const Color(0xFF0F172A).withValues(alpha: 0.08),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
+          if (!isDarkMode)
+            const BoxShadow(
+              color: Colors.white,
+              blurRadius: 6,
+              offset: Offset(0, -1),
+            ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(19.2),
+        borderRadius: BorderRadius.circular(21.2),
         child: Stack(
           fit: StackFit.expand,
           children: [
             // 🎨 Full Card Image
             Image.asset(imageAsset, cacheWidth: 360, fit: BoxFit.cover),
 
-            // Subtle gradient overlay (iOS depth feel)
+            // Subtle gradient overlay for iOS depth & contrast
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -1733,89 +1441,78 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                   colors: [
                     Colors.black.withValues(alpha: 0.18),
                     Colors.transparent,
-                    Colors.black.withValues(alpha: 0.38),
+                    Colors.black.withValues(alpha: 0.40),
                   ],
                   stops: const [0.0, 0.40, 1.0],
                 ),
               ),
             ),
 
-            // 💎 Streamlined Top-Right Icon & Status Capsule
+            // Floating Status Pill (Top-Left corner)
+            Positioned(
+              top: 8,
+              left: 8,
+              child: _buildStatusPill(status, isDarkMode),
+            ),
+
+            // Floating Icon Badge with Glass Aura (Top-Right corner)
             Positioned(
               top: 8,
               right: 8,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(999),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                    padding: const EdgeInsets.all(5.5),
                     decoration: BoxDecoration(
-                      color: (isDarkMode ? Colors.black : Colors.white).withValues(alpha: 0.65),
-                      borderRadius: BorderRadius.circular(14),
+                      shape: BoxShape.circle,
+                      color: (isDarkMode ? const Color(0xFF0F172A) : Colors.white)
+                          .withValues(alpha: 0.70),
                       border: Border.all(
-                        color: (isDarkMode ? Colors.white : Colors.black).withValues(alpha: 0.10),
-                        width: 0.75,
+                        color: iconColor.withValues(alpha: 0.45),
+                        width: 0.85,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(icon, size: 13, color: iconColor),
-                        const SizedBox(width: 4),
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: statusColor,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: statusColor.withValues(alpha: 0.6),
-                                blurRadius: 3,
-                              ),
-                            ],
-                          ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: iconColor.withValues(alpha: 0.35),
+                          blurRadius: 6,
                         ),
                       ],
                     ),
+                    child: Icon(icon, size: 13.5, color: iconColor),
                   ),
                 ),
               ),
             ),
 
-            // Floating Warning Pill (Top-Left corner, only if setup required or locked)
-            if (status == ModuleStatus.setupRequired || status == ModuleStatus.locked)
-              Positioned(
-                top: 8,
-                left: 8,
-                child: _buildStatusPill(status, isDarkMode),
-              ),
-
-            // 🌫 Frosted Glass overlay on the bottom part of the card
+            // 🌫 Frosted Ultra-Glass footer
             Positioned(
               left: 0,
               right: 0,
               bottom: 0,
               child: ClipRRect(
                 borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(19.2),
-                  bottomRight: Radius.circular(19.2),
+                  bottomLeft: Radius.circular(21.2),
+                  bottomRight: Radius.circular(21.2),
                 ),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                   child: Container(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 7.5,
+                    ),
                     decoration: BoxDecoration(
                       color: isDarkMode
-                          ? Colors.black.withValues(alpha: 0.52)
-                          : Colors.white.withValues(alpha: 0.65),
+                          ? const Color(0xFF0B0F19).withValues(alpha: 0.68)
+                          : Colors.white.withValues(alpha: 0.74),
                       border: Border(
                         top: BorderSide(
                           color: isDarkMode
-                              ? Colors.white.withValues(alpha: 0.12)
-                              : Colors.white.withValues(alpha: 0.45),
-                          width: 0.8,
+                              ? Colors.white.withValues(alpha: 0.16)
+                              : Colors.white.withValues(alpha: 0.70),
+                          width: 0.85,
                         ),
                       ),
                     ),
@@ -1830,12 +1527,12 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 13.0,
+                            fontSize: 12.8,
                             fontWeight: FontWeight.w900,
                             fontFamily: 'Vazirmatn',
                             color: isDarkMode
                                 ? Colors.white
-                                : const Color(0xFF1C1C1E),
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -1843,15 +1540,16 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                         Text(
                           description,
                           textAlign: TextAlign.center,
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 9.8,
                             fontWeight: FontWeight.w600,
                             fontFamily: 'Vazirmatn',
+                            height: 1.25,
                             color: isDarkMode
                                 ? Colors.white.withValues(alpha: 0.80)
-                                : Colors.black.withValues(alpha: 0.70),
+                                : const Color(0xFF475569),
                           ),
                         ),
                       ],
@@ -1888,17 +1586,17 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     return ClipRRect(
       borderRadius: BorderRadius.circular(999),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
-            color: (isDarkMode ? Colors.black : Colors.white).withValues(
-              alpha: 0.65,
+            color: (isDarkMode ? const Color(0xFF0F172A) : Colors.white).withValues(
+              alpha: 0.70,
             ),
             border: Border.all(
               color: color.withValues(alpha: 0.45),
-              width: 0.8,
+              width: 0.85,
             ),
             boxShadow: [
               BoxShadow(
@@ -1934,9 +1632,10 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
               Text(
                 text,
                 style: TextStyle(
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                  fontSize: 10.0,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Vazirmatn',
+                  color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
                 ),
               ),
             ],
@@ -2422,6 +2121,7 @@ class _PressableGlassCardState extends State<PressableGlassCard> {
     return GestureDetector(
       onLongPress: widget.onLongPress,
       onTapDown: (_) {
+        RitmoHaptics.tap();
         setState(() {
           scale = 0.97;
           elevation = 10;

@@ -167,10 +167,6 @@ class AppleCardDeckHost extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     Widget buildTransform(double progress, double extent, Widget staticChild) {
-      if (progress <= 0.0) {
-        return staticChild;
-      }
-
       final clampedExtent = extent.clamp(0.0, 1.0);
 
       // Normalized progress between 60% and 95%
@@ -179,7 +175,7 @@ class AppleCardDeckHost extends StatelessWidget {
       // Continuous Lerp Scaling: 4.5% at 60% up to 8.0% at 95%, smoothly returning to 0% if pulled down below 60%
       final scaleFactorBelow60 = clampedExtent < 0.60 ? (clampedExtent / 0.60).clamp(0.0, 1.0) : 1.0;
       final targetScaleDown = (0.045 + (0.035 * tExtent)) * scaleFactorBelow60;
-      final scale = 1.0 - (targetScaleDown * progress);
+      final scale = progress <= 0.0 ? 1.0 : 1.0 - (targetScaleDown * progress);
 
       // Fixed Static Corner Radius (locked at 30px)
       final radius = topCornerRadius;
@@ -187,7 +183,7 @@ class AppleCardDeckHost extends StatelessWidget {
 
       // Top Peek Y-Shift: -10px at 60% to -16px at 95%
       final targetShift = (10.0 + (6.0 * tExtent)) * scaleFactorBelow60;
-      final translateY = -targetShift * progress;
+      final translateY = progress <= 0.0 ? 0.0 : -targetShift * progress;
 
       // Visible-Only Scrim Height: exactly (1.0 - extent)
       final visibleTopHeightFactor = (1.0 - (clampedExtent * progress)).clamp(0.0, 1.0);
@@ -218,8 +214,8 @@ class AppleCardDeckHost extends StatelessWidget {
           scale: scale,
           alignment: Alignment.topCenter,
           child: ClipRRect(
-            borderRadius: clipBorderRadius,
-            clipBehavior: Clip.antiAlias,
+            borderRadius: progress <= 0.0 ? BorderRadius.zero : clipBorderRadius,
+            clipBehavior: progress <= 0.0 ? Clip.none : Clip.antiAlias,
             child: Stack(
               fit: StackFit.passthrough,
               children: [
@@ -228,7 +224,7 @@ class AppleCardDeckHost extends StatelessWidget {
                 // 1. Occlusion-Aware Visible-Band Scrim with soft feathering & exact matching rounded corners
                 // ONLY dims the visible band above the foreground sheet,
                 // leaving the area behind the foreground sheet 100% pristine.
-                if (visibleTopHeightFactor > 0.001)
+                if (progress > 0.001 && visibleTopHeightFactor > 0.001)
                   Positioned(
                     top: 0,
                     left: 0,
@@ -260,20 +256,21 @@ class AppleCardDeckHost extends StatelessWidget {
 
                 // 2. Preserved Crisp Glass Rim & Border (renders ON TOP of scrim)
                 // Ensures the outer 1px white border and curve remain razor-sharp without dark occlusion artifacts.
-                Positioned.fill(
-                  child: IgnorePointer(
-                    ignoring: true,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: clipBorderRadius,
-                        border: Border.all(
-                          color: borderColor,
-                          width: borderWidth,
+                if (progress > 0.001)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      ignoring: true,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: clipBorderRadius,
+                          border: Border.all(
+                            color: borderColor,
+                            width: borderWidth,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

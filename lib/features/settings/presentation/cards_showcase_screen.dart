@@ -912,8 +912,14 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
               ),
               _buildAppleRuleRow(
                 icon: CupertinoIcons.hand_draw,
-                title: 'دستگیره اپل و سوایپ به پایین (Grabber & Dismiss)',
-                desc: 'دستگیره کپسولی در بالا برای جابجایی بین ارتفاع‌ها؛ در صورت وجود تغییرات ذخیره‌نشده، سوایپ به پایین متوقف شده و دیالوگ تایید شیشه‌ای نمایش می‌یابد.',
+                title: 'بسته شدن طبیعی با اسکرول به پایین (Scroll-to-Dismiss)',
+                desc: 'هنگامی که محتوا در بالاترین نقطه (offset == 0) قرار دارد، ادامه درگ/اسکرول به سمت پایین، پنجره را به نرمی می‌بندد (مگر در حالت تغییرات ذخیره‌نشده).',
+                colors: colors,
+              ),
+              _buildAppleRuleRow(
+                icon: CupertinoIcons.square_arrow_left,
+                title: 'چیدمان دکمه‌های هدر بالای پنجره (Top Action Buttons)',
+                desc: 'دکمه انصراف/بستن در لبه آغازین (راست در فارسی) و دکمه تایید/ذخیره در لبه پایانی (چپ در فارسی)؛ در فرآیندهای چندمرحله‌ای، دکمه راست در مراحل بعد به «بازگشت» تبدیل می‌شود.',
                 colors: colors,
               ),
             ],

@@ -4,6 +4,7 @@
 // =============================================================================
 
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
@@ -239,7 +240,6 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
     final colors = context.colors;
     final isDark = context.isDark;
     final effectiveBadgeColor = widget.iconBadgeColor ?? colors.primary;
-    final effectiveSaveLabel = widget.saveLabel ?? (widget.isEditing ? 'ذخیره' : 'ایجاد');
 
     if (MediaQuery.of(context).viewInsets.bottom > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -381,21 +381,34 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // Leading: Cancel / Discard
+                                // Leading (Right in RTL): Circular Tactile Cancel (X) Button
                                 widget.leadingAction ??
-                                    TextButton(
-                                      onPressed: _onCancelPressed,
-                                      style: TextButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        minimumSize: Size.zero,
-                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: Text(
-                                        widget.cancelLabel,
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                          color: colors.textSecondary,
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: _onCancelPressed,
+                                        borderRadius: BorderRadius.circular(17),
+                                        child: Container(
+                                          width: 34,
+                                          height: 34,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: isDark
+                                                ? colors.surfaceElevated.withValues(alpha: 0.85)
+                                                : colors.textPrimary.withValues(alpha: 0.07),
+                                            border: Border.all(
+                                              color: isDark
+                                                  ? colors.border.withValues(alpha: 0.35)
+                                                  : colors.border.withValues(alpha: 0.15),
+                                              width: 0.85,
+                                            ),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Icon(
+                                            CupertinoIcons.xmark,
+                                            size: 15,
+                                            color: colors.textSecondary,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -436,7 +449,7 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
                                           widget.title,
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
-                                            fontSize: 15.5,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                             color: colors.textPrimary,
                                           ),
@@ -446,27 +459,44 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
                                   ),
                                 ),
 
-                                // Trailing: Save / Submit Action
+                                // Trailing (Left in RTL): Circular Tactile Save / Confirm (✔) Button
                                 widget.trailingAction ??
-                                    (widget.isSubmitting
-                                        ? const SizedBox(
-                                            width: 18,
-                                            height: 18,
-                                            child: CircularProgressIndicator(strokeWidth: 2),
-                                          )
-                                        : TextButton(
-                                            onPressed: widget.onSave,
-                                            style: TextButton.styleFrom(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                              minimumSize: Size.zero,
-                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                            ),
-                                            child: Text(
-                                              effectiveSaveLabel,
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                                color: colors.primary,
+                                    (widget.onSave == null
+                                        ? const SizedBox(width: 34, height: 34)
+                                        : Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              onTap: widget.isSubmitting ? null : widget.onSave,
+                                              borderRadius: BorderRadius.circular(17),
+                                              child: Container(
+                                                width: 34,
+                                                height: 34,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: colors.primary,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: colors.primary.withValues(alpha: 0.35),
+                                                      blurRadius: 8,
+                                                      offset: const Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                                alignment: Alignment.center,
+                                                child: widget.isSubmitting
+                                                    ? const SizedBox(
+                                                        width: 16,
+                                                        height: 16,
+                                                        child: CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Colors.white,
+                                                        ),
+                                                      )
+                                                    : const Icon(
+                                                        CupertinoIcons.checkmark,
+                                                        size: 16,
+                                                        color: Colors.white,
+                                                      ),
                                               ),
                                             ),
                                           )),

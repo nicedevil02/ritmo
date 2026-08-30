@@ -377,9 +377,9 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
 
     final content = Container(
       constraints: BoxConstraints(
-        maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+        maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
       ),
-      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 16),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).viewInsets.bottom + 16),
       child: Column(
           children: [
             // Handle bar
@@ -393,28 +393,43 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
-            // Header Title with iOS 26 RTL standard
+            // Canonical Header Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    'انصراف',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                // Leading (Right in RTL): Circular Tactile Close (X) Button
+                GestureDetector(
+                  onTap: () {
+                    RitmoHapticsPolicy.tap();
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? colors.surfaceElevated.withValues(alpha: 0.85)
+                          : colors.textPrimary.withValues(alpha: 0.07),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDarkMode
+                            ? colors.border.withValues(alpha: 0.35)
+                            : colors.border.withValues(alpha: 0.15),
+                        width: 0.85,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      CupertinoIcons.xmark,
+                      size: 15,
                       color: colors.textSecondary,
                     ),
                   ),
                 ),
+
+                // Center: Title
                 Text(
                   isEditing ? 'ویرایش دوره آموزشی' : 'ایجاد دوره جدید',
                   style: TextStyle(
@@ -423,31 +438,48 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                     color: colors.textPrimary,
                   ),
                 ),
-                TextButton(
-                  onPressed: _isSaving ? null : _saveCourse,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: _isSaving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          isEditing ? 'ذخیره' : 'ایجاد',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: colors.primary,
-                          ),
+
+                // Trailing (Left in RTL): Circular Tactile Save (✔) Button
+                GestureDetector(
+                  onTap: _isSaving ? null : _saveCourse,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: _isSaving
+                          ? colors.primary.withValues(alpha: 0.2)
+                          : colors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.primary.withValues(alpha: 0.35),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(
+                            CupertinoIcons.checkmark,
+                            size: 17,
+                            color: Colors.white,
+                          ),
+                  ),
                 ),
               ],
             ),
-            const Divider(height: 16),
+            const SizedBox(height: 8),
+            Divider(color: colors.divider, height: 1),
 
             // Form
             Expanded(

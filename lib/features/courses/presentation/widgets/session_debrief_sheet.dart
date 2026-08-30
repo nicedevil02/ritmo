@@ -27,18 +27,18 @@ class SessionDebriefSheet extends StatefulWidget {
     String? initialNote,
     VoidCallback? onCompleted,
   }) {
+    RitmoHapticsPolicy.selection();
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       enableDrag: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.60,
-        minChildSize: 0.40,
+        initialChildSize: 0.94,
+        minChildSize: 0.0,
         maxChildSize: 0.94,
         snap: true,
-        snapSizes: const [0.60, 0.94],
+        snapSizes: const [0.0, 0.94],
         expand: false,
         builder: (context, scrollController) => SessionDebriefSheet(
           session: session,
@@ -146,7 +146,10 @@ class _SessionDebriefSheetState extends State<SessionDebriefSheet> {
                 final score = opt['score'] as int;
                 final isSelected = _understandingScore == score;
                 return GestureDetector(
-                  onTap: () => setState(() => _understandingScore = score),
+                  onTap: () {
+                    RitmoHapticsPolicy.selection();
+                    setState(() => _understandingScore = score);
+                  },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

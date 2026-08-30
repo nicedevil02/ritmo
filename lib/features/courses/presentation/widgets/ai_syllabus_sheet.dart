@@ -164,28 +164,60 @@ class _AiSyllabusSheetState extends State<AiSyllabusSheet> {
     const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
     final content = Padding(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).viewInsets.bottom + 16),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Canonical Header Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Leading (Right in RTL): Circular Tactile Close (X) Button
+                GestureDetector(
+                  onTap: () {
+                    RitmoHapticsPolicy.tap();
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? colors.surfaceElevated.withValues(alpha: 0.85)
+                          : colors.textPrimary.withValues(alpha: 0.07),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark
+                            ? colors.border.withValues(alpha: 0.35)
+                            : colors.border.withValues(alpha: 0.15),
+                        width: 0.85,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      CupertinoIcons.xmark,
+                      size: 15,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ),
+
+                // Center: Title
                 Text(
-                  'ایجاد دوره با سرفصل AI',
+                  'ایجاد دوره با سرفصل هوشمند',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                 ),
-                IconButton(
-                  icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
-                  onPressed: () => Navigator.pop(context),
-                ),
+
+                // Trailing (Left in RTL): Symmetrical Spacer
+                const SizedBox(width: 34, height: 34),
               ],
             ),
-            Divider(color: colors.divider, height: 16),
+            const SizedBox(height: 8),
+            Divider(color: colors.divider, height: 1),
             const SizedBox(height: 8),
 
             if (!_isParsed) ...[

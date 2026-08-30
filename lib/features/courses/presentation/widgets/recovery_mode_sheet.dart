@@ -28,18 +28,18 @@ class RecoveryModeSheet extends StatefulWidget {
     required List<CourseSession> sessions,
     VoidCallback? onApplied,
   }) {
+    RitmoHapticsPolicy.selection();
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       enableDrag: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.60,
-        minChildSize: 0.40,
+        initialChildSize: 0.94,
+        minChildSize: 0.0,
         maxChildSize: 0.94,
         snap: true,
-        snapSizes: const [0.60, 0.94],
+        snapSizes: const [0.0, 0.94],
         expand: false,
         builder: (context, scrollController) => RecoveryModeSheet(
           course: course,
@@ -124,7 +124,10 @@ class _RecoveryModeSheetState extends State<RecoveryModeSheet> {
               final isSelected = _selectedPlanIndex == idx;
 
               return GestureDetector(
-                onTap: () => setState(() => _selectedPlanIndex = idx),
+                onTap: () {
+                  RitmoHapticsPolicy.selection();
+                  setState(() => _selectedPlanIndex = idx);
+                },
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(16),

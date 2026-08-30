@@ -134,56 +134,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   Future<void> _deleteCourse() async {
     final colors = context.colors;
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: RitmoTheme.glassCardLight(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'حذف دوره آموزشی',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'آیا از حذف کامل این دوره و تمام جلسات مطالعاتی و یادآورهای مربوط به آن اطمینان دارید؟ این عمل غیرقابل بازگشت است.',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(fontSize: 13, color: Colors.white70, height: 1.5),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.warning,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: const Text('بله، حذف کن', style: TextStyle(color: Colors.white)),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+    final confirm = await RitmoDialog.show(
+      context,
+      title: 'حذف دوره آموزشی',
+      content: 'آیا از حذف کامل این دوره و تمام جلسات مطالعاتی و یادآورهای مربوط به آن اطمینان دارید؟ این عمل غیرقابل بازگشت است.',
+      confirmLabel: 'بله، حذف کن',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
 
     if (confirm ?? false) {
@@ -286,28 +243,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   }
 
   Future<void> _rollbackAdaptive() async {
-    final colors = context.colors;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.surface,
-          title: const Text('بازگردانی ریتم قبلی'),
-          content: const Text('آیا می‌خواهید تنظیم هوشمند ریتم مطالعه را لغو کرده و به وضعیت قبل از تنظیم خودکار بازگردید؟'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-              child: const Text('تأیید بازگردانی', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+    final confirm = await RitmoDialog.show(
+      context,
+      title: 'بازگردانی ریتم قبلی',
+      content: 'آیا می‌خواهید تنظیم هوشمند ریتم مطالعه را لغو کرده و به وضعیت قبل از تنظیم خودکار بازگردید؟',
+      confirmLabel: 'تأیید بازگردانی',
+      cancelLabel: 'انصراف',
     );
 
     if (confirm != true) return;
@@ -476,26 +417,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   }
 
   Future<void> _uncompleteSessionWithDialog(CourseSession session) async {
-    final colors = context.colors;
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.surface,
-          title: const Text('لغو تکمیل جلسه'),
-          content: const Text('آیا می‌خواهید این جلسه را از حالت تکمیل‌شده خارج کرده و به وضعیت در انتظار بازگردانید؟'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: Text('انصراف', style: TextStyle(color: colors.textSecondary))),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-              child: const Text('تأیید بازگشت', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+    final confirm = await RitmoDialog.show(
+      context,
+      title: 'لغو تکمیل جلسه',
+      content: 'آیا می‌خواهید این جلسه را از حالت تکمیل‌شده خارج کرده و به وضعیت در انتظار بازگردانید؟',
+      confirmLabel: 'تأیید بازگشت',
+      cancelLabel: 'انصراف',
     );
 
     if (confirm ?? false) {

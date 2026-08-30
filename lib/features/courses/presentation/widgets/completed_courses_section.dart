@@ -22,69 +22,47 @@ class CompletedCoursesSection extends StatelessWidget {
 
   Future<void> _restoreCourse(BuildContext context, Course course) async {
     final colors = context.colors;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: isDarkMode ? const Color(0xff12141C) : Colors.white,
-          title: const Text(
-            'بازیابی دوره',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          content: Text(
-            'آیا می‌خواهید دوره "${course.title}" را از وضعیت ${course.statusLabel} به وضعیت فعال بازگردانید تا جلسات آن را پیگیری کنید؟',
-            style: const TextStyle(fontSize: 13),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-              child: const Text('بازیابی', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+    final confirm = await RitmoDialog.show(
+      context,
+      title: 'بازیابی دوره',
+      content: 'آیا می‌خواهید دوره "${course.title}" را از وضعیت ${course.statusLabel} به وضعیت فعال بازگردانید تا جلسات آن را پیگیری کنید؟',
+      confirmLabel: 'بازیابی',
+      cancelLabel: 'انصراف',
     );
 
-    if (confirm ?? false) {
-      try {
-        final res = await CoursesRepository.instance.restoreCourse(course.id);
-        if (res.isApplied) {
-          onRefresh();
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('دوره "${course.title}" دوباره بازیابی شد. 📚'),
-                backgroundColor: colors.success,
-              ),
-            );
-          }
-        }
-      } on CourseValidationException catch (e) {
+    if (confirm != true) return;
+
+    try {
+      final res = await CoursesRepository.instance.restoreCourse(course.id);
+      if (res.isApplied) {
+        onRefresh();
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.messageFa),
-              backgroundColor: colors.error,
+              content: Text('دوره "${course.title}" دوباره بازیابی شد. 📚'),
+              backgroundColor: colors.success,
             ),
           );
         }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('خطا در بازیابی دوره: $e'),
-              backgroundColor: colors.error,
-            ),
-          );
-        }
+      }
+    } on CourseValidationException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.messageFa),
+            backgroundColor: colors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('خطا در بازیابی دوره: $e'),
+            backgroundColor: colors.error,
+          ),
+        );
       }
     }
   }

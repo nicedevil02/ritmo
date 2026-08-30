@@ -201,27 +201,12 @@ class _FloatingTimerBarState extends State<FloatingTimerBar> {
                   icon: const Icon(CupertinoIcons.checkmark_circle_fill, size: 22, color: Colors.green),
                   onPressed: () async {
                     if (elapsedSec < 30) {
-                      final proceed = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: AlertDialog(
-                            title: const Text('جلسه بسیار کوتاه'),
-                            content: Text(
-                              'مدت زمان مطالعه شما کمتر از ۳۰ ثانیه است (${toPersianDigits(elapsedSec)} ثانیه). آیا مایل به ثبت این جلسه هستید؟',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('ادامه تایمر'),
-                              ),
-                              ElevatedButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text('ثبت جلسه'),
-                              ),
-                            ],
-                          ),
-                        ),
+                      final proceed = await RitmoDialog.show(
+                        context,
+                        title: 'جلسه بسیار کوتاه',
+                        content: 'مدت زمان مطالعه شما کمتر از ۳۰ ثانیه است (${toPersianDigits(elapsedSec)} ثانیه). آیا مایل به ثبت این جلسه هستید؟',
+                        confirmLabel: 'ثبت جلسه',
+                        cancelLabel: 'ادامه تایمر',
                       );
                       if (proceed != true || !context.mounted) return;
                     }

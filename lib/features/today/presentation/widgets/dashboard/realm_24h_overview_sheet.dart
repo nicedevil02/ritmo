@@ -104,6 +104,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
   DateTime _now = DateTime.now();
   late int _selectedWeekday; // 1: Mon ... 7: Sun
   int? _scrubbedMinute; // اگر کاربر ساعت را لمس و بررسی کند (۰ تا ۱۴۴۰)
+  bool _isDismissing = false;
 
   static const List<({String label, String fullLabel, int weekday})> _weekdays = [
     (label: 'ش', fullLabel: 'شنبه', weekday: 6),
@@ -776,98 +777,129 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
 
     final sheetContent = Column(
       children: [
-        // Top Drag Handle & Title
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
-          child: Column(
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4.5,
-                  decoration: BoxDecoration(
-                    color: colors.textTertiary.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(3),
+        // Top Drag Handle & Title (Swipe down to dismiss)
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onVerticalDragEnd: (details) {
+            if (details.primaryVelocity != null && details.primaryVelocity! > 250 && !_isDismissing) {
+              _isDismissing = true;
+              Navigator.of(context).pop();
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+            child: Column(
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4.5,
+                    decoration: BoxDecoration(
+                      color: colors.textTertiary.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'گاه‌شمار شبانه‌روز',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          color: colors.textPrimary,
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'گاه‌شمار شبانه‌روز',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: colors.textPrimary,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'نمای ۲۴ ساعته، توازن زمان و جریان قلمروها',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontFamily: 'Vazirmatn',
-                          color: colors.textSecondary,
+                        const SizedBox(height: 2),
+                        Text(
+                          'نمای ۲۴ ساعته، توازن زمان و جریان قلمروها',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontFamily: 'Vazirmatn',
+                            color: colors.textSecondary,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(CupertinoIcons.xmark_circle_fill, size: 24),
-                    color: colors.textSecondary,
-                  ),
-                ],
-              ),
-            ],
+                      ],
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(CupertinoIcons.xmark_circle_fill, size: 24),
+                      color: colors.textSecondary,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
 
         Divider(height: 1, color: colors.divider),
 
-        // Scrollable Content
+        // Scrollable Content with Apple HIG Pull-to-Dismiss at Top Edge
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-            children: [
-              // 1. Weekday Selector
-              _buildWeekdaySelector(isDark, colors, isGlass),
-
-              const SizedBox(height: 18),
-
-              // 2. Interactive 24h Chronometer Piece
-              _buildInteractiveDialSection(
-                isDark,
-                colors,
-                isGlass,
-                inspectStatus,
-                isScrubbing,
-                inspectMinute,
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (scrollInfo) {
+              if (_isDismissing) return false;
+              if (scrollInfo is ScrollEndNotification &&
+                  scrollInfo.metrics.pixels < -30) {
+                _isDismissing = true;
+                Navigator.of(context).pop();
+                return true;
+              }
+              if (scrollInfo is OverscrollNotification &&
+                  scrollInfo.overscroll < -12 &&
+                  scrollInfo.velocity < -200) {
+                _isDismissing = true;
+                Navigator.of(context).pop();
+                return true;
+              }
+              return false;
+            },
+            child: ListView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
               ),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              children: [
+                // 1. Weekday Selector
+                _buildWeekdaySelector(isDark, colors, isGlass),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
-              // 3. 24-Hour Day Balance Bar (توزیع ساعات شبانه‌روز)
-              _buildDayBalanceSection(isDark, colors, isGlass, blocks),
+                // 2. Interactive 24h Chronometer Piece
+                _buildInteractiveDialSection(
+                  isDark,
+                  colors,
+                  isGlass,
+                  inspectStatus,
+                  isScrubbing,
+                  inspectMinute,
+                ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-              // 4. Chronological Day Timeline Stream & Realm Management
-              _buildTimelineStreamHeader(isDark, colors),
-              const SizedBox(height: 10),
+                // 3. 24-Hour Day Balance Bar (توزیع ساعات شبانه‌روز)
+                _buildDayBalanceSection(isDark, colors, isGlass, blocks),
 
-              // Smart Sleep Suggestion Banner
-              _buildSleepSuggestionCard(isDark, colors),
+                const SizedBox(height: 20),
 
-              ...blocks.map((block) => _buildTimelineBlockCard(isDark, colors, isGlass, block, activeNowMinute)),
+                // 4. Chronological Day Timeline Stream & Realm Management
+                _buildTimelineStreamHeader(isDark, colors),
+                const SizedBox(height: 10),
 
-              const SizedBox(height: 16),
-            ],
+                // Smart Sleep Suggestion Banner
+                _buildSleepSuggestionCard(isDark, colors),
+
+                ...blocks.map((block) => _buildTimelineBlockCard(isDark, colors, isGlass, block, activeNowMinute)),
+
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ],

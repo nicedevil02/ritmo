@@ -212,6 +212,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.transparent,
       transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(
         initialSchedules: initialSchedules,
@@ -233,6 +234,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.transparent,
       transitionAnimationController: _childSheetAnimController,
       builder: (_) => RealmEditFormSheet(
         initialRealm: realm,

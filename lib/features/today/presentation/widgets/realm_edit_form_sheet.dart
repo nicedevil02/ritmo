@@ -300,6 +300,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
   }
 
   bool _isConfirmationShowing = false;
+  bool _isDismissing = false;
 
   Future<bool> _handleDiscardConfirmation() async {
     if (!_isDirty || _isSubmitting) return true;
@@ -319,9 +320,17 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
   }
 
   void _onCancelPressed() async {
+    if (_isDismissing) return;
+    if (!_isDirty) {
+      _isDismissing = true;
+      Navigator.of(context).pop();
+      return;
+    }
     final canDismiss = await _handleDiscardConfirmation();
-    if (canDismiss && mounted) {
-      Navigator.pop(context);
+    if (!mounted) return;
+    if (canDismiss) {
+      _isDismissing = true;
+      Navigator.of(context).pop();
     }
   }
 
@@ -340,10 +349,16 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onVerticalDragEnd: (details) async {
-              if (details.primaryVelocity != null && details.primaryVelocity! > 180) {
+              if (details.primaryVelocity != null && details.primaryVelocity! > 180 && !_isDismissing) {
+                if (!_isDirty) {
+                  _isDismissing = true;
+                  Navigator.of(this.context).pop();
+                  return;
+                }
                 final canDismiss = await _handleDiscardConfirmation();
                 if (!mounted) return;
                 if (canDismiss) {
+                  _isDismissing = true;
                   Navigator.of(this.context).pop();
                 } else if (_sheetController.isAttached) {
                   unawaited(_sheetController.animateTo(
@@ -467,14 +482,19 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
                 if (scrollInfo is ScrollUpdateNotification &&
                     scrollInfo.metrics.pixels < -35 &&
                     (scrollInfo.scrollDelta ?? 0) < -4 &&
-                    _isDirty &&
-                    !_isConfirmationShowing) {
-                  _handleDiscardConfirmation().then((canDismiss) {
-                    if (!mounted) return;
-                    if (canDismiss) {
-                      Navigator.of(this.context).pop();
-                    }
-                  });
+                    !_isDismissing) {
+                  if (!_isDirty) {
+                    _isDismissing = true;
+                    Navigator.of(this.context).pop();
+                  } else if (!_isConfirmationShowing) {
+                    _handleDiscardConfirmation().then((canDismiss) {
+                      if (!mounted) return;
+                      if (canDismiss) {
+                        _isDismissing = true;
+                        Navigator.of(this.context).pop();
+                      }
+                    });
+                  }
                 }
                 return false;
               },
@@ -829,21 +849,26 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
         },
         child: NotificationListener<DraggableScrollableNotification>(
           onNotification: (notification) {
-            if (notification.extent <= 0.42 && !_isConfirmationShowing) {
+            if (notification.extent <= 0.48 && !_isDismissing) {
               if (_isDirty) {
-                _handleDiscardConfirmation().then((canDismiss) {
-                  if (!mounted) return;
-                  if (canDismiss) {
-                    Navigator.of(this.context).pop();
-                  } else if (_sheetController.isAttached) {
+                if (!_isConfirmationShowing) {
+                  if (_sheetController.isAttached) {
                     unawaited(_sheetController.animateTo(
                       0.60,
-                      duration: const Duration(milliseconds: 300),
+                      duration: const Duration(milliseconds: 200),
                       curve: Curves.easeOutCubic,
                     ));
                   }
-                });
-              } else if (notification.extent <= 0.36 && mounted) {
+                  _handleDiscardConfirmation().then((canDismiss) {
+                    if (!mounted) return;
+                    if (canDismiss) {
+                      _isDismissing = true;
+                      Navigator.of(this.context).pop();
+                    }
+                  });
+                }
+              } else {
+                _isDismissing = true;
                 Navigator.of(this.context).pop();
               }
             }
@@ -852,7 +877,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
           child: DraggableScrollableSheet(
             controller: _sheetController,
             initialChildSize: 0.60,
-            minChildSize: 0.35,
+            minChildSize: 0.20,
             maxChildSize: 0.95,
             snap: true,
             snapSizes: const [0.60, 0.95],

@@ -8,9 +8,9 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/core/widgets/sheet/ritmo_picker_sheet.dart';
+import 'package:ritmo/features/settings/presentation/widgets/showcase_24h_overview_sheet.dart';
+import 'package:ritmo/features/settings/presentation/widgets/showcase_realm_edit_form_sheet.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_24h_dial.dart';
-import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_24h_overview_sheet.dart';
-import 'package:ritmo/features/today/presentation/widgets/realm_edit_form_sheet.dart';
 
 class CardsShowcaseScreen extends StatefulWidget {
   const CardsShowcaseScreen({super.key});
@@ -962,7 +962,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
         ),
         const SizedBox(height: 10),
         _buildSheetLaunchTile(
-          title: '[Realm24hOverviewSheet] شیت گاه‌شمار ۲۴ ساعته',
+          title: '[Showcase24hOverviewSheet] شیت گاه‌شمار ۲۴ ساعته',
           subtitle: 'نمای کامل ۲۴ ساعته با دایال شبانه‌روز، نوار توازن زمان و مدیریت بازه‌ها',
           badge: 'گاه‌شمار کامل',
           icon: CupertinoIcons.clock_fill,
@@ -980,7 +980,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
         ),
         const SizedBox(height: 10),
         _buildSheetLaunchTile(
-          title: '[RealmEditFormSheet] شیت فرم تعریف و ویرایش',
+          title: '[ShowcaseRealmEditFormSheet] شیت فرم تعریف و ویرایش',
           subtitle: 'فرم استاندارد ورود اطلاعات با پالت رنگ، آیکون و زمان‌بندی هفتگی',
           badge: 'فرم تعاملی',
           icon: CupertinoIcons.square_pencil_fill,
@@ -1458,7 +1458,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => Realm24hOverviewSheet(
+      builder: (context) => Showcase24hOverviewSheet(
         isDarkMode: isDark,
         realmState: activeState,
         activeZoneColor: activeColor,
@@ -1522,7 +1522,7 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => RealmEditFormSheet(
+      builder: (_) => ShowcaseRealmEditFormSheet(
         onSave: (realm, schedules) async {
           if (context.mounted) {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();

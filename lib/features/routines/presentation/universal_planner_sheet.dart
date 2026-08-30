@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_dialog.dart';
 import 'package:ritmo/features/courses/presentation/widgets/create_course_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/create_goal_sheet.dart';
 import 'package:ritmo/features/health/presentation/widgets/medication_form_sheet.dart';
@@ -274,9 +273,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {

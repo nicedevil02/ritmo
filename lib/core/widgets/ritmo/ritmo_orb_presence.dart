@@ -1,58 +1,49 @@
 // =============================================================================
-//  Ritmo Orb Presence — «حضور زندهٔ» تیلهٔ تفکر ریتمو
+//  Ritmo Orb Presence — حضور زندهٔ تیلهٔ تفکر ریتمو
 //
-//  همه‌چیز اینجا حرکتِ فنری (spring) است، نه انیمیشنِ خطی. به همین دلیل
-//  عوض شدن حالت‌ها هیچ‌وقت پرش ندارد و همه‌چیز «سنگین و گران‌قیمت» حس می‌شود:
+//  همهٔ حرکت‌ها فنری (spring) است، نه خطی. پس تغییر حالت هیچ‌وقت پرش ندارد:
+//    • نفس نامتقارن: دم ۳۳٪ / نگه ۹٪ / بازدم ۴۴٪ / سکوت ۱۴٪
+//    • شناوری لیساژو با فرکانس ناهم‌مقیاس → هیچ‌وقت تکرار نمی‌شود
+//    • ادا و اطفار: تابِ رهبر ارکستر + ضربهٔ فنری روی هر توکن + چشمک نادر
+//    • جشن کوتاه آخر پاسخ، بعد محو شدن با پژواک نور
+//    • ورود: شکفتن  |  خروج: نفس عمیق ← جمع شدن ← فرو رفتن
 //
-//    • نفس: چهار مرحلهٔ نامتقارن → دم ۳۳٪ / نگه ۹٪ / بازدم کشیدهٔ ۴۴٪ / سکوت ۱۴٪
-//    • شناوری: مسیر لیساژو با فرکانس‌های ناهم‌مقیاس → هیچ‌وقت تکرار نمی‌شود
-//    • ادا و اطفار موقع نوشتن: تابِ رهبر ارکستر + ضربهٔ فنری روی هر توکن + چشمکِ نادر
-//    • جشن کوچک وقتی پاسخ تمام می‌شود، بعد محو شدن با «پژواک نور»
-//    • ورود: شکفتن  |  خروج: یک نفس عمیق ← جمع شدن ← فرو رفتن
-//
-//  هیچ تغییری در ritmo_siri_orb.dart لازم نیست؛ فقط پارامترهای عمومی‌اش
-//  (mode / tiltOffset / squeezeFactor / intensity / speed / palette) رانده می‌شوند.
+//  ritmo_siri_orb.dart دست‌نخورده می‌ماند؛ فقط پارامترهای عمومی‌اش رانده می‌شوند.
 // =============================================================================
 
+import 'dart:async' show unawaited;
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show Ticker;
 import 'package:flutter/services.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_orb_halo.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart';
 
-/// وضعیت زندگی تیله.
-///
-/// جدا از [RitmoOrbMode] نگه داشته شده تا enum اصلی دست‌نخورده بماند و
-/// switch های موجود در پروژه نشکنند.
+/// حالت زندگی تیله. جدا از [RitmoOrbMode] تا enum اصلی دست‌نخورده بماند.
 enum RitmoOrbLife {
-  /// کاملاً پنهان؛ با انیمیشن جمع می‌شود و ارتفاع رزروشده را هم آزاد می‌کند.
+  /// پنهان؛ با انیمیشن جمع می‌شود و ارتفاع رزروشده را هم آزاد می‌کند.
   hidden,
 
   /// استراحت: فقط نفس می‌کشد و آرام شنا می‌کند.
   breathing,
 
-  /// «گوش می‌دهم»: نفس عمیق‌تر و کمی خنک‌تر (مناسب حالت میکروفون).
+  /// «گوش می‌دهم»: نفس عمیق‌تر و رنگ کمی خنک‌تر.
   listening,
 
-  /// در حال فکر کردن: نفس کوتاه‌تر، رنگ خنک‌تر.
+  /// در حال فکر کردن.
   thinking,
 
-  /// در حال نوشتن پیام: نفس + ادا و اطفار + پرش روی هر توکن.
+  /// در حال نوشتن: نفس + ادا و اطفار + پرش روی هر توکن.
   writing,
 
-  /// پاسخ تمام شد: یک شکفتن گرم و کوتاه، سپس محو شدن.
+  /// پاسخ تمام شد: شکفتن گرم و کوتاه.
   celebrating,
 }
 
-// =============================================================================
-//  حل‌کنندهٔ فنر میرا (critically damped spring)
-// =============================================================================
-
-/// یک فنر تک‌بعدی با میرایی. راز حرکتِ «پرمیوم» همین است:
-/// هدف را عوض می‌کنی، فنر خودش مسیر طبیعی را پیدا می‌کند؛ و اگر وسط راه
-/// هدف دوباره عوض شود، سرعت فعلی حفظ می‌شود و هیچ پرشی رخ نمی‌دهد.
+/// فنر تک‌بعدی با میرایی. راز حرکت پرمیوم همین است: وقتی وسط راه هدف را
+/// عوض می‌کنی، سرعت فعلی حفظ می‌شود و حرکت هیچ پرشی ندارد.
 class _Spring {
   _Spring({
     required double initial,
@@ -67,9 +58,6 @@ class _Spring {
   double stiffness;
   double damping;
 
-  bool get isSettled =>
-      (value - target).abs() < 0.0005 && velocity.abs() < 0.0025;
-
   void snap(double v) {
     value = v;
     target = v;
@@ -81,7 +69,7 @@ class _Spring {
     velocity += impulse;
   }
 
-  /// انتگرال‌گیری با گام‌های ریز تا افتادن فریم، حرکت را ناپایدار نکند.
+  /// گام‌های ریز تا افتادن فریم، حرکت را ناپایدار نکند.
   void step(double dt) {
     const double maxStep = 1.0 / 120.0;
     var remaining = dt;
@@ -111,10 +99,6 @@ RitmoOrbPalette _lerpPalette(
   );
 }
 
-// =============================================================================
-//  ویجت
-// =============================================================================
-
 class RitmoLivingOrb extends StatefulWidget {
   const RitmoLivingOrb({
     super.key,
@@ -134,28 +118,25 @@ class RitmoLivingOrb extends StatefulWidget {
     this.semanticLabel = 'دستیار هوشمند ریتمو',
   });
 
-  /// حالت زندگی فعلی.
   final RitmoOrbLife life;
 
   /// قطر خود تیله (فضای رزروشده = size × reserveHeightFactor).
   final double size;
 
-  /// پالت پایه؛ اگر null باشد [RitmoOrbPalette.coral] استفاده می‌شود.
+  /// اگر null باشد [RitmoOrbPalette.coral] استفاده می‌شود.
   final RitmoOrbPalette? palette;
 
   final bool glowEnabled;
 
   /// هر بار مقدارش عوض شود، یک ضربهٔ فنری نرم به تیله زده می‌شود.
-  /// (در چت: روی هر ChatChunk یکی بالا ببر)
   final ValueListenable<int>? writingPulse;
 
   final VoidCallback? onTap;
 
-  /// شدت ادا و اطفار. ۰ = خنثی، ۱ = پیش‌فرض، ۱٫۶ = شیطون.
+  /// ۰ = خنثی، ۱ = پیش‌فرض، ۱٫۶ = شیطون.
   final double anticsStrength;
 
-  /// ارتفاعی که در layout رزرو می‌شود (ضریبی از [size]).
-  /// موقع مخفی شدن، همین ارتفاع هم نرم جمع می‌شود تا لیست پرش نکند.
+  /// ارتفاع رزروشده در layout (ضریبی از [size]) که موقع مخفی شدن نرم جمع می‌شود.
   final double reserveHeightFactor;
 
   final Duration breathPeriod;
@@ -163,8 +144,7 @@ class RitmoLivingOrb extends StatefulWidget {
   final Duration exitDuration;
   final bool animateOnMount;
 
-  /// اگر true باشد، به `RitmoAiStateService.instance.triggerSuccessFlare()`
-  /// هم واکنش می‌دهد و یک شکفتن کوتاه انجام می‌دهد.
+  /// واکنش به `RitmoAiStateService.instance.triggerSuccessFlare()`.
   final bool reactToSuccessFlare;
 
   final String semanticLabel;
@@ -179,8 +159,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
 
   late final AnimationController _presence;
 
-  // ---- کانال‌های فنری ------------------------------------------------------
-  /// میزان درگیری در ادا و اطفار (۰..۱)
+  /// درگیری در ادا و اطفار (۰..۱)
   final _Spring _play = _Spring(initial: 0.0, stiffness: 46.0, damping: 14.0);
 
   /// عمق نفس
@@ -195,7 +174,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
   /// شکفتن جشن / بارقهٔ موفقیت
   final _Spring _bloom = _Spring(initial: 0.0, stiffness: 74.0, damping: 11.0);
 
-  /// دمای رنگ: ‎-۱ خنک (فکر) ‎.. ۰ پایه .. ‎+۱ گرم (جشن)
+  /// دمای رنگ: ‎-۱ خنک (فکر) .. ۰ پایه .. ‎+۱ گرم (جشن)
   final _Spring _hue = _Spring(initial: 0.0, stiffness: 26.0, damping: 10.5);
 
   final ValueNotifier<int> _frame = ValueNotifier<int>(0);
@@ -203,7 +182,6 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
   Ticker? _ticker;
   Duration _lastTick = Duration.zero;
 
-  // فازهای پیوسته (واحد: دور)
   double _breathPhase = 0.10;
   double _driftPhase = 0.0;
   double _swayPhase = 0.0;
@@ -223,8 +201,6 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
   RitmoOrbPalette? _paletteCache;
   RitmoOrbPalette? _paletteBase;
   double _paletteHue = 999.0;
-
-  // ------------------------------------------------------------- lifecycle
 
   @override
   void initState() {
@@ -279,7 +255,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
     final bool wasHidden = oldWidget.life == RitmoOrbLife.hidden;
 
     if (widget.life == RitmoOrbLife.hidden) {
-      // رنگ و عمق را دست نمی‌زنیم تا خروج، حال‌وهوای لحظهٔ قبل را نگه دارد.
+      // رنگ و عمق دست‌نخورده می‌ماند تا خروج، حال‌وهوای لحظهٔ قبل را نگه دارد.
       _play.target = 0.0;
       _lean.target = 0.0;
       _presence.reverse();
@@ -287,11 +263,10 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
       _shownLife = widget.life;
 
       if (wasHidden) {
-        // ورودِ تازه: با یک دم نو شروع کن.
         _hop.snap(0.0);
         _bloom.snap(0.0);
         _lean.snap(0.0);
-        _breathPhase = 0.04;
+        _breathPhase = 0.04; // ورود با یک دم تازه
         _winkCountdown = 4.5;
         _winkProgress = 1.0;
         _pulseCount = 0;
@@ -325,8 +300,6 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
     super.dispose();
   }
 
-  // ---------------------------------------------------------------- helpers
-
   void _onPresenceStatus(AnimationStatus status) {
     if (status == AnimationStatus.dismissed) _syncTicker();
   }
@@ -344,13 +317,12 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
 
     _pulseCount++;
 
-    // ضربه‌ها روی هم سوار می‌شوند، ولی هرچه تیله بیشتر در حرکت باشد ضربهٔ
-    // بعدی ملایم‌تر می‌شود؛ نتیجه: توکن‌های تندِ پشت‌سرهم به‌جای «رگبار»،
-    // یک لرزشِ نرم و پیوسته می‌سازند.
+    // هرچه تیله بیشتر در حرکت باشد، ضربهٔ بعدی ملایم‌تر می‌شود؛ نتیجه:
+    // توکن‌های تند به‌جای رگبار، یک لرزش نرم و پیوسته می‌سازند.
     final double softener = 1.0 / (1.0 + _hop.value.abs() * 2.1);
     _hop.kick(2.30 * softener * widget.anticsStrength.clamp(0.0, 2.0));
 
-    // هر چند توکن یک‌بار، سرش را کمی می‌چرخاند: حسِ «رهبر ارکستر».
+    // هر چند توکن یک‌بار، سرش را کمی می‌چرخاند: حس رهبر ارکستر.
     if (_pulseCount % 7 == 0) {
       _lean.target = (_rng.nextDouble() * 2.0 - 1.0) * 0.85;
     }
@@ -383,23 +355,20 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
     var dt = (elapsed - _lastTick).inMicroseconds / 1000000.0;
     _lastTick = elapsed;
     if (dt <= 0.0) return;
-    // اگر فریم افتاد، جهش نمی‌کنیم؛ یک فریم استاندارد جلو می‌رویم.
+    // اگر فریم افتاد، جهش نمی‌کنیم.
     if (dt > 0.25) dt = _kFallbackFrame;
 
     final double play = _play.value.clamp(0.0, 1.0);
     final double motion = _reduceMotion ? 0.0 : 1.0;
 
-    // ---- نفس (حتی در حالت کم‌حرکت هم زنده می‌ماند، فقط کم‌دامنه) ----
     final double periodSec =
         math.max(0.8, widget.breathPeriod.inMilliseconds / 1000.0);
     _breathPhase += dt * (1.0 + 0.55 * play) / periodSec;
     _breath01 = _breathCurve(_breathPhase - _breathPhase.floorToDouble());
 
-    // ---- شناوری و تاب ----
     _driftPhase += dt * (0.055 + 0.030 * play) * motion;
     _swayPhase += dt * (0.095 + 0.150 * play) * motion;
 
-    // ---- چشمکِ نادر ----
     if (motion > 0.0) {
       _winkCountdown -= dt * (0.55 + 0.85 * play);
       if (_winkCountdown <= 0.0) {
@@ -411,7 +380,6 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
       }
     }
 
-    // ---- فنرها ----
     _play.step(dt);
     _depth.step(dt);
     _hop.step(dt);
@@ -422,7 +390,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
     _frame.value = _frame.value + 1;
   }
 
-  /// نفس نامتقارن: دم ۳۳٪ ← نگه ۹٪ ← بازدم کشیدهٔ ۴۴٪ ← سکوت ۱۴٪
+  /// دم ۳۳٪ ← نگه ۹٪ ← بازدم کشیدهٔ ۴۴٪ ← سکوت ۱۴٪
   static double _breathCurve(double x) {
     const double inhale = 0.33;
     const double hold = 0.09;
@@ -537,8 +505,6 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
     cb();
   }
 
-  // ------------------------------------------------------------------ build
-
   @override
   Widget build(BuildContext context) {
     final double box = widget.size * widget.reserveHeightFactor;
@@ -558,16 +524,15 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
               (_play.value.clamp(0.0, 1.0)) * widget.anticsStrength;
           final double depth = _depth.value.clamp(0.0, 1.4);
           final double breath01 = _breath01;
-          final double breath = breath01 * 2.0 - 1.0; // ‎-۱..۱
+          final double breath = breath01 * 2.0 - 1.0;
 
-          // ---- شناوری: دو موج ناهم‌مقیاس در هر محور → مسیر غیرتکراری ----
+          // شناوری: دو موج ناهم‌مقیاس در هر محور → مسیر غیرتکراری
           final double d = _driftPhase * math.pi * 2.0;
           final double driftX =
               math.sin(d * 0.61) * 0.62 + math.sin(d * 0.23 + 1.9) * 0.38;
           final double driftY =
               math.sin(d * 0.44 + 0.7) * 0.58 + math.sin(d * 0.83 + 2.4) * 0.42;
 
-          // ---- تاب و ادا و اطفار ----
           final double s = _swayPhase * math.pi * 2.0;
           final double sway =
               math.sin(s * 0.42) * 0.62 + math.sin(s * 0.67 + 1.1) * 0.38;
@@ -577,7 +542,6 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
               _winkProgress >= 1.0 ? 0.0 : math.sin(_winkProgress * math.pi);
           final double bloom = _bloom.value.clamp(0.0, 1.4);
 
-          // ---- حضور: ورود / خروج ----
           final double sx0;
           final double sy0;
           final double dy0;
@@ -587,7 +551,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
           final double rippleAlpha;
 
           if (exiting) {
-            // یک نفس عمیق (باد کردن) ← جمع شدن ← فرو رفتن
+            // نفس عمیق (باد کردن) ← جمع شدن ← فرو رفتن
             final double e = Curves.easeInOutCubic.transform(1.0 - p);
             final double swell =
                 math.sin(math.min(1.0, e / 0.34) * math.pi) * 0.12;
@@ -618,7 +582,6 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
             rippleAlpha = math.sin(p * math.pi) * 0.34;
           }
 
-          // ---- ترکیب همهٔ کانال‌ها ----
           final double breathScale =
               1.0 + amp * 0.040 * breath * depth + amp * 0.075 * bloom;
 
@@ -672,7 +635,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
                   amp * 0.050 * bloom)
               .clamp(0.80, 1.20);
 
-          // جریان درون تیله هم با حال‌وهوا کند و تند می‌شود
+          // جریان درون تیله هم با حال‌وهوا کند و تند می‌شود.
           final double innerSpeed =
               (0.70 + 0.55 * play + 0.22 * bloom).clamp(0.45, 1.60);
           final double innerIntensity =
@@ -680,7 +643,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
 
           final RitmoOrbPalette pal = _resolvePalette();
 
-          Widget core = Transform.rotate(
+          final Widget core = Transform.rotate(
             angle: angle,
             child: Transform(
               alignment: Alignment.center,
@@ -709,7 +672,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
                   Positioned.fill(
                     child: IgnorePointer(
                       child: CustomPaint(
-                        painter: _OrbHaloPainter(
+                        painter: RitmoOrbHaloPainter(
                           aura: pal.aura,
                           warm: pal.hot,
                           orbSize: widget.size,
@@ -742,8 +705,8 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
             );
           }
 
-          // ارتفاع رزروشده نرم باز و بسته می‌شود، ولی خودِ تیله فشرده نمی‌شود:
-          // موقع رفتن، فضا کمی «صبر می‌کند» تا حرکت از layout جلو نزند.
+          // ارتفاع رزروشده نرم باز و بسته می‌شود، ولی خود تیله فشرده نمی‌شود:
+          // موقع رفتن، فضا کمی صبر می‌کند تا حرکت از layout جلو نزند.
           final double reveal = exiting
               ? Curves.easeOutCubic.transform(p)
               : Curves.easeInOutCubic.transform(p);
@@ -766,5 +729,3 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
     );
   }
 }
-
-// =============================

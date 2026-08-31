@@ -139,20 +139,18 @@ void ritmoPaintGlassBody({
 }) {
   if (radius <= 1.0) return;
 
-  const List<Color> darkRamp = <Color>[
-    Color(0xFFFFFFFF),
-    Color(0xFFF0F4FA),
-    Color(0xFFD0D7E6),
-    Color(0xFF98A2B8),
+  final List<Color> darkRamp = <Color>[
+    const Color(0xFF1E2232).withValues(alpha: 0.92),
+    const Color(0xFF131622).withValues(alpha: 0.95),
+    const Color(0xFF090B12).withValues(alpha: 0.98),
   ];
-  const List<Color> lightRamp = <Color>[
-    Color(0xFFFFFFFF),
-    Color(0xFFFAF9FD),
-    Color(0xFFEDEAF3),
-    Color(0xFFD4CFDF),
+  final List<Color> lightRamp = <Color>[
+    const Color(0xFFFFFFFF).withValues(alpha: 0.92),
+    const Color(0xFFF6F4FA).withValues(alpha: 0.94),
+    const Color(0xFFE2DDEC).withValues(alpha: 0.97),
   ];
   final List<Color> ramp = isDark ? darkRamp : lightRamp;
-  final Offset focal = center + Offset(-radius * 0.30, -radius * 0.34);
+  final Offset focal = center + Offset(-radius * 0.28, -radius * 0.32);
 
   canvas.drawPath(
     shell,
@@ -160,9 +158,9 @@ void ritmoPaintGlassBody({
       ..isAntiAlias = true
       ..shader = ui.Gradient.radial(
         focal,
-        radius * 1.38,
+        radius * 1.35,
         ramp,
-        const <double>[0.0, 0.42, 0.78, 1.0],
+        const <double>[0.0, 0.55, 1.0],
       ),
   );
 }

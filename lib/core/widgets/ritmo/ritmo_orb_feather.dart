@@ -1,11 +1,9 @@
 // =============================================================================
-//  Ritmo Orb Ribbon & Topographic Core (v4)
+//  Ritmo Orb Ribbon & Topographic Core (v4) — موتور سه‌بعدی تیلهٔ هولوگرافیک
 //
-//  Redesigned to render an authentic 3D Iridescent Liquid Crystal Marble:
-//    * Volumetric wavy ribbons with organic cubic bezier curvature
-//    * Parallel topographic contour striations (خطوط تراز کانتوری موازی و زنده)
-//    * Smooth isometric wave phase flow and audio/AI reactive dynamics
-//    * Pixel-budget adaptive rendering (60/120 FPS latency-free Canvas math)
+//  • توده‌های حجیم و مواج مایع کریستالی با رنگ‌های اشباع و نئونی
+//  • خطوط تراز کانتوری لیزری و موازی (Topographic Laser Striations)
+//  • جریان ارگانیک و پیوسته با امواج بزیه و گرادیان‌های رنگین‌کمانی
 // =============================================================================
 
 import 'dart:math' as math;
@@ -17,7 +15,7 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart'
 
 enum RitmoPlumeTone { milk, blush, coral, ember, violet }
 
-/// One volumetric ribbon wave inside the crystal marble.
+/// روبان هولوگرافیک سه‌بعدی درون تیله
 @immutable
 class RitmoPlume {
   const RitmoPlume({
@@ -35,42 +33,24 @@ class RitmoPlume {
   });
 
   final RitmoPlumeTone tone;
-
-  /// Angle the ribbon root is rooted at.
   final double anchor;
-
-  /// How far toward the rim the spine reaches (fraction of radius).
   final double reach;
-
-  /// Signed curvature / bow of the spine.
   final double bow;
-
-  /// Contour sweep-back angle.
   final double sweep;
-
-  /// 1 = near the surface (bright, crisp), 0 = deep (dim, volumetric).
   final double depth;
-
-  /// Half-width of the ribbon band at its widest (fraction of radius).
   final double shaft;
-
-  /// Stroke weight multiplier.
   final double weight;
-
   final double phase;
   final double swayRate;
-
-  /// Number of topographic contour striations across the ribbon.
   final int barbs;
 }
 
-// tone, anchor, reach, bow, sweep, depth, shaft, weight, prio
+// چیدمان هندسی ۳ روبان حجیم و متقاطع با پهنای عریض و عمق سه‌بعدی
 const List<List<double>> _kLayout = <List<double>>[
-  <double>[0, -1.22, 0.92, 0.58, 0.88, 0.96, 0.190, 1.00, 1], // Main luminous white/milk ribbon
-  <double>[2, 0.95, 0.86, -0.65, 0.82, 0.78, 0.220, 0.95, 2], // Primary coral wave
-  <double>[4, 2.65, 0.82, 0.52, 0.76, 0.42, 0.175, 0.85, 3], // Lavender/violet deep ribbon
-  <double>[3, -2.55, 0.74, -0.72, 0.92, 0.24, 0.160, 0.75, 4], // Ember/gold accent ribbon
-  <double>[1, 0.15, 0.68, 0.44, 0.68, 0.58, 0.145, 0.65, 5], // Secondary blush wave
+  // tone, anchor, reach, bow, sweep, depth, shaft, weight, prio
+  <double>[2, 0.92, 0.90, -0.68, 0.85, 0.92, 0.44, 1.00, 1], // روبان اصلی مرجانی/سرخابی به فیروزه‌ای
+  <double>[4, -1.85, 0.88, 0.72, -0.80, 0.65, 0.38, 0.95, 2], // روبان فیروزه‌ای/آبی به بنفش سلطنتی
+  <double>[0, 2.70, 0.82, -0.50, 0.75, 0.40, 0.34, 0.85, 3], // روبان درخشان ابریشمی/هلویی در عمق
 ];
 
 List<RitmoPlume> ritmoBuildPlumes({
@@ -79,11 +59,9 @@ List<RitmoPlume> ritmoBuildPlumes({
   bool detailed = true,
 }) {
   final math.Random rng = math.Random(seed * 7919 + 13);
-  final int keep = count >= 7 ? 4 : (count >= 4 ? 3 : 2);
   final List<RitmoPlume> out = <RitmoPlume>[];
 
   for (final List<double> row in _kLayout) {
-    if (row[8] > keep) continue;
     final double weight = row[7];
     out.add(
       RitmoPlume(
@@ -96,30 +74,14 @@ List<RitmoPlume> ritmoBuildPlumes({
         shaft: row[6],
         weight: weight,
         phase: rng.nextDouble() * math.pi * 2.0,
-        swayRate: 0.42 + rng.nextDouble() * 0.48,
-        barbs: detailed ? 14 + (weight * 10.0).round() : 8,
+        swayRate: 0.38 + rng.nextDouble() * 0.42,
+        barbs: detailed ? 26 + (weight * 10.0).round() : 14,
       ),
     );
   }
 
-  // Deepest first, so the front ribbons gracefully layer on top.
   out.sort((a, b) => a.depth.compareTo(b.depth));
   return out;
-}
-
-Color _toneColor(RitmoPlumeTone tone, RitmoOrbPalette p) {
-  switch (tone) {
-    case RitmoPlumeTone.milk:
-      return p.milk;
-    case RitmoPlumeTone.blush:
-      return p.mid;
-    case RitmoPlumeTone.coral:
-      return p.core;
-    case RitmoPlumeTone.ember:
-      return p.hot;
-    case RitmoPlumeTone.violet:
-      return p.violet;
-  }
 }
 
 Offset _bez(Offset a, Offset c1, Offset c2, Offset b, double s) {
@@ -143,13 +105,12 @@ Offset _bezTan(Offset a, Offset c1, Offset c2, Offset b, double s) {
   );
 }
 
-/// Smooth bell-curve taper for volumetric ribbons.
 double _ribbonTaper(double s) {
   final double v = math.sin(s.clamp(0.0, 1.0) * math.pi);
-  return math.pow(v < 0.0 ? 0.0 : v, 0.72).toDouble();
+  return math.pow(v < 0.0 ? 0.0 : v, 0.55).toDouble();
 }
 
-/// The topographic fluid ribbons inside the living crystal marble.
+/// رسم روبان‌های حجیم و خطوط تراز کانتوری درون تیله
 void ritmoPaintPlumes({
   required Canvas canvas,
   required Offset center,
@@ -167,52 +128,66 @@ void ritmoPaintPlumes({
 }) {
   if (radius <= 1.0 || plumes.isEmpty) return;
 
-  final double gain = intensity.clamp(0.0, 1.6);
-  if (gain <= 0.01) return;
-
+  final double gain = intensity.clamp(0.4, 1.6);
   final double e = energy.clamp(0.0, 1.0);
   final double pu = pulse.clamp(0.0, 1.0);
   final double wk = wink.clamp(0.0, 1.0);
 
-  final bool tiny = radius < 26.0;
-  final double budget = tiny ? 0.45 : (radius < 46.0 ? 0.75 : 1.0);
-  final double boost = tiny ? 1.25 : (radius < 46.0 ? 1.10 : 1.0);
+  // پالت‌های گرادیان هولوگرافیک اشباع و پرانرژی
+  const List<Color> coralCyanRamp = <Color>[
+    Color(0xFFFF007A), // نئون سرخابی
+    Color(0xFFFF455B), // مرجانی داغ
+    Color(0xFFFFB03A), // کهربایی درخشان
+    Color(0xFF00F5D4), // فیروزه‌ای نئونی
+    Color(0xFF00D2FF), // آبی آسمانی
+  ];
 
-  final Color deepShadow =
-      Color.lerp(palette.violet, const Color(0xFF14021C), 0.82) ??
-          palette.violet;
+  const List<Color> cyanVioletRamp = <Color>[
+    Color(0xFF00F5D4), // فیروزه‌ای
+    Color(0xFF00B4D8), // آبی دریایی
+    Color(0xFF7209B7), // بنفش رویال
+    Color(0xFFF72585), // سرخابی درخشان
+  ];
 
-  for (final RitmoPlume p in plumes) {
+  const List<Color> silkPeachRamp = <Color>[
+    Color(0xFFFFFFFF), // ابریشم سفید
+    Color(0xFFFFB3C6), // صورتی ملایم
+    Color(0xFFFF758F), // مرجانی
+    Color(0xFF8338EC), // ارغوانی
+  ];
+
+  for (int pIdx = 0; pIdx < plumes.length; pIdx++) {
+    final RitmoPlume p = plumes[pIdx];
     final double depth = p.depth.clamp(0.0, 1.0);
-    final double front = 0.40 + 0.60 * depth;
+    final double front = 0.65 + 0.35 * depth;
     final double sway = math.sin(t * p.swayRate + p.phase);
     final double secondarySway = math.cos(t * p.swayRate * 0.75 + p.phase * 1.3);
 
-    final double rootA = p.anchor + swirl * (0.50 + 0.50 * depth) + sway * 0.14;
+    final double rootA = p.anchor + swirl * (0.45 + 0.55 * depth) + sway * 0.16;
     final Offset u = Offset(math.cos(rootA), math.sin(rootA));
     final Offset nrm = Offset(-u.dy, u.dx);
-    final Offset par = parallax * (radius * 0.10 * (0.25 + 0.75 * depth));
+    final Offset par = parallax * (radius * 0.12 * (0.30 + 0.70 * depth));
 
-    final Offset root = center + u * (radius * 0.06) + par;
-    final double far = radius * p.reach * (1.0 + 0.06 * pu + 0.03 * sway);
+    final Offset root = center - u * (radius * 0.18) + par;
+    final double far = radius * p.reach * (1.0 + 0.05 * pu + 0.03 * sway);
     final Offset tip = center + u * far + par;
 
-    // Dual control points for genuine S-curve organic fluid motion
     final Offset ctrl1 = center +
-        u * (far * 0.35) +
-        nrm * (radius * 0.38 * p.bow * (1.0 + 0.15 * sway)) +
+        u * (far * 0.30) +
+        nrm * (radius * 0.42 * p.bow * (1.0 + 0.12 * sway)) +
         par;
     final Offset ctrl2 = center +
-        u * (far * 0.72) -
-        nrm * (radius * 0.22 * p.bow * (1.0 + 0.20 * secondarySway)) +
+        u * (far * 0.70) -
+        nrm * (radius * 0.26 * p.bow * (1.0 + 0.18 * secondarySway)) +
         par;
 
-    final Color tone = _toneColor(p.tone, palette);
-    final Color litColor =
-        Color.lerp(tone, palette.milk, 0.40 + 0.45 * depth) ?? tone;
+    // انتخاب پالت بر اساس لایه
+    final List<Color> ramp = pIdx == 0
+        ? coralCyanRamp
+        : (pIdx == 1 ? cyanVioletRamp : silkPeachRamp);
 
-    // 1. Generate smooth ribbon geometry points
-    const int segments = 16;
+    // ۱. محاسبه مسیر اسکلت و لبه‌های روبان
+    const int segments = 22;
     final List<Offset> lft = <Offset>[];
     final List<Offset> rgt = <Offset>[];
     final List<Offset> spine = <Offset>[];
@@ -227,8 +202,8 @@ void ritmoPaintPlumes({
 
       final Offset nn = Offset(-tg.dy / tl, tg.dx / tl);
       final double halfWidth = math.max(
-        0.8,
-        radius * p.shaft * _ribbonTaper(s) * (1.0 + 0.28 * pu),
+        1.2,
+        radius * p.shaft * _ribbonTaper(s) * (1.0 + 0.20 * pu),
       );
 
       spine.add(pt);
@@ -239,7 +214,7 @@ void ritmoPaintPlumes({
 
     if (lft.length < 3) continue;
 
-    // 2. Draw Volumetric Iridescent Ribbon Body
+    // ساخت چندضلعی بدنه روبان
     final Path ribbonBody = Path()..moveTo(lft.first.dx, lft.first.dy);
     for (int i = 1; i < lft.length; i++) {
       ribbonBody.lineTo(lft[i].dx, lft[i].dy);
@@ -249,7 +224,7 @@ void ritmoPaintPlumes({
     }
     ribbonBody.close();
 
-    // Soft volumetric underbody glow
+    // ۲. هالهٔ درخشان حجیم زیر روبان (Subsurface Volumetric Glow)
     canvas.drawPath(
       ribbonBody,
       Paint()
@@ -257,71 +232,59 @@ void ritmoPaintPlumes({
         ..shader = ui.Gradient.linear(
           lft.first,
           tip,
-          <Color>[
-            tone.withValues(alpha: 0.0),
-            tone.withValues(
-              alpha: ((0.28 + 0.20 * e) * front * gain).clamp(0.0, 0.65),
-            ),
-            litColor.withValues(
-              alpha: ((0.42 + 0.25 * e + 0.15 * pu) * front * gain).clamp(0.0, 0.85),
-            ),
-            palette.violet.withValues(
-              alpha: ((0.18 + 0.12 * e) * front * gain).clamp(0.0, 0.45),
-            ),
-          ],
-          const <double>[0.0, 0.35, 0.72, 1.0],
+          ramp.map((c) => c.withValues(alpha: (0.50 * front * gain).clamp(0.0, 0.85))).toList(),
+        )
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(1.0, radius * 0.08)),
+    );
+
+    // ۳. پر کردن بدنهٔ روبان با گرادیان پررنگ، غلیظ و با کنتراست بالا
+    canvas.drawPath(
+      ribbonBody,
+      Paint()
+        ..isAntiAlias = true
+        ..shader = ui.Gradient.linear(
+          lft.first,
+          tip,
+          ramp.map((c) => c.withValues(alpha: ((0.82 + 0.15 * e) * front * gain).clamp(0.0, 0.98))).toList(),
         ),
     );
 
-    // Deep edge shadow line for 3D separation
+    // لبهٔ سایه پشت روبان برای تفکیک ۳بعدی عمیق
     canvas.drawPath(
       Path()..addPolygon(rgt, false),
       Paint()
         ..isAntiAlias = true
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = math.max(0.65, radius * 0.016)
-        ..color = deepShadow.withValues(
-          alpha: (0.35 * front * gain).clamp(0.0, 0.55),
+        ..strokeWidth = math.max(0.8, radius * 0.022)
+        ..color = const Color(0xFF0A0214).withValues(
+          alpha: (0.45 * front * gain).clamp(0.0, 0.70),
         ),
     );
 
-    // Glowing bright leading edge
+    // لبهٔ درخشان بالایی روبان
     canvas.drawPath(
       Path()..addPolygon(lft, false),
       Paint()
         ..isAntiAlias = true
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = math.max(0.85, radius * 0.024) * boost
-        ..shader = ui.Gradient.linear(
-          lft.first,
-          lft.last,
-          <Color>[
-            palette.milk.withValues(alpha: 0.0),
-            palette.milk.withValues(
-              alpha: ((0.65 + 0.20 * e + 0.20 * pu) * front * gain).clamp(0.0, 0.95),
-            ),
-            litColor.withValues(
-              alpha: (0.35 * front * gain).clamp(0.0, 0.60),
-            ),
-          ],
-          const <double>[0.0, 0.50, 1.0],
+        ..strokeWidth = math.max(1.0, radius * 0.026)
+        ..color = Colors.white.withValues(
+          alpha: (0.75 * front * gain).clamp(0.0, 0.95),
         ),
     );
 
-    // 3. Draw Topographic Parallel Contour Lines (خطوط تراز کانتوری موازی و زنده)
-    if (!detailed && depth < 0.45) continue;
-
-    final int numContours = math.max(4, (p.barbs * budget).round());
+    // ۴. رسم خطوط تراز کانتوری لیزری و متراکم (Topographic Laser Striations)
+    final int numContours = math.max(10, p.barbs);
     final Path contourBatch = Path();
 
     for (int k = 0; k < numContours; k++) {
       final double uNorm = k / (numContours - 1).toDouble();
-      final double linePos = 0.10 + 0.82 * uNorm;
+      final double linePos = 0.06 + 0.88 * uNorm;
 
-      // Isometric wave ripple flowing through time
-      final double waveShift = math.sin(linePos * 5.2 - t * 1.8 * p.swayRate + p.phase) * 0.06;
+      // موج لغزان کانتوری روی محور زمان
+      final double waveShift = math.sin(linePos * 6.0 - t * 2.2 * p.swayRate + p.phase) * 0.045;
       final double sampleS = (linePos + waveShift).clamp(0.0, 1.0);
 
       final int spineIdx = (sampleS * (spine.length - 1)).round().clamp(0, spine.length - 1);
@@ -329,55 +292,54 @@ void ritmoPaintPlumes({
       final Offset nn = normals[spineIdx];
 
       final double currentWidth = math.max(
-        0.8,
-        radius * p.shaft * _ribbonTaper(sampleS) * (1.0 + 0.28 * pu),
+        1.2,
+        radius * p.shaft * _ribbonTaper(sampleS) * (1.0 + 0.20 * pu),
       );
 
-      // Curved contour cross-rib
-      final Offset pStart = pt - nn * (currentWidth * 0.95);
-      final Offset pEnd = pt + nn * (currentWidth * 0.95);
-      
-      // Control point curved with 3D spherical dome effect
-      final Offset pDome = pt + nn * (currentWidth * 0.15 * p.sweep) - (normals[spineIdx].scale(0.1, 0.1));
+      final Offset pStart = pt - nn * (currentWidth * 0.96);
+      final Offset pEnd = pt + nn * (currentWidth * 0.96);
+      final Offset pDome = pt + nn * (currentWidth * 0.18 * p.sweep);
 
       contourBatch
         ..moveTo(pStart.dx, pStart.dy)
         ..quadraticBezierTo(pDome.dx, pDome.dy, pEnd.dx, pEnd.dy);
     }
 
-    final double contourStrokeWidth = math.max(0.75, radius * 0.020 * p.weight) * boost;
+    final double contourWidth = math.max(0.85, radius * 0.020);
 
-    // Contour Soft Under-glow
+    // هاله نرم خطوط تراز
     canvas.drawPath(
       contourBatch,
       Paint()
         ..isAntiAlias = true
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = contourStrokeWidth * 2.0
-        ..color = tone.withValues(
-          alpha: ((0.12 + 0.10 * e) * front * gain).clamp(0.0, 0.30),
+        ..strokeWidth = contourWidth * 2.2
+        ..shader = ui.Gradient.linear(
+          lft.first,
+          tip,
+          ramp.map((c) => c.withValues(alpha: 0.35 * front * gain)).toList(),
         )
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(0.5, radius * 0.015)),
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(0.5, radius * 0.018)),
     );
 
-    // Contour Crisp Holographic Line
+    // خط تیز هولوگرافیک تراز
     canvas.drawPath(
       contourBatch,
       Paint()
         ..isAntiAlias = true
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = contourStrokeWidth
-        ..color = palette.milk.withValues(
-          alpha: ((0.48 + 0.32 * e + 0.25 * pu + 0.35 * wk) * front * gain).clamp(0.0, 0.95),
+        ..strokeWidth = contourWidth
+        ..color = Colors.white.withValues(
+          alpha: ((0.75 + 0.20 * e + 0.20 * pu + 0.30 * wk) * front * gain).clamp(0.0, 0.98),
         ),
     );
   }
 
-  // 4. Volumetric Core Luminescence (قلب درخشان تیله)
-  final Offset heart = center + parallax * (radius * 0.06);
-  final double hr = radius * (0.34 + 0.08 * e + 0.08 * pu);
+  // ۵. کانون نورانی مرکز کره
+  final Offset heart = center + parallax * (radius * 0.05);
+  final double hr = radius * (0.38 + 0.08 * e + 0.08 * pu);
   canvas.drawCircle(
     heart,
     hr,
@@ -387,29 +349,17 @@ void ritmoPaintPlumes({
         heart,
         hr,
         <Color>[
-          palette.milk.withValues(alpha: (0.35 + 0.15 * e + 0.20 * pu) * gain),
-          palette.core.withValues(alpha: (0.22 + 0.12 * e) * gain),
-          palette.violet.withValues(alpha: 0.08 * gain),
-          palette.core.withValues(alpha: 0.0),
+          Colors.white.withValues(alpha: (0.45 + 0.20 * e + 0.20 * pu) * gain),
+          const Color(0xFFFF007A).withValues(alpha: (0.28 + 0.14 * e) * gain),
+          const Color(0xFF00F5D4).withValues(alpha: 0.15 * gain),
+          Colors.transparent,
         ],
-        const <double>[0.0, 0.38, 0.70, 1.0],
+        const <double>[0.0, 0.35, 0.70, 1.0],
       ),
   );
-
-  // Winking flash / Flare
-  if (wk > 0.02) {
-    canvas.drawCircle(
-      center + Offset(-radius * 0.15, -radius * 0.12),
-      radius * (0.24 + 0.20 * wk),
-      Paint()
-        ..isAntiAlias = true
-        ..color = palette.milk.withValues(alpha: (0.38 * wk * gain).clamp(0.0, 0.70))
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.18),
-    );
-  }
 }
 
-/// The ground behind the ribbons: spherical shadow, cool ambient tint, and caustic pool.
+/// لایهٔ عمق و اتمسفر پشت روبان‌ها
 void ritmoPaintPillow({
   required Canvas canvas,
   required Offset center,
@@ -422,92 +372,47 @@ void ritmoPaintPillow({
   double pulse = 0.0,
 }) {
   if (radius <= 1.0) return;
-  final double gain = intensity.clamp(0.0, 1.6);
-  if (gain <= 0.01) return;
-
+  final double gain = intensity.clamp(0.4, 1.6);
   final double e = energy.clamp(0.0, 1.0);
   final Offset shift = parallax * (radius * 0.06);
-  final Color ink =
-      Color.lerp(palette.violet, const Color(0xFF12021A), 0.82) ??
-          palette.violet;
 
-  // 1. Dark spherical depth ground (lower-right)
-  final Offset deep = center + Offset(radius * 0.26, radius * 0.30) + shift;
-  canvas.drawCircle(
-    deep,
-    radius * 1.02,
-    Paint()
-      ..isAntiAlias = true
-      ..shader = ui.Gradient.radial(
-        deep,
-        radius * 1.02,
-        <Color>[
-          ink.withValues(alpha: 0.46 * gain),
-          ink.withValues(alpha: 0.24 * gain),
-          ink.withValues(alpha: 0.0),
-        ],
-        const <double>[0.0, 0.60, 1.0],
-      ),
-  );
-
-  // 2. Cool ambient glass tint (upper-left)
-  final Offset cool = center - Offset(radius * 0.24, radius * 0.28) + shift;
+  // هالهٔ اتمسفریک فیروزه‌ای در بالا-چپ
+  final Offset cool = center - Offset(radius * 0.30, radius * 0.32) + shift;
   canvas.drawCircle(
     cool,
-    radius * 0.90,
+    radius * 0.95,
     Paint()
       ..isAntiAlias = true
       ..shader = ui.Gradient.radial(
         cool,
-        radius * 0.90,
+        radius * 0.95,
         <Color>[
-          palette.violet.withValues(alpha: 0.20 * gain),
-          palette.violet.withValues(alpha: 0.0),
+          const Color(0xFF00F5D4).withValues(alpha: (0.25 + 0.10 * e) * gain),
+          const Color(0xFF7209B7).withValues(alpha: 0.10 * gain),
+          Colors.transparent,
         ],
-        const <double>[0.0, 1.0],
-      ),
+        const <double>[0.0, 0.50, 1.0],
+      )
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.15),
   );
 
-  // 3. Bottom internal caustic refraction pool
-  final double a = -2.30 + 0.16 * math.sin(t * 0.32);
-  final Offset pool = center +
-      Offset(math.cos(a), -math.sin(a)) * (radius * 0.56) +
-      shift * 1.3;
-  final double pr =
-      radius * (0.32 + 0.05 * math.sin(t * 0.45) + 0.05 * pulse);
-
+  // هالهٔ گرم مرجانی-سرخابی در پایین-راست
+  final Offset warm = center + Offset(radius * 0.28, radius * 0.28) + shift;
   canvas.drawCircle(
-    pool,
-    pr,
+    warm,
+    radius * 1.00,
     Paint()
       ..isAntiAlias = true
       ..shader = ui.Gradient.radial(
-        pool,
-        pr,
+        warm,
+        radius * 1.00,
         <Color>[
-          palette.milk.withValues(alpha: (0.28 + 0.12 * e) * gain),
-          palette.milk.withValues(alpha: 0.09 * gain),
-          palette.milk.withValues(alpha: 0.0),
+          const Color(0xFFFF007A).withValues(alpha: (0.30 + 0.12 * e) * gain),
+          const Color(0xFF3A0CA3).withValues(alpha: 0.18 * gain),
+          Colors.transparent,
         ],
-        const <double>[0.0, 0.48, 1.0],
-      ),
-  );
-
-  // 4. Crisp Caustic Arc inside the glass
-  final Rect arc = Rect.fromCircle(center: pool, radius: pr * 1.02);
-  canvas.drawArc(
-    arc,
-    -1.05 + 0.12 * math.sin(t * 0.28),
-    1.62,
-    false,
-    Paint()
-      ..isAntiAlias = true
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = math.max(0.70, radius * 0.024)
-      ..color = palette.milk.withValues(
-        alpha: ((0.32 + 0.14 * e) * gain).clamp(0.0, 0.65),
-      ),
+        const <double>[0.0, 0.55, 1.0],
+      )
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.18),
   );
 }
-

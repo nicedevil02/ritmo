@@ -1,9 +1,11 @@
 // =============================================================================
-//  Ritmo Orb Ribbon & Topographic Core (v4) — موتور سه‌بعدی تیلهٔ هولوگرافیک
+//  Ritmo Liquid Silk Aurora Vortex Engine (v5)
 //
-//  • توده‌های حجیم و مواج مایع کریستالی با رنگ‌های اشباع و نئونی
-//  • خطوط تراز کانتوری لیزری و موازی (Topographic Laser Striations)
-//  • جریان ارگانیک و پیوسته با امواج بزیه و گرادیان‌های رنگین‌کمانی
+//  تلفیق کانسپت ۱ (ورتکس ابریشمی مایع) + کانسپت ۲ (شفق مخملی ساتین):
+//    • امواج ابریشمی، سیال و پیوستهٔ نور مایع (بدون خطوط سیمی یا راه‌راه)
+//    • بستر شفق قطبی مخملی (Velvet Multicolor Aurora Bloom)
+//    • کانون نوری درخشان در مرکز ورتکس با پالس‌های زندهٔ پاسخ‌دهی
+//    • رندرینگ ۱۲۰ فریم بر ثانیه با ریاضیات خالص Canvas
 // =============================================================================
 
 import 'dart:math' as math;
@@ -13,104 +15,77 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart'
     show RitmoOrbPalette;
 
-enum RitmoPlumeTone { milk, blush, coral, ember, violet }
+enum RitmoSilkWaveType { magentaCoral, cyanTurquoise, orchidViolet, silkPeach }
 
-/// روبان هولوگرافیک سه‌بعدی درون تیله
+/// مدل موج ابریشمی سیال درون تیله
 @immutable
 class RitmoPlume {
   const RitmoPlume({
-    required this.tone,
-    required this.anchor,
-    required this.reach,
-    required this.bow,
-    required this.sweep,
+    required this.type,
+    required this.baseAngle,
+    required this.speed,
+    required this.spiralFactor,
+    required this.breadth,
     required this.depth,
-    required this.shaft,
-    required this.weight,
     required this.phase,
-    required this.swayRate,
-    required this.barbs,
   });
 
-  final RitmoPlumeTone tone;
-  final double anchor;
-  final double reach;
-  final double bow;
-  final double sweep;
+  final RitmoSilkWaveType type;
+  final double baseAngle;
+  final double speed;
+  final double spiralFactor;
+  final double breadth;
   final double depth;
-  final double shaft;
-  final double weight;
   final double phase;
-  final double swayRate;
-  final int barbs;
 }
-
-// چیدمان هندسی ۳ روبان حجیم و متقاطع با پهنای عریض و عمق سه‌بعدی
-const List<List<double>> _kLayout = <List<double>>[
-  // tone, anchor, reach, bow, sweep, depth, shaft, weight, prio
-  <double>[2, 0.92, 0.90, -0.68, 0.85, 0.92, 0.44, 1.00, 1], // روبان اصلی مرجانی/سرخابی به فیروزه‌ای
-  <double>[4, -1.85, 0.88, 0.72, -0.80, 0.65, 0.38, 0.95, 2], // روبان فیروزه‌ای/آبی به بنفش سلطنتی
-  <double>[0, 2.70, 0.82, -0.50, 0.75, 0.40, 0.34, 0.85, 3], // روبان درخشان ابریشمی/هلویی در عمق
-];
 
 List<RitmoPlume> ritmoBuildPlumes({
   int seed = 11,
   int count = 7,
   bool detailed = true,
 }) {
-  final math.Random rng = math.Random(seed * 7919 + 13);
-  final List<RitmoPlume> out = <RitmoPlume>[];
-
-  for (final List<double> row in _kLayout) {
-    final double weight = row[7];
-    out.add(
-      RitmoPlume(
-        tone: RitmoPlumeTone.values[row[0].round()],
-        anchor: row[1],
-        reach: row[2],
-        bow: row[3],
-        sweep: row[4],
-        depth: row[5],
-        shaft: row[6],
-        weight: weight,
-        phase: rng.nextDouble() * math.pi * 2.0,
-        swayRate: 0.38 + rng.nextDouble() * 0.42,
-        barbs: detailed ? 26 + (weight * 10.0).round() : 14,
-      ),
-    );
-  }
-
-  out.sort((a, b) => a.depth.compareTo(b.depth));
-  return out;
+  final math.Random rng = math.Random(seed * 7919 + 17);
+  return <RitmoPlume>[
+    RitmoPlume(
+      type: RitmoSilkWaveType.magentaCoral,
+      baseAngle: 0.0,
+      speed: 0.48,
+      spiralFactor: 0.88,
+      breadth: 0.42,
+      depth: 0.95,
+      phase: rng.nextDouble() * math.pi * 2.0,
+    ),
+    RitmoPlume(
+      type: RitmoSilkWaveType.cyanTurquoise,
+      baseAngle: math.pi * 0.65,
+      speed: -0.42,
+      spiralFactor: 0.92,
+      breadth: 0.38,
+      depth: 0.85,
+      phase: rng.nextDouble() * math.pi * 2.0,
+    ),
+    RitmoPlume(
+      type: RitmoSilkWaveType.orchidViolet,
+      baseAngle: math.pi * 1.35,
+      speed: 0.52,
+      spiralFactor: 0.80,
+      breadth: 0.36,
+      depth: 0.70,
+      phase: rng.nextDouble() * math.pi * 2.0,
+    ),
+    RitmoPlume(
+      type: RitmoSilkWaveType.silkPeach,
+      baseAngle: math.pi * 0.25,
+      speed: -0.36,
+      spiralFactor: 0.75,
+      breadth: 0.30,
+      depth: 0.55,
+      phase: rng.nextDouble() * math.pi * 2.0,
+    ),
+  ];
 }
 
-Offset _bez(Offset a, Offset c1, Offset c2, Offset b, double s) {
-  final double u = 1.0 - s;
-  final double tt = s * s;
-  final double uu = u * u;
-  final double uuu = uu * u;
-  final double ttt = tt * s;
-
-  return Offset(
-    uuu * a.dx + 3 * uu * s * c1.dx + 3 * u * tt * c2.dx + ttt * b.dx,
-    uuu * a.dy + 3 * uu * s * c1.dy + 3 * u * tt * c2.dy + ttt * b.dy,
-  );
-}
-
-Offset _bezTan(Offset a, Offset c1, Offset c2, Offset b, double s) {
-  final double u = 1.0 - s;
-  return Offset(
-    3 * u * u * (c1.dx - a.dx) + 6 * u * s * (c2.dx - c1.dx) + 3 * s * s * (b.dx - c2.dx),
-    3 * u * u * (c1.dy - a.dy) + 6 * u * s * (c2.dy - c1.dy) + 3 * s * s * (b.dy - c2.dy),
-  );
-}
-
-double _ribbonTaper(double s) {
-  final double v = math.sin(s.clamp(0.0, 1.0) * math.pi);
-  return math.pow(v < 0.0 ? 0.0 : v, 0.55).toDouble();
-}
-
-/// رسم روبان‌های حجیم و خطوط تراز کانتوری درون تیله
+/// رسم ورتکس ابریشمی مایع نوری
 void ritmoPaintPlumes({
   required Canvas canvas,
   required Offset center,
@@ -126,246 +101,214 @@ void ritmoPaintPlumes({
   double pulse = 0.0,
   double wink = 0.0,
 }) {
-  if (radius <= 1.0 || plumes.isEmpty) return;
+  if (radius <= 1.0) return;
 
   final double gain = intensity.clamp(0.4, 1.6);
   final double e = energy.clamp(0.0, 1.0);
   final double pu = pulse.clamp(0.0, 1.0);
   final double wk = wink.clamp(0.0, 1.0);
 
-  // پالت‌های گرادیان هولوگرافیک اشباع و پرانرژی
-  const List<Color> coralCyanRamp = <Color>[
+  final Offset shift = parallax * (radius * 0.10);
+
+  // ── پالت‌های رنگی مایع ابریشمی (Liquid Silk Color Ramps) ──
+  const List<Color> magentaRamp = <Color>[
     Color(0xFFFF007A), // نئون سرخابی
-    Color(0xFFFF455B), // مرجانی داغ
-    Color(0xFFFFB03A), // کهربایی درخشان
+    Color(0xFFFF3366), // مرجانی پرانرژی
+    Color(0xFFFF9E00), // کهربایی گرم
+    Color(0xFFFF5400), // نارنجی نئونی
+  ];
+
+  const List<Color> cyanRamp = <Color>[
     Color(0xFF00F5D4), // فیروزه‌ای نئونی
-    Color(0xFF00D2FF), // آبی آسمانی
+    Color(0xFF00BBF9), // آبی فیروزه‌ای روشن
+    Color(0xFF4361EE), // آبی الکتریک
+    Color(0xFF7209B7), // بنفش نئونی
   ];
 
-  const List<Color> cyanVioletRamp = <Color>[
-    Color(0xFF00F5D4), // فیروزه‌ای
-    Color(0xFF00B4D8), // آبی دریایی
+  const List<Color> violetRamp = <Color>[
     Color(0xFF7209B7), // بنفش رویال
+    Color(0xFFB5179E), // ارغوانی
     Color(0xFFF72585), // سرخابی درخشان
+    Color(0xFF4CC9F0), // فیروزه‌ای نئونی
   ];
 
-  const List<Color> silkPeachRamp = <Color>[
-    Color(0xFFFFFFFF), // ابریشم سفید
-    Color(0xFFFFB3C6), // صورتی ملایم
-    Color(0xFFFF758F), // مرجانی
-    Color(0xFF8338EC), // ارغوانی
+  const List<Color> silkRamp = <Color>[
+    Color(0xFFFFFFFF), // سفید ابریشمی
+    Color(0xFFFFCCD5), // صورتی شیری
+    Color(0xFFFFB3C6), // هلویی ملایم
+    Color(0xFF90E0EF), // آبی ملایم
   ];
 
-  for (int pIdx = 0; pIdx < plumes.length; pIdx++) {
-    final RitmoPlume p = plumes[pIdx];
-    final double depth = p.depth.clamp(0.0, 1.0);
-    final double front = 0.65 + 0.35 * depth;
-    final double sway = math.sin(t * p.swayRate + p.phase);
-    final double secondarySway = math.cos(t * p.swayRate * 0.75 + p.phase * 1.3);
+  // ── رسم امواج مارپیچی ورتکس ابریشمی ──
+  for (final RitmoPlume plume in plumes) {
+    final double depth = plume.depth;
+    final double front = 0.70 + 0.30 * depth;
+    final double rot = plume.baseAngle + (t * plume.speed * (0.65 + 0.35 * e)) + swirl * 0.5;
 
-    final double rootA = p.anchor + swirl * (0.45 + 0.55 * depth) + sway * 0.16;
-    final Offset u = Offset(math.cos(rootA), math.sin(rootA));
-    final Offset nrm = Offset(-u.dy, u.dx);
-    final Offset par = parallax * (radius * 0.12 * (0.30 + 0.70 * depth));
+    final List<Color> ramp = switch (plume.type) {
+      RitmoSilkWaveType.magentaCoral => magentaRamp,
+      RitmoSilkWaveType.cyanTurquoise => cyanRamp,
+      RitmoSilkWaveType.orchidViolet => violetRamp,
+      RitmoSilkWaveType.silkPeach => silkRamp,
+    };
 
-    final Offset root = center - u * (radius * 0.18) + par;
-    final double far = radius * p.reach * (1.0 + 0.05 * pu + 0.03 * sway);
-    final Offset tip = center + u * far + par;
+    // تولید مسیر جریان ابریشمی سیال (Smooth Fluid Swirl Path)
+    const int steps = 36;
+    final List<Offset> innerCurve = <Offset>[];
+    final List<Offset> outerCurve = <Offset>[];
+    final List<Offset> centerSpine = <Offset>[];
 
-    final Offset ctrl1 = center +
-        u * (far * 0.30) +
-        nrm * (radius * 0.42 * p.bow * (1.0 + 0.12 * sway)) +
-        par;
-    final Offset ctrl2 = center +
-        u * (far * 0.70) -
-        nrm * (radius * 0.26 * p.bow * (1.0 + 0.18 * secondarySway)) +
-        par;
+    final double startRadius = radius * (0.12 + 0.05 * math.sin(t * 0.8 + plume.phase));
+    final double maxR = radius * (0.84 + 0.04 * pu);
 
-    // انتخاب پالت بر اساس لایه
-    final List<Color> ramp = pIdx == 0
-        ? coralCyanRamp
-        : (pIdx == 1 ? cyanVioletRamp : silkPeachRamp);
-    final List<double> rampStops = pIdx == 0
-        ? const <double>[0.0, 0.25, 0.50, 0.75, 1.0]
-        : const <double>[0.0, 0.33, 0.67, 1.0];
+    for (int i = 0; i <= steps; i++) {
+      final double s = i / steps.toDouble();
+      final double angle = rot + (s * math.pi * 2.2 * plume.spiralFactor);
+      
+      // شعاع مارپیچ هموار با لغزش موجی
+      final double curRadius = startRadius + (maxR - startRadius) * math.pow(s, 0.85);
+      final double waveWobble = math.sin(s * math.pi * 3.0 - t * 1.5 + plume.phase) * (radius * 0.035 * e);
+      final double rFinal = (curRadius + waveWobble).clamp(1.0, radius * 0.94);
 
-    // ۱. محاسبه مسیر اسکلت و لبه‌های روبان
-    const int segments = 22;
-    final List<Offset> lft = <Offset>[];
-    final List<Offset> rgt = <Offset>[];
-    final List<Offset> spine = <Offset>[];
-    final List<Offset> normals = <Offset>[];
+      final Offset pos = center + Offset(math.cos(angle) * rFinal, math.sin(angle) * rFinal) + shift * depth;
+      
+      // پهنای روبان ابریشمی با انحنای نرم
+      final double taper = math.sin(s * math.pi);
+      final double halfWidth = math.max(1.5, radius * plume.breadth * math.pow(taper, 0.6) * (1.0 + 0.18 * pu));
 
-    for (int i = 0; i <= segments; i++) {
-      final double s = i / segments.toDouble();
-      final Offset pt = _bez(root, ctrl1, ctrl2, tip, s);
-      final Offset tg = _bezTan(root, ctrl1, ctrl2, tip, s);
-      final double tl = tg.distance;
-      if (tl < 0.0001) continue;
+      final Offset normal = Offset(-math.sin(angle), math.cos(angle));
 
-      final Offset nn = Offset(-tg.dy / tl, tg.dx / tl);
-      final double halfWidth = math.max(
-        1.2,
-        radius * p.shaft * _ribbonTaper(s) * (1.0 + 0.20 * pu),
-      );
-
-      spine.add(pt);
-      normals.add(nn);
-      lft.add(pt + nn * halfWidth);
-      rgt.add(pt - nn * halfWidth);
+      centerSpine.add(pos);
+      outerCurve.add(pos + normal * halfWidth);
+      innerCurve.add(pos - normal * halfWidth);
     }
 
-    if (lft.length < 3) continue;
+    if (outerCurve.length < 3) continue;
 
-    // ساخت چندضلعی بدنه روبان
-    final Path ribbonBody = Path()..moveTo(lft.first.dx, lft.first.dy);
-    for (int i = 1; i < lft.length; i++) {
-      ribbonBody.lineTo(lft[i].dx, lft[i].dy);
+    // ایجاد بدنه پیوسته روبان مایع
+    final Path silkPath = Path()..moveTo(outerCurve.first.dx, outerCurve.first.dy);
+    for (int i = 1; i < outerCurve.length; i++) {
+      silkPath.lineTo(outerCurve[i].dx, outerCurve[i].dy);
     }
-    for (int i = rgt.length - 1; i >= 0; i--) {
-      ribbonBody.lineTo(rgt[i].dx, rgt[i].dy);
+    for (int i = innerCurve.length - 1; i >= 0; i--) {
+      silkPath.lineTo(innerCurve[i].dx, innerCurve[i].dy);
     }
-    ribbonBody.close();
+    silkPath.close();
 
-    // ۲. هالهٔ درخشان حجیم زیر روبان (Subsurface Volumetric Glow)
+    // ۱. هالهٔ عمیق نوری زیر مایع (Subsurface Volumetric Silk Glow)
     canvas.drawPath(
-      ribbonBody,
+      silkPath,
       Paint()
         ..isAntiAlias = true
-        ..shader = ui.Gradient.linear(
-          lft.first,
-          tip,
-          ramp.map((c) => c.withValues(alpha: (0.50 * front * gain).clamp(0.0, 0.85))).toList(),
-          rampStops,
+        ..shader = ui.Gradient.sweep(
+          center + shift * depth,
+          ramp.map((c) => c.withValues(alpha: (0.45 * front * gain).clamp(0.0, 0.75))).toList(),
+          null,
+          TileMode.clamp,
+          rot,
+          rot + math.pi * 2.0,
         )
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(1.0, radius * 0.08)),
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(1.5, radius * 0.10)),
     );
 
-    // ۳. پر کردن بدنهٔ روبان با گرادیان پررنگ، غلیظ و با کنتراست بالا
+    // ۲. بدنهٔ مایع ابریشمی فوق‌اشباع و غلیظ (Liquid Silk Mass)
     canvas.drawPath(
-      ribbonBody,
+      silkPath,
       Paint()
         ..isAntiAlias = true
-        ..shader = ui.Gradient.linear(
-          lft.first,
-          tip,
-          ramp.map((c) => c.withValues(alpha: ((0.82 + 0.15 * e) * front * gain).clamp(0.0, 0.98))).toList(),
-          rampStops,
+        ..shader = ui.Gradient.sweep(
+          center + shift * depth,
+          ramp.map((c) => c.withValues(alpha: ((0.80 + 0.16 * e) * front * gain).clamp(0.0, 0.98))).toList(),
+          null,
+          TileMode.clamp,
+          rot,
+          rot + math.pi * 2.0,
         ),
     );
 
-    // لبهٔ سایه پشت روبان برای تفکیک ۳بعدی عمیق
-    canvas.drawPath(
-      Path()..addPolygon(rgt, false),
-      Paint()
-        ..isAntiAlias = true
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = math.max(0.8, radius * 0.022)
-        ..color = const Color(0xFF0A0214).withValues(
-          alpha: (0.45 * front * gain).clamp(0.0, 0.70),
-        ),
-    );
-
-    // لبهٔ درخشان بالایی روبان
-    canvas.drawPath(
-      Path()..addPolygon(lft, false),
-      Paint()
-        ..isAntiAlias = true
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = math.max(1.0, radius * 0.026)
-        ..color = Colors.white.withValues(
-          alpha: (0.75 * front * gain).clamp(0.0, 0.95),
-        ),
-    );
-
-    // ۴. رسم خطوط تراز کانتوری لیزری و متراکم (Topographic Laser Striations)
-    final int numContours = math.max(10, p.barbs);
-    final Path contourBatch = Path();
-
-    for (int k = 0; k < numContours; k++) {
-      final double uNorm = k / (numContours - 1).toDouble();
-      final double linePos = 0.06 + 0.88 * uNorm;
-
-      // موج لغزان کانتوری روی محور زمان
-      final double waveShift = math.sin(linePos * 6.0 - t * 2.2 * p.swayRate + p.phase) * 0.045;
-      final double sampleS = (linePos + waveShift).clamp(0.0, 1.0);
-
-      final int spineIdx = (sampleS * (spine.length - 1)).round().clamp(0, spine.length - 1);
-      final Offset pt = spine[spineIdx];
-      final Offset nn = normals[spineIdx];
-
-      final double currentWidth = math.max(
-        1.2,
-        radius * p.shaft * _ribbonTaper(sampleS) * (1.0 + 0.20 * pu),
-      );
-
-      final Offset pStart = pt - nn * (currentWidth * 0.96);
-      final Offset pEnd = pt + nn * (currentWidth * 0.96);
-      final Offset pDome = pt + nn * (currentWidth * 0.18 * p.sweep);
-
-      contourBatch
-        ..moveTo(pStart.dx, pStart.dy)
-        ..quadraticBezierTo(pDome.dx, pDome.dy, pEnd.dx, pEnd.dy);
+    // ۳. خط براق و درخشان ابریشمی روی ستون فقرات موج (Luminous Silk Crest Line)
+    final Path spinePath = Path()..moveTo(centerSpine.first.dx, centerSpine.first.dy);
+    for (int i = 1; i < centerSpine.length; i++) {
+      spinePath.lineTo(centerSpine[i].dx, centerSpine[i].dy);
     }
 
-    final double contourWidth = math.max(0.85, radius * 0.020);
-
-    // هاله نرم خطوط تراز
+    // هاله نرم خط درخشان
     canvas.drawPath(
-      contourBatch,
+      spinePath,
       Paint()
         ..isAntiAlias = true
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = contourWidth * 2.2
-        ..shader = ui.Gradient.linear(
-          lft.first,
-          tip,
-          ramp.map((c) => c.withValues(alpha: 0.35 * front * gain)).toList(),
-          rampStops,
+        ..strokeWidth = math.max(1.8, radius * 0.038)
+        ..shader = ui.Gradient.sweep(
+          center + shift * depth,
+          ramp.map((c) => c.withValues(alpha: (0.60 * front * gain).clamp(0.0, 0.85))).toList(),
+          null,
+          TileMode.clamp,
+          rot,
+          rot + math.pi * 2.0,
         )
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(0.5, radius * 0.018)),
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(0.8, radius * 0.025)),
     );
 
-    // خط تیز هولوگرافیک تراز
+    // خط تیز سفید هولوگرافیک روی ابریشم
     canvas.drawPath(
-      contourBatch,
+      spinePath,
       Paint()
         ..isAntiAlias = true
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = contourWidth
+        ..strokeWidth = math.max(0.85, radius * 0.016)
         ..color = Colors.white.withValues(
-          alpha: ((0.75 + 0.20 * e + 0.20 * pu + 0.30 * wk) * front * gain).clamp(0.0, 0.98),
+          alpha: ((0.75 + 0.20 * e + 0.20 * pu + 0.25 * wk) * front * gain).clamp(0.0, 0.98),
         ),
     );
   }
 
-  // ۵. کانون نورانی مرکز کره
-  final Offset heart = center + parallax * (radius * 0.05);
-  final double hr = radius * (0.38 + 0.08 * e + 0.08 * pu);
+  // ── کانون درخشان نور کوانتومی در مرکز ورتکس (Glowing Singularity Core) ──
+  final Offset heart = center + shift;
+  final double hr = radius * (0.32 + 0.08 * e + 0.08 * pu);
+
+  // هاله بیرونی کانون
   canvas.drawCircle(
     heart,
-    hr,
+    hr * 1.4,
     Paint()
       ..isAntiAlias = true
       ..shader = ui.Gradient.radial(
         heart,
-        hr,
+        hr * 1.4,
         <Color>[
-          Colors.white.withValues(alpha: (0.45 + 0.20 * e + 0.20 * pu) * gain),
-          const Color(0xFFFF007A).withValues(alpha: (0.28 + 0.14 * e) * gain),
-          const Color(0xFF00F5D4).withValues(alpha: 0.15 * gain),
+          const Color(0xFFFF007A).withValues(alpha: (0.40 + 0.20 * e) * gain),
+          const Color(0xFF00F5D4).withValues(alpha: (0.25 + 0.12 * e) * gain),
+          const Color(0xFF7209B7).withValues(alpha: 0.10 * gain),
           Colors.transparent,
         ],
-        const <double>[0.0, 0.35, 0.70, 1.0],
+        const <double>[0.0, 0.40, 0.70, 1.0],
+      )
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.08),
+  );
+
+  // هسته درخشان سفید مرکزی
+  canvas.drawCircle(
+    heart,
+    hr * 0.65,
+    Paint()
+      ..isAntiAlias = true
+      ..shader = ui.Gradient.radial(
+        heart,
+        hr * 0.65,
+        <Color>[
+          Colors.white.withValues(alpha: (0.85 + 0.15 * e + 0.15 * pu) * gain),
+          const Color(0xFFFF9E00).withValues(alpha: (0.50 + 0.20 * e) * gain),
+          Colors.transparent,
+        ],
+        const <double>[0.0, 0.50, 1.0],
       ),
   );
 }
 
-/// لایهٔ عمق و اتمسفر پشت روبان‌ها
+/// بستر شفق قطبی مخملی ساتین در پس‌زمینه (Frosted Velvet Aurora Bed)
 void ritmoPaintPillow({
   required Canvas canvas,
   required Offset center,
@@ -382,43 +325,67 @@ void ritmoPaintPillow({
   final double e = energy.clamp(0.0, 1.0);
   final Offset shift = parallax * (radius * 0.06);
 
-  // هالهٔ اتمسفریک فیروزه‌ای در بالا-چپ
-  final Offset cool = center - Offset(radius * 0.30, radius * 0.32) + shift;
+  // چرخش آرام بستر شفق قطبی چندرنگ
+  final double a0 = t * 0.25;
+
+  // بستر ابری شفق قطبی با محوشدگی عمیق مخملی (Velvet Satin Aurora Bloom)
   canvas.drawCircle(
-    cool,
-    radius * 0.95,
+    center + shift,
+    radius * 0.98,
     Paint()
       ..isAntiAlias = true
-      ..shader = ui.Gradient.radial(
-        cool,
-        radius * 0.95,
+      ..shader = ui.Gradient.sweep(
+        center + shift,
         <Color>[
-          const Color(0xFF00F5D4).withValues(alpha: (0.25 + 0.10 * e) * gain),
-          const Color(0xFF7209B7).withValues(alpha: 0.10 * gain),
-          Colors.transparent,
+          const Color(0xFFFF007A).withValues(alpha: (0.35 + 0.10 * e) * gain), // سرخابی
+          const Color(0xFF00F5D4).withValues(alpha: (0.30 + 0.10 * e) * gain), // فیروزه‌ای
+          const Color(0xFF7209B7).withValues(alpha: (0.28 + 0.08 * e) * gain), // بنفش
+          const Color(0xFFFFB703).withValues(alpha: (0.32 + 0.10 * e) * gain), // هلویی/طلایی
+          const Color(0xFFFF007A).withValues(alpha: (0.35 + 0.10 * e) * gain),
         ],
-        const <double>[0.0, 0.50, 1.0],
+        const <double>[0.0, 0.25, 0.50, 0.75, 1.0],
+        TileMode.repeated,
+        a0,
+        a0 + math.pi * 2.0,
       )
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.15),
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.24),
   );
 
-  // هالهٔ گرم مرجانی-سرخابی در پایین-راست
-  final Offset warm = center + Offset(radius * 0.28, radius * 0.28) + shift;
+  // نور کاستیک فیروزه‌ای-یاسی در قطاع بالا-چپ
+  final Offset upperLight = center - Offset(radius * 0.26, radius * 0.28) + shift;
   canvas.drawCircle(
-    warm,
-    radius * 1.00,
+    upperLight,
+    radius * 0.75,
     Paint()
       ..isAntiAlias = true
       ..shader = ui.Gradient.radial(
-        warm,
-        radius * 1.00,
+        upperLight,
+        radius * 0.75,
         <Color>[
-          const Color(0xFFFF007A).withValues(alpha: (0.30 + 0.12 * e) * gain),
-          const Color(0xFF3A0CA3).withValues(alpha: 0.18 * gain),
+          const Color(0xFF00F5D4).withValues(alpha: (0.22 + 0.08 * e) * gain),
           Colors.transparent,
         ],
-        const <double>[0.0, 0.55, 1.0],
+        const <double>[0.0, 1.0],
       )
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.18),
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.16),
+  );
+
+  // سایهٔ نرم کروی در پایین-راست برای تفکیک عمق سه‌بعدی
+  final Offset deepShadow = center + Offset(radius * 0.32, radius * 0.36) + shift;
+  canvas.drawCircle(
+    deepShadow,
+    radius * 0.88,
+    Paint()
+      ..isAntiAlias = true
+      ..shader = ui.Gradient.radial(
+        deepShadow,
+        radius * 0.88,
+        <Color>[
+          const Color(0xFF06020E).withValues(alpha: 0.40 * gain),
+          Colors.transparent,
+        ],
+        const <double>[0.0, 1.0],
+      )
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.20),
   );
 }

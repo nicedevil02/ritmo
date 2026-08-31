@@ -1,9 +1,10 @@
 // =============================================================================
-//  Ritmo Orb Skin — لایه‌های نورِ پوسته
+//  Ritmo Orb Skin — لایه‌های نورِ پوسته و اپتیک شیشهٔ کریستالی (v4)
 //
-//  • سایهٔ داخلی و زیرجریانِ بنفش ⇒ حسِ حجم
-//  • تاجِ نور روی برآمدگی‌ها ⇒ بدون این، ورم آمدنِ پوسته دیده نمی‌شود
-//  • برقِ سطح که با tilt جابه‌جا می‌شود و لبهٔ نورِ چرخان
+//  • سایهٔ داخلی و زیرجریانِ ارغوانی ⇒ حسِ حجم سه‌بعدی
+//  • تاجِ نور روی برآمدگی‌ها ⇒ نمایش دینامیک تغییر فرم پوسته
+//  • کمانِ هلالی بازتاب نور (Curved Specular Crescent Glare) ⇒ اپتیک شیشهٔ صیقلی
+//  • لبهٔ فرنل (Fresnel Caustic Rim) با گرادیان زاویه‌ای چرخان
 // =============================================================================
 
 import 'dart:math' as math;
@@ -33,50 +34,51 @@ void ritmoPaintShellSkin({
   final double e = energy.clamp(0.0, 1.0);
   final double gain = intensity.clamp(0.4, 1.4);
   final Color shadeColor =
-      isDark ? const Color(0xFF2A2F3D) : const Color(0xFF6B5F74);
+      isDark ? const Color(0xFF242834) : const Color(0xFF63566C);
 
   canvas.save();
   canvas.clipPath(shell);
 
-  // سایهٔ داخلیِ پایین-راست
-  final Offset shadeAt = center + Offset(radius * 0.42, radius * 0.52);
+  // 1. سایهٔ داخلیِ کروی (پایین-راست)
+  final Offset shadeAt = center + Offset(radius * 0.40, radius * 0.50);
   canvas.drawCircle(
     shadeAt,
-    radius * 1.05,
+    radius * 1.08,
     Paint()
       ..isAntiAlias = true
       ..shader = ui.Gradient.radial(
         shadeAt,
-        radius * 1.05,
+        radius * 1.08,
         <Color>[
-          shadeColor.withValues(alpha: 0.20 * gain),
+          shadeColor.withValues(alpha: 0.22 * gain),
           shadeColor.withValues(alpha: 0.0),
         ],
         const <double>[0.0, 1.0],
       )
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.20),
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.22),
   );
 
-  // زیرجریانِ بنفشِ پایین
-  final Offset violetAt = center + Offset(radius * 0.16, radius * 0.62);
+  // 2. زیرجریانِ ارغوانی و فیروزه‌ای پایین (Subsurface Chromatic Scattering)
+  final Offset violetAt = center + Offset(radius * 0.14, radius * 0.60);
   canvas.drawCircle(
     violetAt,
-    radius * 0.78,
+    radius * 0.82,
     Paint()
       ..isAntiAlias = true
       ..shader = ui.Gradient.radial(
         violetAt,
-        radius * 0.78,
+        radius * 0.82,
         <Color>[
-          palette.violet.withValues(alpha: (0.16 + 0.06 * e) * gain),
+          palette.violet.withValues(alpha: (0.18 + 0.08 * e) * gain),
+          palette.aura.withValues(alpha: (0.08 * gain)),
           palette.violet.withValues(alpha: 0.0),
         ],
-        const <double>[0.0, 1.0],
+        const <double>[0.0, 0.45, 1.0],
       )
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.24),
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.26),
   );
 
-  // تاجِ نورِ برآمدگی‌ها
+  // 3. تاجِ نورِ برآمدگی‌های پوسته
   for (int i = 0; i < bulges.length; i++) {
     final RitmoShellBulge b = bulges[i];
     if (b.amount <= 0.02) continue;
@@ -87,8 +89,8 @@ void ritmoPaintShellSkin({
       radius: radius,
       bulge: b,
     );
-    final double rr = math.max(1.0, radius * (0.30 + 0.24 * b.width));
-    final Offset glowAt = crest - dir * (rr * 0.52);
+    final double rr = math.max(1.0, radius * (0.32 + 0.26 * b.width));
+    final Offset glowAt = crest - dir * (rr * 0.50);
 
     canvas.drawCircle(
       glowAt,
@@ -99,7 +101,7 @@ void ritmoPaintShellSkin({
           glowAt,
           rr,
           <Color>[
-            palette.milk.withValues(alpha: 0.26 * b.amount * gain),
+            palette.milk.withValues(alpha: 0.28 * b.amount * gain),
             palette.milk.withValues(alpha: 0.0),
           ],
           const <double>[0.0, 1.0],
@@ -108,64 +110,107 @@ void ritmoPaintShellSkin({
     );
 
     canvas.drawCircle(
-      crest - dir * (radius * 0.055),
+      crest - dir * (radius * 0.050),
       math.max(0.8, radius * 0.10 * (0.60 + b.amount)),
       Paint()
         ..isAntiAlias = true
-        ..color = Colors.white.withValues(alpha: 0.22 * b.amount)
+        ..color = Colors.white.withValues(alpha: 0.25 * b.amount)
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.06),
     );
   }
 
-  // برقِ سطح
-  final Offset sheen =
-      center + Offset(-radius * 0.32, -radius * 0.40) - tilt * (radius * 0.13);
-  canvas.save();
-  canvas.translate(sheen.dx, sheen.dy);
-  canvas.rotate(-0.62 + tilt.dx * 0.10);
-  canvas.translate(-sheen.dx, -sheen.dy);
-  canvas.drawOval(
-    Rect.fromCenter(
-      center: sheen,
-      width: radius * 0.92,
-      height: radius * 0.50,
-    ),
+  // 4. کمانِ هلالی بازتاب نور شیشه (Curved Specular Crescent Glare)
+  final Offset glareAnchor = center - tilt * (radius * 0.12);
+  final double glareRadius = radius * 0.78;
+  final Rect glareRect = Rect.fromCircle(center: glareAnchor, radius: glareRadius);
+
+  // Crescent sweep curve in the upper-left quadrant (-140° to -40°)
+  const double startAngle = -math.pi * 0.88;
+  const double sweepLen = math.pi * 0.62;
+
+  final Path crescentPath = Path()
+    ..addArc(glareRect, startAngle, sweepLen);
+
+  // Soft ambient glare glow
+  canvas.drawPath(
+    crescentPath,
     Paint()
       ..isAntiAlias = true
-      ..color = Colors.white
-          .withValues(alpha: ((0.32 + 0.10 * e) * gain).clamp(0.0, 0.55))
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.15),
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = math.max(2.0, radius * 0.14)
+      ..shader = ui.Gradient.sweep(
+        glareAnchor,
+        <Color>[
+          Colors.white.withValues(alpha: 0.0),
+          Colors.white.withValues(alpha: ((0.32 + 0.12 * e) * gain).clamp(0.0, 0.60)),
+          Colors.white.withValues(alpha: ((0.55 + 0.18 * e) * gain).clamp(0.0, 0.85)),
+          Colors.white.withValues(alpha: ((0.20 + 0.08 * e) * gain).clamp(0.0, 0.45)),
+          Colors.white.withValues(alpha: 0.0),
+        ],
+        const <double>[0.0, 0.25, 0.50, 0.75, 1.0],
+        TileMode.clamp,
+        startAngle,
+        startAngle + sweepLen,
+      )
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(1.0, radius * 0.08)),
   );
-  canvas.restore();
 
+  // Crisp fine specular line
+  canvas.drawPath(
+    crescentPath,
+    Paint()
+      ..isAntiAlias = true
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = math.max(0.8, radius * 0.028)
+      ..shader = ui.Gradient.sweep(
+        glareAnchor,
+        <Color>[
+          Colors.white.withValues(alpha: 0.0),
+          Colors.white.withValues(alpha: ((0.60 + 0.20 * e) * gain).clamp(0.0, 0.95)),
+          Colors.white.withValues(alpha: ((0.90 + 0.10 * e) * gain).clamp(0.0, 1.0)),
+          Colors.white.withValues(alpha: ((0.40 + 0.10 * e) * gain).clamp(0.0, 0.70)),
+          Colors.white.withValues(alpha: 0.0),
+        ],
+        const <double>[0.0, 0.25, 0.50, 0.75, 1.0],
+        TileMode.clamp,
+        startAngle,
+        startAngle + sweepLen,
+      ),
+  );
+
+  // Secondary tiny micro-point glare
+  final Offset microSpot =
+      glareAnchor + Offset(-radius * 0.42, -radius * 0.45);
   canvas.drawCircle(
-    sheen + Offset(radius * 0.10, -radius * 0.02),
-    math.max(0.7, radius * 0.075),
+    microSpot,
+    math.max(0.8, radius * 0.065),
     Paint()
       ..isAntiAlias = true
-      ..color = Colors.white.withValues(alpha: (0.52 * gain).clamp(0.0, 0.75))
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.05),
+      ..color = Colors.white.withValues(alpha: (0.75 * gain).clamp(0.0, 0.95))
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(0.5, radius * 0.035)),
   );
 
   canvas.restore();
 
-  // لبهٔ نور: بیرون از clip تا تیز بماند
-  final double a0 = -math.pi / 2.0 + 0.30 * math.sin(t * 0.22);
+  // 5. لبهٔ فرنل دور شیشه (Fresnel Edge Caustic Rim): بیرون از clip تا بسیار شفاف و کریستالی بماند
+  final double a0 = -math.pi / 2.0 + 0.28 * math.sin(t * 0.20);
   canvas.drawPath(
     shell,
     Paint()
       ..isAntiAlias = true
       ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(0.7, radius * 0.045)
+      ..strokeWidth = math.max(0.85, radius * 0.048)
       ..shader = ui.Gradient.sweep(
         center,
         <Color>[
-          Colors.white.withValues(alpha: 0.90),
-          palette.milk.withValues(alpha: 0.42),
-          palette.aura.withValues(alpha: 0.30),
-          Colors.white.withValues(alpha: 0.12),
-          palette.milk.withValues(alpha: 0.40),
-          Colors.white.withValues(alpha: 0.90),
+          Colors.white.withValues(alpha: 0.95),
+          palette.milk.withValues(alpha: 0.45),
+          palette.aura.withValues(alpha: 0.35),
+          Colors.white.withValues(alpha: 0.15),
+          palette.milk.withValues(alpha: 0.45),
+          Colors.white.withValues(alpha: 0.95),
         ],
         const <double>[0.0, 0.18, 0.42, 0.62, 0.84, 1.0],
         TileMode.repeated,
@@ -176,13 +221,15 @@ void ritmoPaintShellSkin({
 
   if (!detailed) return;
 
+  // Soft atmospheric rim blur layer
   canvas.drawPath(
     shell,
     Paint()
       ..isAntiAlias = true
       ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(0.5, radius * 0.016)
-      ..color = Colors.white.withValues(alpha: 0.28)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.020),
+      ..strokeWidth = math.max(0.6, radius * 0.020)
+      ..color = Colors.white.withValues(alpha: 0.32)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.022),
   );
 }
+

@@ -1,20 +1,11 @@
 // =============================================================================
-//  Ritmo Orb Feather v3 - real vanes, budgeted for a 24px radius.
+//  Ritmo Orb Ribbon & Topographic Core (v4)
 //
-//  Why v1 and v2 read as flat colour: they were designed for a big canvas, but
-//  the orb renders at radius ~19-24px. At that size:
-//    * a `radius * 0.34` sheet is an 8px blob (17% of the diameter)
-//    * a `radius * 0.14` blur sigma is ~3px of mush on an 8px shape
-//    * the old caustic pool was `radius * 0.62` at alpha 0.4 - a milk cloud
-//      covering 40% of the marble, drowning every structure under it
-//    * barbs were 2.6px long and 0.55px wide - literally invisible
-//
-//  v3 inverts the budget:
-//    * the sheet is thin (radius * 0.05-0.09); the BARBS carry the volume
-//    * barbs are radius * 0.19-0.44 long, >= 0.85px wide, and never blurred
-//    * the ground is genuinely dark so light structures pop off it
-//    * every vane gets a dark trailing edge so neighbours cannot merge
-//    * barb count and stroke weight adapt to the real pixel budget
+//  Redesigned to render an authentic 3D Iridescent Liquid Crystal Marble:
+//    * Volumetric wavy ribbons with organic cubic bezier curvature
+//    * Parallel topographic contour striations (خطوط تراز کانتوری موازی و زنده)
+//    * Smooth isometric wave phase flow and audio/AI reactive dynamics
+//    * Pixel-budget adaptive rendering (60/120 FPS latency-free Canvas math)
 // =============================================================================
 
 import 'dart:math' as math;
@@ -26,7 +17,7 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart'
 
 enum RitmoPlumeTone { milk, blush, coral, ember, violet }
 
-/// One quill: a thin pulled sheet plus the barbs branching off it.
+/// One volumetric ribbon wave inside the crystal marble.
 @immutable
 class RitmoPlume {
   const RitmoPlume({
@@ -45,22 +36,22 @@ class RitmoPlume {
 
   final RitmoPlumeTone tone;
 
-  /// Angle the quill is rooted at.
+  /// Angle the ribbon root is rooted at.
   final double anchor;
 
   /// How far toward the rim the spine reaches (fraction of radius).
   final double reach;
 
-  /// Signed curvature of the spine.
+  /// Signed curvature / bow of the spine.
   final double bow;
 
-  /// Barb sweep-back, in radians past the perpendicular.
+  /// Contour sweep-back angle.
   final double sweep;
 
-  /// 1 = near the surface (bright, crisp), 0 = deep (dim).
+  /// 1 = near the surface (bright, crisp), 0 = deep (dim, volumetric).
   final double depth;
 
-  /// Half-width of the sheet at its widest, as a fraction of radius. Small.
+  /// Half-width of the ribbon band at its widest (fraction of radius).
   final double shaft;
 
   /// Stroke weight multiplier.
@@ -69,17 +60,17 @@ class RitmoPlume {
   final double phase;
   final double swayRate;
 
-  /// Barbs per side at full detail; scaled down by the pixel budget.
+  /// Number of topographic contour striations across the ribbon.
   final int barbs;
 }
 
 // tone, anchor, reach, bow, sweep, depth, shaft, weight, prio
 const List<List<double>> _kLayout = <List<double>>[
-  <double>[0, -1.28, 0.94, 0.55, 0.92, 0.96, 0.070, 1.00, 1],
-  <double>[2, 1.05, 0.88, -0.62, 0.86, 0.74, 0.085, 0.94, 2],
-  <double>[4, 2.72, 0.80, 0.50, 0.78, 0.34, 0.060, 0.82, 3],
-  <double>[3, -2.62, 0.72, -0.70, 0.98, 0.16, 0.055, 0.72, 4],
-  <double>[1, 0.10, 0.62, 0.40, 0.70, 0.52, 0.048, 0.62, 5],
+  <double>[0, -1.22, 0.92, 0.58, 0.88, 0.96, 0.190, 1.00, 1], // Main luminous white/milk ribbon
+  <double>[2, 0.95, 0.86, -0.65, 0.82, 0.78, 0.220, 0.95, 2], // Primary coral wave
+  <double>[4, 2.65, 0.82, 0.52, 0.76, 0.42, 0.175, 0.85, 3], // Lavender/violet deep ribbon
+  <double>[3, -2.55, 0.74, -0.72, 0.92, 0.24, 0.160, 0.75, 4], // Ember/gold accent ribbon
+  <double>[1, 0.15, 0.68, 0.44, 0.68, 0.58, 0.145, 0.65, 5], // Secondary blush wave
 ];
 
 List<RitmoPlume> ritmoBuildPlumes({
@@ -105,14 +96,14 @@ List<RitmoPlume> ritmoBuildPlumes({
         shaft: row[6],
         weight: weight,
         phase: rng.nextDouble() * math.pi * 2.0,
-        swayRate: 0.46 + rng.nextDouble() * 0.52,
-        barbs: detailed ? 14 + (weight * 9.0).round() : 9,
+        swayRate: 0.42 + rng.nextDouble() * 0.48,
+        barbs: detailed ? 14 + (weight * 10.0).round() : 8,
       ),
     );
   }
 
-  // Deepest first, so the front vanes land on top of them.
-  out.sort((RitmoPlume a, RitmoPlume b) => a.depth.compareTo(b.depth));
+  // Deepest first, so the front ribbons gracefully layer on top.
+  out.sort((a, b) => a.depth.compareTo(b.depth));
   return out;
 }
 
@@ -131,31 +122,34 @@ Color _toneColor(RitmoPlumeTone tone, RitmoOrbPalette p) {
   }
 }
 
-Offset _bez(Offset a, Offset c, Offset b, double s) {
+Offset _bez(Offset a, Offset c1, Offset c2, Offset b, double s) {
   final double u = 1.0 - s;
+  final double tt = s * s;
+  final double uu = u * u;
+  final double uuu = uu * u;
+  final double ttt = tt * s;
+
   return Offset(
-    u * u * a.dx + 2.0 * u * s * c.dx + s * s * b.dx,
-    u * u * a.dy + 2.0 * u * s * c.dy + s * s * b.dy,
+    uuu * a.dx + 3 * uu * s * c1.dx + 3 * u * tt * c2.dx + ttt * b.dx,
+    uuu * a.dy + 3 * uu * s * c1.dy + 3 * u * tt * c2.dy + ttt * b.dy,
   );
 }
 
-Offset _bezTan(Offset a, Offset c, Offset b, double s) {
+Offset _bezTan(Offset a, Offset c1, Offset c2, Offset b, double s) {
   final double u = 1.0 - s;
   return Offset(
-    2.0 * (u * (c.dx - a.dx) + s * (b.dx - c.dx)),
-    2.0 * (u * (c.dy - a.dy) + s * (b.dy - c.dy)),
+    3 * u * u * (c1.dx - a.dx) + 6 * u * s * (c2.dx - c1.dx) + 3 * s * s * (b.dx - c2.dx),
+    3 * u * u * (c1.dy - a.dy) + 6 * u * s * (c2.dy - c1.dy) + 3 * s * s * (b.dy - c2.dy),
   );
 }
 
-/// Feather taper: nothing at the root, fattest past the middle, nothing at the
-/// tip. `bias` slides where the fat part sits.
-double _hump(double s, double bias, double power) {
-  final double x = math.pow(s.clamp(0.0, 1.0), bias).toDouble();
-  final double v = math.sin(x * math.pi);
-  return math.pow(v < 0.0 ? 0.0 : v, power).toDouble();
+/// Smooth bell-curve taper for volumetric ribbons.
+double _ribbonTaper(double s) {
+  final double v = math.sin(s.clamp(0.0, 1.0) * math.pi);
+  return math.pow(v < 0.0 ? 0.0 : v, 0.72).toDouble();
 }
 
-/// The vanes inside the marble.
+/// The topographic fluid ribbons inside the living crystal marble.
 void ritmoPaintPlumes({
   required Canvas canvas,
   required Offset center,
@@ -180,190 +174,210 @@ void ritmoPaintPlumes({
   final double pu = pulse.clamp(0.0, 1.0);
   final double wk = wink.clamp(0.0, 1.0);
 
-  // Everything below is sized against the real pixel budget, not a guess.
   final bool tiny = radius < 26.0;
-  final double budget = tiny ? 0.42 : (radius < 46.0 ? 0.66 : 1.0);
-  final double boost = tiny ? 1.30 : (radius < 46.0 ? 1.12 : 1.0);
-  final Color ink =
-      Color.lerp(palette.violet, const Color(0xFF17021F), 0.74) ??
+  final double budget = tiny ? 0.45 : (radius < 46.0 ? 0.75 : 1.0);
+  final double boost = tiny ? 1.25 : (radius < 46.0 ? 1.10 : 1.0);
+
+  final Color deepShadow =
+      Color.lerp(palette.violet, const Color(0xFF14021C), 0.82) ??
           palette.violet;
 
   for (final RitmoPlume p in plumes) {
     final double depth = p.depth.clamp(0.0, 1.0);
-    final double front = 0.38 + 0.62 * depth;
+    final double front = 0.40 + 0.60 * depth;
     final double sway = math.sin(t * p.swayRate + p.phase);
+    final double secondarySway = math.cos(t * p.swayRate * 0.75 + p.phase * 1.3);
 
-    final double rootA = p.anchor + swirl * (0.60 + 0.40 * depth) + sway * 0.16;
+    final double rootA = p.anchor + swirl * (0.50 + 0.50 * depth) + sway * 0.14;
     final Offset u = Offset(math.cos(rootA), math.sin(rootA));
     final Offset nrm = Offset(-u.dy, u.dx);
-    final Offset par = parallax * (radius * 0.085 * (0.30 + 0.70 * depth));
+    final Offset par = parallax * (radius * 0.10 * (0.25 + 0.75 * depth));
 
-    final Offset root = center + u * (radius * 0.075) + par;
-    final double far = radius * p.reach * (1.0 + 0.05 * pu + 0.02 * sway);
+    final Offset root = center + u * (radius * 0.06) + par;
+    final double far = radius * p.reach * (1.0 + 0.06 * pu + 0.03 * sway);
     final Offset tip = center + u * far + par;
-    final Offset ctrl = center +
-        u * (far * 0.52) +
-        nrm * (radius * 0.42 * p.bow * (1.0 + 0.18 * sway)) +
+
+    // Dual control points for genuine S-curve organic fluid motion
+    final Offset ctrl1 = center +
+        u * (far * 0.35) +
+        nrm * (radius * 0.38 * p.bow * (1.0 + 0.15 * sway)) +
+        par;
+    final Offset ctrl2 = center +
+        u * (far * 0.72) -
+        nrm * (radius * 0.22 * p.bow * (1.0 + 0.20 * secondarySway)) +
         par;
 
     final Color tone = _toneColor(p.tone, palette);
-    final Color lit =
-        Color.lerp(tone, palette.milk, 0.28 + 0.36 * depth) ?? tone;
+    final Color litColor =
+        Color.lerp(tone, palette.milk, 0.40 + 0.45 * depth) ?? tone;
 
-    // ---- the thin pulled sheet (the rachis) -------------------------------
+    // 1. Generate smooth ribbon geometry points
+    const int segments = 16;
     final List<Offset> lft = <Offset>[];
     final List<Offset> rgt = <Offset>[];
-    for (int i = 0; i <= 12; i++) {
-      final double s = i / 12.0;
-      final Offset a = _bez(root, ctrl, tip, s);
-      final Offset tg = _bezTan(root, ctrl, tip, s);
+    final List<Offset> spine = <Offset>[];
+    final List<Offset> normals = <Offset>[];
+
+    for (int i = 0; i <= segments; i++) {
+      final double s = i / segments.toDouble();
+      final Offset pt = _bez(root, ctrl1, ctrl2, tip, s);
+      final Offset tg = _bezTan(root, ctrl1, ctrl2, tip, s);
       final double tl = tg.distance;
       if (tl < 0.0001) continue;
+
       final Offset nn = Offset(-tg.dy / tl, tg.dx / tl);
-      final double half = math.max(
-        0.40,
-        radius * p.shaft * _hump(s, 0.70, 0.95) * (1.0 + 0.32 * pu),
+      final double halfWidth = math.max(
+        0.8,
+        radius * p.shaft * _ribbonTaper(s) * (1.0 + 0.28 * pu),
       );
-      lft.add(a + nn * half);
-      rgt.add(a - nn * half);
+
+      spine.add(pt);
+      normals.add(nn);
+      lft.add(pt + nn * halfWidth);
+      rgt.add(pt - nn * halfWidth);
     }
 
-    if (lft.length > 2) {
-      final List<Offset> ring = <Offset>[...lft];
-      for (int i = rgt.length - 1; i >= 0; i--) {
-        ring.add(rgt[i]);
-      }
+    if (lft.length < 3) continue;
 
-      canvas.drawPath(
-        Path()..addPolygon(ring, true),
-        Paint()
-          ..isAntiAlias = true
-          ..shader = ui.Gradient.linear(
-            lft.first,
-            lft.last,
-            <Color>[
-              tone.withValues(alpha: 0.0),
-              lit.withValues(
-                alpha: ((0.22 + 0.16 * e) * front * gain).clamp(0.0, 0.46),
-              ),
-              tone.withValues(alpha: (0.10 * front * gain).clamp(0.0, 0.22)),
-            ],
-            const <double>[0.0, 0.46, 1.0],
-          ),
-      );
-
-      // Dark trailing edge. This single stroke is what makes the eye read
-      // separate structures instead of one smear.
-      canvas.drawPath(
-        Path()..addPolygon(rgt, false),
-        Paint()
-          ..isAntiAlias = true
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..strokeWidth = math.max(0.55, radius * 0.014)
-          ..color =
-              ink.withValues(alpha: (0.34 * front * gain).clamp(0.0, 0.50)),
-      );
-
-      // Crisp lit edge. Absolutely no blur.
-      canvas.drawPath(
-        Path()..addPolygon(lft, false),
-        Paint()
-          ..isAntiAlias = true
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..strokeWidth = math.max(0.75, radius * 0.020) * boost
-          ..shader = ui.Gradient.linear(
-            lft.first,
-            lft.last,
-            <Color>[
-              palette.milk.withValues(alpha: 0.0),
-              palette.milk.withValues(
-                alpha: ((0.52 + 0.18 * e) * front * gain + 0.16 * pu)
-                    .clamp(0.0, 0.92),
-              ),
-              (Color.lerp(palette.milk, tone, 0.60) ?? tone).withValues(
-                alpha: (0.26 * front * gain).clamp(0.0, 0.48),
-              ),
-            ],
-            const <double>[0.0, 0.44, 1.0],
-          ),
-      );
+    // 2. Draw Volumetric Iridescent Ribbon Body
+    final Path ribbonBody = Path()..moveTo(lft.first.dx, lft.first.dy);
+    for (int i = 1; i < lft.length; i++) {
+      ribbonBody.lineTo(lft[i].dx, lft[i].dy);
     }
-
-    // ---- the barbs: this is what actually reads as a feather --------------
-    if (!detailed && depth < 0.50) continue;
-
-    final int n = math.max(5, (p.barbs * budget).round());
-    final Path vane = Path();
-
-    for (int i = 0; i < n; i++) {
-      final double s = 0.10 + 0.86 * (i / (n - 1));
-      final Offset a = _bez(root, ctrl, tip, s);
-      final Offset tg = _bezTan(root, ctrl, tip, s);
-      final double tl = tg.distance;
-      if (tl < 0.0001) continue;
-      final Offset d = tg / tl;
-      final double base = math.atan2(d.dy, d.dx);
-
-      final double len = radius *
-          (0.19 + 0.25 * p.reach) *
-          _hump(s, 0.72, 0.85) *
-          (1.0 + 0.24 * pu);
-      if (len < 0.9) continue;
-
-      // A wave travelling out along the spine, so the vane is alive.
-      final double flex =
-          math.sin(s * 3.4 - t * 1.25 * p.swayRate + p.phase) * 0.13;
-      final double sweep =
-          p.sweep * (0.60 + 0.36 * s) * (1.0 - 0.26 * pu) + flex;
-
-      for (int k = -1; k <= 1; k += 2) {
-        final double ang = base + k * (math.pi * 0.5 + sweep);
-        final Offset dd = Offset(math.cos(ang), math.sin(ang));
-        final Offset end = a + dd * len;
-        final Offset cc = a + dd * (len * 0.50) + d * (len * 0.30);
-        vane
-          ..moveTo(a.dx, a.dy)
-          ..quadraticBezierTo(cc.dx, cc.dy, end.dx, end.dy);
-      }
+    for (int i = rgt.length - 1; i >= 0; i--) {
+      ribbonBody.lineTo(rgt[i].dx, rgt[i].dy);
     }
+    ribbonBody.close();
 
-    final double w = math.max(0.85, radius * 0.026 * p.weight) * boost;
-
-    // One soft pass for body, with a sigma small enough to survive.
+    // Soft volumetric underbody glow
     canvas.drawPath(
-      vane,
+      ribbonBody,
       Paint()
         ..isAntiAlias = true
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = w * 2.1
-        ..color = tone.withValues(
-          alpha: ((0.06 + 0.08 * e) * front * gain).clamp(0.0, 0.22),
-        )
-        ..maskFilter =
-            MaskFilter.blur(BlurStyle.normal, math.max(0.6, radius * 0.018)),
+        ..shader = ui.Gradient.linear(
+          lft.first,
+          tip,
+          <Color>[
+            tone.withValues(alpha: 0.0),
+            tone.withValues(
+              alpha: ((0.28 + 0.20 * e) * front * gain).clamp(0.0, 0.65),
+            ),
+            litColor.withValues(
+              alpha: ((0.42 + 0.25 * e + 0.15 * pu) * front * gain).clamp(0.0, 0.85),
+            ),
+            palette.violet.withValues(
+              alpha: ((0.18 + 0.12 * e) * front * gain).clamp(0.0, 0.45),
+            ),
+          ],
+          const <double>[0.0, 0.35, 0.72, 1.0],
+        ),
     );
 
-    // The hairline itself: crisp, bright, unblurred.
+    // Deep edge shadow line for 3D separation
     canvas.drawPath(
-      vane,
+      Path()..addPolygon(rgt, false),
       Paint()
         ..isAntiAlias = true
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = w
-        ..color = lit.withValues(
-          alpha:
-              ((0.30 + 0.28 * e + 0.18 * pu) * front * gain).clamp(0.0, 0.80),
+        ..strokeWidth = math.max(0.65, radius * 0.016)
+        ..color = deepShadow.withValues(
+          alpha: (0.35 * front * gain).clamp(0.0, 0.55),
+        ),
+    );
+
+    // Glowing bright leading edge
+    canvas.drawPath(
+      Path()..addPolygon(lft, false),
+      Paint()
+        ..isAntiAlias = true
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = math.max(0.85, radius * 0.024) * boost
+        ..shader = ui.Gradient.linear(
+          lft.first,
+          lft.last,
+          <Color>[
+            palette.milk.withValues(alpha: 0.0),
+            palette.milk.withValues(
+              alpha: ((0.65 + 0.20 * e + 0.20 * pu) * front * gain).clamp(0.0, 0.95),
+            ),
+            litColor.withValues(
+              alpha: (0.35 * front * gain).clamp(0.0, 0.60),
+            ),
+          ],
+          const <double>[0.0, 0.50, 1.0],
+        ),
+    );
+
+    // 3. Draw Topographic Parallel Contour Lines (خطوط تراز کانتوری موازی و زنده)
+    if (!detailed && depth < 0.45) continue;
+
+    final int numContours = math.max(4, (p.barbs * budget).round());
+    final Path contourBatch = Path();
+
+    for (int k = 0; k < numContours; k++) {
+      final double uNorm = k / (numContours - 1).toDouble();
+      final double linePos = 0.10 + 0.82 * uNorm;
+
+      // Isometric wave ripple flowing through time
+      final double waveShift = math.sin(linePos * 5.2 - t * 1.8 * p.swayRate + p.phase) * 0.06;
+      final double sampleS = (linePos + waveShift).clamp(0.0, 1.0);
+
+      final int spineIdx = (sampleS * (spine.length - 1)).round().clamp(0, spine.length - 1);
+      final Offset pt = spine[spineIdx];
+      final Offset nn = normals[spineIdx];
+
+      final double currentWidth = math.max(
+        0.8,
+        radius * p.shaft * _ribbonTaper(sampleS) * (1.0 + 0.28 * pu),
+      );
+
+      // Curved contour cross-rib
+      final Offset pStart = pt - nn * (currentWidth * 0.95);
+      final Offset pEnd = pt + nn * (currentWidth * 0.95);
+      
+      // Control point curved with 3D spherical dome effect
+      final Offset pDome = pt + nn * (currentWidth * 0.15 * p.sweep) - (normals[spineIdx].scale(0.1, 0.1));
+
+      contourBatch
+        ..moveTo(pStart.dx, pStart.dy)
+        ..quadraticBezierTo(pDome.dx, pDome.dy, pEnd.dx, pEnd.dy);
+    }
+
+    final double contourStrokeWidth = math.max(0.75, radius * 0.020 * p.weight) * boost;
+
+    // Contour Soft Under-glow
+    canvas.drawPath(
+      contourBatch,
+      Paint()
+        ..isAntiAlias = true
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = contourStrokeWidth * 2.0
+        ..color = tone.withValues(
+          alpha: ((0.12 + 0.10 * e) * front * gain).clamp(0.0, 0.30),
+        )
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(0.5, radius * 0.015)),
+    );
+
+    // Contour Crisp Holographic Line
+    canvas.drawPath(
+      contourBatch,
+      Paint()
+        ..isAntiAlias = true
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = contourStrokeWidth
+        ..color = palette.milk.withValues(
+          alpha: ((0.48 + 0.32 * e + 0.25 * pu + 0.35 * wk) * front * gain).clamp(0.0, 0.95),
         ),
     );
   }
 
-  // ---- the heart the quills converge into ---------------------------------
-  final Offset heart = center + parallax * (radius * 0.05);
-  final double hr = radius * (0.30 + 0.06 * e + 0.06 * pu);
+  // 4. Volumetric Core Luminescence (قلب درخشان تیله)
+  final Offset heart = center + parallax * (radius * 0.06);
+  final double hr = radius * (0.34 + 0.08 * e + 0.08 * pu);
   canvas.drawCircle(
     heart,
     hr,
@@ -373,28 +387,29 @@ void ritmoPaintPlumes({
         heart,
         hr,
         <Color>[
-          palette.milk.withValues(alpha: (0.28 + 0.14 * e) * gain),
-          palette.core.withValues(alpha: 0.13 * gain),
+          palette.milk.withValues(alpha: (0.35 + 0.15 * e + 0.20 * pu) * gain),
+          palette.core.withValues(alpha: (0.22 + 0.12 * e) * gain),
+          palette.violet.withValues(alpha: 0.08 * gain),
           palette.core.withValues(alpha: 0.0),
         ],
-        const <double>[0.0, 0.42, 1.0],
+        const <double>[0.0, 0.38, 0.70, 1.0],
       ),
   );
 
+  // Winking flash / Flare
   if (wk > 0.02) {
     canvas.drawCircle(
-      center + Offset(-radius * 0.16, -radius * 0.10),
-      radius * (0.20 + 0.16 * wk),
+      center + Offset(-radius * 0.15, -radius * 0.12),
+      radius * (0.24 + 0.20 * wk),
       Paint()
         ..isAntiAlias = true
-        ..color = palette.milk.withValues(alpha: 0.22 * wk * gain)
+        ..color = palette.milk.withValues(alpha: (0.38 * wk * gain).clamp(0.0, 0.70))
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.18),
     );
   }
 }
 
-/// The ground behind the vanes. Dark on purpose - light structures only read
-/// when there is something dark to read them against.
+/// The ground behind the ribbons: spherical shadow, cool ambient tint, and caustic pool.
 void ritmoPaintPillow({
   required Canvas canvas,
   required Offset center,
@@ -411,57 +426,55 @@ void ritmoPaintPillow({
   if (gain <= 0.01) return;
 
   final double e = energy.clamp(0.0, 1.0);
-  final Offset shift = parallax * (radius * 0.05);
+  final Offset shift = parallax * (radius * 0.06);
   final Color ink =
-      Color.lerp(palette.violet, const Color(0xFF14021C), 0.78) ??
+      Color.lerp(palette.violet, const Color(0xFF12021A), 0.82) ??
           palette.violet;
 
-  // 1) Dark ground, pushed to the lower right so the upper left stays glassy
-  //    - that is how a marble lit from the top left actually looks.
-  final Offset deep =
-      center + Offset(radius * 0.28, radius * 0.32) + shift;
+  // 1. Dark spherical depth ground (lower-right)
+  final Offset deep = center + Offset(radius * 0.26, radius * 0.30) + shift;
   canvas.drawCircle(
     deep,
-    radius * 1.00,
+    radius * 1.02,
     Paint()
       ..isAntiAlias = true
       ..shader = ui.Gradient.radial(
         deep,
-        radius * 1.00,
+        radius * 1.02,
         <Color>[
-          ink.withValues(alpha: 0.44 * gain),
-          ink.withValues(alpha: 0.26 * gain),
+          ink.withValues(alpha: 0.46 * gain),
+          ink.withValues(alpha: 0.24 * gain),
           ink.withValues(alpha: 0.0),
         ],
-        const <double>[0.0, 0.58, 1.0],
+        const <double>[0.0, 0.60, 1.0],
       ),
   );
 
-  // 2) A faint tint on the lit side so the shadow is coloured, not grey.
-  final Offset cool = center - Offset(radius * 0.22, radius * 0.26) + shift;
+  // 2. Cool ambient glass tint (upper-left)
+  final Offset cool = center - Offset(radius * 0.24, radius * 0.28) + shift;
   canvas.drawCircle(
     cool,
-    radius * 0.86,
+    radius * 0.90,
     Paint()
       ..isAntiAlias = true
       ..shader = ui.Gradient.radial(
         cool,
-        radius * 0.86,
+        radius * 0.90,
         <Color>[
-          palette.violet.withValues(alpha: 0.18 * gain),
+          palette.violet.withValues(alpha: 0.20 * gain),
           palette.violet.withValues(alpha: 0.0),
         ],
         const <double>[0.0, 1.0],
       ),
   );
 
-  // 3) Caustic pooling: a SMALL bright pool near the rim, not a cloud.
-  final double a = -2.34 + 0.14 * math.sin(t * 0.30);
+  // 3. Bottom internal caustic refraction pool
+  final double a = -2.30 + 0.16 * math.sin(t * 0.32);
   final Offset pool = center +
-      Offset(math.cos(a), -math.sin(a)) * (radius * 0.58) +
-      shift * 1.4;
+      Offset(math.cos(a), -math.sin(a)) * (radius * 0.56) +
+      shift * 1.3;
   final double pr =
-      radius * (0.30 + 0.04 * math.sin(t * 0.44) + 0.04 * pulse);
+      radius * (0.32 + 0.05 * math.sin(t * 0.45) + 0.05 * pulse);
 
   canvas.drawCircle(
     pool,
@@ -472,27 +485,29 @@ void ritmoPaintPillow({
         pool,
         pr,
         <Color>[
-          palette.milk.withValues(alpha: (0.26 + 0.10 * e) * gain),
-          palette.milk.withValues(alpha: 0.08 * gain),
+          palette.milk.withValues(alpha: (0.28 + 0.12 * e) * gain),
+          palette.milk.withValues(alpha: 0.09 * gain),
           palette.milk.withValues(alpha: 0.0),
         ],
-        const <double>[0.0, 0.46, 1.0],
+        const <double>[0.0, 0.48, 1.0],
       ),
   );
 
-  // 4) Its crisp arc. Zero blur, this is the tell that it is glass.
+  // 4. Crisp Caustic Arc inside the glass
   final Rect arc = Rect.fromCircle(center: pool, radius: pr * 1.02);
   canvas.drawArc(
     arc,
-    -1.02 + 0.10 * math.sin(t * 0.26),
-    1.58,
+    -1.05 + 0.12 * math.sin(t * 0.28),
+    1.62,
     false,
     Paint()
       ..isAntiAlias = true
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = math.max(0.65, radius * 0.022)
-      ..color = palette.milk
-          .withValues(alpha: ((0.30 + 0.12 * e) * gain).clamp(0.0, 0.60)),
+      ..strokeWidth = math.max(0.70, radius * 0.024)
+      ..color = palette.milk.withValues(
+        alpha: ((0.32 + 0.14 * e) * gain).clamp(0.0, 0.65),
+      ),
   );
 }
+

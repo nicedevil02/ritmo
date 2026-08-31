@@ -193,7 +193,7 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore>
 
     final double bulge = widget.bulgeStrength.clamp(0.0, 2.0);
     if (bulge > 0.02 && _t >= _nextBulge) {
-      _bulges.removeWhere((_Bulge b) => b.expired(_t));
+      _bulges.removeWhere((b) => b.expired(_t));
       if (_bulges.length < 2) {
         _bulges.add(
           _Bulge(
@@ -208,7 +208,7 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore>
       _nextBulge =
           _t + (2.30 + _rng.nextDouble() * 3.40) * (1.0 - 0.35 * _energy);
     } else if (_bulges.isNotEmpty) {
-      _bulges.removeWhere((_Bulge b) => b.expired(_t));
+      _bulges.removeWhere((b) => b.expired(_t));
     }
 
     _frame.value = _frame.value + 1;
@@ -221,7 +221,7 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore>
     return RepaintBoundary(
       child: ValueListenableBuilder<int>(
         valueListenable: _frame,
-        builder: (BuildContext context, int _, Widget? __) {
+        builder: (context, _, _) {
           final List<RitmoShellBulge> bulges = <RitmoShellBulge>[];
           for (int i = 0; i < _bulges.length; i++) {
             final double amount = _bulges[i].amountAt(_t);

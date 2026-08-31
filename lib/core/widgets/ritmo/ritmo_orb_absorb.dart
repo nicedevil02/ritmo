@@ -226,7 +226,7 @@ class _RitmoOrbAbsorbLipState extends State<RitmoOrbAbsorbLip>
               _bus.residue,
               _bus.palette,
             ]),
-            builder: (BuildContext context, Widget? _) {
+            builder: (context, _) {
               return CustomPaint(
                 painter: _LipPainter(
                   splash: reduce ? 0.0 : _splash.value,

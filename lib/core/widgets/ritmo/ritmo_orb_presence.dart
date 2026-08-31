@@ -345,7 +345,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
     return RepaintBoundary(
       child: AnimatedBuilder(
         animation: Listenable.merge(<Listenable>[_frame, _presence]),
-        builder: (BuildContext context, Widget? _) => _compose(),
+        builder: (context, _) => _compose(),
       ),
     );
   }

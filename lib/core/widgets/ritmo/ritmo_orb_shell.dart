@@ -90,7 +90,7 @@ class RitmoOrbShell {
     required int seed,
   }) {
     final int n = samples.clamp(24, 160);
-    final List<Offset> pts = List<Offset>.generate(n, (int i) {
+    final List<Offset> pts = List<Offset>.generate(n, (i) {
       final double a = (i / n) * math.pi * 2.0;
       final double r = radiusAt(
         angle: a,

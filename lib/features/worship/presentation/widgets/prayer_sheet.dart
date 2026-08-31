@@ -1,9 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/completion/completion_gateway.dart';
 import 'package:ritmo/core/domain/completion/completion_request.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/worship/domain/prayer_log_quality.dart';
 import 'package:ritmo/features/worship/domain/prayer_target.dart';
 import 'package:ritmo/features/worship/logic/worship_cache_bus.dart';
@@ -122,64 +122,106 @@ class _PrayerSheetState extends State<PrayerSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoGlassSheet(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        child: SafeArea(
-          top: false,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Grab Handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colors.border.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+        ),
+        child: RitmoGlassSheet(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          padding: EdgeInsets.zero,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag Handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(height: 16),
+              ),
 
-                // Header
-                Row(
+              // Canonical Symmetrical Header Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.target.titleFa,
-                          style: TextStyle(
-                            fontSize: 19,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
+                    // Leading (Right in RTL): Circular Tactile Close (X) Button
+                    GestureDetector(
+                      onTap: () {
+                        RitmoHapticsPolicy.tap();
+                        Navigator.of(context).pop();
+                      },
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? colors.surfaceElevated.withValues(alpha: 0.85)
+                              : colors.textPrimary.withValues(alpha: 0.07),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? colors.border.withValues(alpha: 0.35)
+                                : colors.border.withValues(alpha: 0.15),
+                            width: 0.85,
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _startTime != null ? 'اذان: ${_formatTime(_startTime)}' : 'ثبت مستقیم با لمس گزینه',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: colors.textSecondary,
-                          ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          CupertinoIcons.xmark,
+                          size: 15,
+                          color: colors.textSecondary,
                         ),
-                      ],
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: Icon(Icons.close_rounded, color: colors.textSecondary),
-                      style: IconButton.styleFrom(
-                        backgroundColor: colors.surfaceSunken.withValues(alpha: isDark ? 0.5 : 0.7),
-                        padding: const EdgeInsets.all(8),
                       ),
                     ),
+
+                    // Center: Title & Subtitle
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            widget.target.titleFa,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _startTime != null ? 'اذان: ${_formatTime(_startTime)}' : 'ثبت مستقیم با لمس گزینه',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Trailing (Left in RTL): Symmetrical Spacer
+                    const SizedBox(width: 34, height: 34),
                   ],
                 ),
+              ),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
 
-                const SizedBox(height: 20),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
 
                 if (_isLoading)
                   Padding(
@@ -294,9 +336,12 @@ class _PrayerSheetState extends State<PrayerSheet> {
             ),
           ),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  ),
+),
+);
+}
 
   Widget _buildOptionCard(
     BuildContext context, {

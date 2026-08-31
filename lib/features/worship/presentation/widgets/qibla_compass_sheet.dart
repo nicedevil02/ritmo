@@ -181,6 +181,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet>
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
     final degreesStr = toPersianDigits(_qiblaAzimuth.toStringAsFixed(1));
 
     // Determine needle rotation angle:
@@ -194,115 +195,161 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet>
         ? (-_deviceHeading! * (math.pi / 180.0))
         : 0.0;
 
-    return SizedBox(
-      height: 520,
-      child: RitmoGlassSheet(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Column(
-          children: [
-          // Drag Handle
-          Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: colors.textSecondary.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Title & Live Alignment Indicator
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+        ),
+        child: RitmoGlassSheet(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          padding: EdgeInsets.zero,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'قبله‌نمای زنده',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'موقعیت: $_name ($degreesStr° نسبت به شمال)',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: _isAlignedWithQibla
-                      ? Colors.green.withValues(alpha: 0.18)
-                      : (_hasCompassSensor && _deviceHeading != null
-                            ? colors.primary.withValues(alpha: 0.12)
-                            : colors.surfaceSunken),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _isAlignedWithQibla
-                        ? Colors.green
-                        : (_hasCompassSensor && _deviceHeading != null
-                              ? colors.primary.withValues(alpha: 0.4)
-                              : colors.border.withValues(alpha: 0.2)),
-                    width: 1.2,
+              // Top Drag Handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
+              ),
+
+              // Canonical Symmetrical Header Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(
-                      _isAlignedWithQibla
-                          ? CupertinoIcons.check_mark_circled_solid
-                          : (_hasCompassSensor && _deviceHeading != null
-                                ? CupertinoIcons.compass
-                                : CupertinoIcons.location_north),
-                      size: 14,
-                      color: _isAlignedWithQibla
-                          ? Colors.green
-                          : (_hasCompassSensor && _deviceHeading != null
-                                ? colors.primary
-                                : colors.textSecondary),
+                    // Leading (Right in RTL): Circular Tactile Close (X) Button
+                    GestureDetector(
+                      onTap: () {
+                        RitmoHapticsPolicy.tap();
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? colors.surfaceElevated.withValues(alpha: 0.85)
+                              : colors.textPrimary.withValues(alpha: 0.07),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? colors.border.withValues(alpha: 0.35)
+                                : colors.border.withValues(alpha: 0.15),
+                            width: 0.85,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          CupertinoIcons.xmark,
+                          size: 15,
+                          color: colors.textSecondary,
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _isAlignedWithQibla
-                          ? 'رو به قبله 🕋'
-                          : (_hasCompassSensor && _deviceHeading != null
-                                ? 'سنسور فعال 🧭'
-                                : 'حالت آفلاین'),
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.bold,
+
+                    // Center: Title + Subtitle
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'قبله‌نمای زنده',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'موقعیت: $_name ($degreesStr°)',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Trailing (Left in RTL): Live Alignment Badge
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
                         color: _isAlignedWithQibla
-                            ? Colors.green
+                            ? Colors.green.withValues(alpha: 0.18)
                             : (_hasCompassSensor && _deviceHeading != null
-                                  ? colors.primary
-                                  : colors.textSecondary),
+                                  ? colors.primary.withValues(alpha: 0.12)
+                                  : colors.surfaceSunken),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _isAlignedWithQibla
+                              ? Colors.green
+                              : (_hasCompassSensor && _deviceHeading != null
+                                    ? colors.primary.withValues(alpha: 0.4)
+                                    : colors.border.withValues(alpha: 0.2)),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _isAlignedWithQibla
+                                ? CupertinoIcons.check_mark_circled_solid
+                                : (_hasCompassSensor && _deviceHeading != null
+                                      ? CupertinoIcons.compass
+                                      : CupertinoIcons.location_north),
+                            size: 12,
+                            color: _isAlignedWithQibla
+                                ? Colors.green
+                                : (_hasCompassSensor && _deviceHeading != null
+                                      ? colors.primary
+                                      : colors.textSecondary),
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            _isAlignedWithQibla
+                                ? 'قبله 🕋'
+                                : (_hasCompassSensor && _deviceHeading != null
+                                      ? 'زنده'
+                                      : 'آفلاین'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: _isAlignedWithQibla
+                                  ? Colors.green
+                                  : (_hasCompassSensor && _deviceHeading != null
+                                        ? colors.primary
+                                        : colors.textSecondary),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
 
-          // Compass Rose UI
-          Expanded(
+              // Compass Rose UI
+              Expanded(
             child: _isLoadingCoords
                 ? const Center(child: CupertinoActivityIndicator())
                 : Center(
@@ -510,6 +557,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet>
         ],
       ),
     ),
-  );
-}
+  ),
+);
+  }
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -254,6 +255,50 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
     }
   }
 
+  /// محاسبه فاصله دو نقطه جغرافیایی بر حسب کیلومتر با فرمول کروی Haversine
+  static double _calculateHaversineDistanceKm(
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
+    const r = 6371.0; // Earth radius in km
+    final dLat = (lat2 - lat1) * (math.pi / 180.0);
+    final dLon = (lon2 - lon1) * (math.pi / 180.0);
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1 * (math.pi / 180.0)) *
+            math.cos(lat2 * (math.pi / 180.0)) *
+            math.sin(dLon / 2) *
+            math.sin(dLon / 2);
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    return r * c;
+  }
+
+  /// یافتن نزدیک‌ترین شهر از بین لیست شهرهای ایران و بین‌المللی
+  Map<String, dynamic>? _findNearestCity(double lat, double lng) {
+    if (_cities.isEmpty) return null;
+
+    Map<String, dynamic>? closest;
+    double minDistanceKm = double.infinity;
+
+    for (final city in _cities) {
+      final cityLat = (city['latitude'] as num?)?.toDouble();
+      final cityLng = (city['longitude'] as num?)?.toDouble();
+      if (cityLat == null || cityLng == null) continue;
+
+      final distance = _calculateHaversineDistanceKm(lat, lng, cityLat, cityLng);
+      if (distance < minDistanceKm) {
+        minDistanceKm = distance;
+        closest = {
+          ...city,
+          'distanceKm': distance,
+        };
+      }
+    }
+
+    return closest;
+  }
+
   Future<void> _fetchAndApplyGpsLocation() async {
     unawaited(HapticFeedback.mediumImpact());
     setState(() => _isLocatingGps = true);
@@ -266,8 +311,33 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
 
       final lat = double.parse(position.latitude.toStringAsFixed(4));
       final lng = double.parse(position.longitude.toStringAsFixed(4));
-      const cityName = 'موقعیت زنده (GPS)';
-      const cityId = 'CUSTOM_GPS';
+
+      // 1. Find the closest city from database using Haversine calculation
+      final nearestCity = _findNearestCity(lat, lng);
+      final double distanceKm = (nearestCity?['distanceKm'] as num?)?.toDouble() ?? 999.0;
+
+      final String cityId;
+      final String cityName;
+      final String locationMode;
+      final String? province = nearestCity?['province'] as String?;
+
+      if (nearestCity != null && distanceKm <= 35.0) {
+        // Direct match to known city (within 35 km radius)
+        cityId = nearestCity['id'] as String;
+        cityName = nearestCity['city'] as String;
+        final isIntl = cityId.startsWith('INTL_');
+        locationMode = isIntl ? 'CUSTOM_COORDS' : 'CITY';
+      } else if (nearestCity != null) {
+        // Near a known city (> 35 km away, like outer areas/suburbs/roads)
+        cityId = 'CUSTOM_GPS';
+        final baseName = nearestCity['city'] as String;
+        cityName = '$baseName (موقعیت مکانی شما)';
+        locationMode = 'CUSTOM_COORDS';
+      } else {
+        cityId = 'CUSTOM_GPS';
+        cityName = 'موقعیت زنده (GPS)';
+        locationMode = 'CUSTOM_COORDS';
+      }
 
       final db = await DatabaseHelper.instance.database;
       final nowMs = DateTime.now().millisecondsSinceEpoch;
@@ -285,7 +355,12 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
       );
       batch.insert(
         'app_settings',
-        {'key': 'prayer_location_mode', 'value': 'CUSTOM_COORDS', 'updatedAt': nowMs},
+        {'key': 'home_city_id', 'value': cityId, 'updatedAt': nowMs},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      batch.insert(
+        'app_settings',
+        {'key': 'prayer_location_mode', 'value': locationMode, 'updatedAt': nowMs},
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
       batch.insert(
@@ -319,10 +394,14 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
       widget.onChanged();
       if (mounted) {
         Navigator.pop(context);
-        RitmoSnackbar.success(
-          context,
-          'موقعیت از GPS دریافت و اعمال شد 📍\nعرض: ${toPersianDigits(lat.toString())} | طول: ${toPersianDigits(lng.toString())}',
-        );
+        final String successMessage;
+        if (nearestCity != null && distanceKm <= 35.0) {
+          final provDisplay = province != null && province.isNotEmpty ? ' ($province)' : '';
+          successMessage = 'شهر شما «$cityName$provDisplay» بر اساس موقعیت مکانی تنظیم شد 📍';
+        } else {
+          successMessage = 'موقعیت شما در نزدیکی «$cityName» اعمال شد 📍\nعرض: ${toPersianDigits(lat.toString())} | طول: ${toPersianDigits(lng.toString())}';
+        }
+        RitmoSnackbar.success(context, successMessage);
       }
     } catch (e) {
       debugPrint('Error applying GPS location: $e');
@@ -396,9 +475,14 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                             setDialogState(() => isFetchingDialogGps = true);
                             final pos = await DeviceLocationService.instance.getCurrentPosition(context);
                             if (pos != null) {
-                              latCtrl.text = pos.latitude.toStringAsFixed(4);
-                              lngCtrl.text = pos.longitude.toStringAsFixed(4);
-                              if (nameCtrl.text.isEmpty || nameCtrl.text == 'موقعیت سفارشی') {
+                              final dLat = double.parse(pos.latitude.toStringAsFixed(4));
+                              final dLng = double.parse(pos.longitude.toStringAsFixed(4));
+                              latCtrl.text = dLat.toString();
+                              lngCtrl.text = dLng.toString();
+                              final nearest = _findNearestCity(dLat, dLng);
+                              if (nearest != null) {
+                                nameCtrl.text = nearest['city'] as String? ?? 'موقعیت من (GPS)';
+                              } else {
                                 nameCtrl.text = 'موقعیت من (GPS)';
                               }
                             }
@@ -486,6 +570,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
     final viewInsetsBottom = MediaQuery.viewInsetsOf(context).bottom;
 
     return Directionality(
@@ -494,38 +579,92 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
         padding: EdgeInsets.only(bottom: viewInsetsBottom),
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOutCubic,
-        child: Container(
+        child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.88),
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
           ),
           child: RitmoGlassSheet(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'انتخاب شهر و موقعیت مکانی',
-                      style: TextStyle(
-                        fontSize: 17.5,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
+                // Top Drag Handle
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    IconButton(
-                      icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 20),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 12),
+
+                // Canonical Symmetrical Header Row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Leading (Right in RTL): Circular Tactile Close (X) Button
+                      GestureDetector(
+                        onTap: () {
+                          RitmoHapticsPolicy.tap();
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? colors.surfaceElevated.withValues(alpha: 0.85)
+                                : colors.textPrimary.withValues(alpha: 0.07),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDark
+                                  ? colors.border.withValues(alpha: 0.35)
+                                  : colors.border.withValues(alpha: 0.15),
+                              width: 0.85,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            CupertinoIcons.xmark,
+                            size: 15,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ),
+
+                      // Center: Title
+                      Expanded(
+                        child: Text(
+                          'انتخاب شهر و موقعیت مکانی',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+
+                      // Trailing (Left in RTL): Symmetrical Spacer
+                      const SizedBox(width: 34, height: 34),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                const SizedBox(height: 10),
 
                 // Content Area: Direct City List
                 Expanded(
-                  child: _buildCityTab(colors),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _buildCityTab(colors),
+                  ),
                 ),
               ],
             ),

@@ -6,7 +6,6 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
@@ -1076,41 +1075,95 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoTheme.glassCardLight(
-        borderRadius: 28,
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
-          ),
-          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+        ),
+        child: RitmoGlassSheet(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          padding: EdgeInsets.zero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'مدیریت مستحبات و ادعیه',
-                    style: TextStyle(
-                      fontSize: 17.5,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                      ),
+              // Top Drag Handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  IconButton(
-                    icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 20),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 16),
+
+              // Canonical Symmetrical Header Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Leading (Right in RTL): Circular Tactile Close (X) Button
+                    GestureDetector(
+                      onTap: () {
+                        RitmoHapticsPolicy.tap();
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? colors.surfaceElevated.withValues(alpha: 0.85)
+                              : colors.textPrimary.withValues(alpha: 0.07),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? colors.border.withValues(alpha: 0.35)
+                                : colors.border.withValues(alpha: 0.15),
+                            width: 0.85,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          CupertinoIcons.xmark,
+                          size: 15,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ),
+
+                    // Center: Title
+                    Expanded(
+                      child: Text(
+                        'مدیریت مستحبات و ادعیه',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+
+                    // Trailing (Left in RTL): Symmetrical Spacer
+                    const SizedBox(width: 34, height: 34),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
 
               Expanded(
-                child: _buildPresetsTab(colors),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.viewInsetsOf(context).bottom + 20),
+                  child: _buildPresetsTab(colors),
+                ),
               ),
             ],
           ),
@@ -1496,305 +1549,369 @@ class _AddCustomMustahabSheetState extends State<AddCustomMustahabSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoTheme.glassCardLight(
-        borderRadius: 28,
-        child: Container(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+        ),
+        child: RitmoGlassSheet(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          padding: EdgeInsets.zero,
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    widget.practice != null ? 'ویرایش مستحب سفارشی' : 'افزودن مستحب سفارشی',
-                    style: TextStyle(
-                      fontSize: 16.5,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                      ),
-                  ),
-                  IconButton(
-                    icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 18),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Title field
-              Text(
-                'عنوان مستحب:',
-                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
-              ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _titleController,
-                style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
-                decoration: InputDecoration(
-                  hintText: 'مثلا: زیارت آل یاسین، دعای سمات...',
-                  hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.4), fontSize: 13),
-                  fillColor: colors.surfaceSunken,
-                  filled: true,
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: colors.primary, width: 1.5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Description/Notes field
-              Text(
-                'توضیحات کوتاه:',
-                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
-              ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _notesController,
-                style: TextStyle(color: colors.textPrimary, fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: 'مثلا: سه شنبه شب ها، هدیه به اموات...',
-                  hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.4), fontSize: 13),
-                  fillColor: colors.surfaceSunken,
-                  filled: true,
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: colors.primary, width: 1.5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Add / Edit Reminder Area
-              if (_tempPractice?.reminderEnabled ?? false) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              // Top Drag Handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
                   decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                    color: colors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  child: Row(
+                ),
+              ),
+
+              // Canonical Symmetrical Header Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Leading (Right in RTL): Circular Tactile Close (X) Button
+                    GestureDetector(
+                      onTap: () {
+                        RitmoHapticsPolicy.tap();
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? colors.surfaceElevated.withValues(alpha: 0.85)
+                              : colors.textPrimary.withValues(alpha: 0.07),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? colors.border.withValues(alpha: 0.35)
+                                : colors.border.withValues(alpha: 0.15),
+                            width: 0.85,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          CupertinoIcons.xmark,
+                          size: 15,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ),
+
+                    // Center: Title
+                    Expanded(
+                      child: Text(
+                        widget.practice != null ? 'ویرایش مستحب سفارشی' : 'افزودن مستحب سفارشی',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+
+                    // Trailing (Left in RTL): Symmetrical Spacer
+                    const SizedBox(width: 34, height: 34),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.viewInsetsOf(context).bottom + 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(CupertinoIcons.alarm_fill, color: colors.primary, size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'یادآوری فعال است ⏰',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: colors.primary,
+                      // Title field
+                      Text(
+                        'عنوان مستحب:',
+                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _titleController,
+                        style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          hintText: 'مثلا: زیارت آل یاسین، دعای سمات...',
+                          hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.4), fontSize: 13),
+                          fillColor: colors.surfaceSunken,
+                          filled: true,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: colors.primary, width: 1.5),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Description/Notes field
+                      Text(
+                        'توضیحات کوتاه:',
+                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _notesController,
+                        style: TextStyle(color: colors.textPrimary, fontSize: 14),
+                        decoration: InputDecoration(
+                          hintText: 'مثلا: سه شنبه شب ها، هدیه به اموات...',
+                          hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.4), fontSize: 13),
+                          fillColor: colors.surfaceSunken,
+                          filled: true,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: colors.primary, width: 1.5),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Add / Edit Reminder Area
+                      if (_tempPractice?.reminderEnabled ?? false) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(CupertinoIcons.alarm_fill, color: colors.primary, size: 20),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'یادآوری فعال است ⏰',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: colors.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'تناوب: ${_tempPractice!.reminderFrequency == "DAILY" ? "روزانه" : _tempPractice!.reminderFrequency == "WEEKLY" ? "هفتگی" : _tempPractice!.reminderFrequency}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: colors.textPrimary.withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextButton.icon(
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: colors.error,
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      backgroundColor: colors.error.withValues(alpha: 0.08),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    ),
+                                    onPressed: () async {
+                                      unawaited(HapticFeedback.vibrate());
+                                      setState(() {
+                                        if (_tempPractice != null) {
+                                          _tempPractice = _tempPractice!.copyWith(reminderEnabled: false);
+                                        }
+                                      });
+                                      RitmoSnackbar.success(context, 'یادآور با موفقیت حذف شد 🗑️');
+                                    },
+                                    icon: const Icon(CupertinoIcons.trash, size: 14),
+                                    label: const Text(
+                                      'حذف',
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  TextButton.icon(
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: colors.primary,
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      backgroundColor: colors.primary.withValues(alpha: 0.1),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    ),
+                                    onPressed: () {
+                                      HapticFeedback.selectionClick();
+                                      showModalBottomSheet(
+                                        context: context,
+                                        backgroundColor: Colors.transparent,
+                                        isScrollControlled: true,
+                                        builder: (context) {
+                                          return WorshipReminderSettingsSheet(
+                                            practice: _tempPractice!,
+                                            onSaved: (updated) {
+                                              setState(() {
+                                                _tempPractice = updated;
+                                              });
+                                            },
+                                          );
+                                        },
+                                      );
+                                    },
+                                    icon: const Icon(CupertinoIcons.pencil, size: 14),
+                                    label: const Text(
+                                      'ویرایش',
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else ...[
+                        GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            final p = _tempPractice ?? WorshipPractice(
+                              id: '',
+                              practiceType: 'MUSTAHAB',
+                              subType: 'CUSTOM',
+                              title: _titleController.text.isEmpty ? 'مستحب' : _titleController.text,
+                              reminderTime: '21:00',
+                              dailyDoneDate: '',
+                              createdAt: 0,
+                              updatedAt: 0,
+                            );
+                            showModalBottomSheet(
+                              context: context,
+                              backgroundColor: Colors.transparent,
+                              isScrollControlled: true,
+                              builder: (context) {
+                                return WorshipReminderSettingsSheet(
+                                  practice: p,
+                                  onSaved: (updated) {
+                                    setState(() {
+                                      _tempPractice = updated;
+                                    });
+                                  },
+                                );
+                              },
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              color: colors.surfaceSunken,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: colors.border.withValues(alpha: 0.5)),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'تناوب: ${_tempPractice!.reminderFrequency == "DAILY" ? "روزانه" : _tempPractice!.reminderFrequency == "WEEKLY" ? "هفتگی" : _tempPractice!.reminderFrequency}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: colors.textPrimary.withValues(alpha: 0.7),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  CupertinoIcons.bell_fill,
+                                  size: 18,
+                                  color: colors.textSecondary,
                                 ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'افزودن یادآور',
+                                  style: TextStyle(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+
+                      if (widget.onDelete != null) ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: colors.error,
+                                  side: BorderSide(color: colors.error.withValues(alpha: 0.3)),
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                ),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  widget.onDelete!();
+                                },
+                                child: const Text(
+                                  'حذف مستحب',
+                                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 2,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: colors.primary,
+                                  foregroundColor: colors.onPrimary,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  elevation: 0,
+                                ),
+                                onPressed: _saveCustom,
+                                child: Text(
+                                  'ثبت تغییرات',
+                                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: colors.onPrimary),
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextButton.icon(
-                            style: TextButton.styleFrom(
-                              foregroundColor: colors.error,
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              backgroundColor: colors.error.withValues(alpha: 0.08),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            onPressed: () async {
-                              unawaited(HapticFeedback.vibrate());
-                              setState(() {
-                                if (_tempPractice != null) {
-                                  _tempPractice = _tempPractice!.copyWith(reminderEnabled: false);
-                                }
-                              });
-                              RitmoSnackbar.success(context, 'یادآور با موفقیت حذف شد 🗑️');
-                            },
-                            icon: const Icon(CupertinoIcons.trash, size: 14),
-                            label: const Text(
-                              'حذف',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                            ),
+                      ] else ...[
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colors.primary,
+                            foregroundColor: colors.onPrimary,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 0,
                           ),
-                          const SizedBox(width: 6),
-                          TextButton.icon(
-                            style: TextButton.styleFrom(
-                              foregroundColor: colors.primary,
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              backgroundColor: colors.primary.withValues(alpha: 0.1),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            onPressed: () {
-                              HapticFeedback.selectionClick();
-                              showModalBottomSheet(
-                                context: context,
-                                backgroundColor: Colors.transparent,
-                                isScrollControlled: true,
-                                builder: (context) {
-                                  return WorshipReminderSettingsSheet(
-                                    practice: _tempPractice!,
-                                    onSaved: (updated) {
-                                      setState(() {
-                                        _tempPractice = updated;
-                                      });
-                                    },
-                                  );
-                                },
-                              );
-                            },
-                            icon: const Icon(CupertinoIcons.pencil, size: 14),
-                            label: const Text(
-                              'ویرایش',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                            ),
+                          onPressed: _saveCustom,
+                          child: Text(
+                            widget.practice != null ? 'ثبت تغییرات' : 'ثبت و افزودن مستحب',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
-              ] else ...[
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    final p = _tempPractice ?? WorshipPractice(
-                      id: '',
-                      practiceType: 'MUSTAHAB',
-                      subType: 'CUSTOM',
-                      title: _titleController.text.isEmpty ? 'مستحب' : _titleController.text,
-                      reminderTime: '21:00',
-                      dailyDoneDate: '',
-                      createdAt: 0,
-                      updatedAt: 0,
-                    );
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: Colors.transparent,
-                      isScrollControlled: true,
-                      builder: (context) {
-                        return WorshipReminderSettingsSheet(
-                          practice: p,
-                          onSaved: (updated) {
-                            setState(() {
-                              _tempPractice = updated;
-                            });
-                          },
-                        );
-                      },
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      color: colors.surfaceSunken,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colors.border.withValues(alpha: 0.5)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          CupertinoIcons.bell_fill,
-                          size: 18,
-                          color: colors.textSecondary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'افزودن یادآور',
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textSecondary,
-                            ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 24),
-
-              if (widget.onDelete != null) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: colors.error,
-                          side: BorderSide(color: colors.error.withValues(alpha: 0.3)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          widget.onDelete!();
-                        },
-                        child: const Text(
-                          'حذف مستحب',
-                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.primary,
-                          foregroundColor: colors.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          elevation: 0,
-                        ),
-                        onPressed: _saveCustom,
-                        child: Text(
-                          'ثبت تغییرات',
-                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: colors.onPrimary),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ] else ...[
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: colors.onPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
-                  ),
-                  onPressed: _saveCustom,
-                  child: Text(
-                    widget.practice != null ? 'ثبت تغییرات' : 'ثبت و افزودن مستحب',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary),
-                  ),
-                ),
-              ],
+              ),
             ],
           ),
         ),

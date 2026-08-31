@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -197,7 +196,7 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
             _currentCount = 0;
           });
           await _saveZahraFullRound();
-          _showCompletionDialog();
+          await _showCompletionDialog();
         }
       }
     } else {
@@ -215,7 +214,7 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
       await _saveOtherDhikr(active, newDone);
 
       if (newDone == active.dailyTarget) {
-        _showCompletionDialog();
+        await _showCompletionDialog();
       }
     }
   }
@@ -374,31 +373,19 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
     });
   }
 
-  void _showCompletionDialog() {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('قبول باشد 🤲', style: TextStyle()),
-        content: const Text('ذکر به پایان رسید. ان‌شاءالله قبول حق باشد ✨', style: TextStyle()),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text('تکرار مجدد', style: TextStyle()),
-            onPressed: () {
-              Navigator.pop(context);
-              _reset();
-            },
-          ),
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            child: const Text('پایان و بستن', style: TextStyle(fontWeight: FontWeight.bold)),
-            onPressed: () {
-              Navigator.pop(context);
-              _onPop();
-            },
-          ),
-        ],
-      ),
+  Future<void> _showCompletionDialog() async {
+    final repeat = await RitmoDialog.show(
+      context,
+      title: 'قبول باشد 🤲',
+      content: 'ذکر به پایان رسید. ان‌شاءالله قبول حق باشد ✨',
+      confirmLabel: 'تکرار مجدد',
+      cancelLabel: 'پایان و بستن',
     );
+    if (repeat == true) {
+      await _reset();
+    } else {
+      _onPop();
+    }
   }
 
   @override

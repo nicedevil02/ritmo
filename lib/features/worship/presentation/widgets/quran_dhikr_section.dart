@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/features/worship/presentation/widgets/fullscreen_tasbih_sheet.dart';
 import 'package:ritmo/features/routines/presentation/widgets/confetti_widget.dart';
@@ -553,71 +551,19 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
 
 
   Future<void> _manuallySetDhikrCount(WorshipPractice practice) async {
-    final colors = context.colors;
-    final controller = TextEditingController(text: practice.dailyDone.toString());
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.card,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text(
-              'ثبت دستی تعداد ${practice.title}',
-              style: TextStyle(color: colors.textPrimary, fontSize: 15.5, fontWeight: FontWeight.bold),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'تعداد انجام شده امروز را وارد کنید:',
-                  style: TextStyle(color: colors.textSecondary, fontSize: 13.5),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: controller,
-                  keyboardType: TextInputType.number,
-                  style: TextStyle(color: colors.textPrimary),
-                  decoration: InputDecoration(
-                    fillColor: colors.inputBackground,
-                    filled: true,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colors.glassBorder),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colors.accent),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  foregroundColor: colors.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  elevation: 0,
-                ),
-                onPressed: () => Navigator.pop(context, true),
-                child: Text('ذخیره', style: TextStyle(color: colors.onPrimary, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
-      },
+    final result = await RitmoInputDialog.show(
+      context,
+      title: 'ثبت دستی تعداد ${practice.title}',
+      hintText: 'تعداد انجام شده امروز را وارد کنید',
+      initialValue: practice.dailyDone.toString(),
+      keyboardType: TextInputType.number,
+      confirmLabel: 'ذخیره',
+      cancelLabel: 'انصراف',
+      icon: CupertinoIcons.pencil,
     );
 
-    if (result ?? false) {
-      final value = int.tryParse(controller.text) ?? 0;
+    if (result != null) {
+      final value = int.tryParse(result.trim()) ?? 0;
       unawaited(HapticFeedback.mediumImpact());
       try {
         final db = await DatabaseHelper.instance.database;
@@ -2107,62 +2053,98 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
-    final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     final presets = [1, 2, 4, 5, 10, 20];
     const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
-    final content = Padding(
-      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Drag Handle
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colors.border.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Header Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+        ),
+        child: RitmoGlassSheet(
+          borderRadius: sheetRadius,
+          padding: EdgeInsets.zero,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: isDark ? 0.2 : 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(CupertinoIcons.book_fill, color: colors.primary, size: 18),
+              // Drag Handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'تنظیمات قرائت قرآن',
-                    style: TextStyle(
-                      fontSize: 16.5,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
+                ),
+              ),
+
+              // Canonical Symmetrical Header Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Leading (Right in RTL): Circular Tactile Close (X) Button
+                    GestureDetector(
+                      onTap: () {
+                        RitmoHapticsPolicy.tap();
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? colors.surfaceElevated.withValues(alpha: 0.85)
+                              : colors.textPrimary.withValues(alpha: 0.07),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? colors.border.withValues(alpha: 0.35)
+                                : colors.border.withValues(alpha: 0.15),
+                            width: 0.85,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          CupertinoIcons.xmark,
+                          size: 15,
+                          color: colors.textSecondary,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+
+                    // Center: Title
+                    Expanded(
+                      child: Text(
+                        'تنظیمات قرائت قرآن',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+
+                    // Trailing (Left in RTL): Symmetrical Spacer
+                    const SizedBox(width: 34, height: 34),
+                  ],
+                ),
               ),
-              IconButton(
-                icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textTertiary, size: 22),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
 
           // Target Stepper Pod
           Container(
@@ -2354,61 +2336,14 @@ class _QuranSettingsSheetState extends State<_QuranSettingsSheet> {
           ),
         ],
       ),
-    );
-
-    final sheetBody = Directionality(
-      textDirection: TextDirection.rtl,
-      child: content,
-    );
-
-    if (!isGlass) {
-      return Container(
-        decoration: BoxDecoration(
-          color: colors.surfaceElevated,
-          borderRadius: sheetRadius,
-          border: Border.all(
-            color: isDark ? colors.border : colors.divider,
-            width: 1.0,
-          ),
-        ),
-        child: sheetBody,
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: sheetRadius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.glassTint,
-            borderRadius: sheetRadius,
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.18)
-                  : Colors.white.withValues(alpha: 0.70),
-              width: 1.0,
-            ),
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: sheetRadius,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                  Colors.white.withValues(alpha: 0.0),
-                ],
-                stops: const [0.0, 0.45],
-              ),
-            ),
-            child: sheetBody,
-          ),
-        ),
-      ),
-    );
-  }
+    ),
+  ),
+],
+),
+),
+),
+);
+}
 }
 
 class _AddDhikrSheet extends StatefulWidget {
@@ -2475,178 +2410,207 @@ class _AddDhikrSheetState extends State<_AddDhikrSheet> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
-    final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
-    final content = Padding(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+        ),
+        child: RitmoGlassSheet(
+          borderRadius: sheetRadius,
+          padding: EdgeInsets.zero,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'افزودن ذکر سفارشی جدید',
-                style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
+              // Drag Handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-              IconButton(
-                icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
 
-          // Title
-          TextField(
-            controller: _titleController,
-            style: TextStyle(color: colors.textPrimary, fontSize: 14.5),
-            decoration: InputDecoration(
-              hintText: 'نام ذکر (مثلا: لا اله الا الله)',
-              hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
-              fillColor: colors.surfaceSunken,
-              filled: true,
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: colors.border.withValues(alpha: 0.4)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: colors.accent),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
+              // Canonical Symmetrical Header Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Leading (Right in RTL): Circular Tactile Close (X) Button
+                    GestureDetector(
+                      onTap: () {
+                        RitmoHapticsPolicy.tap();
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? colors.surfaceElevated.withValues(alpha: 0.85)
+                              : colors.textPrimary.withValues(alpha: 0.07),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? colors.border.withValues(alpha: 0.35)
+                                : colors.border.withValues(alpha: 0.15),
+                            width: 0.85,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          CupertinoIcons.xmark,
+                          size: 15,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ),
 
-          // Target count
-          TextField(
-            controller: _targetController,
-            keyboardType: TextInputType.number,
-            style: TextStyle(color: colors.textPrimary, fontSize: 14.5),
-            decoration: InputDecoration(
-              hintText: 'هدف روزانه (تعداد مرتبه)',
-              hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
-              fillColor: colors.surfaceSunken,
-              filled: true,
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: colors.border.withValues(alpha: 0.4)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: colors.accent),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
+                    // Center: Title
+                    Expanded(
+                      child: Text(
+                        'افزودن ذکر سفارشی جدید',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
 
-          // Calendar Toggle Switch
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: colors.surfaceSunken,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colors.border.withValues(alpha: 0.4)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
+                    // Trailing (Left in RTL): Symmetrical Spacer
+                    const SizedBox(width: 34, height: 34),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 20),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // Title
+                      TextField(
+                        controller: _titleController,
+                        style: TextStyle(color: colors.textPrimary, fontSize: 14.5),
+                        decoration: InputDecoration(
+                          hintText: 'نام ذکر (مثلا: لا اله الا الله)',
+                          hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
+                          fillColor: colors.surfaceSunken,
+                          filled: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Target Count
                       Text(
-                        'نمایش در تقویم و برنامه روزانه',
+                        'هدف روزانه (تعداد):',
                         style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'این ذکر در لیست کارهای روزانه تقویم ظاهر شود',
-                        style: TextStyle(fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.8)),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _targetController,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: colors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          fillColor: colors.surfaceSunken,
+                          filled: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Presets for quick count
+                      Wrap(
+                        spacing: 8,
+                        children: [33, 70, 100, 300, 1000].map((count) {
+                          return ActionChip(
+                            label: Text(toPersianDigits(count.toString())),
+                            onPressed: () {
+                              unawaited(HapticFeedback.selectionClick());
+                              _targetController.text = count.toString();
+                            },
+                            backgroundColor: colors.surfaceSunken,
+                            labelStyle: TextStyle(color: colors.primary, fontWeight: FontWeight.bold),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            side: BorderSide.none,
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Show in Calendar toggle
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: colors.surfaceSunken,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: colors.border.withValues(alpha: 0.4)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'نمایش در تقویم و برنامه روزانه',
+                                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'این ذکر در لیست کارهای روزانه تقویم ظاهر شود',
+                                    style: TextStyle(fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.8)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            CupertinoSwitch(
+                              value: _showInCalendar,
+                              activeTrackColor: colors.primary,
+                              onChanged: (val) {
+                                setState(() {
+                                  _showInCalendar = val;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: colors.onPrimary,
+                          backgroundColor: colors.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                        ),
+                        onPressed: _save,
+                        child: Text('ثبت و افزودن ذکر', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary)),
                       ),
                     ],
                   ),
                 ),
-                CupertinoSwitch(
-                  value: _showInCalendar,
-                  activeTrackColor: colors.primary,
-                  onChanged: (val) {
-                    setState(() {
-                      _showInCalendar = val;
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              foregroundColor: colors.onPrimary,
-              backgroundColor: colors.primary,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              elevation: 0,
-            ),
-            onPressed: _save,
-            child: Text('ثبت و افزودن ذکر', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary)),
-          ),
-        ],
-      ),
-    );
-
-    final sheetBody = Directionality(
-      textDirection: TextDirection.rtl,
-      child: content,
-    );
-
-    if (!isGlass) {
-      return Container(
-        decoration: BoxDecoration(
-          color: colors.surfaceElevated,
-          borderRadius: sheetRadius,
-          border: Border.all(
-            color: isDark ? colors.border : colors.divider,
-            width: 1.0,
-          ),
-        ),
-        child: sheetBody,
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: sheetRadius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.glassTint,
-            borderRadius: sheetRadius,
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.18)
-                  : Colors.white.withValues(alpha: 0.70),
-              width: 1.0,
-            ),
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: sheetRadius,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                  Colors.white.withValues(alpha: 0.0),
-                ],
-                stops: const [0.0, 0.45],
               ),
-            ),
-            child: sheetBody,
+            ],
           ),
         ),
       ),
@@ -2712,29 +2676,13 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
   }
 
   Future<void> _delete() async {
-    final colors = context.colors;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.card,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('حذف ذکر', style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold)),
-          content: Text('آیا از حذف «${widget.practice.title}» اطمینان دارید؟', style: TextStyle(color: colors.textSecondary)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: colors.error, elevation: 0),
-              onPressed: () => Navigator.pop(context, true),
-              child: Text('حذف', style: TextStyle(color: colors.textOnColor, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
+    final confirm = await RitmoDialog.show(
+      context,
+      title: 'حذف ذکر',
+      content: 'آیا از حذف «${widget.practice.title}» اطمینان دارید؟',
+      confirmLabel: 'حذف',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
 
     if (confirm == true) {
@@ -2753,225 +2701,231 @@ class _DhikrSettingsSheetState extends State<_DhikrSettingsSheet> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
-    final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     final isZahra = widget.practice.id == 'wp_dhikr_zahra';
     final isCustom = widget.practice.subType == 'CUSTOM';
     const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
-    final content = Padding(
-      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colors.border.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Header Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+        ),
+        child: RitmoGlassSheet(
+          borderRadius: sheetRadius,
+          padding: EdgeInsets.zero,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: colors.accent.withValues(alpha: isDark ? 0.2 : 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(CupertinoIcons.slider_horizontal_3, color: isDark ? colors.accent : colors.accent, size: 18),
+              // Drag Handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'تنظیمات ${isZahra ? 'تسبیحات حضرت زهرا (س)' : widget.practice.title}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              IconButton(
-                icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textTertiary, size: 22),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Target Count Field (if not Zahra)
-          if (!isZahra) ...[
-            Text(
-              'هدف روزانه (تعداد مرتبه):',
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                color: colors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _targetController,
-              keyboardType: TextInputType.number,
-              style: TextStyle(color: colors.textPrimary, fontSize: 14.5),
-              decoration: InputDecoration(
-                fillColor: colors.surfaceSunken,
-                filled: true,
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: colors.border.withValues(alpha: 0.3)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: colors.accent),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
 
-          // Calendar Toggle Switch
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: colors.surfaceSunken.withValues(alpha: isDark ? 0.4 : 0.6),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: colors.border.withValues(alpha: 0.2),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'نمایش در تقویم و برنامه روزانه',
+              // Canonical Symmetrical Header Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Leading (Right in RTL): Circular Tactile Close (X) Button
+                    GestureDetector(
+                      onTap: () {
+                        RitmoHapticsPolicy.tap();
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? colors.surfaceElevated.withValues(alpha: 0.85)
+                              : colors.textPrimary.withValues(alpha: 0.07),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? colors.border.withValues(alpha: 0.35)
+                                : colors.border.withValues(alpha: 0.15),
+                            width: 0.85,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          CupertinoIcons.xmark,
+                          size: 15,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ),
+
+                    // Center: Title
+                    Expanded(
+                      child: Text(
+                        'تنظیمات ${isZahra ? 'تسبیحات حضرت زهرا (س)' : widget.practice.title}',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'این ذکر در تسک‌های تقویم نمایش داده شود',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.textSecondary.withValues(alpha: 0.8),
+                    ),
+
+                    // Trailing (Left in RTL): Symmetrical Spacer
+                    const SizedBox(width: 34, height: 34),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (!isZahra) ...[
+                        Text(
+                          'هدف روزانه (تعداد مرتبه):',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
                         ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _targetController,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          decoration: InputDecoration(
+                            fillColor: colors.surfaceSunken,
+                            filled: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Presets
+                        Wrap(
+                          spacing: 8,
+                          children: [33, 70, 100, 300, 1000].map((count) {
+                            return ActionChip(
+                              label: Text(toPersianDigits(count.toString())),
+                              onPressed: () {
+                                unawaited(HapticFeedback.selectionClick());
+                                _targetController.text = count.toString();
+                              },
+                              backgroundColor: colors.surfaceSunken,
+                              labelStyle: TextStyle(color: colors.primary, fontWeight: FontWeight.bold),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              side: BorderSide.none,
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+
+                      // Calendar Toggle
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: colors.surfaceSunken,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: colors.border.withValues(alpha: 0.4)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'نمایش در تقویم و برنامه روزانه',
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: colors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'این ذکر در لیست کارهای روزانه تقویم ظاهر شود',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: colors.textSecondary.withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            CupertinoSwitch(
+                              value: _showInCalendar,
+                              activeTrackColor: colors.primary,
+                              onChanged: (val) {
+                                setState(() {
+                                  _showInCalendar = val;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Save and Delete Buttons
+                      Row(
+                        children: [
+                          if (isCustom) ...[
+                            IconButton(
+                              onPressed: _delete,
+                              icon: Icon(CupertinoIcons.trash, color: colors.error),
+                              tooltip: 'حذف ذکر',
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colors.primary,
+                                foregroundColor: colors.onPrimary,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                elevation: 0,
+                              ),
+                              onPressed: _save,
+                              child: Text(
+                                'ذخیره تنظیمات',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                CupertinoSwitch(
-                  value: _showInCalendar,
-                  activeTrackColor: colors.primary,
-                  onChanged: (val) {
-                    setState(() {
-                      _showInCalendar = val;
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Save and Delete Buttons
-          Row(
-            children: [
-              if (isCustom) ...[
-                IconButton(
-                  onPressed: _delete,
-                  icon: Icon(CupertinoIcons.trash, color: colors.error),
-                  tooltip: 'حذف ذکر',
-                ),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: colors.onPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
-                  ),
-                  onPressed: _save,
-                  child: Text(
-                    'ذخیره تنظیمات',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary),
-                  ),
-                ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-
-    final sheetBody = Directionality(
-      textDirection: TextDirection.rtl,
-      child: content,
-    );
-
-    if (!isGlass) {
-      return Container(
-        decoration: BoxDecoration(
-          color: colors.surfaceElevated,
-          borderRadius: sheetRadius,
-          border: Border.all(
-            color: isDark ? colors.border : colors.divider,
-            width: 1.0,
-          ),
-        ),
-        child: sheetBody,
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: sheetRadius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.glassTint,
-            borderRadius: sheetRadius,
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.18)
-                  : Colors.white.withValues(alpha: 0.70),
-              width: 1.0,
-            ),
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: sheetRadius,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                  Colors.white.withValues(alpha: 0.0),
-                ],
-                stops: const [0.0, 0.45],
-              ),
-            ),
-            child: sheetBody,
           ),
         ),
       ),

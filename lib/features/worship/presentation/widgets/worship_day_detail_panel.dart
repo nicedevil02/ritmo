@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/worship/domain/prayer_target.dart';
 import 'package:ritmo/features/worship/logic/mafatih_weekly_acts.dart';
 import 'package:ritmo/features/worship/logic/worship_calendar_logic.dart';
@@ -342,28 +341,18 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
 
 
   Future<void> _handleExplicitQada(String pKey) async {
-    final colors = context.colors;
     final targetDate = widget.selectedDay.dateTime;
     final isFuture = targetDate.isAfter(DateTime.now());
     if (isFuture) return;
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('ثبت نماز قضا', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text('آیا می‌خواهید این نماز به عنوان نماز قضاشده ثبت گردد؟', style: TextStyle()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('انصراف', style: TextStyle()),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: colors.error),
-            child: const Text('ثبت قضا', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+    final confirm = await RitmoDialog.show(
+      context,
+      title: 'ثبت نماز قضا',
+      content: 'آیا می‌خواهید این نماز به عنوان نماز قضاشده ثبت گردد؟',
+      confirmLabel: 'ثبت قضا',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
+      icon: Icons.history_rounded,
     );
 
     if (confirm == true) {
@@ -1289,45 +1278,50 @@ class WorshipDayDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
         ),
-      decoration: BoxDecoration(
-        color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 12),
-          // Drag handle
-          Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: colors.textSecondary.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+          ),
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: EdgeInsets.zero,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top Drag handle
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: WorshipDayDetailPanel(
+                      selectedDay: selectedDay,
+                      qamariNightText: qamariNightText,
+                      onOpenTasbih: onOpenTasbih,
+                      onChanged: onChanged,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: WorshipDayDetailPanel(
-                selectedDay: selectedDay,
-                qamariNightText: qamariNightText,
-                onOpenTasbih: onOpenTasbih,
-                onChanged: onChanged,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
-    ),);
+    );
   }
 }

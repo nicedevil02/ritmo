@@ -10,7 +10,6 @@ import 'package:ritmo/core/services/prayer_time_provider.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:ritmo/features/worship/logic/prayer_reminder_scheduler.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
@@ -246,60 +245,85 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
+      child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.92),
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
         ),
         child: RitmoGlassSheet(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            16,
-            20,
-            MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          padding: EdgeInsets.zero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Header ────────────────────────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
+              // Drag Handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+
+              // Canonical Symmetrical Header Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Leading (Right in RTL): Circular Tactile Close (X) Button
+                    GestureDetector(
+                      onTap: () {
+                        RitmoHapticsPolicy.tap();
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: 34,
+                        height: 34,
                         decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12),
+                          color: isDark
+                              ? colors.surfaceElevated.withValues(alpha: 0.85)
+                              : colors.textPrimary.withValues(alpha: 0.07),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? colors.border.withValues(alpha: 0.35)
+                                : colors.border.withValues(alpha: 0.15),
+                            width: 0.85,
+                          ),
                         ),
+                        alignment: Alignment.center,
                         child: Icon(
-                          CupertinoIcons.settings,
-                          color: colors.primary,
-                          size: 20,
+                          CupertinoIcons.xmark,
+                          size: 15,
+                          color: colors.textSecondary,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Text(
+                    ),
+
+                    // Center: Title
+                    Expanded(
+                      child: Text(
                         'تنظیمات عبادت و معنویت',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 17,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
                         ),
                       ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      CupertinoIcons.xmark_circle_fill,
-                      color: colors.textSecondary.withValues(alpha: 0.6),
-                      size: 24,
                     ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+
+                    // Trailing (Left in RTL): Symmetrical Spacer
+                    const SizedBox(width: 34, height: 34),
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
 
               // ── Scrollable Body ───────────────────────────────
               Expanded(
@@ -311,6 +335,7 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
                       )
                     : SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.viewInsetsOf(context).bottom + 24),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [

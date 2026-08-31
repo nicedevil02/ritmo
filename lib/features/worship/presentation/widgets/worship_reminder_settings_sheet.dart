@@ -8,7 +8,6 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart' hide toPersianDigits;
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -270,33 +269,130 @@ class _WorshipReminderSettingsSheetState
       textDirection: TextDirection.rtl,
       child: FadeTransition(
         opacity: _fadeAnim,
-        child: Container(
+        child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
           ),
           child: RitmoGlassSheet(
-            padding: EdgeInsets.fromLTRB(
-                20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 16),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: EdgeInsets.zero,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle bar
-                Container(
-                  width: 40, height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: colors.textSecondary.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(2),
+                // Drag Handle
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
 
-                _buildHeader(colors),
-                const SizedBox(height: 20),
+                // Canonical Symmetrical Header Row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Leading (Right in RTL): Circular Tactile Close (X) Button
+                      GestureDetector(
+                        onTap: () {
+                          RitmoHapticsPolicy.tap();
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? colors.surfaceElevated.withValues(alpha: 0.85)
+                                : colors.textPrimary.withValues(alpha: 0.07),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDark
+                                  ? colors.border.withValues(alpha: 0.35)
+                                  : colors.border.withValues(alpha: 0.15),
+                              width: 0.85,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            CupertinoIcons.xmark,
+                            size: 15,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ),
+
+                      // Center: Title & Subtitle
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'تنظیم یادآوری',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.practice.title,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colors.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Trailing (Left in RTL): Circular Tactile Save Button
+                      GestureDetector(
+                        onTap: () {
+                          setState(() => _reminderEnabled = true);
+                          _save();
+                        },
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: colors.primary.withValues(alpha: 0.35),
+                              width: 0.85,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            CupertinoIcons.checkmark_alt,
+                            size: 17,
+                            color: colors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                const SizedBox(height: 10),
 
                 // Steps
                 Flexible(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -334,55 +430,6 @@ class _WorshipReminderSettingsSheetState
           ),
         ),
       ),
-    );
-  }
-
-  // ── Header ─────────────────────────────────────────────
-  Widget _buildHeader(RitmoColors colors) {
-    return Row(
-      children: [
-        Container(
-          width: 38, height: 38,
-          decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(CupertinoIcons.bell_fill, color: colors.primary, size: 18),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'تنظیم یادآوری',
-                style: TextStyle(
-                  fontSize: 17, fontWeight: FontWeight.bold,
-                  color: colors.textPrimary, ),
-              ),
-              Text(
-                widget.practice.title,
-                style: TextStyle(
-                  fontSize: 12.5, color: colors.textSecondary,
-                  ),
-                maxLines: 1, overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-        GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            width: 32, height: 32,
-            decoration: BoxDecoration(
-              color: colors.textSecondary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(CupertinoIcons.xmark,
-                color: colors.textSecondary, size: 14),
-          ),
-        ),
-      ],
     );
   }
 

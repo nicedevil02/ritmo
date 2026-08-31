@@ -1,10 +1,10 @@
 // =============================================================================
-//  Ritmo Orb Aurora Engine (Concept 2 — Apple Intelligence Aurora Fluid Orb)
+//  Ritmo Orb Aurora Engine (Concept 2 — Ultra-Luxury Velvet Celestial Orb)
 //
-//  • لایه‌های نرم و مواج شفق قطبی (Aurora Borealis Fluid Waves)
-//  • بدون خطوط راه‌راه یا سیمی؛ کاملاً روان، مخملی و درخشان
-//  • امواج کروماتیک ارگانیک با ترکیب فیروزه‌ای، سرخابی، کهربایی و بنفش رویال
-//  • هستهٔ نورانی متحرک و حلقه‌های تنفسی هوش مصنوعی
+//  • پالت رنگی فوق‌لوکس، باوقار و اشرافی (Velvet Lavender, Champagne Peach & Platinum)
+//  • حذف شلوغی و رنگین‌کمانی؛ حفظ هارمونی عمیق، یکدست و شبیه سنگ‌های قیمتی
+//  • امواج مخملی ارگانیک شفق با بلور عمیق و شکست نور اپتیکال
+//  • کانون نورانی پلاتینیوم-رزگلد با تپش‌های آرام و سلطنتی
 // =============================================================================
 
 import 'dart:math' as math;
@@ -109,12 +109,12 @@ Path _buildAuroraWaveBlob({
   for (int i = 0; i < samples; i++) {
     final double a = (i / samples) * math.pi * 2.0;
 
-    // امواج نرم هارمونیک چندفرکانسه برای مایع شفق قطبی
+    // امواج نرم هارمونیک باوقار و آرام
     final double wave1 = math.sin(lobes * a + time + phaseShift) * wobble;
-    final double wave2 = math.cos((lobes + 1.0) * a - time * 0.8) * (wobble * 0.45);
-    final double wave3 = math.sin(2.0 * a + time * 1.3) * (wobble * 0.25);
+    final double wave2 = math.cos((lobes + 1.0) * a - time * 0.7) * (wobble * 0.40);
+    final double wave3 = math.sin(2.0 * a + time * 1.1) * (wobble * 0.20);
 
-    final double r = radius * (1.0 + wave1 + wave2 + wave3).clamp(0.20, 1.45);
+    final double r = radius * (1.0 + wave1 + wave2 + wave3).clamp(0.20, 1.40);
     pts.add(
       Offset(
         center.dx + math.cos(a) * r,
@@ -126,7 +126,7 @@ Path _buildAuroraWaveBlob({
   return _smoothClosedPath(pts);
 }
 
-/// رسم امواج و مایع شفق قطبی درون تیله (Apple Intelligence Aurora Orb)
+/// رسم امواج و مایع شفق قطبی با هارمونی لوکس (Luxury Velvet Celestial Orb)
 void ritmoPaintPlumes({
   required Canvas canvas,
   required Offset center,
@@ -149,26 +149,26 @@ void ritmoPaintPlumes({
   final double pu = pulse.clamp(0.0, 1.0);
   final double wk = wink.clamp(0.0, 1.0);
 
-  // تنفس طبیعی ارگانیک شفق
-  final double breath = math.sin(t * 0.9) * 0.04 + math.sin(t * 1.8) * 0.02 + pu * 0.08;
-  final Offset par = parallax * (radius * 0.10);
+  // تنفس باوقار و آرام شفق
+  final double breath = math.sin(t * 0.7) * 0.035 + math.sin(t * 1.4) * 0.015 + pu * 0.06;
+  final Offset par = parallax * (radius * 0.08);
   final Offset coreCenter = center + par;
 
   // ---------------------------------------------------------------------------
-  // ۱. موج شفق بیرونی (Outer Aurora Wave — فیروزه‌ای، آبی و بنفش رویال)
+  // ۱. موج شفق بیرونی (Outer Velvet Mantle — اسطوخودوسی مخملی، بنفش رویال و نیلی ابسیدین)
   // ---------------------------------------------------------------------------
-  final double rOuter = radius * (0.84 + breath + 0.04 * e);
+  final double rOuter = radius * (0.82 + breath + 0.03 * e);
   final Path outerBlob = _buildAuroraWaveBlob(
     center: coreCenter,
     radius: rOuter,
     t: t,
-    speedMult: 0.95 + 0.40 * e,
+    speedMult: 0.85 + 0.30 * e,
     lobes: 4.0,
-    wobble: 0.16 + 0.06 * e,
+    wobble: 0.14 + 0.05 * e,
     phaseShift: 0.0,
   );
 
-  // هالهٔ بیرونی محو
+  // هالهٔ بیرونی محو و مخملی
   canvas.drawPath(
     outerBlob,
     Paint()
@@ -176,32 +176,32 @@ void ritmoPaintPlumes({
       ..shader = ui.Gradient.sweep(
         coreCenter,
         <Color>[
-          const Color(0xFF00F5D4).withValues(alpha: (0.70 * gain).clamp(0.0, 0.95)),
-          const Color(0xFF00B4D8).withValues(alpha: (0.60 * gain).clamp(0.0, 0.90)),
-          const Color(0xFF7209B7).withValues(alpha: (0.80 * gain).clamp(0.0, 0.95)),
-          const Color(0xFFF72585).withValues(alpha: (0.75 * gain).clamp(0.0, 0.95)),
-          const Color(0xFF00F5D4).withValues(alpha: (0.70 * gain).clamp(0.0, 0.95)),
+          const Color(0xFF8E76FF).withValues(alpha: (0.75 * gain).clamp(0.0, 0.95)),
+          const Color(0xFF6C5CE7).withValues(alpha: (0.70 * gain).clamp(0.0, 0.90)),
+          const Color(0xFF4834D4).withValues(alpha: (0.80 * gain).clamp(0.0, 0.95)),
+          const Color(0xFFA29BFE).withValues(alpha: (0.75 * gain).clamp(0.0, 0.95)),
+          const Color(0xFF8E76FF).withValues(alpha: (0.75 * gain).clamp(0.0, 0.95)),
         ],
         const <double>[0.0, 0.28, 0.58, 0.82, 1.0],
         TileMode.repeated,
-        t * 0.35,
-        t * 0.35 + math.pi * 2.0,
+        t * 0.28,
+        t * 0.28 + math.pi * 2.0,
       )
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(1.0, radius * 0.14)),
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(1.0, radius * 0.16)),
   );
 
-  // بدنهٔ نرم و مخملی موج بیرونی
+  // بدنهٔ نرم و عمیق موج بیرونی
   canvas.drawPath(
     outerBlob,
     Paint()
       ..isAntiAlias = true
       ..shader = ui.Gradient.radial(
-        coreCenter - Offset(radius * 0.15, radius * 0.15),
+        coreCenter - Offset(radius * 0.14, radius * 0.14),
         rOuter * 1.15,
         <Color>[
-          const Color(0xFF00F5D4).withValues(alpha: (0.85 * gain).clamp(0.0, 0.98)),
-          const Color(0xFF7209B7).withValues(alpha: (0.75 * gain).clamp(0.0, 0.95)),
-          const Color(0xFF3A0CA3).withValues(alpha: (0.40 * gain).clamp(0.0, 0.70)),
+          const Color(0xFFA29BFE).withValues(alpha: (0.85 * gain).clamp(0.0, 0.98)),
+          const Color(0xFF6C5CE7).withValues(alpha: (0.75 * gain).clamp(0.0, 0.95)),
+          const Color(0xFF241442).withValues(alpha: (0.45 * gain).clamp(0.0, 0.75)),
           Colors.transparent,
         ],
         const <double>[0.0, 0.45, 0.80, 1.0],
@@ -209,20 +209,20 @@ void ritmoPaintPlumes({
   );
 
   // ---------------------------------------------------------------------------
-  // ۲. موج شفق میانی (Middle Aurora Fluid Body — سرخابی، مرجانی و کهربایی)
+  // ۲. موج شفق میانی (Middle Silk Body — شامپاینی گرم، رزگلد و مرجانی مخملی)
   // ---------------------------------------------------------------------------
-  final double rMiddle = radius * (0.64 + breath * 0.8 + 0.05 * pu);
+  final double rMiddle = radius * (0.62 + breath * 0.7 + 0.04 * pu);
   final Path middleBlob = _buildAuroraWaveBlob(
-    center: coreCenter + Offset(radius * 0.06 * math.cos(t * 0.7), radius * 0.06 * math.sin(t * 0.6)),
+    center: coreCenter + Offset(radius * 0.05 * math.cos(t * 0.6), radius * 0.05 * math.sin(t * 0.5)),
     radius: rMiddle,
     t: -t,
-    speedMult: 1.10 + 0.45 * e,
+    speedMult: 0.95 + 0.35 * e,
     lobes: 3.0,
-    wobble: 0.20 + 0.08 * e,
+    wobble: 0.18 + 0.06 * e,
     phaseShift: math.pi * 0.65,
   );
 
-  // هالهٔ درخشان میانی
+  // هالهٔ لطیف میانی رزگلد
   canvas.drawPath(
     middleBlob,
     Paint()
@@ -230,32 +230,32 @@ void ritmoPaintPlumes({
       ..shader = ui.Gradient.sweep(
         coreCenter,
         <Color>[
-          const Color(0xFFFF007A).withValues(alpha: (0.85 * gain).clamp(0.0, 0.98)),
-          const Color(0xFFFF5252).withValues(alpha: (0.80 * gain).clamp(0.0, 0.95)),
-          const Color(0xFFFFBE0B).withValues(alpha: (0.75 * gain).clamp(0.0, 0.95)),
-          const Color(0xFF8338EC).withValues(alpha: (0.75 * gain).clamp(0.0, 0.95)),
-          const Color(0xFFFF007A).withValues(alpha: (0.85 * gain).clamp(0.0, 0.98)),
+          const Color(0xFFFF7675).withValues(alpha: (0.85 * gain).clamp(0.0, 0.98)),
+          const Color(0xFFFFA07A).withValues(alpha: (0.80 * gain).clamp(0.0, 0.95)),
+          const Color(0xFFFFB8B8).withValues(alpha: (0.78 * gain).clamp(0.0, 0.95)),
+          const Color(0xFFD6A2E8).withValues(alpha: (0.75 * gain).clamp(0.0, 0.95)),
+          const Color(0xFFFF7675).withValues(alpha: (0.85 * gain).clamp(0.0, 0.98)),
         ],
         const <double>[0.0, 0.25, 0.52, 0.78, 1.0],
         TileMode.repeated,
-        -t * 0.45,
-        -t * 0.45 + math.pi * 2.0,
+        -t * 0.35,
+        -t * 0.35 + math.pi * 2.0,
       )
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(1.0, radius * 0.09)),
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(1.0, radius * 0.10)),
   );
 
-  // بدنهٔ اصلی لایهٔ میانی
+  // بدنهٔ لایهٔ رزگلد-شامپاینی
   canvas.drawPath(
     middleBlob,
     Paint()
       ..isAntiAlias = true
       ..shader = ui.Gradient.radial(
-        coreCenter + Offset(radius * 0.12, -radius * 0.10),
+        coreCenter + Offset(radius * 0.10, -radius * 0.08),
         rMiddle * 1.10,
         <Color>[
-          const Color(0xFFFFBE0B).withValues(alpha: (0.90 * gain).clamp(0.0, 1.0)),
-          const Color(0xFFFF007A).withValues(alpha: (0.85 * gain).clamp(0.0, 0.98)),
-          const Color(0xFF7209B7).withValues(alpha: (0.50 * gain).clamp(0.0, 0.85)),
+          const Color(0xFFFFF0EB).withValues(alpha: (0.92 * gain).clamp(0.0, 1.0)),
+          const Color(0xFFFF7675).withValues(alpha: (0.85 * gain).clamp(0.0, 0.98)),
+          const Color(0xFF6C5CE7).withValues(alpha: (0.50 * gain).clamp(0.0, 0.85)),
           Colors.transparent,
         ],
         const <double>[0.0, 0.40, 0.75, 1.0],
@@ -263,36 +263,36 @@ void ritmoPaintPlumes({
   );
 
   // ---------------------------------------------------------------------------
-  // ۳. حلقه‌های هم‌مرکز تنفسی شفق (Concentric Aurora Rings)
+  // ۳. حلقهٔ هم‌مرکز درخشان پلاتینیوم (Platinum Silk Ripple Ring)
   // ---------------------------------------------------------------------------
-  final double ring1Radius = radius * (0.42 + 0.08 * math.sin(t * 1.4) + 0.06 * pu);
+  final double ring1Radius = radius * (0.40 + 0.06 * math.sin(t * 1.2) + 0.05 * pu);
   canvas.drawCircle(
     coreCenter,
     ring1Radius,
     Paint()
       ..isAntiAlias = true
       ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(1.5, radius * 0.045)
+      ..strokeWidth = math.max(1.2, radius * 0.038)
       ..shader = ui.Gradient.sweep(
         coreCenter,
         <Color>[
-          Colors.white.withValues(alpha: (0.75 * gain).clamp(0.0, 0.95)),
-          const Color(0xFF00F5D4).withValues(alpha: (0.50 * gain).clamp(0.0, 0.85)),
-          const Color(0xFFFF007A).withValues(alpha: (0.65 * gain).clamp(0.0, 0.90)),
-          Colors.white.withValues(alpha: (0.75 * gain).clamp(0.0, 0.95)),
+          Colors.white.withValues(alpha: (0.80 * gain).clamp(0.0, 0.95)),
+          const Color(0xFFFFD8CC).withValues(alpha: (0.55 * gain).clamp(0.0, 0.85)),
+          const Color(0xFFA29BFE).withValues(alpha: (0.65 * gain).clamp(0.0, 0.90)),
+          Colors.white.withValues(alpha: (0.80 * gain).clamp(0.0, 0.95)),
         ],
         const <double>[0.0, 0.35, 0.70, 1.0],
         TileMode.repeated,
-        t * 0.60,
-        t * 0.60 + math.pi * 2.0,
+        t * 0.45,
+        t * 0.45 + math.pi * 2.0,
       )
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(0.6, radius * 0.025)),
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(0.5, radius * 0.020)),
   );
 
   // ---------------------------------------------------------------------------
-  // ۴. کانون نورانی و هستهٔ درخشان مرکزی (Radiant Intelligence Core)
+  // ۴. کانون نورانی پلاتینیوم و ابریشم خالص (Platinum Intelligence Core)
   // ---------------------------------------------------------------------------
-  final double coreR = radius * (0.32 + 0.06 * math.sin(t * 2.0) + 0.08 * pu + 0.12 * wk);
+  final double coreR = radius * (0.30 + 0.05 * math.sin(t * 1.6) + 0.06 * pu + 0.10 * wk);
   canvas.drawCircle(
     coreCenter,
     coreR,
@@ -302,30 +302,30 @@ void ritmoPaintPlumes({
         coreCenter,
         coreR,
         <Color>[
-          Colors.white.withValues(alpha: (0.95 * gain).clamp(0.0, 1.0)),
-          const Color(0xFFFFD166).withValues(alpha: (0.85 * gain).clamp(0.0, 1.0)),
-          const Color(0xFFFF007A).withValues(alpha: (0.65 * gain).clamp(0.0, 0.95)),
-          const Color(0xFF00F5D4).withValues(alpha: (0.25 * gain).clamp(0.0, 0.60)),
+          Colors.white.withValues(alpha: (0.98 * gain).clamp(0.0, 1.0)),
+          const Color(0xFFFFF2EC).withValues(alpha: (0.88 * gain).clamp(0.0, 1.0)),
+          const Color(0xFFFF7675).withValues(alpha: (0.60 * gain).clamp(0.0, 0.92)),
+          const Color(0xFF8E76FF).withValues(alpha: (0.22 * gain).clamp(0.0, 0.55)),
           Colors.transparent,
         ],
-        const <double>[0.0, 0.30, 0.62, 0.85, 1.0],
+        const <double>[0.0, 0.32, 0.65, 0.88, 1.0],
       ),
   );
 
-  // تابش لحطهٔ فلر / وینک
+  // تابش لحظهٔ فلر / وینک
   if (wk > 0.02) {
     canvas.drawCircle(
       coreCenter,
-      radius * (0.45 + 0.25 * wk),
+      radius * (0.42 + 0.22 * wk),
       Paint()
         ..isAntiAlias = true
-        ..color = Colors.white.withValues(alpha: (0.45 * wk * gain).clamp(0.0, 0.80))
+        ..color = Colors.white.withValues(alpha: (0.42 * wk * gain).clamp(0.0, 0.75))
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.15),
     );
   }
 }
 
-/// لایهٔ عمق و زمینهٔ اتمسفریک شفق قطبی
+/// لایهٔ عمق و زمینهٔ اتمسفریک باوقار و لوکس
 void ritmoPaintPillow({
   required Canvas canvas,
   required Offset center,
@@ -340,10 +340,10 @@ void ritmoPaintPillow({
   if (radius <= 1.0) return;
   final double gain = intensity.clamp(0.4, 1.6);
   final double e = energy.clamp(0.0, 1.0);
-  final Offset shift = parallax * (radius * 0.06);
+  final Offset shift = parallax * (radius * 0.05);
 
-  // هالهٔ اتمسفریک فیروزه‌ای در بالا-چپ
-  final Offset cool = center - Offset(radius * 0.28, radius * 0.30) + shift;
+  // هالهٔ لطیف اسطوخودوسی در بالا-چپ
+  final Offset cool = center - Offset(radius * 0.26, radius * 0.28) + shift;
   canvas.drawCircle(
     cool,
     radius * 0.95,
@@ -353,8 +353,8 @@ void ritmoPaintPillow({
         cool,
         radius * 0.95,
         <Color>[
-          const Color(0xFF00F5D4).withValues(alpha: (0.35 + 0.10 * e) * gain),
-          const Color(0xFF7209B7).withValues(alpha: 0.15 * gain),
+          const Color(0xFFA29BFE).withValues(alpha: (0.30 + 0.08 * e) * gain),
+          const Color(0xFF6C5CE7).withValues(alpha: 0.12 * gain),
           Colors.transparent,
         ],
         const <double>[0.0, 0.50, 1.0],
@@ -362,8 +362,8 @@ void ritmoPaintPillow({
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.20),
   );
 
-  // هالهٔ عمیق سرخابی-بنفش در پایین-راست
-  final Offset warm = center + Offset(radius * 0.26, radius * 0.26) + shift;
+  // هالهٔ عمیق رزگلد و نیلی اشرافی در پایین-راست
+  final Offset warm = center + Offset(radius * 0.24, radius * 0.24) + shift;
   canvas.drawCircle(
     warm,
     radius * 1.00,
@@ -373,8 +373,8 @@ void ritmoPaintPillow({
         warm,
         radius * 1.00,
         <Color>[
-          const Color(0xFFFF007A).withValues(alpha: (0.38 + 0.12 * e) * gain),
-          const Color(0xFF3A0CA3).withValues(alpha: 0.25 * gain),
+          const Color(0xFFFF7675).withValues(alpha: (0.32 + 0.10 * e) * gain),
+          const Color(0xFF2D1B4E).withValues(alpha: 0.22 * gain),
           Colors.transparent,
         ],
         const <double>[0.0, 0.55, 1.0],

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
@@ -595,7 +596,9 @@ class ManageMustahabSheet extends StatefulWidget {
   State<ManageMustahabSheet> createState() => _ManageMustahabSheetState();
 }
 
-class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
+class _ManageMustahabSheetState extends State<ManageMustahabSheet>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _childSheetAnimController;
   List<Map<String, dynamic>> _presets = [];
   List<WorshipPractice> _customPractices = [];
   bool _isLoadingPresets = true;
@@ -617,7 +620,18 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
   @override
   void initState() {
     super.initState();
+    _childSheetAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+      reverseDuration: const Duration(milliseconds: 300),
+    );
     _loadPresets();
+  }
+
+  @override
+  void dispose() {
+    _childSheetAnimController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadPresets() async {
@@ -888,6 +902,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
                           context: context,
                           backgroundColor: Colors.transparent,
                           isScrollControlled: true,
+                          transitionAnimationController: _childSheetAnimController,
                           builder: (sheetCtx) {
                             return WorshipReminderSettingsSheet(
                               practice: tempPractice,
@@ -1059,6 +1074,7 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      transitionAnimationController: _childSheetAnimController,
       builder: (sheetCtx) {
         return AddCustomMustahabSheet(
           practice: practiceToEdit,
@@ -1083,12 +1099,15 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
         constraints: BoxConstraints(
           maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
         ),
-        child: RitmoGlassSheet(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          padding: EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        child: AppleCardDeckHost(
+          animation: _childSheetAnimController,
+          topCornerRadius: 28.0,
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: EdgeInsets.zero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               // Top Drag Handle
               Center(
                 child: Container(
@@ -1169,8 +1188,9 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   ({IconData icon, Color color, Color bg}) _getMustahabVisuals(String title, RitmoColors colors) {
     if (title.contains('شب')) {

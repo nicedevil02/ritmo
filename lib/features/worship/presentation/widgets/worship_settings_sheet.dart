@@ -9,11 +9,11 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/services/prayer_time_provider.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
 import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:ritmo/features/worship/logic/prayer_reminder_scheduler.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
-
 import 'package:ritmo/features/worship/presentation/widgets/prayer_city_picker.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -42,7 +42,9 @@ class WorshipSettingsSheet extends StatefulWidget {
   State<WorshipSettingsSheet> createState() => _WorshipSettingsSheetState();
 }
 
-class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
+class _WorshipSettingsSheetState extends State<WorshipSettingsSheet>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _childSheetAnimController;
   bool _isLoading = true;
   bool _isSaving = false;
 
@@ -83,7 +85,18 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
   @override
   void initState() {
     super.initState();
+    _childSheetAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+      reverseDuration: const Duration(milliseconds: 300),
+    );
     _loadAllSettings();
+  }
+
+  @override
+  void dispose() {
+    _childSheetAnimController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadAllSettings() async {
@@ -215,13 +228,16 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
   }
 
   void _openCitySelector() {
+    RitmoHapticsPolicy.tap();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      transitionAnimationController: _childSheetAnimController,
       builder: (context) {
         return PrayerCityPicker(
           initialTab: 0,
+          isNested: true,
           onChanged: () {
             _loadAllSettings();
             widget.onChanged();
@@ -249,12 +265,15 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
         constraints: BoxConstraints(
           maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
         ),
-        child: RitmoGlassSheet(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          padding: EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        child: AppleCardDeckHost(
+          animation: _childSheetAnimController,
+          topCornerRadius: 28.0,
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: EdgeInsets.zero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               // Drag Handle
               Center(
                 child: Container(
@@ -940,8 +959,9 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSectionHeader({
     required IconData icon,

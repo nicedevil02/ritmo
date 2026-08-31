@@ -69,12 +69,14 @@ class RitmoSheetScaffold extends StatelessWidget {
     AnimationController? transitionAnimationController,
   }) {
     RitmoHaptics.sheetOpen();
+    AppleCardDeckHost.activeForegroundSheetExtent.value = initialHeightFactor;
     final controller = DraggableScrollableController();
     double lastSize = initialHeightFactor;
 
     controller.addListener(() {
       if (!controller.isAttached) return;
       final cur = controller.size;
+      AppleCardDeckHost.activeForegroundSheetExtent.value = cur;
       if ((lastSize < 0.77 && cur >= 0.77) || (lastSize > 0.77 && cur <= 0.77)) {
         HapticFeedback.selectionClick();
       }
@@ -119,6 +121,7 @@ class RitmoSheetScaffold extends StatelessWidget {
         ),
       ),
     ).then((result) {
+      AppleCardDeckHost.activeForegroundSheetExtent.value = 0.60;
       RitmoHaptics.sheetClose();
       return result;
     });
@@ -307,62 +310,133 @@ class AppleCardDeckHost extends StatelessWidget {
       return child;
     }
 
-    final isDark = context.isDark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return AnimatedBuilder(
-      animation: effectiveAnim,
-      builder: (context, staticChild) {
-        final progress = effectiveAnim.value;
-        if (progress <= 0.001) {
-          return staticChild!;
-        }
+    Widget buildTransform(double progress, double extent, Widget staticChild) {
+      final clampedExtent = extent.clamp(0.0, 1.0);
 
-        final extentNotifier = foregroundExtentNotifier ?? activeForegroundSheetExtent;
+      // Normalized progress between 60% and 95%
+      final tExtent = ((clampedExtent - 0.60) / (0.95 - 0.60)).clamp(0.0, 1.0);
 
-        return ValueListenableBuilder<double>(
-          valueListenable: extentNotifier,
-          builder: (context, extent, innerChild) {
-            final double targetScale = 1.0 - (0.045 + (0.035 * ((extent - 0.60) / 0.35).clamp(0.0, 1.0)));
-            final double scale = 1.0 - ((1.0 - targetScale) * progress);
-            final double currentRadius = topCornerRadius * progress;
-            final double translateY = -10.0 * progress;
-            final double dimAlpha = (0.28 * progress).clamp(0.0, 0.40);
+      // Continuous Lerp Scaling: 4.5% at 60% up to 8.0% at 95%, smoothly returning to 0% if pulled down below 60%
+      final scaleFactorBelow60 = clampedExtent < 0.60 ? (clampedExtent / 0.60).clamp(0.0, 1.0) : 1.0;
+      final targetScaleDown = (0.045 + (0.035 * tExtent)) * scaleFactorBelow60;
+      final scale = progress <= 0.0 ? 1.0 : 1.0 - (targetScaleDown * progress);
 
-            return Container(
-              color: isDark ? const Color(0xFF000000) : const Color(0xFF1E2430),
-              child: Transform.translate(
-                offset: Offset(0, translateY),
-                child: Transform.scale(
-                  scale: scale,
-                  alignment: Alignment.topCenter,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(currentRadius),
-                    ),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        innerChild!,
-                        if (dimAlpha > 0.01)
-                          Positioned.fill(
-                            child: IgnorePointer(
-                              child: ColoredBox(
-                                color: (isDark ? Colors.black : const Color(0xFF0F172A))
-                                    .withValues(alpha: dimAlpha),
-                              ),
+      // Fixed Static Corner Radius (locked at 30px)
+      final radius = topCornerRadius;
+      final clipBorderRadius = BorderRadius.vertical(top: Radius.circular(radius));
+
+      // Top Peek Y-Shift: -10px at 60% to -16px at 95%
+      final targetShift = (10.0 + (6.0 * tExtent)) * scaleFactorBelow60;
+      final translateY = progress <= 0.0 ? 0.0 : -targetShift * progress;
+
+      // Visible-Only Scrim Height: exactly (1.0 - extent)
+      final rawVisibleHeight = MediaQuery.of(context).size.height * (1.0 - (clampedExtent * progress)).clamp(0.0, 1.0);
+      // Soft feather buffer (+16px) ensures solid dark scrim covers 100% of visible space
+      // while the soft gradient feathering fades seamlessly behind the foreground sheet's header.
+      final visibleScrimHeight = (rawVisibleHeight + (progress > 0.001 ? 16.0 : 0.0)).clamp(0.0, MediaQuery.of(context).size.height);
+
+      // Dynamic Scrim Density / Opacity based on foreground extent:
+      // At 60%: standard nominal opacity (1.0x)
+      // At 95%: deep focus opacity (1.50x, +50% density)
+      // Pulled below 60% down to 0%: opacity fades linearly and melts away to 0.0!
+      final double extentOpacityFactor;
+      if (clampedExtent <= 0.60) {
+        extentOpacityFactor = (clampedExtent / 0.60).clamp(0.0, 1.0);
+      } else {
+        extentOpacityFactor = 1.0 + (0.50 * tExtent);
+      }
+
+      final baseAlpha = isDark ? 0.42 : 0.22;
+      final effectiveAlpha = (baseAlpha * progress * extentOpacityFactor).clamp(0.0, 1.0);
+      final dimColor = Colors.black.withValues(alpha: effectiveAlpha);
+
+      final borderColor = isDark
+          ? const Color(0xFF94A3B8).withValues(alpha: (0.16 * progress).clamp(0.0, 1.0))
+          : Colors.white.withValues(alpha: (0.70 * progress).clamp(0.0, 1.0));
+      final borderWidth = isDark ? 0.9 : 1.0;
+
+      return Transform.translate(
+        offset: Offset(0, translateY),
+        child: Transform.scale(
+          scale: scale,
+          alignment: Alignment.topCenter,
+          child: ClipRRect(
+            borderRadius: progress <= 0.0 ? BorderRadius.zero : clipBorderRadius,
+            clipBehavior: progress <= 0.0 ? Clip.none : Clip.antiAlias,
+            child: Stack(
+              fit: StackFit.passthrough,
+              children: [
+                staticChild,
+
+                // 1. Occlusion-Aware Visible-Band Scrim with soft feathering & exact matching rounded corners
+                // ONLY dims the visible band above the foreground sheet,
+                // leaving the area behind the foreground sheet 100% pristine.
+                if (progress > 0.001 && rawVisibleHeight > 0.001)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: IgnorePointer(
+                      ignoring: true,
+                      child: ClipRRect(
+                        borderRadius: clipBorderRadius,
+                        clipBehavior: Clip.antiAlias,
+                        child: Container(
+                          height: visibleScrimHeight,
+                          decoration: BoxDecoration(
+                            borderRadius: clipBorderRadius,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                dimColor,
+                                dimColor,
+                                dimColor.withValues(alpha: 0.0),
+                              ],
+                              stops: const [0.0, 0.88, 1.0],
                             ),
                           ),
-                      ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            );
-          },
-          child: staticChild,
+
+                // 2. Preserved Crisp Glass Rim & Border (renders ON TOP of scrim)
+                // Ensures the outer 1px white border and curve remain razor-sharp without dark occlusion artifacts.
+                if (progress > 0.001)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      ignoring: true,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: clipBorderRadius,
+                          border: Border.all(
+                            color: borderColor,
+                            width: borderWidth,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final notifier = foregroundExtentNotifier ?? activeForegroundSheetExtent;
+    return ListenableBuilder(
+      listenable: Listenable.merge([effectiveAnim, notifier]),
+      builder: (context, _) {
+        return buildTransform(
+          effectiveAnim.value,
+          notifier.value,
+          child,
         );
       },
-      child: child,
     );
   }
 }

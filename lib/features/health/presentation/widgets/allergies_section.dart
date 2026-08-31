@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -200,60 +201,59 @@ class _AllergiesSectionState extends State<AllergiesSection> {
           sColor = colors.warning;
         }
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: sColor.withValues(alpha: 0.1),
-              child: Icon(Icons.warning_amber_rounded, color: sColor),
-            ),
-            title: Row(
-              children: [
-                Text(
-                  allergy.allergen,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colors.textPrimary),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: sColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    allergy.severityLabel,
-                    style: TextStyle(fontSize: 10, color: sColor, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            subtitle: Column(
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: RitmoCard.neumorphic(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'دسته‌بندی: ${_getCategoryLabel(allergy.category)}',
-                  style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                RitmoCardHeader(
+                  title: allergy.allergen,
+                  subtitle: 'دسته‌بندی: ${_getCategoryLabel(allergy.category)}',
+                  icon: CupertinoIcons.exclamationmark_shield_fill,
+                  iconColor: sColor,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      RitmoCardBadge(
+                        label: allergy.severityLabel,
+                        color: sColor,
+                      ),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        icon: Icon(CupertinoIcons.trash, size: 16, color: colors.medicalRed),
+                        onPressed: () => _confirmDelete(allergy.id),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
                 ),
-                if (allergy.reaction != null && allergy.reaction!.isNotEmpty)
-                  Text(
-                    'علائم: ${allergy.reaction}',
-                    style: TextStyle(fontSize: 12, color: colors.textPrimary),
-                  ),
-                if (allergy.diagnosedDate != null)
-                  Text(
-                    'تاریخ تشخیص: ${_formatJalaliDate(allergy.diagnosedDate!)}',
-                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
-                  ),
-                if (allergy.notes != null && allergy.notes!.isNotEmpty)
-                  Text(
-                    allergy.notes!,
-                    style: TextStyle(fontSize: 11, color: colors.textPrimary, fontStyle: FontStyle.italic),
-                  ),
+                if ((allergy.reaction != null && allergy.reaction!.isNotEmpty) ||
+                    allergy.diagnosedDate != null ||
+                    (allergy.notes != null && allergy.notes!.isNotEmpty)) ...[
+                  const RitmoCardDivider(),
+                  if (allergy.reaction != null && allergy.reaction!.isNotEmpty)
+                    Text(
+                      'علائم: ${allergy.reaction}',
+                      style: TextStyle(fontSize: 12, color: colors.textPrimary),
+                    ),
+                  if (allergy.diagnosedDate != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'تاریخ تشخیص: ${_formatJalaliDate(allergy.diagnosedDate!)}',
+                      style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                    ),
+                  ],
+                  if (allergy.notes != null && allergy.notes!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      allergy.notes!,
+                      style: TextStyle(fontSize: 11, color: colors.textSecondary, fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                ],
               ],
-            ),
-            trailing: IconButton(
-              icon: Icon(Icons.delete_outline, size: 18, color: colors.medicalRed),
-              onPressed: () => _confirmDelete(allergy.id),
             ),
           ),
         );

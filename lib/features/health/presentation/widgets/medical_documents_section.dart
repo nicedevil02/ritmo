@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path_utils;
@@ -356,19 +357,31 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
         final doc = docs[index];
         final images = _docImagesMap[doc.id] ?? [];
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ExpansionTile(
-            title: Text(
-              doc.title,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colors.textPrimary),
-            ),
-            subtitle: Text(
-              '${_getCategoryLabel(doc.category)} · ${_formatJalaliDate(doc.documentDate)}',
-              style: TextStyle(fontSize: 12, color: colors.textSecondary),
-            ),
-            childrenPadding: const EdgeInsets.all(12),
-            expandedCrossAxisAlignment: CrossAxisAlignment.start,
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: RitmoCard.neumorphic(
+            padding: EdgeInsets.zero,
+            child: ExpansionTile(
+              shape: const Border(),
+              collapsedShape: const Border(),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colors.success.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(CupertinoIcons.doc_richtext, color: colors.success, size: 20),
+              ),
+              title: Text(
+                doc.title,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: colors.textPrimary),
+              ),
+              subtitle: Text(
+                '${_getCategoryLabel(doc.category)} · ${_formatJalaliDate(doc.documentDate)}',
+                style: TextStyle(fontSize: 12, color: colors.textSecondary),
+              ),
+              childrenPadding: const EdgeInsets.all(14),
+              expandedCrossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (doc.labName != null && doc.labName!.isNotEmpty) ...[
                 Text(
@@ -481,7 +494,8 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
                   ),
                 ],
               ),
-            ],
+              ],
+            ),
           ),
         );
       },

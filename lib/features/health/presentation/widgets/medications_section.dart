@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/medical_engine.dart';
@@ -581,7 +582,6 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -589,38 +589,38 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
         children: [
           Column(
             children: [
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E2235).withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colors.border.withValues(alpha: isDark ? 0.08 : 0.4)),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  labelColor: isDark ? Colors.white : colors.primary,
-                  unselectedLabelColor: colors.textSecondary,
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  indicator: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: isDark ? const Color(0xFF2E334D) : Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
-                  dividerColor: Colors.transparent,
-                  padding: const EdgeInsets.all(4),
-                  tabs: const [
-                    Tab(text: 'امروز'),
-                    Tab(text: 'همه داروها'),
-                    Tab(text: 'تاریخچه'),
-                  ],
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: AnimatedBuilder(
+                  animation: _tabController,
+                  builder: (context, _) {
+                    return RitmoGlassSegmentedControl<int>(
+                      selectedIndex: _tabController.index,
+                      accentColor: colors.primary,
+                      onTabChanged: (index) {
+                        setState(() {
+                          _tabController.animateTo(index);
+                        });
+                      },
+                      items: const [
+                        RitmoTabItem<int>(
+                          title: 'امروز',
+                          icon: CupertinoIcons.sun_max_fill,
+                          value: 0,
+                        ),
+                        RitmoTabItem<int>(
+                          title: 'همه داروها',
+                          icon: CupertinoIcons.capsule_fill,
+                          value: 1,
+                        ),
+                        RitmoTabItem<int>(
+                          title: 'تاریخچه',
+                          icon: CupertinoIcons.clock_fill,
+                          value: 2,
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 12),
@@ -656,7 +656,6 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
 
   Widget _buildTodayTab() {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -797,109 +796,35 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                     final threshold = med['medRefillThreshold'] as int? ?? 0;
                     final isRefill = MedicalEngine.isRefillNeeded(stockCount: stock, warningThreshold: threshold);
 
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.6) : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isRefill 
-                              ? colors.warning.withValues(alpha: 0.3)
-                              : colors.border.withValues(alpha: isDark ? 0.12 : 0.5),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: (isPrn ? colors.warning : colors.primary).withValues(alpha: 0.12),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      isPrn ? Icons.medical_services_rounded : Icons.vaccines_rounded,
-                                      color: isPrn ? colors.warning : colors.primary,
-                                      size: 24,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          med['title'] as String,
-                                          style: TextStyle(
-                                            fontSize: 16.5,
-                                            fontWeight: FontWeight.bold,
-                                            color: colors.textPrimary,
-                                            ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                              decoration: BoxDecoration(
-                                                color: (isPrn ? colors.warning : colors.primary).withValues(alpha: 0.1),
-                                                borderRadius: BorderRadius.circular(8),
-                                              ),
-                                              child: Text(
-                                                isPrn ? 'در صورت نیاز (PRN)' : 'ساعت $timeLabel',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: isPrn ? colors.warning : colors.primary,
-                                                  ),
-                                              ),
-                                            ),
-                                            if (dose.isNotEmpty) ...[
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                '• $dose',
-                                                style: TextStyle(
-                                                  fontSize: 13.5,
-                                                  color: colors.textSecondary,
-                                                  ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
+                      child: RitmoCard.neumorphic(
+                        borderColor: isRefill ? colors.warning.withValues(alpha: 0.4) : null,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            RitmoCardHeader(
+                              title: med['title'] as String,
+                              subtitle: dose.isNotEmpty ? 'دوز: $dose' : null,
+                              icon: isPrn ? CupertinoIcons.square_stack_3d_up_fill : CupertinoIcons.capsule_fill,
+                              iconColor: isPrn ? colors.warning : colors.primary,
+                              trailing: RitmoCardBadge(
+                                label: isPrn ? 'در صورت نیاز (PRN)' : 'ساعت $timeLabel',
+                                color: isPrn ? colors.warning : colors.primary,
                               ),
-                              const SizedBox(height: 16),
-                              Divider(height: 1, thickness: 1, color: colors.border.withValues(alpha: 0.5)),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: _buildStockIndicator(med),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  _buildActionButton(med, isLogged, loggedStatus, checkResult, countdownSecs),
-                                ],
-                              ),
-                            ],
-                          ),
+                            ),
+                            const RitmoCardDivider(),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: _buildStockIndicator(med),
+                                ),
+                                const SizedBox(width: 16),
+                                _buildActionButton(med, isLogged, loggedStatus, checkResult, countdownSecs),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -913,30 +838,28 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
   Widget _buildRefillWarningBanner(List<Map<String, dynamic>> meds) {
     final colors = context.colors;
     final names = meds.map((r) => r['title'] as String).join('، ');
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: colors.warning.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.warning.withValues(alpha: 0.25), width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.warning_amber_rounded, color: colors.warning, size: 22),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'نیاز به تهیه دارو: موجودی ($names) رو به اتمام است.',
-              style: TextStyle(
-                fontSize: 13, 
-                color: colors.warning, 
-                fontWeight: FontWeight.w600
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
+      child: RitmoCard.neumorphic(
+        backgroundColor: colors.warning.withValues(alpha: 0.08),
+        borderColor: colors.warning.withValues(alpha: 0.3),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: colors.warning, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'نیاز به تهیه دارو: موجودی ($names) رو به اتمام است.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: colors.warning,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1151,7 +1074,6 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
 
   Widget _buildAllTab() {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -1254,94 +1176,68 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                           return false;
                         }
                       },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.6) : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: colors.border.withValues(alpha: isDark ? 0.12 : 0.5),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: (isPrn ? colors.warning : colors.primary).withValues(alpha: 0.12),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    isPrn ? Icons.medical_services_rounded : Icons.vaccines_rounded,
-                                    color: isPrn ? colors.warning : colors.primary,
-                                    size: 24,
-                                  ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
+                        child: RitmoCard.neumorphic(
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: (isPrn ? colors.warning : colors.primary).withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        med['title'] as String,
-                                        style: TextStyle(
-                                          fontSize: 16.5,
-                                          fontWeight: FontWeight.bold,
-                                          color: colors.textPrimary,
-                                          ),
+                                child: Icon(
+                                  isPrn ? CupertinoIcons.square_stack_3d_up_fill : CupertinoIcons.capsule_fill,
+                                  color: isPrn ? colors.warning : colors.primary,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      med['title'] as String,
+                                      style: TextStyle(
+                                        fontSize: 15.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: colors.textPrimary,
                                       ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                            decoration: BoxDecoration(
-                                              color: (isPrn ? colors.warning : colors.primary).withValues(alpha: 0.1),
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        RitmoCardBadge(
+                                          label: isPrn ? 'در صورت نیاز (PRN)' : 'برنامه منظم',
+                                          color: isPrn ? colors.warning : colors.primary,
+                                        ),
+                                        if (med['description'] != null && (med['description'] as String).isNotEmpty) ...[
+                                          const SizedBox(width: 8),
+                                          Expanded(
                                             child: Text(
-                                              isPrn ? 'در صورت نیاز (PRN)' : 'برنامه منظم تکرارشونده',
+                                              '• دوز: ${med['description']}',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: isPrn ? colors.warning : colors.primary,
-                                                ),
+                                                fontSize: 12.5,
+                                                color: colors.textSecondary,
+                                              ),
                                             ),
                                           ),
-                                          if (med['description'] != null && (med['description'] as String).isNotEmpty) ...[
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              '• دوز: ${med['description']}',
-                                              style: TextStyle(
-                                                fontSize: 13.5,
-                                                color: colors.textSecondary,
-                                                ),
-                                            ),
-                                          ],
                                         ],
-                                      ),
-                                    ],
-                                  ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                                IconButton(
-                                  icon: Icon(Icons.edit_rounded, color: colors.primary.withValues(alpha: 0.8), size: 20),
-                                  onPressed: () => _showAddEditMedicationSheet(medication: med),
-                                  tooltip: 'ویرایش دارو',
-                                ),
-                              ],
-                            ),
+                              ),
+                              IconButton(
+                                icon: Icon(CupertinoIcons.pencil, color: colors.primary, size: 20),
+                                onPressed: () => _showAddEditMedicationSheet(medication: med),
+                                tooltip: 'ویرایش دارو',
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -1355,7 +1251,6 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
 
   Widget _buildHistoryTab() {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_historyItems.isEmpty && _archivedRoutines.isEmpty) {
       return Center(child: Text('سوابق مصرف یا داروی خاتمه‌یافته‌ای ثبت نشده است', style: TextStyle(color: colors.textSecondary, fontSize: 14.5)));
@@ -1387,71 +1282,60 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
             final isPrn = med['routineType'] == 'asNeeded';
             final dose = med['description'] as String? ?? '';
 
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.02),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: colors.border.withValues(alpha: isDark ? 0.08 : 0.4),
-                  width: 1.5,
-                ),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: colors.textSecondary.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isPrn ? Icons.medical_services_rounded : Icons.vaccines_rounded,
-                          color: colors.textSecondary,
-                          size: 20,
-                        ),
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
+              child: RitmoCard.neumorphic(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colors.textSecondary.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              med['title'] as String,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: colors.textPrimary,
-                              ),
+                      child: Icon(
+                        isPrn ? CupertinoIcons.square_stack_3d_up_fill : CupertinoIcons.capsule_fill,
+                        color: colors.textSecondary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            med['title'] as String,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${isPrn ? "PRN (در صورت نیاز)" : "منظم"} ${dose.isNotEmpty ? "• دوز: $dose" : ""}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: colors.textSecondary,
-                              ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${isPrn ? "PRN (در صورت نیاز)" : "منظم"} ${dose.isNotEmpty ? "• دوز: $dose" : ""}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.textSecondary,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: () => _restoreMedication(medId),
-                        icon: Icon(Icons.unarchive_rounded, color: colors.primary, size: 22),
-                        tooltip: 'فعال‌سازی مجدد',
-                      ),
-                      IconButton(
-                        onPressed: () => _showDeleteMedicationConfirmation(med),
-                        icon: Icon(Icons.delete_forever_rounded, color: colors.medicalRed, size: 22),
-                        tooltip: 'حذف کامل دارو',
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => _restoreMedication(medId),
+                      icon: Icon(Icons.unarchive_rounded, color: colors.primary, size: 22),
+                      tooltip: 'فعال‌سازی مجدد',
+                    ),
+                    IconButton(
+                      onPressed: () => _showDeleteMedicationConfirmation(med),
+                      icon: Icon(Icons.delete_forever_rounded, color: colors.medicalRed, size: 22),
+                      tooltip: 'حذف کامل دارو',
+                    ),
+                  ],
                 ),
               ),
             );
@@ -1496,73 +1380,54 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
               agoStr = '${diff.inDays} روز پیش';
             }
 
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.6) : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: colors.border.withValues(alpha: isDark ? 0.12 : 0.5),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: (isPrn ? colors.warning : colors.primary).withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isPrn ? Icons.history_rounded : Icons.check_circle_outline_rounded,
-                          color: isPrn ? colors.warning : colors.primary,
-                          size: 24,
-                        ),
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
+              child: RitmoCard.neumorphic(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: (isPrn ? colors.warning : colors.primary).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item['title'] as String,
-                              style: TextStyle(
-                                fontSize: 16.5,
-                                fontWeight: FontWeight.bold,
-                                color: colors.textPrimary,
-                                ),
+                      child: Icon(
+                        isPrn ? CupertinoIcons.square_stack_3d_up_fill : CupertinoIcons.checkmark_seal_fill,
+                        color: isPrn ? colors.warning : colors.primary,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item['title'] as String,
+                            style: TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'دوز: ${item['dosage'] ?? "نامشخص"} · ساعت $hourStr ($agoStr)',
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                color: colors.textSecondary,
-                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'دوز: ${item['dosage'] ?? "نامشخص"} · ساعت $hourStr ($agoStr)',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: colors.textSecondary,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: () => _showDeleteLogConfirmation(item),
-                        icon: Icon(Icons.delete_outline_rounded, color: colors.textSecondary.withValues(alpha: 0.6), size: 22),
-                        tooltip: 'حذف سابقه مصرف',
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => _showDeleteLogConfirmation(item),
+                      icon: Icon(CupertinoIcons.trash, color: colors.textSecondary.withValues(alpha: 0.6), size: 20),
+                      tooltip: 'حذف سابقه مصرف',
+                    ),
+                  ],
                 ),
               ),
             );

@@ -226,83 +226,82 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
           constraints: BoxConstraints(
             maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
           ),
-        padding: const EdgeInsets.all(16),
-        child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // Drag handle
-                Center(
-                  child: Container(
-                    width: 38,
-                    height: 4.5,
-                    decoration: BoxDecoration(
-                      color: colors.textPrimary.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.22),
-                      borderRadius: BorderRadius.circular(3),
+          padding: const EdgeInsets.all(16),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  children: [
+                    // Drag handle
+                    Center(
+                      child: Container(
+                        width: 38,
+                        height: 4.5,
+                        decoration: BoxDecoration(
+                          color: colors.textPrimary.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.22),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'خلاصه آماده برای ارائه به پزشک',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
+                    const SizedBox(height: 12),
+                    Text(
+                      'خلاصه آماده برای ارائه به پزشک',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
                     ),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Card(
-                      color: colors.card,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: colors.border)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Text(
-                          _summaryText,
-                          style: TextStyle(
-                            fontFamily: 'Courier', // medical data layout
-                            fontSize: 12,
-                            color: colors.textPrimary,
-                            height: 1.6,
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: RitmoCard.neumorphic(
+                          padding: const EdgeInsets.all(14),
+                          child: Text(
+                            _summaryText,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.textPrimary,
+                              height: 1.6,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _copyToClipboard,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _copyToClipboard,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              elevation: 0,
+                            ),
+                            icon: const Icon(Icons.copy, size: 18),
+                            label: const Text('کپی متن گزارش', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
                         ),
-                        icon: const Icon(Icons.copy, size: 18),
-                        label: const Text('کپی متن گزارش', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      ),
-                      child: const Text('بستن', style: TextStyle()),
+                        const SizedBox(width: 12),
+                        OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: colors.border),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          ),
+                          child: Text('بستن', style: TextStyle(color: colors.textPrimary)),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+        ),
       ),
-    ),);
+    );
   }
 
   String _toPersianDigits(String input) {

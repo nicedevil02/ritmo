@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path_utils;
@@ -351,15 +352,31 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
             ],
           ),
           const SizedBox(height: 12),
-          TabBar(
-            controller: _tabController,
-            indicatorColor: colors.primary,
-            labelColor: colors.textPrimary,
-            unselectedLabelColor: colors.textSecondary,
-            tabs: [
-              Tab(text: l10n.doctorVisitsTabUpcoming),
-              Tab(text: l10n.doctorVisitsTabPast),
-            ],
+          AnimatedBuilder(
+            animation: _tabController,
+            builder: (context, _) {
+              return RitmoGlassSegmentedControl<int>(
+                selectedIndex: _tabController.index,
+                accentColor: colors.primary,
+                onTabChanged: (index) {
+                  setState(() {
+                    _tabController.animateTo(index);
+                  });
+                },
+                items: [
+                  RitmoTabItem<int>(
+                    title: l10n.doctorVisitsTabUpcoming,
+                    icon: CupertinoIcons.calendar_today,
+                    value: 0,
+                  ),
+                  RitmoTabItem<int>(
+                    title: l10n.doctorVisitsTabPast,
+                    icon: CupertinoIcons.clock_fill,
+                    value: 1,
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -397,40 +414,20 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemBuilder: (context, index) {
         final visit = visits[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: RitmoCard.neumorphic(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            visit.doctorName,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                          if (visit.specialty != null && visit.specialty!.isNotEmpty)
-                            Text(
-                              visit.specialty!,
-                              style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                            ),
-                        ],
-                      ),
-                    ),
-                    _buildVisitTypeBadge(visit.visitType),
-                  ],
+                RitmoCardHeader(
+                  title: visit.doctorName,
+                  subtitle: (visit.specialty != null && visit.specialty!.isNotEmpty) ? visit.specialty! : null,
+                  icon: CupertinoIcons.person_crop_circle_badge_checkmark,
+                  iconColor: colors.primary,
+                  trailing: _buildVisitTypeBadge(visit.visitType),
                 ),
-                const Divider(height: 16),
+                const RitmoCardDivider(),
                 Row(
                   children: [
                     Icon(Icons.calendar_today, size: 14, color: colors.primary),

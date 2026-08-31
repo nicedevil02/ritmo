@@ -431,69 +431,21 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
       '${DateTime.fromMillisecondsSinceEpoch(latest.loggedAt).hour.toString().padLeft(2, '0')}:${DateTime.fromMillisecondsSinceEpoch(latest.loggedAt).minute.toString().padLeft(2, '0')}',
     );
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: stageColor.withValues(alpha: 0.35), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: stageColor.withValues(alpha: 0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return RitmoCard.neumorphic(
+      borderColor: stageColor.withValues(alpha: 0.35),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: stageColor,
-                      boxShadow: [
-                        BoxShadow(
-                          color: stageColor.withValues(alpha: 0.6),
-                          blurRadius: 8,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'آخرین سنجش ثبت‌شده ($dateStr $timeStr)',
-                    style: RitmoTextStyles.caption(colors.textSecondary),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: stageColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: stageColor.withValues(alpha: 0.4)),
-                ),
-                child: Text(
-                  latest.stageLabel,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: stageColor,
-                  ),
-                ),
-              ),
-            ],
+          RitmoCardHeader(
+            title: 'آخرین سنجش ثبت‌شده ($dateStr $timeStr)',
+            icon: CupertinoIcons.heart_circle_fill,
+            iconColor: stageColor,
+            trailing: RitmoCardBadge(
+              label: latest.stageLabel,
+              color: stageColor,
+            ),
           ),
-          const SizedBox(height: 12),
+          const RitmoCardDivider(),
           Row(
             children: [
               Expanded(
@@ -555,7 +507,7 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: colors.surfaceSunken,
+                    color: colors.card,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: colors.border),
                   ),
@@ -624,15 +576,15 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+        color: colors.warning.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+        border: Border.all(color: colors.warning.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             CupertinoIcons.exclamationmark_triangle_fill,
-            color: Color(0xFFF59E0B),
+            color: colors.warning,
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -640,12 +592,12 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'هشدار الگوی پرفشاری صبحگاهی (Morning Surge)',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFF59E0B),
+                    color: colors.warning,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -693,7 +645,7 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                   ? 'خون‌رسانی بهینه بافت‌ها'
                   : 'خارج از محدوده استاندارد',
               icon: CupertinoIcons.drop_fill,
-              color: const Color(0xFF06B6D4),
+              color: colors.primary,
               width: itemWidth,
               colors: colors,
             ),
@@ -705,7 +657,7 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                   ? 'انعطاف عروقی ایده‌آل'
                   : (stats.averagePulsePressure <= 60 ? 'سفتی عروق مرزی' : 'احتمال سفتی عروق بالا'),
               icon: CupertinoIcons.sparkles,
-              color: const Color(0xFF8B5CF6),
+              color: colors.accent,
               width: itemWidth,
               colors: colors,
             ),
@@ -717,7 +669,7 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                   ? 'ریتم سینوسی نرمال'
                   : 'پایش ریتم پیشنهاد می‌شود',
               icon: CupertinoIcons.heart_fill,
-              color: const Color(0xFFEC4899),
+              color: colors.medicalRed,
               width: itemWidth,
               colors: colors,
             ),
@@ -737,59 +689,58 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
     required double width,
     required RitmoColors colors,
   }) {
-    return Container(
+    return SizedBox(
       width: width,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 14, color: color),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(fontSize: 11, color: colors.textSecondary),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+      child: RitmoCard.neumorphic(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 14, color: color),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: colors.textPrimary,
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: colors.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                unit,
-                style: TextStyle(fontSize: 10, color: colors.textSecondary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+                if (unit.isNotEmpty) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    unit,
+                    style: TextStyle(fontSize: 10, color: colors.textSecondary),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -799,13 +750,8 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
     List<BloodPressureLog> filteredLogs,
     RitmoColors colors,
   ) {
-    return Container(
+    return RitmoCard.neumorphic(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: colors.border),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -869,46 +815,34 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
     RitmoColors colors,
     AppLocalizations l10n,
   ) {
-    return Container(
+    return RitmoCard.neumorphic(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: colors.border),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'ثبت سریع اندازه‌گیری جدید',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
-              ),
-              if (livePreview != null)
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: livePreview.stageColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: livePreview.stageColor.withValues(alpha: 0.4)),
-                  ),
-                  child: Text(
-                    livePreview.stageLabel,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.bold,
-                      color: livePreview.stageColor,
+          RitmoCardHeader(
+            title: 'ثبت سریع اندازه‌گیری جدید',
+            icon: CupertinoIcons.pencil_ellipsis_rectangle,
+            iconColor: colors.primary,
+            trailing: livePreview != null
+                ? AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: livePreview.stageColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: livePreview.stageColor.withValues(alpha: 0.4)),
                     ),
-                  ),
-                ),
-            ],
+                    child: Text(
+                      livePreview.stageLabel,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: livePreview.stageColor,
+                      ),
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(height: 12),
           Row(
@@ -1091,6 +1025,7 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
               backgroundColor: colors.primary,
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
             ),
             icon: const Icon(CupertinoIcons.check_mark_circled_solid, color: Colors.white, size: 18),
             label: Text(
@@ -1210,101 +1145,91 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
 
         final armText = log.arm == 'LEFT' ? l10n.bloodPressureArmLeft : l10n.bloodPressureArmRight;
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 14,
-                        backgroundColor: stageColor.withValues(alpha: 0.15),
-                        child: Icon(Icons.favorite, color: stageColor, size: 14),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _toPersianDigits('${log.systolic}/${log.diastolic}'),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                          color: colors.textPrimary,
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: RitmoCard.neumorphic(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: stageColor.withValues(alpha: 0.15),
+                          child: Icon(CupertinoIcons.heart_fill, color: stageColor, size: 14),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'mmHg',
-                        style: TextStyle(fontSize: 10, color: colors.textSecondary),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: stageColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
+                        const SizedBox(width: 8),
+                        Text(
+                          _toPersianDigits('${log.systolic}/${log.diastolic}'),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            color: colors.textPrimary,
+                          ),
                         ),
-                        child: Text(
-                          log.stageLabel,
-                          style: TextStyle(fontSize: 10, color: stageColor, fontWeight: FontWeight.bold),
+                        const SizedBox(width: 6),
+                        Text(
+                          'mmHg',
+                          style: TextStyle(fontSize: 10, color: colors.textSecondary),
                         ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.delete_outline, size: 18, color: colors.error),
-                    onPressed: () => _confirmDelete(log.id),
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    padding: EdgeInsets.zero,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Text(
-                    '$dateStr ساعت $timeStr · $armText ($posText)',
-                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
-                  ),
-                  if (log.pulse != null) ...[
-                    const Spacer(),
-                    Text(
-                      'ضربان: ${_toPersianDigits(log.pulse.toString())} bpm',
-                      style: TextStyle(fontSize: 11, color: colors.primary, fontWeight: FontWeight.w600),
+                        const SizedBox(width: 8),
+                        RitmoCardBadge(
+                          label: log.stageLabel,
+                          color: stageColor,
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: Icon(CupertinoIcons.trash, size: 16, color: colors.medicalRed),
+                      onPressed: () => _confirmDelete(log.id),
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      padding: EdgeInsets.zero,
                     ),
                   ],
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Text(
-                    'MAP: ${_toPersianDigits(log.meanArterialPressure.toStringAsFixed(1))} (${log.mapLabel})',
-                    style: TextStyle(fontSize: 10, color: log.mapColor, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'PP: ${_toPersianDigits(log.pulsePressure.toString())} (${log.pulsePressureLabel})',
-                    style: TextStyle(fontSize: 10, color: log.pulsePressureColor, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              if (log.note != null && log.note!.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  log.note!,
-                  style: TextStyle(fontSize: 11, color: colors.textSecondary, fontStyle: FontStyle.italic),
                 ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Text(
+                      '$dateStr ساعت $timeStr · $armText ($posText)',
+                      style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                    ),
+                    if (log.pulse != null) ...[
+                      const Spacer(),
+                      Text(
+                        'ضربان: ${_toPersianDigits(log.pulse.toString())} bpm',
+                        style: TextStyle(fontSize: 11, color: colors.primary, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      'MAP: ${_toPersianDigits(log.meanArterialPressure.toStringAsFixed(1))} (${log.mapLabel})',
+                      style: TextStyle(fontSize: 10, color: log.mapColor, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'PP: ${_toPersianDigits(log.pulsePressure.toString())} (${log.pulsePressureLabel})',
+                      style: TextStyle(fontSize: 10, color: log.pulsePressureColor, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                if (log.note != null && log.note!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    log.note!,
+                    style: TextStyle(fontSize: 11, color: colors.textSecondary, fontStyle: FontStyle.italic),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         );
       },

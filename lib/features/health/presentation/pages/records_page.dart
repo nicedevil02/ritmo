@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
+import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/features/health/presentation/widgets/allergies_section.dart';
 import 'package:ritmo/features/health/presentation/widgets/medical_documents_section.dart';
 import 'package:ritmo/features/health/presentation/widgets/medical_profile_section.dart';
@@ -36,7 +38,7 @@ class _RecordsPageState extends State<RecordsPage> {
       final settingsMap = {for (final s in settings) s['key']! as String: s['value']! as String};
       final pregnancyEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_pregnancy_enabled');
       final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
-      
+
       if (mounted) {
         setState(() {
           _showPregnancy = isFemale && pregnancyEnabled;
@@ -67,7 +69,6 @@ class _RecordsPageState extends State<RecordsPage> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
-    const identityColor = Color(0xff8B5CF6); // Records Purple
 
     if (_isLoading) {
       return Scaffold(
@@ -80,38 +81,11 @@ class _RecordsPageState extends State<RecordsPage> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: colors.bg,
-        appBar: AppBar(
-          backgroundColor: colors.bg,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_rounded, color: colors.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: identityColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(CupertinoIcons.folder_fill, color: identityColor, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                l10n.medicalProfile, // or پرونده پزشکی
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-          centerTitle: false,
+      child: RitmoPageScaffold(
+        appBar: RitmoModuleAppBar.fromContext(
+          context: context,
+          title: l10n.medicalProfile,
+          showBackButton: true,
         ),
         body: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -120,7 +94,7 @@ class _RecordsPageState extends State<RecordsPage> {
               id: 'PROFILE',
               title: l10n.medicalProfile,
               icon: CupertinoIcons.person_crop_circle,
-              color: const Color(0xff3B82F6),
+              color: colors.primary,
               child: const MedicalProfileSection(),
             ),
             const SizedBox(height: 12),
@@ -128,7 +102,7 @@ class _RecordsPageState extends State<RecordsPage> {
               id: 'DOCS',
               title: l10n.medicalDocuments,
               icon: CupertinoIcons.doc_richtext,
-              color: const Color(0xff10B981),
+              color: colors.success,
               child: const MedicalDocumentsSection(),
             ),
             const SizedBox(height: 12),
@@ -136,7 +110,7 @@ class _RecordsPageState extends State<RecordsPage> {
               id: 'VACCINES',
               title: l10n.vaccinations,
               icon: CupertinoIcons.shield_fill,
-              color: const Color(0xffF59E0B),
+              color: colors.warning,
               child: const VaccinationsSection(),
             ),
             const SizedBox(height: 12),
@@ -144,7 +118,7 @@ class _RecordsPageState extends State<RecordsPage> {
               id: 'ALLERGIES',
               title: l10n.allergies,
               icon: CupertinoIcons.exclamationmark_shield,
-              color: const Color(0xffEF4444),
+              color: colors.medicalRed,
               child: const AllergiesSection(),
             ),
             if (_showPregnancy) ...[
@@ -153,7 +127,7 @@ class _RecordsPageState extends State<RecordsPage> {
                 id: 'PREGNANCY',
                 title: l10n.pregnancyTracker,
                 icon: CupertinoIcons.heart_circle,
-                color: const Color(0xffEC4899),
+                color: colors.accent,
                 child: const PregnancySection(),
               ),
             ],
@@ -174,27 +148,13 @@ class _RecordsPageState extends State<RecordsPage> {
     final colors = context.colors;
     final isExpanded = _expandedTileId == id;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isExpanded ? colors.primary.withValues(alpha: 0.3) : colors.border.withValues(alpha: 0.5),
-          width: isExpanded ? 1.5 : 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadowColor.withValues(alpha: isExpanded ? 0.08 : 0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
+    return RitmoCard.neumorphic(
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
           InkWell(
             onTap: () => _toggleTile(id),
+            borderRadius: BorderRadius.circular(RitmoRadius.card),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Row(
@@ -202,8 +162,8 @@ class _RecordsPageState extends State<RecordsPage> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(14),
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(icon, color: color, size: 20),
                   ),
@@ -213,7 +173,7 @@ class _RecordsPageState extends State<RecordsPage> {
                       title,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        fontSize: 14.5,
                         color: colors.textPrimary,
                       ),
                     ),
@@ -237,7 +197,7 @@ class _RecordsPageState extends State<RecordsPage> {
             child: isExpanded
                 ? Column(
                     children: [
-                      Divider(color: colors.border.withValues(alpha: 0.5), height: 1),
+                      const RitmoCardDivider(),
                       child,
                     ],
                   )
@@ -248,3 +208,4 @@ class _RecordsPageState extends State<RecordsPage> {
     );
   }
 }
+

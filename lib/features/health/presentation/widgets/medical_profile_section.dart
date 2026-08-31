@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -246,93 +247,65 @@ class _MedicalProfileSectionState extends State<MedicalProfileSection> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Emergency Info Card
-        Card(
-          color: colors.medicalRed.withValues(alpha: 0.08),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: colors.medicalRed.withValues(alpha: 0.3), width: 1.5),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.emergency_share, color: colors.medicalRed, size: 24),
-                        const SizedBox(width: 8),
-                        Text(
-                          'کارت شناسایی اورژانس پزشکی',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: colors.medicalRed,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (hasEmergencyContact)
-                      IconButton.filled(
+        RitmoCard.neumorphic(
+          borderColor: colors.medicalRed.withValues(alpha: 0.35),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RitmoCardHeader(
+                title: 'کارت شناسایی اورژانس پزشکی',
+                icon: CupertinoIcons.heart_circle_fill,
+                iconColor: colors.medicalRed,
+                trailing: hasEmergencyContact
+                    ? IconButton.filled(
                         style: IconButton.styleFrom(
                           backgroundColor: colors.medicalRed,
                           foregroundColor: Colors.white,
                         ),
-                        icon: const Icon(Icons.phone, size: 20),
+                        icon: const Icon(CupertinoIcons.phone_fill, size: 16),
                         onPressed: _callEmergency,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildCardRow('گروه خونی:', bgLabel, colors.textPrimary),
-                const SizedBox(height: 6),
-                _buildCardRow(
-                  'بیماری‌های خاص / حساسیت مهم:',
-                  _profileData['illnesses']?.isNotEmpty ?? false ? _profileData['illnesses']! : 'ندارد',
-                  colors.textPrimary,
-                ),
-                const SizedBox(height: 6),
-                _buildCardRow(
-                  'مخاطب اضطراری:',
-                  _profileData['emergency_contact_name']?.isNotEmpty ?? false
-                      ? '${_profileData['emergency_contact_name']} (${_toPersianDigits(_profileData['emergency_contact_phone'] ?? "")})'
-                      : 'ثبت نشده',
-                  colors.textPrimary,
-                ),
-                const SizedBox(height: 6),
-                _buildCardRow('اهداکننده عضو:', _isOrganDonor ? 'بله' : 'خیر', colors.textPrimary),
-              ],
-            ),
+                      )
+                    : null,
+              ),
+              const RitmoCardDivider(),
+              _buildCardRow('گروه خونی:', bgLabel, colors.textPrimary),
+              const SizedBox(height: 6),
+              _buildCardRow(
+                'بیماری‌های خاص / حساسیت مهم:',
+                _profileData['illnesses']?.isNotEmpty ?? false ? _profileData['illnesses']! : 'ندارد',
+                colors.textPrimary,
+              ),
+              const SizedBox(height: 6),
+              _buildCardRow(
+                'مخاطب اضطراری:',
+                _profileData['emergency_contact_name']?.isNotEmpty ?? false
+                    ? '${_profileData['emergency_contact_name']} (${_toPersianDigits(_profileData['emergency_contact_phone'] ?? "")})'
+                    : 'ثبت نشده',
+                colors.textPrimary,
+              ),
+              const SizedBox(height: 6),
+              _buildCardRow('اهداکننده عضو:', _isOrganDonor ? 'بله' : 'خیر', colors.textPrimary),
+            ],
           ),
         ),
         const SizedBox(height: 12),
         // Insurance Details Card
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.shield_outlined, color: colors.primary, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'اطلاعات پوشش بیمه',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildCardRow('بیمه پایه:', _profileData['insurance_name']?.isNotEmpty ?? false ? _profileData['insurance_name']! : 'ثبت نشده', colors.textPrimary),
-                const SizedBox(height: 6),
-                _buildCardRow('شماره بیمه:', _profileData['insurance_number']?.isNotEmpty ?? false ? _toPersianDigits(_profileData['insurance_number']!) : 'ثبت نشده', colors.textPrimary),
-                const SizedBox(height: 6),
-                _buildCardRow('بیمه تکمیلی:', _profileData['insurance_supplementary']?.isNotEmpty ?? false ? _profileData['insurance_supplementary']! : 'ثبت نشده', colors.textPrimary),
-              ],
-            ),
+        RitmoCard.neumorphic(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RitmoCardHeader(
+                title: 'اطلاعات پوشش بیمه',
+                icon: CupertinoIcons.shield_fill,
+                iconColor: colors.primary,
+              ),
+              const RitmoCardDivider(),
+              _buildCardRow('بیمه پایه:', _profileData['insurance_name']?.isNotEmpty ?? false ? _profileData['insurance_name']! : 'ثبت نشده', colors.textPrimary),
+              const SizedBox(height: 6),
+              _buildCardRow('شماره بیمه:', _profileData['insurance_number']?.isNotEmpty ?? false ? _toPersianDigits(_profileData['insurance_number']!) : 'ثبت نشده', colors.textPrimary),
+              const SizedBox(height: 6),
+              _buildCardRow('بیمه تکمیلی:', _profileData['insurance_supplementary']?.isNotEmpty ?? false ? _profileData['insurance_supplementary']! : 'ثبت نشده', colors.textPrimary),
+            ],
           ),
         ),
       ],

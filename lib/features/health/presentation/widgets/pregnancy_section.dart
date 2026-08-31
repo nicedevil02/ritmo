@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
@@ -659,39 +660,32 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
           if (is511Labor) ...[
             Semantics(
               liveRegion: true,
-              child: Card(
-                color: colors.medicalRed.withValues(alpha: 0.1),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: colors.medicalRed, width: 1.5),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.warning, color: colors.medicalRed, size: 28),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              '⚠️ هشدار ۵-۱-۱: انقباضات شما منظم شده و هر ۵ دقیقه یا کمتر تکرار می‌شوند. فاز زایمان فعال است! لطفاً سریعاً با پزشک خود یا بیمارستان تماس بگیرید.',
-                              style: TextStyle(
-                                color: colors.medicalRed,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                ),
+              child: RitmoCard.neumorphic(
+                borderColor: colors.medicalRed,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Icon(CupertinoIcons.exclamationmark_triangle_fill, color: colors.medicalRed, size: 28),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '⚠️ هشدار ۵-۱-۱: انقباضات شما منظم شده و هر ۵ دقیقه یا کمتر تکرار می‌شوند. فاز زایمان فعال است! لطفاً سریعاً با پزشک خود یا بیمارستان تماس بگیرید.',
+                            style: TextStyle(
+                              color: colors.medicalRed,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'این برنامه یک ابزار پزشکی نیست و جایگزین نظر پزشک متخصص نمی‌شود.',
-                        style: TextStyle(color: colors.textSecondary, fontSize: 10),
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'این برنامه یک ابزار پزشکی نیست و جایگزین نظر پزشک متخصص نمی‌شود.',
+                      style: TextStyle(color: colors.textSecondary, fontSize: 10),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -761,52 +755,57 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
     final colors = context.colors;
     final jalaliLmp = Jalali.fromDateTime(_selectedLmp);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'پایش و مدیریت بارداری فعال نیست. برای شروع، لطفاً تاریخ اولین روز آخرین قاعدگی خود (LMP) را انتخاب کنید:',
-              style: TextStyle(fontSize: 13, color: colors.textPrimary),
-              textAlign: TextAlign.justify,
+    return RitmoCard.neumorphic(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'پایش و مدیریت بارداری فعال نیست. برای شروع، لطفاً تاریخ اولین روز آخرین قاعدگی خود (LMP) را انتخاب کنید:',
+            style: TextStyle(fontSize: 13, color: colors.textPrimary),
+            textAlign: TextAlign.justify,
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () async {
+              final picked = await RitmoDatePicker.showJalali(
+                context: context,
+                initialDate: Jalali.fromDateTime(_selectedLmp),
+                firstDate: Jalali.fromDateTime(DateTime.now().subtract(const Duration(days: 310))), // PREG-15
+                lastDate: Jalali.fromDateTime(DateTime.now()),
+              );
+              if (picked != null) {
+                setState(() {
+                  _selectedLmp = picked.toDateTime();
+                  _hasSelectedLmp = true;
+                });
+              }
+            },
+            icon: Icon(CupertinoIcons.calendar, color: colors.primary),
+            label: Text(
+              _hasSelectedLmp
+                  ? toPersianDigits('LMP: ${jalaliLmp.year}/${jalaliLmp.month.toString().padLeft(2, "0")}/${jalaliLmp.day.toString().padLeft(2, "0")}')
+                  : 'انتخاب تاریخ LMP',
+              style: TextStyle(color: colors.textPrimary),
             ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: () async {
-                final picked = await RitmoDatePicker.showJalali(
-                  context: context,
-                  initialDate: Jalali.fromDateTime(_selectedLmp),
-                  firstDate: Jalali.fromDateTime(DateTime.now().subtract(const Duration(days: 310))), // PREG-15
-                  lastDate: Jalali.fromDateTime(DateTime.now()),
-                );
-                if (picked != null) {
-                  setState(() {
-                    _selectedLmp = picked.toDateTime();
-                    _hasSelectedLmp = true;
-                  });
-                }
-              },
-              icon: Icon(Icons.calendar_month, color: colors.primary),
-              label: Text(
-                _hasSelectedLmp
-                    ? toPersianDigits('LMP: ${jalaliLmp.year}/${jalaliLmp.month.toString().padLeft(2, "0")}/${jalaliLmp.day.toString().padLeft(2, "0")}')
-                    : 'انتخاب تاریخ LMP',
-                style: TextStyle(color: colors.textPrimary),
-              ),
-              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: colors.border),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: (_isStarting || !_hasSelectedLmp) ? null : _startTracker,
-              style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-              child: _isStarting
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('شروع پایش بارداری', style: TextStyle(color: Colors.white)),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: (_isStarting || !_hasSelectedLmp) ? null : _startTracker,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colors.primary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
             ),
-          ],
-        ),
+            child: _isStarting
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Text('شروع پایش بارداری', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
@@ -830,70 +829,56 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
     if (ga.trimester == 2) trimesterText = 'سه ماهه دوم';
     if (ga.trimester == 3) trimesterText = 'سه ماهه سوم';
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  toPersianDigits('هفته $week بارداری (روز ${ga.days})'),
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    trimesterText,
-                    style: TextStyle(color: colors.primary, fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            LinearProgressIndicator(
-              value: progress,
+    return RitmoCard.neumorphic(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RitmoCardHeader(
+            title: toPersianDigits('هفته $week بارداری (روز ${ga.days})'),
+            icon: CupertinoIcons.heart_circle_fill,
+            iconColor: colors.primary,
+            trailing: RitmoCardBadge(
+              label: trimesterText,
               color: colors.primary,
-              backgroundColor: colors.border,
-              minHeight: 8,
-              borderRadius: BorderRadius.circular(4),
             ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('پیشرفت بارداری:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
-                Text(toPersianDigits('${(progress * 100).toStringAsFixed(0)}٪'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary)),
-              ],
-            ),
-            const Divider(height: 32),
-            Row(
-              children: [
-                Icon(Icons.event, color: colors.primary),
-                const SizedBox(width: 10),
-                Text('تاریخ تخمینی زایمان (EDD):', style: TextStyle(fontSize: 13, color: colors.textSecondary)),
-                const SizedBox(width: 8),
-                Text(eddStrJalali, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.calendar_today, color: colors.textSecondary),
-                const SizedBox(width: 10),
-                Text('تاریخ آخرین قاعدگی (LMP):', style: TextStyle(fontSize: 13, color: colors.textSecondary)),
-                const SizedBox(width: 8),
-                Text(_formatJalaliDate(lmpDate.millisecondsSinceEpoch), style: TextStyle(fontSize: 14, color: colors.textPrimary)),
-              ],
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          LinearProgressIndicator(
+            value: progress,
+            color: colors.primary,
+            backgroundColor: colors.border,
+            minHeight: 8,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('پیشرفت بارداری:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+              Text(toPersianDigits('${(progress * 100).toStringAsFixed(0)}٪'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary)),
+            ],
+          ),
+          const RitmoCardDivider(),
+          Row(
+            children: [
+              Icon(CupertinoIcons.calendar_today, color: colors.primary, size: 16),
+              const SizedBox(width: 8),
+              Text('تاریخ تخمینی زایمان (EDD):', style: TextStyle(fontSize: 13, color: colors.textSecondary)),
+              const SizedBox(width: 8),
+              Text(eddStrJalali, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(CupertinoIcons.clock, color: colors.textSecondary, size: 16),
+              const SizedBox(width: 8),
+              Text('تاریخ آخرین قاعدگی (LMP):', style: TextStyle(fontSize: 13, color: colors.textSecondary)),
+              const SizedBox(width: 8),
+              Text(_formatJalaliDate(lmpDate.millisecondsSinceEpoch), style: TextStyle(fontSize: 14, color: colors.textPrimary)),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -926,28 +911,32 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
               final scheduledDateMs = (chk['scheduledDate'] as int?) ?? 0;
               final actualDateMs = (chk['actualDate'] as int?) ?? 0;
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: CheckboxListTile(
-                  title: Text(
-                    (chk['title'] as String?) ?? '',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: completed ? FontWeight.normal : FontWeight.bold,
-                      color: completed ? colors.textSecondary : colors.textPrimary,
-                      decoration: completed ? TextDecoration.lineThrough : null,
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: RitmoCard.neumorphic(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      (chk['title'] as String?) ?? '',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: completed ? FontWeight.normal : FontWeight.bold,
+                        color: completed ? colors.textSecondary : colors.textPrimary,
+                        decoration: completed ? TextDecoration.lineThrough : null,
+                      ),
                     ),
+                    subtitle: completed
+                        ? Text('انجام شده در: ${_formatJalaliDate(actualDateMs)}', style: TextStyle(fontSize: 11, color: colors.textSecondary))
+                        : Text('تاریخ تقریبی سررسید: ${_formatJalaliDate(scheduledDateMs)}', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                    value: completed,
+                    activeColor: colors.success,
+                    onChanged: (val) {
+                      if (val != null) {
+                        _toggleCheckup(chk['id'] as String, val);
+                      }
+                    },
                   ),
-                  subtitle: completed
-                      ? Text('انجام شده در: ${_formatJalaliDate(actualDateMs)}', style: TextStyle(fontSize: 11, color: colors.textSecondary))
-                      : Text('تاریخ تقریبی سررسید: ${_formatJalaliDate(scheduledDateMs)}', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
-                  value: completed,
-                  activeColor: colors.success,
-                  onChanged: (val) {
-                    if (val != null) {
-                      _toggleCheckup(chk['id'] as String, val);
-                    }
-                  },
                 ),
               );
             },
@@ -964,60 +953,68 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
     return SingleChildScrollView(
       child: Column(
         children: [
-          Card(
-            color: _isCountingKicks ? colors.primary.withValues(alpha: 0.08) : null,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  if (!_isCountingKicks) ...[
-                    Text('پایش حرکات جنین به مدت ۱ ساعت به ارزیابی سلامت جنین کمک می‌کند.', style: TextStyle(fontSize: 12, color: colors.textPrimary)),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: _startKickSession,
-                      style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-                      child: const Text('شروع شمارش حرکات جنین', style: TextStyle(color: Colors.white)),
+          RitmoCard.neumorphic(
+            child: Column(
+              children: [
+                if (!_isCountingKicks) ...[
+                  Text('پایش حرکات جنین به مدت ۱ ساعت به ارزیابی سلامت جنین کمک می‌کند.', style: TextStyle(fontSize: 12, color: colors.textPrimary)),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: _startKickSession,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
                     ),
-                  ] else ...[
-                    ValueListenableBuilder<int>(
-                      valueListenable: _kickElapsedNotifier,
-                      builder: (context, kickSecs, _) {
-                        final mins = kickSecs ~/ 60;
-                        final secs = kickSecs % 60;
-                        return Text(
-                          toPersianDigits('${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}'),
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: colors.primary),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      toPersianDigits('حرکات شمرده شده: $_currentKickCount'),
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Semantics(
-                          button: true,
-                          label: 'ثبت حرکت جنین',
-                          child: ElevatedButton.icon(
-                            onPressed: _recordKick,
-                            icon: const Icon(Icons.add, color: Colors.white),
-                            label: const Text('ثبت حرکت / لگد', style: TextStyle(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(backgroundColor: colors.success),
+                    child: const Text('شروع شمارش حرکات جنین', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ] else ...[
+                  ValueListenableBuilder<int>(
+                    valueListenable: _kickElapsedNotifier,
+                    builder: (context, kickSecs, _) {
+                      final mins = kickSecs ~/ 60;
+                      final secs = kickSecs % 60;
+                      return Text(
+                        toPersianDigits('${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}'),
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: colors.primary),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    toPersianDigits('حرکات شمرده شده: $_currentKickCount'),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Semantics(
+                        button: true,
+                        label: 'ثبت حرکت جنین',
+                        child: ElevatedButton.icon(
+                          onPressed: _recordKick,
+                          icon: const Icon(CupertinoIcons.add, color: Colors.white, size: 16),
+                          label: const Text('ثبت حرکت / لگد', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colors.success,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
                           ),
                         ),
-                        OutlinedButton(
-                          onPressed: _saveKickSession,
-                          child: const Text('پایان و ذخیره', style: TextStyle()),
+                      ),
+                      OutlinedButton(
+                        onPressed: _saveKickSession,
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: colors.border),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                      ],
-                    ),
-                  ],
+                        child: Text('پایان و ذخیره', style: TextStyle(color: colors.textPrimary)),
+                      ),
+                    ],
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
           const SizedBox(height: 12),
@@ -1050,36 +1047,50 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
 
                 // 4-State Kick Evaluation Table (PREG-11)
                 Color statusColor = colors.success;
-                IconData statusIcon = Icons.check_circle_outline;
+                IconData statusIcon = CupertinoIcons.check_mark_circled;
                 String statusLabel = 'وضعیت طبیعی است';
 
                 if (count >= 10 && durationMins <= 120) {
                   statusColor = colors.success;
-                  statusIcon = Icons.check_circle_outline;
+                  statusIcon = CupertinoIcons.check_mark_circled;
                   statusLabel = 'وضعیت طبیعی است';
                 } else if (count >= 10 && durationMins > 120) {
                   statusColor = colors.textSecondary;
-                  statusIcon = Icons.info_outline;
+                  statusIcon = CupertinoIcons.info_circle;
                   statusLabel = 'شمارش کامل شد اما بیش از حد معمول طول کشید';
                 } else if (count < KickSessionTracker.targetCount && durationMins >= 120) {
                   statusColor = colors.warning;
-                  statusIcon = Icons.warning_amber_rounded;
+                  statusIcon = CupertinoIcons.exclamationmark_triangle;
                   statusLabel = 'حرکات کمتر از حد انتظار بود؛ با پزشک خود تماس بگیرید';
                 } else {
                   statusColor = colors.textSecondary;
-                  statusIcon = Icons.timelapse;
+                  statusIcon = CupertinoIcons.clock;
                   statusLabel = 'جلسه کوتاه بود؛ برای نتیجه معتبر ادامه دهید';
                 }
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 6),
-                  child: ListTile(
-                    leading: Icon(statusIcon, color: statusColor),
-                    title: Text(
-                      toPersianDigits('$count حرکت در $durationMins دقیقه'),
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: colors.textPrimary),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: RitmoCard.neumorphic(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Icon(statusIcon, color: statusColor, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                toPersianDigits('$count حرکت در $durationMins دقیقه'),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: colors.textPrimary),
+                              ),
+                              const SizedBox(height: 2),
+                              Text('$statusLabel · تاریخ ثبت: $date', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    subtitle: Text('$statusLabel · تاریخ ثبت: $date', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                   ),
                 );
               },
@@ -1096,40 +1107,39 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
     return SingleChildScrollView(
       child: Column(
         children: [
-          Card(
-            color: _isTimingContraction ? colors.medicalRed.withValues(alpha: 0.08) : null,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  if (_isTimingContraction) ...[
-                    ValueListenableBuilder<int>(
-                      valueListenable: _contractionElapsedNotifier,
-                      builder: (context, durationSecs, _) {
-                        return Text(
-                          toPersianDigits('مدت انقباض: $durationSecs ثانیه'),
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colors.medicalRed),
-                        );
-                      },
+          RitmoCard.neumorphic(
+            borderColor: _isTimingContraction ? colors.medicalRed : null,
+            child: Column(
+              children: [
+                if (_isTimingContraction) ...[
+                  ValueListenableBuilder<int>(
+                    valueListenable: _contractionElapsedNotifier,
+                    builder: (context, durationSecs, _) {
+                      return Text(
+                        toPersianDigits('مدت انقباض: $durationSecs ثانیه'),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colors.medicalRed),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                Semantics(
+                  button: true,
+                  label: _isTimingContraction ? 'پایان ثبت انقباض' : 'شروع ثبت انقباض',
+                  child: ElevatedButton(
+                    onPressed: _toggleContractionTimer,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isTimingContraction ? colors.medicalRed : colors.primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
                     ),
-                    const SizedBox(height: 12),
-                  ],
-                  Semantics(
-                    button: true,
-                    label: _isTimingContraction ? 'پایان ثبت انقباض' : 'شروع ثبت انقباض',
-                    child: ElevatedButton(
-                      onPressed: _toggleContractionTimer,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _isTimingContraction ? colors.medicalRed : colors.primary,
-                      ),
-                      child: Text(
-                        _isTimingContraction ? 'پایان انقباض' : 'شروع انقباض',
-                        style: const TextStyle(color: Colors.white),
-                      ),
+                    child: Text(
+                      _isTimingContraction ? 'پایان انقباض' : 'شروع انقباض',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),
@@ -1159,15 +1169,29 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
 
                 final intervalStr = interval > 0 ? 'فاصله از قبلی: ${interval ~/ 60} دقیقه' : 'اولین انقباض';
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 6),
-                  child: ListTile(
-                    leading: Icon(Icons.timer_outlined, color: colors.medicalRed),
-                    title: Text(
-                      toPersianDigits('مدت: $duration ثانیه · $intervalStr'),
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: colors.textPrimary),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: RitmoCard.neumorphic(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Icon(CupertinoIcons.stopwatch_fill, color: colors.medicalRed, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                toPersianDigits('مدت: $duration ثانیه · $intervalStr'),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: colors.textPrimary),
+                              ),
+                              const SizedBox(height: 2),
+                              Text('ثبت: $date', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    subtitle: Text('ثبت: $date', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                   ),
                 );
               },

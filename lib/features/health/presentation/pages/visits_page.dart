@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
+import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/features/health/presentation/widgets/doctor_visit_summary_sheet.dart';
 import 'package:ritmo/features/health/presentation/widgets/doctor_visits_section.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
@@ -12,7 +14,6 @@ class VisitsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
-    const identityColor = Color(0xff10B981); // Visits Green
 
     void openDoctorVisitSummarySheet() {
       showModalBottomSheet(
@@ -28,70 +29,41 @@ class VisitsPage extends StatelessWidget {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: colors.bg,
-        appBar: AppBar(
-          backgroundColor: colors.bg,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_rounded, color: colors.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: identityColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(CupertinoIcons.calendar_badge_plus, color: identityColor, size: 18),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  l10n.doctorVisits,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                    fontSize: 15,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+      child: RitmoPageScaffold(
+        appBar: RitmoModuleAppBar.fromContext(
+          context: context,
+          title: l10n.doctorVisits,
+          showBackButton: true,
           actions: [
             Padding(
               padding: const EdgeInsets.only(left: 8),
               child: TextButton.icon(
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  minimumSize: Size.zero,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  backgroundColor: colors.primary.withValues(alpha: 0.1),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 onPressed: openDoctorVisitSummarySheet,
-                icon: const Icon(Icons.description_outlined, size: 15, color: Color(0xff10B981)),
-                label: const Text(
+                icon: Icon(CupertinoIcons.doc_text_fill, size: 14, color: colors.primary),
+                label: Text(
                   'خلاصه برای پزشک',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 11.5,
-                    color: Color(0xff10B981),
+                    color: colors.primary,
                   ),
                 ),
               ),
             ),
           ],
-          centerTitle: false,
         ),
         body: const SingleChildScrollView(
+          physics: BouncingScrollPhysics(),
           child: DoctorVisitsSection(),
         ),
       ),
     );
   }
 }
+

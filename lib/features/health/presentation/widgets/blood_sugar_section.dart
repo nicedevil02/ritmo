@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -429,36 +430,33 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
     final colors = context.colors;
     final chartLogs = logs.reversed.toList(); // Chronological (oldest to newest)
 
-    return Container(
-      height: 220,
-      width: double.infinity,
+    return RitmoCard.neumorphic(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.border),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return GestureDetector(
-            onTapUp: (details) {
-              final touched = _findTouchedPoint(details.localPosition, constraints.biggest, chartLogs);
-              setState(() {
-                _selectedLog = touched;
-              });
-            },
-            child: CustomPaint(
-              size: constraints.biggest,
-              painter: _BloodSugarMultiLineChartPainter(
-                logs: chartLogs,
-                isDiabetic: _isDiabetic,
-                selectedCategory: _selectedCategoryFilter,
-                selectedLogId: _selectedLog?.id,
-                colors: colors,
+      child: SizedBox(
+        height: 200,
+        width: double.infinity,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return GestureDetector(
+              onTapUp: (details) {
+                final touched = _findTouchedPoint(details.localPosition, constraints.biggest, chartLogs);
+                setState(() {
+                  _selectedLog = touched;
+                });
+              },
+              child: CustomPaint(
+                size: constraints.biggest,
+                painter: _BloodSugarMultiLineChartPainter(
+                  logs: chartLogs,
+                  isDiabetic: _isDiabetic,
+                  selectedCategory: _selectedCategoryFilter,
+                  selectedLogId: _selectedLog?.id,
+                  colors: colors,
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -513,26 +511,22 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
 
   Widget _buildEmptyChartCard() {
     final colors = context.colors;
-    return Container(
-      height: 160,
-      width: double.infinity,
+    return RitmoCard.neumorphic(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.border),
-      ),
       child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.show_chart_rounded, size: 36, color: colors.textSecondary.withValues(alpha: 0.5)),
-            const SizedBox(height: 8),
-            Text(
-              'داده‌ای برای بازه یا دسته انتخابی یافت نشد',
-              style: TextStyle(color: colors.textSecondary, fontSize: 12),
-            ),
-          ],
+        child: SizedBox(
+          height: 120,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(CupertinoIcons.chart_bar, size: 36, color: colors.textSecondary.withValues(alpha: 0.5)),
+              const SizedBox(height: 8),
+              Text(
+                'داده‌ای برای بازه یا دسته انتخابی یافت نشد',
+                style: TextStyle(color: colors.textSecondary, fontSize: 12),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -564,79 +558,66 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
     final dateStr = _toPersianDigits('${jalali.year}/${jalali.month}/${jalali.day}');
     final timeStr = _toPersianDigits('${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}');
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: log.categoryColor, width: 1.5),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: log.categoryColor.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Text(
-                _toPersianDigits(log.value.toString()),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: log.categoryColor,
-                ),
+    return RitmoCard.neumorphic(
+      borderColor: log.categoryColor.withValues(alpha: 0.5),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: log.categoryColor.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              _toPersianDigits(log.value.toString()),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: log.categoryColor,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        _getMeasurementLabel(log.measurementType),
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: badgeColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          statusText,
-                          style: TextStyle(fontSize: 10, color: badgeColor, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$dateStr ساعت $timeStr · هدف: ${_toPersianDigits(range.min.toString())}-${_toPersianDigits(range.max.toString())}',
-                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
-                  ),
-                  if (log.note != null && log.note!.isNotEmpty)
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
                     Text(
-                      log.note!,
-                      style: TextStyle(fontSize: 11, color: colors.textPrimary, fontStyle: FontStyle.italic),
+                      _getMeasurementLabel(log.measurementType),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
-                ],
-              ),
+                    const SizedBox(width: 6),
+                    RitmoCardBadge(
+                      label: statusText,
+                      color: badgeColor,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$dateStr ساعت $timeStr · هدف: ${_toPersianDigits(range.min.toString())}-${_toPersianDigits(range.max.toString())}',
+                  style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                ),
+                if (log.note != null && log.note!.isNotEmpty)
+                  Text(
+                    log.note!,
+                    style: TextStyle(fontSize: 11, color: colors.textPrimary, fontStyle: FontStyle.italic),
+                  ),
+              ],
             ),
-            IconButton(
-              icon: const Icon(Icons.close, size: 18),
-              onPressed: () {
-                setState(() {
-                  _selectedLog = null;
-                });
-              },
-            ),
-          ],
-        ),
+          ),
+          IconButton(
+            icon: Icon(CupertinoIcons.xmark, size: 16, color: colors.textSecondary),
+            onPressed: () {
+              setState(() {
+                _selectedLog = null;
+              });
+            },
+          ),
+        ],
       ),
     );
   }
@@ -644,101 +625,79 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
   Widget _buildClinicalStatsCard(BloodSugarStats stats) {
     final colors = context.colors;
 
-    return Card(
-      elevation: 0,
-      color: colors.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: colors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'تحلیل و وضعیت بالینی (TIR)',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                ),
-                if (stats.estimatedHbA1c != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'تخمین HbA1c: ${_toPersianDigits(stats.estimatedHbA1c!.toStringAsFixed(1))}٪',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: colors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 10),
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RitmoCardHeader(
+            title: 'تحلیل و وضعیت بالینی (TIR)',
+            icon: CupertinoIcons.waveform_path_ecg,
+            iconColor: colors.primary,
+            trailing: stats.estimatedHbA1c != null
+                ? RitmoCardBadge(
+                    label: 'تخمین HbA1c: ${_toPersianDigits(stats.estimatedHbA1c!.toStringAsFixed(1))}٪',
+                    color: colors.primary,
+                  )
+                : null,
+          ),
+          const RitmoCardDivider(),
 
-            // Time in Range Bar
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: SizedBox(
-                height: 10,
-                child: Row(
-                  children: [
-                    if (stats.lowPercentage > 0)
-                      Expanded(
-                        flex: (stats.lowPercentage * 10).toInt(),
-                        child: Container(color: colors.medicalRed),
-                      ),
-                    if (stats.inRangePercentage > 0)
-                      Expanded(
-                        flex: (stats.inRangePercentage * 10).toInt(),
-                        child: Container(color: colors.success),
-                      ),
-                    if (stats.highPercentage > 0)
-                      Expanded(
-                        flex: (stats.highPercentage * 10).toInt(),
-                        child: Container(color: colors.warning),
-                      ),
-                  ],
-                ),
+          // Time in Range Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: SizedBox(
+              height: 10,
+              child: Row(
+                children: [
+                  if (stats.lowPercentage > 0)
+                    Expanded(
+                      flex: (stats.lowPercentage * 10).toInt(),
+                      child: Container(color: colors.medicalRed),
+                    ),
+                  if (stats.inRangePercentage > 0)
+                    Expanded(
+                      flex: (stats.inRangePercentage * 10).toInt(),
+                      child: Container(color: colors.success),
+                    ),
+                  if (stats.highPercentage > 0)
+                    Expanded(
+                      flex: (stats.highPercentage * 10).toInt(),
+                      child: Container(color: colors.warning),
+                    ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
+          ),
+          const SizedBox(height: 10),
 
-            // TIR Legends
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatMetric(
-                  label: 'در محدوده هدف',
-                  val: '${_toPersianDigits(stats.inRangePercentage.toStringAsFixed(0))}٪',
-                  color: colors.success,
-                ),
-                _buildStatMetric(
-                  label: 'بالاتر از هدف',
-                  val: '${_toPersianDigits(stats.highPercentage.toStringAsFixed(0))}٪',
-                  color: colors.warning,
-                ),
-                _buildStatMetric(
-                  label: 'افت قند خون',
-                  val: '${_toPersianDigits(stats.lowPercentage.toStringAsFixed(0))}٪',
-                  color: colors.medicalRed,
-                ),
-                _buildStatMetric(
-                  label: 'میانگین کل',
-                  val: _toPersianDigits(stats.averageGlucose.toStringAsFixed(0)),
-                  color: colors.textPrimary,
-                ),
-              ],
-            ),
-          ],
-        ),
+          // TIR Legends
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatMetric(
+                label: 'در محدوده هدف',
+                val: '${_toPersianDigits(stats.inRangePercentage.toStringAsFixed(0))}٪',
+                color: colors.success,
+              ),
+              _buildStatMetric(
+                label: 'بالاتر از هدف',
+                val: '${_toPersianDigits(stats.highPercentage.toStringAsFixed(0))}٪',
+                color: colors.warning,
+              ),
+              _buildStatMetric(
+                label: 'افت قند خون',
+                val: '${_toPersianDigits(stats.lowPercentage.toStringAsFixed(0))}٪',
+                color: colors.medicalRed,
+              ),
+              _buildStatMetric(
+                label: 'میانگین کل',
+                val: _toPersianDigits(stats.averageGlucose.toStringAsFixed(0)),
+                color: colors.textPrimary,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -762,136 +721,141 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
   Widget _buildAddLogCard(AppLocalizations l10n) {
     final colors = context.colors;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: TextFormField(
-                    controller: _valueController,
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(color: colors.textPrimary),
-                    decoration: RitmoTheme.inputDecoration(
-                      context,
-                      label: l10n.bloodSugarValue,
-                      icon: Icons.speed,
-                    ),
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
-                        return l10n.bloodSugarEnterValue;
-                      }
-                      if (int.tryParse(_normalizeDigits(val.trim())) == null) {
-                        return 'لطفاً یک عدد معتبر وارد کنید';
-                      }
-                      return null;
-                    },
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          RitmoCardHeader(
+            title: 'ثبت قند خون جدید',
+            icon: CupertinoIcons.pencil_ellipsis_rectangle,
+            iconColor: colors.primary,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: TextFormField(
+                  controller: _valueController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: colors.textPrimary),
+                  decoration: RitmoTheme.inputDecoration(
+                    context,
+                    label: l10n.bloodSugarValue,
+                    icon: CupertinoIcons.speedometer,
                   ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return l10n.bloodSugarEnterValue;
+                    }
+                    if (int.tryParse(_normalizeDigits(val.trim())) == null) {
+                      return 'لطفاً یک عدد معتبر وارد کنید';
+                    }
+                    return null;
+                  },
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 3,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _measurementType,
-                    style: TextStyle(color: colors.textPrimary, fontSize: 13),
-                    decoration: RitmoTheme.inputDecoration(
-                      context,
-                      label: l10n.bloodSugarTitle,
-                      icon: Icons.category,
-                    ),
-                    dropdownColor: colors.card,
-                    items: [
-                      DropdownMenuItem(
-                        value: 'FASTING',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.wb_sunny_outlined, size: 16, color: Color(0xFF06B6D4)),
-                            const SizedBox(width: 6),
-                            Text(l10n.bloodSugarFasting),
-                          ],
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'AFTER_MEAL',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.restaurant, size: 16, color: Color(0xFFF59E0B)),
-                            const SizedBox(width: 6),
-                            Text(l10n.bloodSugarAfterMeal),
-                          ],
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'BEFORE_MEAL',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.restaurant_menu, size: 16, color: Color(0xFF6366F1)),
-                            const SizedBox(width: 6),
-                            Text(l10n.bloodSugarBeforeMeal),
-                          ],
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'BEDTIME',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.bedtime_outlined, size: 16, color: Color(0xFF8B5CF6)),
-                            const SizedBox(width: 6),
-                            Text(l10n.bloodSugarBedtime),
-                          ],
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'RANDOM',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.shuffle, size: 16, color: Color(0xFFEC4899)),
-                            const SizedBox(width: 6),
-                            Text(l10n.bloodSugarRandom),
-                          ],
-                        ),
-                      ),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() {
-                          _measurementType = val;
-                        });
-                      }
-                    },
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 3,
+                child: DropdownButtonFormField<String>(
+                  initialValue: _measurementType,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13),
+                  decoration: RitmoTheme.inputDecoration(
+                    context,
+                    label: l10n.bloodSugarTitle,
+                    icon: CupertinoIcons.tag,
                   ),
+                  dropdownColor: colors.card,
+                  items: [
+                    DropdownMenuItem(
+                      value: 'FASTING',
+                      child: Row(
+                        children: [
+                          Icon(CupertinoIcons.sun_max, size: 16, color: colors.primary),
+                          const SizedBox(width: 6),
+                          Text(l10n.bloodSugarFasting),
+                        ],
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 'AFTER_MEAL',
+                      child: Row(
+                        children: [
+                          Icon(Icons.restaurant, size: 16, color: colors.warning),
+                          const SizedBox(width: 6),
+                          Text(l10n.bloodSugarAfterMeal),
+                        ],
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 'BEFORE_MEAL',
+                      child: Row(
+                        children: [
+                          Icon(Icons.restaurant_menu, size: 16, color: colors.accent),
+                          const SizedBox(width: 6),
+                          Text(l10n.bloodSugarBeforeMeal),
+                        ],
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 'BEDTIME',
+                      child: Row(
+                        children: [
+                          Icon(CupertinoIcons.moon, size: 16, color: colors.accent),
+                          const SizedBox(width: 6),
+                          Text(l10n.bloodSugarBedtime),
+                        ],
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 'RANDOM',
+                      child: Row(
+                        children: [
+                          Icon(CupertinoIcons.shuffle, size: 16, color: colors.medicalRed),
+                          const SizedBox(width: 6),
+                          Text(l10n.bloodSugarRandom),
+                        ],
+                      ),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        _measurementType = val;
+                      });
+                    }
+                  },
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _noteController,
-              style: TextStyle(color: colors.textPrimary),
-              decoration: RitmoTheme.inputDecoration(
-                context,
-                label: 'یادداشت (اختیاری)',
-                icon: Icons.note_alt_outlined,
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _noteController,
+            style: TextStyle(color: colors.textPrimary),
+            decoration: RitmoTheme.inputDecoration(
+              context,
+              label: 'یادداشت (اختیاری)',
+              icon: Icons.note_alt_outlined,
             ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _saveLog,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text(
-                l10n.bloodSugarSave,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: _saveLog,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colors.primary,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
             ),
-          ],
-        ),
+            child: Text(
+              l10n.bloodSugarSave,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -941,57 +905,63 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
         final dateStr = _toPersianDigits('${jalali.year}/${jalali.month}/${jalali.day}');
         final timeStr = _toPersianDigits('${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}');
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: log.categoryColor.withValues(alpha: 0.15),
-              child: Text(
-                _toPersianDigits(log.value.toString()),
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: log.categoryColor,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-            title: Row(
-              children: [
-                Text(
-                  typeLabel,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: badgeColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    statusText,
-                    style: TextStyle(fontSize: 10, color: badgeColor, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            subtitle: Column(
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: RitmoCard.neumorphic(
+            padding: const EdgeInsets.all(12),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: log.categoryColor.withValues(alpha: 0.15),
+                          radius: 14,
+                          child: Text(
+                            _toPersianDigits(log.value.toString()),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: log.categoryColor,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          typeLabel,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        const SizedBox(width: 8),
+                        RitmoCardBadge(
+                          label: statusText,
+                          color: badgeColor,
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: Icon(CupertinoIcons.trash, size: 16, color: colors.medicalRed),
+                      onPressed: () => _confirmDelete(log.id),
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
                 Text(
                   '$dateStr ساعت $timeStr',
                   style: TextStyle(fontSize: 11, color: colors.textSecondary),
                 ),
-                if (log.note != null && log.note!.isNotEmpty)
+                if (log.note != null && log.note!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
                   Text(
                     log.note!,
                     style: TextStyle(fontSize: 11, color: colors.textPrimary, fontStyle: FontStyle.italic),
                   ),
+                ],
               ],
-            ),
-            trailing: IconButton(
-              icon: Icon(Icons.delete_outline, size: 18, color: colors.medicalRed),
-              onPressed: () => _confirmDelete(log.id),
             ),
           ),
         );

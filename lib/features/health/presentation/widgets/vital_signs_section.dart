@@ -656,69 +656,21 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
       '${DateTime.fromMillisecondsSinceEpoch(latest.loggedAt).hour.toString().padLeft(2, '0')}:${DateTime.fromMillisecondsSinceEpoch(latest.loggedAt).minute.toString().padLeft(2, '0')}',
     );
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: stageColor.withValues(alpha: 0.35), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: stageColor.withValues(alpha: 0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return RitmoCard.neumorphic(
+      borderColor: stageColor.withValues(alpha: 0.35),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: stageColor,
-                      boxShadow: [
-                        BoxShadow(
-                          color: stageColor.withValues(alpha: 0.6),
-                          blurRadius: 8,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'آخرین سنجش ($dateStr $timeStr)',
-                    style: RitmoTextStyles.caption(colors.textSecondary),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: stageColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: stageColor.withValues(alpha: 0.4)),
-                ),
-                child: Text(
-                  stageLabel,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: stageColor,
-                  ),
-                ),
-              ),
-            ],
+          RitmoCardHeader(
+            title: 'آخرین سنجش ($dateStr $timeStr)',
+            icon: CupertinoIcons.heart_fill,
+            iconColor: stageColor,
+            trailing: RitmoCardBadge(
+              label: stageLabel,
+              color: stageColor,
+            ),
           ),
-          const SizedBox(height: 12),
+          const RitmoCardDivider(),
           Row(
             children: [
               Expanded(
@@ -759,14 +711,14 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                           if (latest.calculateBmi(_height) != null)
                             _metricBadge('BMI: ${_toPersianDigits(latest.calculateBmi(_height)!.toStringAsFixed(1))}', stageColor),
                           if (VitalSignLog.getIdealWeight(_height) != null)
-                            _metricBadge('وزن ایده‌آل: ${_toPersianDigits(VitalSignLog.getIdealWeight(_height)!.toStringAsFixed(1))} kg', const Color(0xFF10B981)),
+                            _metricBadge('وزن ایده‌آل: ${_toPersianDigits(VitalSignLog.getIdealWeight(_height)!.toStringAsFixed(1))} kg', colors.success),
                         ],
                         if (_vitalType == 'WAIST' && latest.calculateWhtr(_height) != null)
                           _metricBadge('WHtR: ${_toPersianDigits(latest.calculateWhtr(_height)!.toStringAsFixed(2))}', stageColor),
                         if (_vitalType == 'TEMPERATURE')
                           _metricBadge('میانگین: ${_toPersianDigits(stats.average.toStringAsFixed(1))} °C', colors.primary),
                         if (_vitalType == 'SPO2')
-                          _metricBadge('حداقل: %${_toPersianDigits(stats.min.toStringAsFixed(0))}', const Color(0xFF06B6D4)),
+                          _metricBadge('حداقل: %${_toPersianDigits(stats.min.toStringAsFixed(0))}', colors.accent),
                       ],
                     ),
                   ],
@@ -782,7 +734,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                   child: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: colors.surfaceSunken,
+                      color: colors.card,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: colors.border),
                     ),
@@ -884,7 +836,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                     ? '${deltaToIdeal >= 0 ? '+' : ''}${_toPersianDigits(deltaToIdeal.toStringAsFixed(1))} kg تا هدف'
                     : 'محاسبه بر اساس قد',
                 icon: CupertinoIcons.scope,
-                color: const Color(0xFF10B981),
+                color: colors.success,
                 width: itemWidth,
                 colors: colors,
               ),
@@ -894,7 +846,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                 unit: 'kg',
                 subtitle: 'دامنه ${_toPersianDigits(stats.min.toStringAsFixed(1))} تا ${_toPersianDigits(stats.max.toStringAsFixed(1))}',
                 icon: CupertinoIcons.waveform_path,
-                color: const Color(0xFF8B5CF6),
+                color: colors.accent,
                 width: itemWidth,
                 colors: colors,
               ),
@@ -906,7 +858,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                     ? (stats.delta! < 0 ? 'کاهش وزن در بازه' : (stats.delta! > 0 ? 'افزایش وزن در بازه' : 'وزن پایدار'))
                     : 'نیاز به سنجش‌های بیشتر',
                 icon: CupertinoIcons.arrow_up_down,
-                color: const Color(0xFF06B6D4),
+                color: colors.primary,
                 width: itemWidth,
                 colors: colors,
               ),
@@ -933,7 +885,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                 unit: '°C',
                 subtitle: stats.average <= 37.2 ? 'ریتم دمایی بدون تب' : 'میانگین با سابقه تب',
                 icon: CupertinoIcons.waveform_path_ecg,
-                color: const Color(0xFF10B981),
+                color: colors.success,
                 width: itemWidth,
                 colors: colors,
               ),
@@ -943,7 +895,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                 unit: '°C',
                 subtitle: stats.max > 38.0 ? 'سابقه تب بااهمیت بالینی' : 'پیک در محدوده فیزیولوژیک',
                 icon: CupertinoIcons.flame_fill,
-                color: stats.max > 38.0 ? const Color(0xFFDC2626) : const Color(0xFFF59E0B),
+                color: stats.max > 38.0 ? colors.medicalRed : colors.warning,
                 width: itemWidth,
                 colors: colors,
               ),
@@ -953,7 +905,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                 unit: '',
                 subtitle: '${_toPersianDigits(stats.inRangeCount.toString())} از ${_toPersianDigits(stats.totalCount.toString())} سنجش در بازه امن',
                 icon: CupertinoIcons.shield_lefthalf_fill,
-                color: const Color(0xFF06B6D4),
+                color: colors.primary,
                 width: itemWidth,
                 colors: colors,
               ),
@@ -980,7 +932,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                 unit: '',
                 subtitle: stats.average >= 95.0 ? 'اکسیژن‌رسانی بافتی عالی' : 'نیازمند بررسی تنفسی',
                 icon: CupertinoIcons.sparkles,
-                color: const Color(0xFF10B981),
+                color: colors.success,
                 width: itemWidth,
                 colors: colors,
               ),
@@ -990,7 +942,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                 unit: '',
                 subtitle: stats.min < 92.0 ? 'هشدار افت اکسیژن' : 'بدون افت نگران‌کننده',
                 icon: CupertinoIcons.exclamationmark_shield,
-                color: stats.min < 92.0 ? const Color(0xFFDC2626) : const Color(0xFFF59E0B),
+                color: stats.min < 92.0 ? colors.medicalRed : colors.warning,
                 width: itemWidth,
                 colors: colors,
               ),
@@ -1000,7 +952,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                 unit: '',
                 subtitle: 'سنجش‌های بالاتر از ۹۵٪',
                 icon: CupertinoIcons.checkmark_seal_fill,
-                color: const Color(0xFF06B6D4),
+                color: colors.primary,
                 width: itemWidth,
                 colors: colors,
               ),
@@ -1033,7 +985,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                     ? (latest.value <= halfHeight ? 'محیط کمتر از نصف قد ✓' : 'فراتر از حد مجاز ⚠️')
                     : 'محاسبه از روی قد',
                 icon: CupertinoIcons.bandage_fill,
-                color: const Color(0xFF10B981),
+                color: colors.success,
                 width: itemWidth,
                 colors: colors,
               ),
@@ -1043,7 +995,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                 unit: 'cm',
                 subtitle: 'دامنه ${_toPersianDigits(stats.min.toStringAsFixed(1))} تا ${_toPersianDigits(stats.max.toStringAsFixed(1))}',
                 icon: CupertinoIcons.waveform_path,
-                color: const Color(0xFF8B5CF6),
+                color: colors.accent,
                 width: itemWidth,
                 colors: colors,
               ),
@@ -1055,7 +1007,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                     ? (stats.delta! < 0 ? 'کاهش سایز شکمی' : (stats.delta! > 0 ? 'افزایش سایز شکمی' : 'سایز بدون تغییر'))
                     : 'نیاز به سنجش بیشتر',
                 icon: CupertinoIcons.arrow_up_down,
-                color: const Color(0xFF06B6D4),
+                color: colors.primary,
                 width: itemWidth,
                 colors: colors,
               ),
@@ -1076,61 +1028,58 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
     required double width,
     required RitmoColors colors,
   }) {
-    return Container(
+    return SizedBox(
       width: width,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 14, color: color),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(fontSize: 11, color: colors.textSecondary),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: colors.textPrimary,
-                ),
-              ),
-              if (unit.isNotEmpty) ...[
-                const SizedBox(width: 4),
-                Text(
-                  unit,
-                  style: TextStyle(fontSize: 10, color: colors.textSecondary),
+      child: RitmoCard.neumorphic(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 14, color: color),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                if (unit.isNotEmpty) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    unit,
+                    style: TextStyle(fontSize: 10, color: colors.textSecondary),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1140,13 +1089,8 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
     List<VitalSignLog> filteredLogs,
     RitmoColors colors,
   ) {
-    return Container(
+    return RitmoCard.neumorphic(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: colors.border),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1223,46 +1167,34 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
 
     final currentTags = _contextTags[_vitalType] ?? [];
 
-    return Container(
+    return RitmoCard.neumorphic(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: colors.border),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'ثبت سریع ${_getVitalTitle(_vitalType, l10n)}',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
-              ),
-              if (livePreview != null && previewLabel.isNotEmpty)
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: previewColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: previewColor.withValues(alpha: 0.4)),
-                  ),
-                  child: Text(
-                    previewLabel,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.bold,
-                      color: previewColor,
+          RitmoCardHeader(
+            title: 'ثبت سریع ${_getVitalTitle(_vitalType, l10n)}',
+            icon: CupertinoIcons.pencil_ellipsis_rectangle,
+            iconColor: colors.primary,
+            trailing: (livePreview != null && previewLabel.isNotEmpty)
+                ? AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: previewColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: previewColor.withValues(alpha: 0.4)),
                     ),
-                  ),
-                ),
-            ],
+                    child: Text(
+                      previewLabel,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: previewColor,
+                      ),
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(height: 12),
           TextFormField(
@@ -1343,6 +1275,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
               backgroundColor: colors.primary,
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
             ),
             icon: const Icon(CupertinoIcons.check_mark_circled_solid, color: Colors.white, size: 18),
             label: Text(
@@ -1408,78 +1341,68 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
           '${DateTime.fromMillisecondsSinceEpoch(log.loggedAt).hour.toString().padLeft(2, '0')}:${DateTime.fromMillisecondsSinceEpoch(log.loggedAt).minute.toString().padLeft(2, '0')}',
         );
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 14,
-                        backgroundColor: stageColor.withValues(alpha: 0.15),
-                        child: Icon(Icons.favorite, color: stageColor, size: 14),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _toPersianDigits(log.value.toStringAsFixed(_vitalType == 'SPO2' ? 0 : 1)),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                          color: colors.textPrimary,
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: RitmoCard.neumorphic(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: stageColor.withValues(alpha: 0.15),
+                          child: Icon(CupertinoIcons.heart_fill, color: stageColor, size: 14),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        log.unit,
-                        style: TextStyle(fontSize: 10, color: colors.textSecondary),
-                      ),
-                      if (stageText.isNotEmpty) ...[
                         const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: stageColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            stageText,
-                            style: TextStyle(fontSize: 10, color: stageColor, fontWeight: FontWeight.bold),
+                        Text(
+                          _toPersianDigits(log.value.toStringAsFixed(_vitalType == 'SPO2' ? 0 : 1)),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            color: colors.textPrimary,
                           ),
                         ),
+                        const SizedBox(width: 6),
+                        Text(
+                          log.unit,
+                          style: TextStyle(fontSize: 10, color: colors.textSecondary),
+                        ),
+                        if (stageText.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          RitmoCardBadge(
+                            label: stageText,
+                            color: stageColor,
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.delete_outline, size: 18, color: colors.error),
-                    onPressed: () => _confirmDelete(log.id),
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    padding: EdgeInsets.zero,
+                    ),
+                    IconButton(
+                      icon: Icon(CupertinoIcons.trash, size: 16, color: colors.medicalRed),
+                      onPressed: () => _confirmDelete(log.id),
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '$dateStr ساعت $timeStr',
+                  style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                ),
+                if (log.note != null && log.note!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    log.note!,
+                    style: TextStyle(fontSize: 11, color: colors.textSecondary, fontStyle: FontStyle.italic),
                   ),
                 ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '$dateStr ساعت $timeStr',
-                style: TextStyle(fontSize: 11, color: colors.textSecondary),
-              ),
-              if (log.note != null && log.note!.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  log.note!,
-                  style: TextStyle(fontSize: 11, color: colors.textSecondary, fontStyle: FontStyle.italic),
-                ),
               ],
-            ],
+            ),
           ),
         );
       },

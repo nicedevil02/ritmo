@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -251,46 +252,25 @@ class _VaccinationsSectionState extends State<VaccinationsSection> {
             ? _toPersianDigits('دوز ${vac.doseNumber} از ${vac.totalDoses}')
             : _toPersianDigits('دوز ${vac.doseNumber}');
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: RitmoCard.neumorphic(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            vac.vaccineName,
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                          ),
-                          if (vac.diseaseTarget != null && vac.diseaseTarget!.isNotEmpty)
-                            Text(
-                              'بیماری هدف: ${vac.diseaseTarget}',
-                              style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        doseStr,
-                        style: TextStyle(color: colors.primary, fontSize: 11, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
+                RitmoCardHeader(
+                  title: vac.vaccineName,
+                  subtitle: (vac.diseaseTarget != null && vac.diseaseTarget!.isNotEmpty)
+                      ? 'بیماری هدف: ${vac.diseaseTarget}'
+                      : null,
+                  icon: CupertinoIcons.shield_fill,
+                  iconColor: colors.warning,
+                  trailing: RitmoCardBadge(
+                    label: doseStr,
+                    color: colors.warning,
+                  ),
                 ),
-                const Divider(height: 16),
+                const RitmoCardDivider(),
                 if (vac.dateAdministered != null)
                   Row(
                     children: [

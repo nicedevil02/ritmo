@@ -1,9 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
 
 class AdherenceCard extends StatelessWidget {
-
   const AdherenceCard({
     super.key,
     required this.stats,
@@ -37,150 +37,153 @@ class AdherenceCard extends StatelessWidget {
       message = 'شروع مجدد همیشه ممکن است. با تنظیم یادآورهای دقیق‌تر، می‌توانیم این آمار را در روزهای آینده ارتقا دهیم. ما در کنار شما هستیم. ❤️';
     }
 
-    return Card(
-      color: colors.card,
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: colors.border)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'پایبندی به داروها',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary),
-            ),
-            const SizedBox(height: 16),
-            if (!hasData)
-              Row(
-                children: [
-                  Icon(Icons.medication_outlined, color: colors.textSecondary, size: 20),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'هنوز دُز سررسیدشده‌ای ثبت نشده است. با اولین ثبت مصرف، درصد پایبندی و زنجیره‌ها همین‌جا نمایش داده می‌شود.',
-                      style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.5),
-                      textAlign: TextAlign.justify,
-                    ),
+    return RitmoCard.neumorphic(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RitmoCardHeader(
+            title: 'پایبندی به داروها',
+            icon: CupertinoIcons.chart_pie_fill,
+            iconColor: colors.primary,
+            trailing: hasData
+                ? RitmoCardBadge(
+                    label: _toPersianDigits('${ratePct.toStringAsFixed(0)}٪'),
+                    color: ratePct >= 80
+                        ? colors.success
+                        : (ratePct >= 50 ? colors.warning : colors.medicalRed),
+                  )
+                : null,
+          ),
+          const RitmoCardDivider(),
+          if (!hasData)
+            Row(
+              children: [
+                Icon(CupertinoIcons.capsule, color: colors.textSecondary, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'هنوز دُز سررسیدشده‌ای ثبت نشده است. با اولین ثبت مصرف، درصد پایبندی و زنجیره‌ها همین‌جا نمایش داده می‌شود.',
+                    style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.5),
+                    textAlign: TextAlign.justify,
                   ),
-                ],
-              )
-            else ...[
-              Row(
-                children: [
-                  // Circular progress ring
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: 80,
-                        height: 80,
-                        child: CircularProgressIndicator(
-                          value: stats.adherenceRate,
-                          backgroundColor: colors.border,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            ratePct >= 80
-                                ? colors.success
-                                : (ratePct >= 50 ? colors.warning : colors.medicalRed),
-                          ),
-                          strokeWidth: 8,
+                ),
+              ],
+            )
+          else ...[
+            Row(
+              children: [
+                // Circular progress ring
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 76,
+                      height: 76,
+                      child: CircularProgressIndicator(
+                        value: stats.adherenceRate,
+                        backgroundColor: colors.border.withValues(alpha: 0.3),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          ratePct >= 80
+                              ? colors.success
+                              : (ratePct >= 50 ? colors.warning : colors.medicalRed),
                         ),
+                        strokeWidth: 7,
                       ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _toPersianDigits('${ratePct.toStringAsFixed(0)}٪'),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                        ),
+                        Text(
+                          'پایبندی',
+                          style: TextStyle(fontSize: 9, color: colors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                // Streaks and details
+                Expanded(
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            _toPersianDigits('${ratePct.toStringAsFixed(0)}٪'),
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                          Row(
+                            children: [
+                              Icon(CupertinoIcons.flame_fill, color: colors.warning, size: 16),
+                              const SizedBox(width: 6),
+                              Text('زنجیره فعلی:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                            ],
                           ),
                           Text(
-                            'پایبندی',
-                            style: TextStyle(fontSize: 9, color: colors.textSecondary),
+                            _toPersianDigits('${stats.currentStreak} روز پیاپی'),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(CupertinoIcons.star_fill, color: colors.primary, size: 16),
+                              const SizedBox(width: 6),
+                              Text('بهترین زنجیره:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                            ],
+                          ),
+                          Text(
+                            _toPersianDigits('${stats.longestStreak} روز'),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
                         ],
                       ),
                     ],
                   ),
-                  const SizedBox(width: 16),
-                  // Streaks and details
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.local_fire_department, color: colors.warning, size: 18),
-                                const SizedBox(width: 4),
-                                Text('زنجیره فعلی:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
-                              ],
-                            ),
-                            Text(
-                              _toPersianDigits('${stats.currentStreak} روز پیاپی'),
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.emoji_events_outlined, color: colors.primary, size: 18),
-                                const SizedBox(width: 4),
-                                Text('بهترین زنجیره:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
-                              ],
-                            ),
-                            Text(
-                              _toPersianDigits('${stats.longestStreak} روز'),
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              if (stats.missedPattern != null) ...[
-                const Divider(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: colors.warning.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: colors.warning.withValues(alpha: 0.15)),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.lightbulb_outline, color: colors.warning, size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            style: TextStyle(fontSize: 11, color: colors.textPrimary),
-                            children: [
-                              const TextSpan(text: 'الگوی فراموشی: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                              TextSpan(text: stats.missedPattern),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
-              const Divider(height: 24),
-              Text(
-                message,
-                style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.5),
-                textAlign: TextAlign.justify,
+            ),
+            if (stats.missedPattern != null) ...[
+              const RitmoCardDivider(),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: colors.warning.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: colors.warning.withValues(alpha: 0.15)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(CupertinoIcons.lightbulb, color: colors.warning, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: TextStyle(fontSize: 11, color: colors.textPrimary),
+                          children: [
+                            const TextSpan(text: 'الگوی فراموشی: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                            TextSpan(text: stats.missedPattern),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
+            const RitmoCardDivider(),
+            Text(
+              message,
+              style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.5),
+              textAlign: TextAlign.justify,
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -195,3 +198,4 @@ class AdherenceCard extends StatelessWidget {
     return result;
   }
 }
+

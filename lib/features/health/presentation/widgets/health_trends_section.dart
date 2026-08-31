@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
@@ -31,16 +32,12 @@ class _HealthTrendsSectionState extends State<HealthTrendsSection> {
     final hasTemp = widget.trends.any((t) => t.metric == 'temperature');
 
     if (widget.trends.isEmpty) {
-      return Card(
-        color: colors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: colors.border)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: Text(
-              'داده‌ای برای تحلیل روند علایم وجود ندارد.',
-              style: TextStyle(color: colors.textSecondary, fontSize: 13),
-            ),
+      return RitmoCard.neumorphic(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Text(
+            'داده‌ای برای تحلیل روند علایم وجود ندارد.',
+            style: TextStyle(color: colors.textSecondary, fontSize: 13),
           ),
         ),
       );
@@ -83,20 +80,16 @@ class _HealthTrendsSectionState extends State<HealthTrendsSection> {
       }
     }
 
-    return Card(
-      color: colors.card,
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: colors.border)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'روند تغییرات علائم حیاتی',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary),
-            ),
-            const SizedBox(height: 12),
+    return RitmoCard.neumorphic(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RitmoCardHeader(
+            title: 'روند تغییرات علائم حیاتی',
+            icon: CupertinoIcons.chart_bar_square_fill,
+            iconColor: colors.primary,
+          ),
+          const SizedBox(height: 12),
             // Chips for selector
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -239,7 +232,6 @@ class _HealthTrendsSectionState extends State<HealthTrendsSection> {
             ],
           ],
         ),
-      ),
     );
   }
 

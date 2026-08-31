@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
@@ -17,25 +18,17 @@ class HealthCorrelationSection extends StatelessWidget {
     // Filter correlations to only show those that have calculations (coefficient != null)
     final activeCorrelations = correlations.where((c) => c.coefficient != null).toList();
 
-    return Card(
-      color: colors.card,
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: colors.border)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'تحلیل همبستگی هوشمند سلامت',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'بررسی ارتباط ریاضی بین خواب/انرژی روزانه و مقادیر قند/فشار خون شما در بازه اخیر.',
-              style: TextStyle(fontSize: 11, color: colors.textSecondary),
-            ),
-            const SizedBox(height: 16),
+    return RitmoCard.neumorphic(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RitmoCardHeader(
+            title: 'تحلیل همبستگی هوشمند سلامت',
+            subtitle: 'بررسی ارتباط ریاضی بین خواب/انرژی روزانه و مقادیر قند/فشار خون شما در بازه اخیر.',
+            icon: CupertinoIcons.arrow_branch,
+            iconColor: colors.primary,
+          ),
+          const RitmoCardDivider(),
             if (activeCorrelations.isEmpty)
               Center(
                 child: Padding(
@@ -151,7 +144,6 @@ class HealthCorrelationSection extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 

@@ -465,18 +465,18 @@ class _HealthScreenState extends State<HealthScreen> {
                     statusBadge: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444).withValues(alpha: isDark ? 0.22 : 0.12),
+                        color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: const Color(0xFFEF4444).withValues(alpha: isDark ? 0.35 : 0.25),
+                          color: colors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
                           width: 0.8,
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'فعال',
                         style: TextStyle(
                           fontSize: 10.5,
-                          color: Color(0xFFEF4444),
+                          color: colors.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -484,16 +484,16 @@ class _HealthScreenState extends State<HealthScreen> {
                     actions: [
                       RitmoVibrancyActionButton(
                         icon: CupertinoIcons.sparkles,
-                        iconColor: const Color(0xFFEF4444),
+                        iconColor: colors.primary,
                         isAiButton: true,
-                        accentColor: const Color(0xFFEF4444),
+                        accentColor: colors.primary,
                         tooltip: 'دستیار هوشمند سلامت',
                         onTap: _openAiAssistant,
                       ),
                       const SizedBox(width: 8),
                       RitmoVibrancyActionButton(
                         icon: CupertinoIcons.chart_bar_square_fill,
-                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                        iconColor: colors.textSecondary,
                         tooltip: 'تحلیل‌ها و نمودارها',
                         onTap: () => _navigateToPage(const HealthInsightsPage()),
                       ),
@@ -508,18 +508,11 @@ class _HealthScreenState extends State<HealthScreen> {
     );
   }
 
-
-
   Widget _buildAlertsBanner() {
     final colors = context.colors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.medicalRed.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border(
-          right: BorderSide(color: colors.medicalRed, width: 4),
-        ),
-      ),
+    return RitmoCard.neumorphic(
+      backgroundColor: colors.medicalRed.withValues(alpha: 0.08),
+      borderColor: colors.medicalRed.withValues(alpha: 0.3),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -556,109 +549,69 @@ class _HealthScreenState extends State<HealthScreen> {
     final streak = stats?.currentStreak ?? 0;
     final hasMeds = _nextDoseName != null;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: colors.border.withValues(alpha: 0.5), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadowColor.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
+    return RitmoCard.neumorphic(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'پایبندی دارویی',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      streak > 0
-                          ? '🔥 ${_toPersianDigits(streak.toString())} روز پایبندی متوالی! فوق‌العاده است.'
-                          : 'با ثبت به‌موقع مصرف داروها، وضعیت خود را بهبود دهید.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              SizedBox(
-                width: 64,
-                height: 64,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: rate / 100.0,
-                      strokeWidth: 6,
-                      backgroundColor: colors.border.withValues(alpha: 0.3),
-                      valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
-                    ),
-                    Text(
-                      '%${_toPersianDigits(rate.toStringAsFixed(0))}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Divider(color: colors.border.withValues(alpha: 0.5), height: 1),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: colors.bg.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  hasMeds ? CupertinoIcons.time : CupertinoIcons.info_circle,
-                  color: hasMeds ? colors.primary : colors.textSecondary,
-                  size: 18,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ValueListenableBuilder<String>(
-                    valueListenable: _countdownNotifier,
-                    builder: (context, countdownText, _) {
-                      return Text(
-                        _toPersianDigits(countdownText),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: hasMeds ? FontWeight.bold : FontWeight.normal,
-                          color: hasMeds ? colors.textPrimary : colors.textSecondary,
-                        ),
-                      );
-                    },
+          RitmoCardHeader(
+            title: 'پایبندی دارویی',
+            subtitle: streak > 0
+                ? '🔥 ${_toPersianDigits(streak.toString())} روز پایبندی متوالی! فوق‌العاده است.'
+                : 'با ثبت به‌موقع مصرف داروها، وضعیت خود را بهبود دهید.',
+            icon: CupertinoIcons.capsule_fill,
+            iconColor: colors.primary,
+            trailing: SizedBox(
+              width: 52,
+              height: 52,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: rate / 100.0,
+                    strokeWidth: 5,
+                    backgroundColor: colors.border.withValues(alpha: 0.3),
+                    valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
                   ),
-                ),
-              ],
+                  Text(
+                    '%${_toPersianDigits(rate.toStringAsFixed(0))}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 11,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const RitmoCardDivider(),
+          RitmoCardTile(
+            leading: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: (hasMeds ? colors.primary : colors.textSecondary).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Icon(
+                hasMeds ? CupertinoIcons.time : CupertinoIcons.info_circle,
+                color: hasMeds ? colors.primary : colors.textSecondary,
+                size: 17,
+              ),
+            ),
+            title: 'وضعیت نوبت بعدی',
+            trailing: ValueListenableBuilder<String>(
+              valueListenable: _countdownNotifier,
+              builder: (context, countdownText, _) {
+                return Text(
+                  _toPersianDigits(countdownText),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: hasMeds ? FontWeight.bold : FontWeight.normal,
+                    color: hasMeds ? colors.textPrimary : colors.textSecondary,
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -667,37 +620,38 @@ class _HealthScreenState extends State<HealthScreen> {
   }
 
   Widget _buildGridMenu() {
+    final colors = context.colors;
     return RitmoAdaptiveGrid(
       minTileWidth: 140,
-      spacing: 16,
+      spacing: 14,
       maxColumns: 2,
       children: [
         _buildHubCard(
           title: 'داروها',
           subtitle: _medicationsSummary,
           icon: CupertinoIcons.capsule_fill,
-          color: const Color(0xff3B82F6),
+          color: colors.primary,
           onTap: () => _navigateToPage(const MedicationsPage()),
         ),
         _buildHubCard(
           title: 'پایش سلامت',
           subtitle: _monitoringSummary,
           icon: CupertinoIcons.waveform_path,
-          color: const Color(0xffF59E0B),
+          color: colors.warning,
           onTap: () => _navigateToPage(const MonitoringPage()),
         ),
         _buildHubCard(
           title: 'نوبت‌های پزشک',
           subtitle: _visitsSummary,
           icon: CupertinoIcons.calendar_badge_plus,
-          color: const Color(0xff10B981),
+          color: colors.success,
           onTap: () => _navigateToPage(const VisitsPage()),
         ),
         _buildHubCard(
           title: 'پرونده پزشکی',
           subtitle: _recordsSummary,
           icon: CupertinoIcons.folder_fill,
-          color: const Color(0xff8B5CF6),
+          color: colors.accent,
           onTap: () => _navigateToPage(const RecordsPage()),
         ),
       ],
@@ -713,128 +667,102 @@ class _HealthScreenState extends State<HealthScreen> {
   }) {
     final colors = context.colors;
 
-    return GestureDetector(
+    return RitmoCard.neumorphic(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: colors.border.withValues(alpha: 0.5), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: colors.shadowColor.withValues(alpha: 0.04),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: color, size: 20),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
                 ),
-                Icon(CupertinoIcons.arrow_up_left, color: colors.textSecondary.withValues(alpha: 0.4), size: 14),
-              ],
+                child: Icon(icon, color: color, size: 20),
+              ),
+              Icon(
+                CupertinoIcons.arrow_up_left,
+                color: colors.textSecondary.withValues(alpha: 0.4),
+                size: 14,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14.5,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _toPersianDigits(subtitle),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: colors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrendsCard({required VoidCallback onTap}) {
+    final colors = context.colors;
+
+    return RitmoCard.neumorphic(
+      onTap: onTap,
+      backgroundColor: colors.card,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
             ),
-            Column(
+            child: Icon(CupertinoIcons.chart_bar_square, color: colors.primary, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  'روندها و تحلیل سلامت',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     color: colors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
-                  _toPersianDigits(subtitle),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  'مشاهده نمودارهای قند، فشار و همبستگی خواب و انرژی',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 11.5,
                     color: colors.textSecondary,
                   ),
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTrendsCard({required VoidCallback onTap}) {
-    const identityColor = Color(0xff8B5CF6);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [identityColor, identityColor.withValues(alpha: 0.85)],
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
           ),
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: identityColor.withValues(alpha: 0.2),
-              blurRadius: 15,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(CupertinoIcons.chart_bar_square, color: Colors.white, size: 22),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'روندها و تحلیل سلامت',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'بررسی پایبندی دارویی و همبستگی شاخص‌های حیاتی',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(CupertinoIcons.chevron_left, color: Colors.white, size: 18),
-          ],
-        ),
+          Icon(CupertinoIcons.chevron_left, color: colors.textSecondary, size: 16),
+        ],
       ),
     );
   }

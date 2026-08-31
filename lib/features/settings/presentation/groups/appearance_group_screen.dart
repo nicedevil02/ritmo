@@ -474,11 +474,20 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                 ),
                           ),
                           SizedBox(height: m.spaceMd),
-                          ...RitmoPalette.all.map((palette) {
-                            final isSelected = palette.id == prefs.paletteId;
-                            return Padding(
-                              padding: EdgeInsets.only(bottom: m.spaceMd),
-                              child: _PalettePreviewCard(
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: RitmoPalette.all.length,
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
+                              mainAxisExtent: 160,
+                            ),
+                            itemBuilder: (context, index) {
+                              final palette = RitmoPalette.all[index];
+                              final isSelected = palette.id == prefs.paletteId;
+                              return _PalettePreviewCard(
                                 palette: palette,
                                 isSelected: isSelected,
                                 onTap: () async {
@@ -506,9 +515,9 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                     );
                                   }
                                 },
-                              ),
-                            );
-                          }),
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -1051,6 +1060,7 @@ class _PalettePreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeBrightness = Theme.of(context).brightness;
+    final isDark = activeBrightness == Brightness.dark;
 
     return Theme(
       data: RitmoTheme.build(
@@ -1061,154 +1071,174 @@ class _PalettePreviewCard extends StatelessWidget {
       child: Builder(
         builder: (innerContext) {
           final innerColors = innerContext.colors;
-          final innerMetrics = innerContext.metrics;
 
           return Semantics(
             label: 'پالت ${palette.nameFa}',
             selected: isSelected,
             button: true,
-            child: GestureDetector(
-              onTap: () {
-                RitmoHapticsPolicy.selection();
-                onTap();
-              },
-              behavior: HitTestBehavior.opaque,
-              child: AnimatedContainer(
-                duration: RitmoMotion.state,
-                padding: EdgeInsets.all(innerMetrics.spaceLg),
-                decoration: BoxDecoration(
-                  color: innerColors.surface,
-                  borderRadius: BorderRadius.circular(innerMetrics.radiusCard),
-                  border: Border.all(
-                    color: isSelected
-                        ? innerColors.primary
-                        : (activeBrightness == Brightness.dark
-                              ? innerColors.border
-                              : innerColors.divider),
-                    width: isSelected ? 2.0 : 1.0,
-                  ),
-                  boxShadow: activeBrightness == Brightness.dark
-                      ? RitmoElevation.none
-                      : RitmoElevation.cardLight,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Header with name and radio
-                    Row(
-                      children: [
-                        Wrap(
-                          spacing: innerMetrics.spaceXs,
-                          runSpacing: innerMetrics.spaceXs,
-                          children: [
-                            _ColorDot(color: innerColors.primary),
-                            _ColorDot(color: innerColors.accent),
-                            _ColorDot(color: innerColors.surface),
-                            _ColorDot(color: innerColors.card),
-                          ],
+            child: RitmoCard.neumorphic(
+              isSelected: isSelected,
+              onTap: onTap,
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 11),
+              borderRadius: BorderRadius.circular(18),
+              backgroundColor: innerColors.surfaceElevated,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // ۱. هدر: نام پالت و نشانگر فعال بودن
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          palette.nameFa,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isSelected
+                                ? FontWeight.w900
+                                : FontWeight.w700,
+                            fontFamily: 'Vazirmatn',
+                            color: isSelected
+                                ? innerColors.primary
+                                : innerColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        SizedBox(width: innerMetrics.spaceSm),
-                        Expanded(
-                          child: Text(
-                            palette.nameFa,
-                            style: innerContext.t.titleMedium?.copyWith(
-                              fontWeight: isSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.w600,
-                              color: isSelected
-                                  ? innerColors.primary
-                                  : innerColors.textPrimary,
+                      ),
+                      if (isSelected)
+                        Container(
+                          padding: const EdgeInsets.all(2.5),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color.lerp(
+                                  innerColors.primary,
+                                  Colors.white,
+                                  isDark ? 0.15 : 0.40,
+                                )!,
+                                innerColors.primary,
+                              ],
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: innerColors.primary.withValues(
+                                  alpha: 0.4,
+                                ),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1.5),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.check_rounded,
+                            size: 11,
+                            color: innerColors.onPrimary,
+                          ),
+                        )
+                      else
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: innerColors.primary.withValues(alpha: 0.35),
                           ),
                         ),
-                        if (isSelected)
-                          Container(
-                            padding: EdgeInsets.all(innerMetrics.spaceXs),
+                    ],
+                  ),
+
+                  // ۲. کپسول ۴ رنگ اصلی پالت
+                  Container(
+                    height: 26,
+                    padding: const EdgeInsets.all(2.5),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF0F172A).withValues(alpha: 0.55)
+                          : const Color(0xFFE2E8F0).withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.black.withValues(alpha: 0.04),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
                             decoration: BoxDecoration(
                               color: innerColors.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.check_rounded,
-                              size: innerMetrics.iconSm,
-                              color: innerColors.onPrimary,
+                              borderRadius: const BorderRadius.horizontal(
+                                right: Radius.circular(6),
+                              ),
                             ),
                           ),
+                        ),
+                        const SizedBox(width: 2),
+                        Expanded(
+                          child: Container(color: innerColors.accent),
+                        ),
+                        const SizedBox(width: 2),
+                        Expanded(
+                          child: Container(color: innerColors.surface),
+                        ),
+                        const SizedBox(width: 2),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: innerColors.card,
+                              borderRadius: const BorderRadius.horizontal(
+                                left: Radius.circular(6),
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    SizedBox(height: innerMetrics.spaceMd),
+                  ),
 
-                    // Sample Title & Subtitle
-                    Text(
-                      'نمونه عنوان کارت',
-                      style: innerContext.t.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        color: innerColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: innerMetrics.spaceXs),
-                    Text(
-                      'این پیش‌نمایش نحوه رندر رنگ‌های پالت را نشان می‌دهد',
-                      style: innerContext.t.bodySmall?.copyWith(
-                        color: innerColors.textSecondary,
-                      ),
-                    ),
-                    SizedBox(height: innerMetrics.spaceMd),
-
-                    // Sample button
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: innerMetrics.spaceMd,
-                        vertical: innerMetrics.spaceSm,
-                      ),
-                      decoration: BoxDecoration(
-                        color: innerColors.primary,
-                        borderRadius: BorderRadius.circular(
-                          innerMetrics.radiusField,
-                        ),
-                      ),
-                      child: Text(
-                        'دکمه نمونه',
-                        style: innerContext.t.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: innerColors.onPrimary,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: innerMetrics.spaceMd),
-
-                    // 8 Module color circles
-                    Row(
-                      children: List.generate(8, (i) {
-                        final dotSize = (10.0 * innerMetrics.densityFactor)
-                            .roundToDouble();
-                        return Padding(
-                          padding: EdgeInsetsDirectional.only(
-                            end: innerMetrics.spaceXs,
-                          ),
-                          child: Container(
-                            width: dotSize,
-                            height: dotSize,
-                            decoration: BoxDecoration(
-                              color: innerColors.modules.bySlot(i),
-                              shape: BoxShape.circle,
+                  // ۳. طیف ۸ رنگ ماژول
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(8, (i) {
+                      final dotColor = innerColors.modules.bySlot(i);
+                      return Container(
+                        width: 6.5,
+                        height: 6.5,
+                        decoration: BoxDecoration(
+                          color: dotColor,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: dotColor.withValues(alpha: 0.3),
+                              blurRadius: 2,
+                              offset: const Offset(0, 1),
                             ),
-                          ),
-                        );
-                      }),
-                    ),
-                    SizedBox(height: innerMetrics.spaceMd),
+                          ],
+                        ),
+                      );
+                    }),
+                  ),
 
-                    // Name & Tagline
-                    Text(
-                      '${palette.nameFa} · ${palette.taglineFa}',
-                      style: innerContext.t.labelLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: innerColors.textPrimary,
-                      ),
+                  // ۴. شعار شخصیتی پالت
+                  Text(
+                    palette.taglineFa,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Vazirmatn',
+                      color: innerColors.textSecondary,
                     ),
-                  ],
-                ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           );
@@ -1218,24 +1248,3 @@ class _PalettePreviewCard extends StatelessWidget {
   }
 }
 
-class _ColorDot extends StatelessWidget {
-  const _ColorDot({required this.color});
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final dotSize = (14.0 * context.metrics.densityFactor).roundToDouble();
-    return Container(
-      width: dotSize,
-      height: dotSize,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: context.colors.border.withValues(alpha: 0.15),
-          width: 0.5,
-        ),
-      ),
-    );
-  }
-}

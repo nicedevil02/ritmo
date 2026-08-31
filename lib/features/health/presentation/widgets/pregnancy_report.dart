@@ -1,11 +1,15 @@
 import 'dart:ui' as ui;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:shamsi_date/shamsi_date.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/features/health/data/pregnancy_repository.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 
 /// Aggregation data structure for Doctor's Report (UX-07)
 class PregnancyReportData {
@@ -218,22 +222,24 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final l10n = AppLocalizations.of(context);
     final disclaimer = l10n?.pregnancyMedicalDisclaimer ??
         'این اطلاعات فقط جهت آگاهی ارائه می‌شود و جایگزین تشخیص، تجویز یا درمان پزشکی نیست.';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('گزارش ویژه پزشک زنان', style: TextStyle()),
+    return RitmoPageScaffold(
+      appBar: RitmoModuleAppBar.fromContext(
+        context: context,
+        title: 'گزارش ویژه پزشک زنان',
         actions: [
           IconButton(
-            icon: const Icon(Icons.share),
+            icon: Icon(CupertinoIcons.share, color: colors.primary),
             onPressed: (_isLoading || _data == null) ? null : _exportAndShare,
           ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: colors.primary))
           : (_errorMessage != null || _data == null)
               ? Center(
                   child: Padding(
@@ -241,18 +247,19 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        Icon(CupertinoIcons.exclamationmark_circle, size: 48, color: colors.medicalRed),
                         const SizedBox(height: 12),
                         Text(
                           _errorMessage ?? 'خطا در بارگذاری گزارش',
-                          style: const TextStyle(fontSize: 14),
+                          style: TextStyle(fontSize: 14, color: colors.textPrimary),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: _loadReport,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('تلاش مجدد', style: TextStyle()),
+                          style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
+                          icon: const Icon(CupertinoIcons.refresh, color: Colors.white),
+                          label: const Text('تلاش مجدد', style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),

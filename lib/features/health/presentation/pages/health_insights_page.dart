@@ -1,8 +1,9 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/analytics/health_engine.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
+import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
 import 'package:ritmo/features/health/presentation/widgets/adherence_card.dart';
 import 'package:ritmo/features/health/presentation/widgets/doctor_visit_summary_sheet.dart';
@@ -124,7 +125,6 @@ class _HealthInsightsPageState extends State<HealthInsightsPage> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    const identityColor = Color(0xff8B5CF6); // Insights Purple-Blue
 
     if (_isLoading) {
       return Scaffold(
@@ -137,43 +137,17 @@ class _HealthInsightsPageState extends State<HealthInsightsPage> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: colors.bg,
-        appBar: AppBar(
-          backgroundColor: colors.bg,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_rounded, color: colors.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: identityColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(CupertinoIcons.chart_bar_square_fill, color: identityColor, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'روندها و تحلیل سلامت',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-          centerTitle: false,
+      child: RitmoPageScaffold(
+        appBar: RitmoModuleAppBar.fromContext(
+          context: context,
+          title: 'روندها و تحلیل سلامت',
+          showBackButton: true,
         ),
         body: _engineOutput == null
             ? const Center(child: Text('داده‌ای برای تحلیل وجود ندارد.'))
             : ListView(
                 padding: const EdgeInsets.all(16),
+                physics: const BouncingScrollPhysics(),
                 children: [
                   AdherenceCard(
                     stats: _engineOutput!.adherence,
@@ -206,3 +180,4 @@ class _HealthInsightsPageState extends State<HealthInsightsPage> {
     );
   }
 }
+

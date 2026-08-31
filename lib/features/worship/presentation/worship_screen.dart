@@ -128,6 +128,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
       builder: (context) {
         return PrayerCityPicker(
           initialTab: tabIndex,
+          isNested: false,
           onChanged: _onDataChanged,
         );
       },

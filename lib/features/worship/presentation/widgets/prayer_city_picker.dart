@@ -13,14 +13,16 @@ import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:sqflite/sqflite.dart';
 
 class PrayerCityPicker extends StatefulWidget {
+  final VoidCallback onChanged;
+  final int initialTab;
+  final bool isNested;
 
   const PrayerCityPicker({
     super.key,
     required this.onChanged,
     this.initialTab = 0,
+    this.isNested = true,
   });
-  final VoidCallback onChanged;
-  final int initialTab;
 
   @override
   State<PrayerCityPicker> createState() => _PrayerCityPickerState();
@@ -433,136 +435,225 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
     }
 
     if (!mounted) return;
-    final colors = context.colors;
 
-    await showDialog(
+    await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text(
-              '📍 ثبت مختصات دلخواه (GPS)',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5, color: colors.textPrimary),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'برای مناطق خارج از لیست یا محاسبه بر اساس GPS، نام و مختصات نقطه را وارد کنید:',
-                    style: TextStyle(fontSize: 13, color: colors.textSecondary, height: 1.5),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: colors.primary.withValues(alpha: 0.4)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    ),
-                    icon: isFetchingDialogGps
-                        ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary))
-                        : Icon(CupertinoIcons.location_fill, size: 16, color: colors.primary),
-                    label: Text(
-                      'دریافت مختصات از GPS گوشی',
-                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: colors.primary),
-                    ),
-                    onPressed: isFetchingDialogGps
-                        ? null
-                        : () async {
-                            setDialogState(() => isFetchingDialogGps = true);
-                            final pos = await DeviceLocationService.instance.getCurrentPosition(context);
-                            if (pos != null) {
-                              final dLat = double.parse(pos.latitude.toStringAsFixed(4));
-                              final dLng = double.parse(pos.longitude.toStringAsFixed(4));
-                              latCtrl.text = dLat.toString();
-                              lngCtrl.text = dLng.toString();
-                              final nearest = _findNearestCity(dLat, dLng);
-                              if (nearest != null) {
-                                nameCtrl.text = nearest['city'] as String? ?? 'موقعیت من (GPS)';
-                              } else {
-                                nameCtrl.text = 'موقعیت من (GPS)';
-                              }
-                            }
-                            setDialogState(() => isFetchingDialogGps = false);
-                          },
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: nameCtrl,
-                    decoration: InputDecoration(
-                      labelText: 'نام موقعیت / شهر',
-                      labelStyle: TextStyle(fontSize: 13, color: colors.textSecondary),
-                      filled: true,
-                      fillColor: colors.surfaceSunken,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: latCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                    decoration: InputDecoration(
-                      labelText: 'عرض جغرافیایی (Latitude مثلاً 35.6892)',
-                      labelStyle: TextStyle(fontSize: 13, color: colors.textSecondary),
-                      filled: true,
-                      fillColor: colors.surfaceSunken,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: lngCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                    decoration: InputDecoration(
-                      labelText: 'طول جغرافیایی (Longitude مثلاً 51.3890)',
-                      labelStyle: TextStyle(fontSize: 13, color: colors.textSecondary),
-                      filled: true,
-                      fillColor: colors.surfaceSunken,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                ],
+        builder: (context, setDialogState) {
+          final colors = context.colors;
+          final isDark = context.isDark;
+
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: RitmoBreakpoints.sheetMaxHeight(ctx, factor: 0.94),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  foregroundColor: colors.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              child: RitmoGlassSheet(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                padding: EdgeInsets.zero,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Drag Handle
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        margin: const EdgeInsets.only(top: 12, bottom: 8),
+                        decoration: BoxDecoration(
+                          color: colors.border.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+
+                    // Symmetrical Header
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              RitmoHapticsPolicy.tap();
+                              Navigator.pop(ctx);
+                            },
+                            child: Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? colors.surfaceElevated.withValues(alpha: 0.85)
+                                    : colors.textPrimary.withValues(alpha: 0.07),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isDark
+                                      ? colors.border.withValues(alpha: 0.35)
+                                      : colors.border.withValues(alpha: 0.15),
+                                  width: 0.85,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                CupertinoIcons.xmark,
+                                size: 15,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              '📍 ثبت مختصات دلخواه (GPS)',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 34, height: 34),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.viewInsetsOf(ctx).bottom + 20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'برای مناطق خارج از لیست یا محاسبه بر اساس GPS، نام و مختصات نقطه را وارد کنید:',
+                              style: TextStyle(fontSize: 13, color: colors.textSecondary, height: 1.5),
+                            ),
+                            const SizedBox(height: 14),
+                            RitmoCard.neumorphic(
+                              onTap: isFetchingDialogGps
+                                  ? null
+                                  : () async {
+                                      setDialogState(() => isFetchingDialogGps = true);
+                                      final pos = await DeviceLocationService.instance.getCurrentPosition(context);
+                                      if (pos != null) {
+                                        final dLat = double.parse(pos.latitude.toStringAsFixed(4));
+                                        final dLng = double.parse(pos.longitude.toStringAsFixed(4));
+                                        latCtrl.text = dLat.toString();
+                                        lngCtrl.text = dLng.toString();
+                                        final nearest = _findNearestCity(dLat, dLng);
+                                        if (nearest != null) {
+                                          nameCtrl.text = nearest['city'] as String? ?? 'موقعیت من (GPS)';
+                                        } else {
+                                          nameCtrl.text = 'موقعیت من (GPS)';
+                                        }
+                                      }
+                                      setDialogState(() => isFetchingDialogGps = false);
+                                    },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (isFetchingDialogGps)
+                                      SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
+                                      )
+                                    else
+                                      Icon(CupertinoIcons.location_fill, size: 18, color: colors.primary),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'دریافت مختصات دقیق از GPS گوشی',
+                                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: colors.primary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: nameCtrl,
+                              decoration: InputDecoration(
+                                labelText: 'نام موقعیت / شهر',
+                                labelStyle: TextStyle(fontSize: 13, color: colors.textSecondary),
+                                filled: true,
+                                fillColor: colors.surfaceSunken,
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: latCtrl,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                              decoration: InputDecoration(
+                                labelText: 'عرض جغرافیایی (Latitude مثلاً 35.6892)',
+                                labelStyle: TextStyle(fontSize: 13, color: colors.textSecondary),
+                                filled: true,
+                                fillColor: colors.surfaceSunken,
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: lngCtrl,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                              decoration: InputDecoration(
+                                labelText: 'طول جغرافیایی (Longitude مثلاً 51.3890)',
+                                labelStyle: TextStyle(fontSize: 13, color: colors.textSecondary),
+                                filled: true,
+                                fillColor: colors.surfaceSunken,
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colors.primary,
+                                foregroundColor: colors.onPrimary,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                              onPressed: () async {
+                                final lat = double.tryParse(latCtrl.text.trim());
+                                final lng = double.tryParse(lngCtrl.text.trim());
+                                final name = nameCtrl.text.trim().isEmpty ? 'موقعیت سفارشی' : nameCtrl.text.trim();
+
+                                if (lat == null || lng == null || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                                  RitmoSnackbar.error(context, 'مختصات جغرافیایی وارد شده نامعتبر است.');
+                                  return;
+                                }
+
+                                Navigator.pop(ctx);
+                                final customId = 'CUSTOM_${DateTime.now().millisecondsSinceEpoch}';
+                                await _selectCity({
+                                  'id': customId,
+                                  'city': name,
+                                  'province': 'مختصات جغرافیایی دلخواه',
+                                  'latitude': lat,
+                                  'longitude': lng,
+                                });
+                              },
+                              child: const Text(
+                                'ذخیره و اعمال مختصات',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                onPressed: () async {
-                  final lat = double.tryParse(latCtrl.text.trim());
-                  final lng = double.tryParse(lngCtrl.text.trim());
-                  final name = nameCtrl.text.trim().isEmpty ? 'موقعیت سفارشی' : nameCtrl.text.trim();
-
-                  if (lat == null || lng == null || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-                    RitmoSnackbar.error(context, 'مختصات جغرافیایی وارد شده نامعتبر است.');
-                    return;
-                  }
-
-                Navigator.pop(ctx);
-                final customId = 'CUSTOM_${DateTime.now().millisecondsSinceEpoch}';
-                await _selectCity({
-                  'id': customId,
-                  'city': name,
-                  'province': 'مختصات جغرافیایی دلخواه',
-                  'latitude': lat,
-                  'longitude': lng,
-                });
-                },
-                child: const Text('ذخیره و اعمال'),
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -608,7 +699,7 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Leading (Right in RTL): Circular Tactile Close (X) Button
+                      // Leading (Right in RTL): Circular Tactile Back / Close Button
                       GestureDetector(
                         onTap: () {
                           RitmoHapticsPolicy.tap();
@@ -631,23 +722,40 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                           ),
                           alignment: Alignment.center,
                           child: Icon(
-                            CupertinoIcons.xmark,
-                            size: 15,
+                            widget.isNested ? CupertinoIcons.chevron_forward : CupertinoIcons.xmark,
+                            size: widget.isNested ? 16 : 15,
                             color: colors.textSecondary,
                           ),
                         ),
                       ),
 
-                      // Center: Title
+                      // Center: Title & Nested Breadcrumb
                       Expanded(
-                        child: Text(
-                          'انتخاب شهر و موقعیت مکانی',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'انتخاب شهر و موقعیت مکانی',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            if (widget.isNested) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                'تنظیمات عبادی > موقعیت',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.textSecondary.withValues(alpha: 0.75),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
 

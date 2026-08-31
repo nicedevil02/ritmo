@@ -9,7 +9,7 @@ import '../components/components.dart';
 
 /// Smart Unified Sheet: "برنامه‌ریزی و ساخت دورهٔ تمرینی هدف‌دار"
 /// Merges sport kind selection, periodization timeline, physical metrics,
-/// and live smart phase calculations into a single fluid Apple HIG sheet with zero nested modals.
+/// and live smart phase calculations into a single fluid Apple HIG sheet (94% height) with zero nested modals.
 class MvCreateCampaignSheet extends StatefulWidget {
   final ValueChanged<MvCampaign> onCreate;
   final MvKindUseCase? kindUseCase;
@@ -27,8 +27,8 @@ class MvCreateCampaignSheet extends StatefulWidget {
   }) {
     return MvSheetScaffold.show(
       context: context,
-      initialChildSize: 0.90,
-      maxChildSize: 0.96,
+      initialChildSize: 0.94,
+      maxChildSize: 0.94,
       builder: (ctx) => MvCreateCampaignSheet(
         onCreate: onCreate,
         kindUseCase: kindUseCase,
@@ -183,6 +183,10 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
     final buildWeeks = (totalWeeks * 0.40).round().clamp(1, totalWeeks);
     final peakWeeks = (totalWeeks - baseWeeks - buildWeeks).clamp(1, totalWeeks);
 
+    final displaySportsList = _isSearching
+        ? _filteredKinds.map((k) => {'code': k.code, 'title': k.titleFa, 'emoji': k.emoji}).toList()
+        : _featuredGoalSports;
+
     return MvSheetScaffold(
       title: 'برنامه‌ریزی و ساخت دورهٔ تمرینی',
       subtitle: 'طراحی هوشمند بار تمرینی و فازبندی معکوس تا روز رویداد',
@@ -190,7 +194,7 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── بخش ۱: انتخاب رشتهٔ هدف ورزشی ────────────────────────────────────────
+          // ── بخش ۱: انتخاب رشتهٔ هدف ورزشی (کادر آسانسوری) ──────────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -208,7 +212,7 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
                   children: [
                     Icon(
                       _isSearching ? Icons.close_rounded : Icons.search_rounded,
-                      size: 16,
+                      size: 15,
                       color: colors.primary,
                     ),
                     const SizedBox(width: 4),
@@ -224,18 +228,18 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
-          // Search Box (if searching)
+          // Search Box (when search is toggled)
           if (_isSearching) ...[
             RitmoNeuSurface(
               sunken: true,
-              radius: 14,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+              radius: 12,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
               child: Row(
                 children: [
-                  Icon(Icons.search_rounded, size: 18, color: colors.textSecondary),
-                  const SizedBox(width: 8),
+                  Icon(Icons.search_rounded, size: 16, color: colors.textSecondary),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: TextField(
                       controller: _searchController,
@@ -243,43 +247,62 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
                       onChanged: _onSearchChanged,
                       style: textTheme.bodyMedium?.copyWith(color: colors.textPrimary),
                       decoration: const InputDecoration(
-                        hintText: 'جستجوی نام ورزش (مثلاً اسکواش، پیلاتس، دوچرخه...)',
+                        hintText: 'جستجوی ورزش (مثلاً اسکواش، پیلاتس، تریل...)',
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        filled: false,
+                        fillColor: Colors.transparent,
                         isDense: true,
-                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(vertical: 6),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 140),
+            const SizedBox(height: 6),
+          ],
+
+          // کادر آسانسوری (Scrollable Elevator Box for Sports)
+          RitmoNeuSurface(
+            sunken: true,
+            radius: 16,
+            padding: const EdgeInsets.all(8),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 120),
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Wrap(
                   spacing: 6,
                   runSpacing: 6,
-                  children: _filteredKinds.map((k) {
-                    final isSel = k.code == _selectedKindCode;
+                  children: displaySportsList.map((item) {
+                    final isSel = item['code'] == _selectedKindCode;
                     return RitmoNeuSurface(
                       sunken: isSel,
                       radius: 12,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      onTap: () => _selectSport(k.code, k.titleFa, k.emoji),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                      onTap: () => _selectSport(
+                        item['code']!,
+                        item['title']!,
+                        item['emoji']!,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(k.emoji, style: const TextStyle(fontSize: 14)),
-                          const SizedBox(width: 4),
+                          Text(item['emoji']!, style: const TextStyle(fontSize: 16)),
+                          const SizedBox(width: 5),
                           Text(
-                            k.titleFa,
+                            item['title']!,
                             style: textTheme.labelSmall?.copyWith(
                               color: isSel ? colors.primary : colors.textPrimary,
                               fontWeight: isSel ? FontWeight.w800 : FontWeight.w500,
                             ),
                           ),
+                          if (isSel) ...[
+                            const SizedBox(width: 4),
+                            Icon(Icons.check_circle_rounded, size: 14, color: colors.primary),
+                          ],
                         ],
                       ),
                     );
@@ -287,46 +310,8 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-          ] else ...[
-            // Quick Featured Sports Grid
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _featuredGoalSports.map((item) {
-                final isSel = item['code'] == _selectedKindCode;
-                return RitmoNeuSurface(
-                  sunken: isSel,
-                  radius: 14,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  onTap: () => _selectSport(
-                    item['code']!,
-                    item['title']!,
-                    item['emoji']!,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(item['emoji']!, style: const TextStyle(fontSize: 18)),
-                      const SizedBox(width: 6),
-                      Text(
-                        item['title']!,
-                        style: textTheme.labelMedium?.copyWith(
-                          color: isSel ? colors.primary : colors.textPrimary,
-                          fontWeight: isSel ? FontWeight.w800 : FontWeight.w500,
-                        ),
-                      ),
-                      if (isSel) ...[
-                        const SizedBox(width: 6),
-                        Icon(Icons.check_circle_rounded, size: 16, color: colors.primary),
-                      ],
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-          const SizedBox(height: 20),
+          ),
+          const SizedBox(height: 14),
 
           // ── بخش ۲: زمان‌بندی و تاریخ رویداد هدف ──────────────────────────────────
           Text(
@@ -336,22 +321,22 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
           // Preset Chips
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 6,
+            runSpacing: 6,
             children: _timelinePresets.map((w) {
               final isSel = totalWeeks == w;
               return RitmoNeuSurface(
                 sunken: isSel,
                 radius: 12,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 onTap: () => _setPresetWeeks(w),
                 child: Text(
                   '${toPersianDigits(w.toString())} هفته (${toPersianDigits((w ~/ 4).toString())} ماه)',
-                  style: textTheme.labelMedium?.copyWith(
+                  style: textTheme.labelSmall?.copyWith(
                     color: isSel ? colors.primary : colors.textSecondary,
                     fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
                   ),
@@ -359,12 +344,12 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
           // Custom Date Picker Card
           RitmoNeuSurface(
-            radius: 14,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            radius: 12,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             onTap: () async {
               final picked = await showDatePicker(
                 context: context,
@@ -381,24 +366,24 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
             },
             child: Row(
               children: [
-                Icon(Icons.calendar_today_rounded, size: 18, color: colors.primary),
-                const SizedBox(width: 10),
+                Icon(Icons.calendar_today_rounded, size: 16, color: colors.primary),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     '${toPersianDigits(totalWeeks.toString())} هفته باقی‌مانده (تاریخ هدف: ${toPersianDigits(MvCalendar.formatDateIso(_targetDate))})',
-                    style: textTheme.bodyMedium?.copyWith(
+                    style: textTheme.labelMedium?.copyWith(
                       color: colors.textPrimary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                Icon(Icons.edit_calendar_rounded, size: 18, color: colors.textSecondary),
+                Icon(Icons.edit_calendar_rounded, size: 16, color: colors.textSecondary),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
 
-          // ── بخش ۳: مشخصات بدنی و بار تمرینی ─────────────────────────────────────
+          // ── بخش ۳: پارامترهای فیزیکی (بدون کادر در کادر) ─────────────────────────
           Text(
             '۳. پارامترهای فیزیکی',
             style: textTheme.titleSmall?.copyWith(
@@ -406,80 +391,136 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Row(
             children: [
               // وزن بدن
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'وزن بدن (کیلوگرم)',
-                      style: textTheme.labelSmall?.copyWith(color: colors.textSecondary),
-                    ),
-                    const SizedBox(height: 4),
-                    RitmoNeuSurface(
-                      sunken: true,
-                      radius: 12,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                      child: TextField(
-                        controller: _weightController,
-                        keyboardType: TextInputType.number,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: '75',
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 8),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              if (_isOutdoorOrHiking) ...[
-                const SizedBox(width: 12),
-                // وزن کوله هدف
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: RitmoNeuSurface(
+                  sunken: true,
+                  radius: 14,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
                     children: [
-                      Text(
-                        'وزن کوله هدف (کیلوگرم)',
-                        style: textTheme.labelSmall?.copyWith(color: colors.textSecondary),
+                      Icon(
+                        Icons.fitness_center_rounded,
+                        size: 16,
+                        color: colors.textSecondary,
                       ),
-                      const SizedBox(height: 4),
-                      RitmoNeuSurface(
-                        sunken: true,
-                        radius: 12,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                        child: TextField(
-                          controller: _packWeightController,
-                          keyboardType: TextInputType.number,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          decoration: const InputDecoration(
-                            hintText: '5',
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8),
-                          ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'وزن بدن',
+                              style: textTheme.labelSmall?.copyWith(
+                                color: colors.textSecondary,
+                                fontSize: 10,
+                              ),
+                            ),
+                            TextField(
+                              controller: _weightController,
+                              keyboardType: TextInputType.number,
+                              style: textTheme.titleMedium?.copyWith(
+                                color: colors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              decoration: const InputDecoration(
+                                hintText: '75',
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
+                                disabledBorder: InputBorder.none,
+                                filled: false,
+                                fillColor: Colors.transparent,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        'kg',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: colors.textSecondary,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
                 ),
+              ),
+
+              if (_isOutdoorOrHiking) ...[
+                const SizedBox(width: 10),
+                // وزن کوله هدف
+                Expanded(
+                  child: RitmoNeuSurface(
+                    sunken: true,
+                    radius: 14,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.backpack_rounded,
+                          size: 16,
+                          color: colors.textSecondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'وزن کوله',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: colors.textSecondary,
+                                  fontSize: 10,
+                                ),
+                              ),
+                              TextField(
+                                controller: _packWeightController,
+                                keyboardType: TextInputType.number,
+                                style: textTheme.titleMedium?.copyWith(
+                                  color: colors.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                decoration: const InputDecoration(
+                                  hintText: '5',
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                  filled: false,
+                                  fillColor: Colors.transparent,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          'kg',
+                          style: textTheme.labelSmall?.copyWith(
+                            color: colors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
 
           // ── بخش ۴: پیش‌نمایش هوشمند فازبندی دوره ──────────────────────────────────
           Text(
@@ -489,11 +530,11 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           RitmoNeuSurface(
             sunken: true,
             radius: 14,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             child: Column(
               children: [
                 Row(
@@ -520,11 +561,12 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   'فازبندی معکوس شامل ایجاد ظرفیت هوازی پایه، شبیه‌سازی شیب و بار، و ۲ هفته کاهش حجم نهایی برای ریکاوری است.',
                   style: textTheme.bodySmall?.copyWith(
                     color: colors.textSecondary,
+                    fontSize: 11,
                     height: 1.35,
                   ),
                 ),
@@ -533,16 +575,16 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
           ),
 
           if (_errorMessage != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: colors.error.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.error_outline_rounded, size: 16, color: colors.error),
+                  Icon(Icons.error_outline_rounded, size: 15, color: colors.error),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -557,7 +599,7 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
         ],
       ),
       bottomAction: MvPrimaryAction(
@@ -579,7 +621,7 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
     return Expanded(
       flex: flex,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(8),
@@ -592,13 +634,13 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
               style: textTheme.labelSmall?.copyWith(
                 color: color,
                 fontWeight: FontWeight.bold,
-                fontSize: 11,
+                fontSize: 10,
               ),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 1),
             Text(
               '${toPersianDigits(weeks.toString())} هـ',
               style: textTheme.labelSmall?.copyWith(

@@ -32,8 +32,8 @@ class MvSheetScaffold extends StatelessWidget {
     required WidgetBuilder builder,
     bool isDismissible = true,
     bool enableDrag = true,
-    double initialChildSize = 0.60,
-    double maxChildSize = 0.95,
+    double initialChildSize = 0.94,
+    double maxChildSize = 0.94,
   }) {
     RitmoHaptics.sheetOpen();
     final controller = DraggableScrollableController();
@@ -62,11 +62,14 @@ class MvSheetScaffold extends StatelessWidget {
           ),
           child: DraggableScrollableSheet(
             controller: controller,
-            initialChildSize: initialChildSize.clamp(0.3, 0.95),
+            initialChildSize: initialChildSize.clamp(0.3, 0.96),
             minChildSize: 0.35,
-            maxChildSize: maxChildSize.clamp(0.5, 0.95),
+            maxChildSize: maxChildSize.clamp(0.5, 0.96),
             snap: true,
-            snapSizes: [initialChildSize.clamp(0.3, 0.95), maxChildSize.clamp(0.5, 0.95)],
+            snapSizes: [
+              initialChildSize.clamp(0.3, 0.96),
+              maxChildSize.clamp(0.5, 0.96),
+            ],
             expand: false,
             builder: (context, scrollCtrl) => RitmoGlassSheet(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -192,8 +195,8 @@ class MvSheetScaffold extends StatelessWidget {
             ),
             Divider(color: colors.divider.withValues(alpha: 0.6), height: 1),
 
-            // Scrollable Body
-            Flexible(
+            // Scrollable Body (Expanded ensures zero bottom overflow)
+            Expanded(
               child: SingleChildScrollView(
                 controller: scrollController,
                 physics: const BouncingScrollPhysics(),

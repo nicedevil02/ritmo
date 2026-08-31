@@ -23,33 +23,28 @@ class KonkurFieldPickerSheet extends StatelessWidget {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
+      child: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
         ),
-        decoration: BoxDecoration(
-          color: isDark ? colors.surfaceElevated : colors.surface,
+        child: RitmoGlassSheet(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border.all(
-            color: isDark ? colors.border.withValues(alpha: 0.35) : colors.border.withValues(alpha: 0.15),
-            width: 0.85,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Drag handle
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                decoration: BoxDecoration(
-                  color: colors.border.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(2),
+          padding: EdgeInsets.zero,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
 
             // Symmetrical Header Row
             Padding(
@@ -136,8 +131,9 @@ class KonkurFieldPickerSheet extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildFieldCard(BuildContext context, KonkurField field, RitmoColors colors) {
     final curriculum = KonkurCurriculum.byField[field] ?? [];

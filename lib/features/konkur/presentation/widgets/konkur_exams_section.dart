@@ -706,33 +706,30 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
     final jalali = Jalali.fromDateTime(_selectedDate);
     final dateDisplay = '${toPersianDigits(jalali.day)} ${jalali.formatter.mN} ${toPersianDigits(jalali.year)}';
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
-      ),
-      decoration: BoxDecoration(
-        color: isDark ? colors.surfaceElevated : colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border.all(
-          color: isDark ? colors.border.withValues(alpha: 0.35) : colors.border.withValues(alpha: 0.15),
-          width: 0.85,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
         ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              decoration: BoxDecoration(
-                color: colors.border.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(2),
+        child: RitmoGlassSheet(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          padding: EdgeInsets.zero,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-            ),
-          ),
 
           // Symmetrical Header Row
           Padding(
@@ -870,8 +867,10 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   Widget _buildSubjectInputRow(KonkurSubject sub, RitmoColors colors) {
     return Container(

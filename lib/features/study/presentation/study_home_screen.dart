@@ -163,111 +163,110 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => Container(
-        constraints: BoxConstraints(
-          maxHeight: RitmoBreakpoints.sheetMaxHeight(ctx, factor: 0.7),
-        ),
-        decoration: BoxDecoration(
-          color: isDark ? colors.surfaceElevated : colors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border.all(
-            color: isDark ? colors.border.withValues(alpha: 0.35) : colors.border.withValues(alpha: 0.15),
-            width: 0.85,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(ctx, factor: 0.7),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Drag handle
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                decoration: BoxDecoration(
-                  color: colors.border.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(2),
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: EdgeInsets.zero,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-            // Symmetrical Header Row
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Leading (Right in RTL): Circular Tactile Close (X) Button
-                  GestureDetector(
-                    onTap: () {
-                      RitmoHapticsPolicy.tap();
-                      Navigator.pop(ctx);
-                    },
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? colors.surfaceElevated.withValues(alpha: 0.85)
-                            : colors.textPrimary.withValues(alpha: 0.07),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isDark
-                              ? colors.border.withValues(alpha: 0.35)
-                              : colors.border.withValues(alpha: 0.15),
-                          width: 0.85,
+                // Symmetrical Header Row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Leading (Right in RTL): Circular Tactile Close (X) Button
+                      GestureDetector(
+                        onTap: () {
+                          RitmoHapticsPolicy.tap();
+                          Navigator.pop(ctx);
+                        },
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? colors.surfaceElevated.withValues(alpha: 0.85)
+                                : colors.textPrimary.withValues(alpha: 0.07),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDark
+                                  ? colors.border.withValues(alpha: 0.35)
+                                  : colors.border.withValues(alpha: 0.15),
+                              width: 0.85,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            CupertinoIcons.xmark,
+                            size: 15,
+                            color: colors.textSecondary,
+                          ),
                         ),
                       ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        CupertinoIcons.xmark,
-                        size: 15,
-                        color: colors.textSecondary,
+
+                      // Center: Title
+                      Expanded(
+                        child: Text(
+                          'انتخاب درس برای مطالعه',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
                       ),
-                    ),
+
+                      // Trailing (Left in RTL): Symmetrical Spacer
+                      const SizedBox(width: 34, height: 34),
+                    ],
                   ),
+                ),
+                const Divider(height: 1),
 
-                  // Center: Title
-                  Expanded(
-                    child: Text(
-                      'انتخاب درس برای مطالعه',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                  ),
-
-                  // Trailing (Left in RTL): Symmetrical Spacer
-                  const SizedBox(width: 34, height: 34),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-
-            Flexible(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                shrinkWrap: true,
-                itemCount: _subjects.length,
-                separatorBuilder: (context, index) => Divider(height: 1, color: colors.divider.withValues(alpha: 0.3)),
-                itemBuilder: (ctx, i) {
-                  final s = _subjects[i];
-                  return ListTile(
-                    leading: Text(s.emoji ?? '📚', style: const TextStyle(fontSize: 22)),
-                    title: Text(s.name, style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                    trailing: Icon(Icons.play_arrow_rounded, color: colors.primary),
-                    onTap: () {
-                      RitmoHapticsPolicy.selection();
-                      Navigator.pop(ctx, s);
+                Flexible(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shrinkWrap: true,
+                    itemCount: _subjects.length,
+                    separatorBuilder: (context, index) => Divider(height: 1, color: colors.divider.withValues(alpha: 0.3)),
+                    itemBuilder: (ctx, i) {
+                      final s = _subjects[i];
+                      return ListTile(
+                        leading: Text(s.emoji ?? '📚', style: const TextStyle(fontSize: 22)),
+                        title: Text(s.name, style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                        trailing: Icon(Icons.play_arrow_rounded, color: colors.primary),
+                        onTap: () {
+                          RitmoHapticsPolicy.selection();
+                          Navigator.pop(ctx, s);
+                        },
+                      );
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

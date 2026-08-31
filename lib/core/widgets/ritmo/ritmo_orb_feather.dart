@@ -30,7 +30,7 @@ class RitmoPlume {
   final double angle;
 }
 
-/// توده‌ها را می‌سازد. کاملاً قطعی (بدون rng) تا حرکت قابلِ پیش‌بینی و تست باشد.
+/// توده‌ها را می‌سازد. قطعی و بدون rng، تا حرکت قابلِ پیش‌بینی و قابلِ تست باشد.
 List<RitmoPlume> ritmoBuildPlumes({
   required Offset center,
   required double radius,
@@ -60,7 +60,7 @@ List<RitmoPlume> ritmoBuildPlumes({
   return out;
 }
 
-/// همهٔ توده‌ها با یک پاس. رنگ از جای قرار گرفتنِ توده می‌آید، نه از پالتِ جدا.
+/// همهٔ توده‌ها با یک پاس. رنگ از محلِ قرار گرفتنِ توده می‌آید، نه از پالتِ جدا.
 void ritmoPaintFlow(
   Canvas canvas, {
   required List<RitmoPlume> plumes,
@@ -157,14 +157,39 @@ void ritmoPaintPillow(
     ).createShader(Rect.fromCircle(center: seat, radius: radius * 0.72))
     ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.16);
   canvas.drawOval(
-    Rect.fromCenter(
-      center: seat,
-      width: radius * 1.24,
-      height: radius * 1.02,
-    ),
+    Rect.fromCenter(center: seat, width: radius * 1.24, height: radius * 1.02),
     paint,
   );
   ritmoCountPaint(blurs: 1, white: milk);
 }
 
-/// نورِ بازتاب
+/// کاستیک: نوری که از درونِ شیشه گذشته و در ربعِ مقابلِ منبع جمع شده.
+/// موقعیتش از [RitmoLightRig.causticAlign] می‌آید، پس ساختاراً نمی‌تواند همِ سمتِ
+/// هایلایت بنشیند — همان اشتباهی که قبلاً تیله را از شیشه بودن درمی‌آورد.
+void ritmoPaintCaustic(
+  Canvas canvas, {
+  required Offset center,
+  required double radius,
+  required RitmoOrbPalette palette,
+  required RitmoLightRig rig,
+  required RitmoWhitePurse purse,
+}) {
+  final double glow = purse.take(0.18 * rig.key);
+  if (glow <= 0.01) return;
+  final Offset seat = Offset(
+    center.dx + rig.causticAlign.x * radius * 0.52,
+    center.dy + rig.causticAlign.y * radius * 0.52,
+  );
+  final Rect area = Rect.fromCircle(center: seat, radius: radius * 0.62);
+  final Paint paint = Paint()
+    ..shader = RadialGradient(
+      colors: <Color>[
+        Color.lerp(palette.milk, palette.mid, 0.45)!.withValues(alpha: glow),
+        palette.mid.withValues(alpha: glow * 0.55),
+        const Color(0x00000000),
+      ],
+      stops: const <double>[0.0, 0.46, 1.0],
+    ).createShader(area);
+  canvas.drawOval(area, paint);
+  ritmoCountPaint(white: glow * 0.5);
+}

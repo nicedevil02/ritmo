@@ -186,9 +186,6 @@ class AppleCardDeckHost extends StatelessWidget {
       final targetShift = (10.0 + (6.0 * tExtent)) * scaleFactorBelow60;
       final translateY = progress <= 0.0 ? 0.0 : -targetShift * progress;
 
-      // Visible-Only Scrim Height: exactly (1.0 - extent)
-      final visibleTopHeightFactor = (1.0 - (clampedExtent * progress)).clamp(0.0, 1.0);
-
       // Dynamic Scrim Density / Opacity based on foreground extent:
       // At 60%: standard nominal opacity (1.0x)
       // At 95%: deep focus opacity (1.50x, +50% density)
@@ -222,45 +219,28 @@ class AppleCardDeckHost extends StatelessWidget {
               children: [
                 staticChild,
 
-                // 1. Adaptive Card Deck Scrim (Seamless & Zero-Gap)
-                // Dims the background card deck smoothly without light gaps, cutoff lines, or height mismatches.
+                // 1. Dynamic & Adaptive Gapless Scrim
+                // Dims the background card seamlessly without any white strip or gap,
+                // while dynamically responding to the foreground sheet animation progress.
                 if (progress > 0.001)
-                  if (fullCoverageScrim)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        ignoring: true,
-                        child: ClipRRect(
-                          borderRadius: clipBorderRadius,
-                          clipBehavior: Clip.antiAlias,
-                          child: ColoredBox(
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      ignoring: true,
+                      child: ClipRRect(
+                        borderRadius: clipBorderRadius,
+                        clipBehavior: Clip.antiAlias,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
                             color: dimColor,
-                          ),
-                        ),
-                      ),
-                    )
-                  else if (visibleTopHeightFactor > 0.001)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: IgnorePointer(
-                        ignoring: true,
-                        child: ClipRRect(
-                          borderRadius: clipBorderRadius,
-                          clipBehavior: Clip.antiAlias,
-                          child: Container(
-                            height: (MediaQuery.of(context).size.height * visibleTopHeightFactor) + 40.0,
-                            decoration: BoxDecoration(
-                              borderRadius: clipBorderRadius,
-                              color: dimColor,
-                            ),
+                            borderRadius: clipBorderRadius,
                           ),
                         ),
                       ),
                     ),
+                  ),
 
                 // 2. Preserved Crisp Glass Rim & Border (renders ON TOP of scrim)
-                // Ensures the outer 1px white border and curve remain razor-sharp without dark occlusion artifacts.
+                // Ensures the outer 1px border and curve remain razor-sharp without dark occlusion artifacts.
                 if (progress > 0.001)
                   Positioned.fill(
                     child: IgnorePointer(

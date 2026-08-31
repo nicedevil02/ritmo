@@ -20,8 +20,7 @@ class MvMetricRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
@@ -29,13 +28,7 @@ class MvMetricRing extends StatelessWidget {
         ? (currentMet / targetMet).clamp(0.0, 1.0)
         : 0.0;
 
-    return Container(
-      padding: EdgeInsets.all(metrics.spaceLg),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(metrics.radiusCard),
-        border: Border.all(color: colors.border.withValues(alpha: 0.7)),
-      ),
+    return RitmoCard.neumorphic(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -58,19 +51,15 @@ class MvMetricRing extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: metrics.spaceMd),
+          const SizedBox(height: 12),
 
-          // Progress Bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(RitmoRadius.pill),
-            child: LinearProgressIndicator(
-              value: ratio,
-              minHeight: 10,
-              backgroundColor: colors.surfaceSunken,
-              valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
-            ),
+          // Sunken Neumorphic Progress Bar
+          RitmoNeuProgressBar(
+            progress: ratio,
+            height: 10,
+            color: colors.primary,
           ),
-          SizedBox(height: metrics.spaceSm),
+          const SizedBox(height: 10),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

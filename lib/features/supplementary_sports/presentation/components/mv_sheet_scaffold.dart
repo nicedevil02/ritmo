@@ -111,25 +111,37 @@ class MvSheetScaffold extends StatelessWidget {
               ),
             ),
 
-            // iOS 26 Symmetrical RTL Header
+            // Canonical Header Row
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Right: Cancel Text Button (RTL leading)
-                  TextButton(
-                    onPressed: onCancel ?? () => Navigator.maybePop(context),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      'انصراف',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                  // Right: Leading Circular Tactile Close (X) Button (RTL)
+                  GestureDetector(
+                    onTap: onCancel ?? () {
+                      RitmoHaptics.tap();
+                      Navigator.maybePop(context);
+                    },
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? colors.surfaceElevated.withValues(alpha: 0.85)
+                            : colors.textPrimary.withValues(alpha: 0.07),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark
+                              ? colors.border.withValues(alpha: 0.35)
+                              : colors.border.withValues(alpha: 0.15),
+                          width: 0.85,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 18,
                         color: colors.textSecondary,
                       ),
                     ),
@@ -174,7 +186,7 @@ class MvSheetScaffold extends StatelessWidget {
                       children: headerActions!,
                     )
                   else
-                    const SizedBox(width: 48), // Balances Cancel button
+                    const SizedBox(width: 34, height: 34), // Balances Close button
                 ],
               ),
             ),

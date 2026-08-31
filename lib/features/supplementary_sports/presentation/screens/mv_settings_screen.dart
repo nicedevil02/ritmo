@@ -6,15 +6,16 @@ import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 import 'mv_commitments_screen.dart';
 
-/// Screen 5: "تنظیمات ورزش و حرکت" (Section 5.5).
+/// Sheet: "تنظیمات ورزش و حرکت" (Section 5.5).
 /// Single source of truth settings for sports, equipment, apartment mode, and cycle consent.
-class MvSettingsScreen extends StatefulWidget {
+/// Presented as an Apple HIG glass bottom sheet.
+class MvSettingsSheet extends StatefulWidget {
   final MvUserProfile initialProfile;
   final ValueChanged<MvUserProfile> onProfileSaved;
   final VoidCallback? onRegenerateProgram;
   final dynamic controller;
 
-  const MvSettingsScreen({
+  const MvSettingsSheet({
     super.key,
     required this.initialProfile,
     required this.onProfileSaved,
@@ -22,11 +23,33 @@ class MvSettingsScreen extends StatefulWidget {
     this.controller,
   });
 
+  static Future<void> show({
+    required BuildContext context,
+    required MvUserProfile initialProfile,
+    required ValueChanged<MvUserProfile> onProfileSaved,
+    VoidCallback? onRegenerateProgram,
+    dynamic controller,
+  }) {
+    return MvSheetScaffold.show(
+      context: context,
+      initialChildSize: 0.85,
+      maxChildSize: 0.95,
+      builder: (ctx) => MvSettingsSheet(
+        initialProfile: initialProfile,
+        onProfileSaved: onProfileSaved,
+        onRegenerateProgram: onRegenerateProgram,
+        controller: controller,
+      ),
+    );
+  }
+
   @override
-  State<MvSettingsScreen> createState() => _MvSettingsScreenState();
+  State<MvSettingsSheet> createState() => _MvSettingsSheetState();
 }
 
-class _MvSettingsScreenState extends State<MvSettingsScreen> {
+typedef MvSettingsScreen = MvSettingsSheet;
+
+class _MvSettingsSheetState extends State<MvSettingsSheet> {
   late int _daysPerWeek;
   late String _duration;
   late MvIntensityTier _intensity;
@@ -72,25 +95,17 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.mv_settings_title),
-        centerTitle: false,
-        actions: [
-          TextButton(
-            onPressed: _saveChanges,
-            child: Text(
-              l10n.mv_settings_save,
-              style: textTheme.labelLarge?.copyWith(
-                color: colors.primary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
+    return MvSheetScaffold(
+      title: l10n.mv_settings_title,
+      subtitle: 'تنظیمات برنامه، تجهیزات و حریم خصوصی',
+      bottomAction: MvPrimaryAction(
+        label: l10n.mv_settings_save,
+        icon: Icons.check_circle_outline_rounded,
+        onPressed: _saveChanges,
       ),
-      body: ListView(
-        padding: EdgeInsets.all(metrics.spaceLg),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // 0. Fixed Sports (Anchors) Section (S8-T4)
           _buildSectionHeader(l10n.mv_settings_anchors_section),
@@ -289,7 +304,7 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
               ],
             ),
           ],
-          SizedBox(height: metrics.spaceXxl),
+          const SizedBox(height: 16),
         ],
       ),
     );

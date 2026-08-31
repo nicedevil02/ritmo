@@ -15,7 +15,7 @@ class MvAudioToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final l10n = AppLocalizations.of(context);
 

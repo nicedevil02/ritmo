@@ -19,20 +19,13 @@ class MvBodyMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
     final counts = distribution.muscleSessionCounts;
 
-    return Container(
-      padding: EdgeInsets.all(metrics.spaceLg),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(metrics.radiusCard),
-        border: Border.all(color: colors.border.withValues(alpha: 0.7)),
-      ),
+    return RitmoCard.neumorphic(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -49,80 +42,66 @@ class MvBodyMap extends StatelessWidget {
               Icon(
                 Icons.accessibility_new_rounded,
                 color: colors.primary,
-                size: metrics.iconMd,
+                size: 20,
               ),
             ],
           ),
-          SizedBox(height: metrics.spaceMd),
+          const SizedBox(height: 12),
 
-          // Muscle Chips Grid
+          // Tactile Muscle Chips Grid
           Wrap(
-            spacing: metrics.spaceSm,
-            runSpacing: metrics.spaceSm,
+            spacing: 8,
+            runSpacing: 8,
             children: MvMuscleGroup.all.map((mg) {
               final count = counts[mg.code] ?? 0;
               final isTrained = count > 0;
 
-              return Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => onMuscleGroupTap?.call(mg.code),
-                  borderRadius: BorderRadius.circular(RitmoRadius.pill),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: metrics.spaceMd,
-                      vertical: metrics.spaceXs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isTrained
-                          ? colors.primary.withValues(alpha: 0.12)
-                          : colors.surfaceElevated,
-                      borderRadius: BorderRadius.circular(RitmoRadius.pill),
-                      border: Border.all(
-                        color: isTrained ? colors.primary : colors.border,
+              return RitmoNeuSurface(
+                sunken: isTrained,
+                radius: 20,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                onTap: () => onMuscleGroupTap?.call(mg.code),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(mg.emoji, style: textTheme.bodySmall),
+                    const SizedBox(width: 4),
+                    Text(
+                      mg.titleFa,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: isTrained
+                            ? colors.primary
+                            : colors.textSecondary,
+                        fontWeight: isTrained
+                            ? FontWeight.w700
+                            : FontWeight.normal,
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(mg.emoji, style: textTheme.bodySmall),
-                        SizedBox(width: metrics.spaceXs),
-                        Text(
-                          mg.titleFa,
+                    if (isTrained) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.primary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          count.toString(),
                           style: textTheme.labelSmall?.copyWith(
-                            color: isTrained
-                                ? colors.primary
-                                : colors.textSecondary,
-                            fontWeight: isTrained
-                                ? FontWeight.w700
-                                : FontWeight.normal,
+                            color: colors.onPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
                           ),
                         ),
-                        if (isTrained) ...[
-                          SizedBox(width: metrics.spaceXs),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 1,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colors.primary,
-                              borderRadius: BorderRadius.circular(
-                                RitmoRadius.pill,
-                              ),
-                            ),
-                            child: Text(
-                              count.toString(),
-                              style: textTheme.labelSmall?.copyWith(
-                                color: colors.onPrimary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+                      ),
+                    ],
+                  ],
                 ),
               );
             }).toList(),
@@ -130,46 +109,35 @@ class MvBodyMap extends StatelessWidget {
 
           // Neglected Group Suggestion CTA (N-03)
           if (distribution.suggestedActionFa != null) ...[
-            SizedBox(height: metrics.spaceMd),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onSuggestedActionTap,
-                borderRadius: BorderRadius.circular(metrics.radiusField),
-                child: Container(
-                  padding: EdgeInsets.all(metrics.spaceMd),
-                  decoration: BoxDecoration(
-                    color: colors.accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(metrics.radiusField),
-                    border: Border.all(
-                      color: colors.accent.withValues(alpha: 0.4),
+            const SizedBox(height: 12),
+            RitmoNeuSurface(
+              sunken: true,
+              radius: 14,
+              padding: const EdgeInsets.all(12),
+              onTap: onSuggestedActionTap,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.lightbulb_outline_rounded,
+                    color: colors.accent,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      distribution.suggestedActionFa!,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.lightbulb_outline_rounded,
-                        color: colors.accent,
-                        size: metrics.iconMd,
-                      ),
-                      SizedBox(width: metrics.spaceSm),
-                      Expanded(
-                        child: Text(
-                          distribution.suggestedActionFa!,
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colors.textPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        color: colors.accent,
-                        size: metrics.iconSm,
-                      ),
-                    ],
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: colors.accent,
+                    size: 14,
                   ),
-                ),
+                ],
               ),
             ),
           ],

@@ -18,46 +18,34 @@ class MvChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
 
-    final bgColor = isSelected
-        ? colors.primary.withValues(alpha: 0.15)
-        : colors.surfaceElevated;
-    final borderColor = isSelected ? colors.primary : colors.border;
     final textColor = isSelected ? colors.primary : colors.textPrimary;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(RitmoRadius.pill),
-        child: Container(
-          constraints: BoxConstraints(minHeight: metrics.touchTarget * 0.75),
-          padding: EdgeInsets.symmetric(
-            horizontal: metrics.spaceMd,
-            vertical: metrics.spaceXs,
+    return RitmoNeuSurface(
+      sunken: isSelected,
+      radius: 20,
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 8,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            icon!,
+            const SizedBox(width: 6),
+          ],
+          Text(
+            label,
+            style: textTheme.labelMedium?.copyWith(
+              color: textColor,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            ),
           ),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(RitmoRadius.pill),
-            border: Border.all(color: borderColor),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[icon!, SizedBox(width: metrics.spaceXs)],
-              Text(
-                label,
-                style: textTheme.labelMedium?.copyWith(
-                  color: textColor,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                ),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart'
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
+import '../sheets/sheets.dart';
 
 /// Tab 3: "پیشرفت" (Section 5.3 / S5-T4).
 /// Displays 5 structured sections with dual-currency WHO budget, ACWR load,
@@ -656,18 +657,23 @@ class MvProgressTab extends StatelessWidget {
             l10n?.mv_campaign_inactive_desc ?? 'Reverse planning and training for sports event (hiking, trail, etc.)',
             style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
           ),
-          SizedBox(height: metrics.spaceMd),
-          ElevatedButton.icon(
+          const SizedBox(height: 12),
+          RitmoNeuButton(
             key: const ValueKey('mv_campaign_create'),
-            onPressed: () => _openCreateCampaignDialog(context),
-            icon: Icon(Icons.add_rounded, size: metrics.iconSm),
-            label: Text(l10n?.mv_campaign_create ?? 'Create Training Campaign'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colors.primary,
-              foregroundColor: colors.onPrimary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(metrics.radiusField),
-              ),
+            onTap: () => _openCreateCampaignSheet(context),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add_rounded, size: 18, color: colors.primary),
+                const SizedBox(width: 6),
+                Text(
+                  l10n?.mv_campaign_create ?? 'Create Training Campaign',
+                  style: textTheme.labelLarge?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -675,14 +681,12 @@ class MvProgressTab extends StatelessWidget {
     );
   }
 
-  void _openCreateCampaignDialog(BuildContext context) {
-    showDialog(
+  void _openCreateCampaignSheet(BuildContext context) {
+    MvCreateCampaignSheet.show(
       context: context,
-      builder: (dialogCtx) => _CreateCampaignDialog(
-        onCreate: (campaign) {
-          onCreateCampaign?.call(campaign);
-        },
-      ),
+      onCreate: (campaign) {
+        onCreateCampaign?.call(campaign);
+      },
     );
   }
 
@@ -817,178 +821,6 @@ class MvProgressTab extends StatelessWidget {
             ),
           );
         }),
-      ],
-    );
-  }
-}
-
-class _CreateCampaignDialog extends StatefulWidget {
-  final ValueChanged<MvCampaign> onCreate;
-
-  const _CreateCampaignDialog({required this.onCreate});
-
-  @override
-  State<_CreateCampaignDialog> createState() => _CreateCampaignDialogState();
-}
-
-class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
-  DateTime _targetDate = DateTime.now().add(const Duration(days: 84)); // 12 weeks
-  final String _sportKind = MvKindCodes.hiking;
-  final TextEditingController _weightController = TextEditingController(text: '75');
-  String? _errorMessage;
-
-  @override
-  void dispose() {
-    _weightController.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final l10n = AppLocalizations.of(context);
-    final days = _targetDate.difference(DateTime.now()).inDays;
-    final weeks = (days / 7).round();
-
-    if (weeks < 4) {
-      setState(() {
-        _errorMessage = l10n?.mv_campaign_too_short ??
-            'Remaining time to event is less than 4 weeks';
-      });
-      return;
-    }
-
-    final now = DateTime.now();
-    final campaign = MvCampaign(
-      id: 'camp_${now.millisecondsSinceEpoch}',
-      titleFa: l10n?.mv_campaign_hiking_title(MvKindCodes.hiking) ?? 'Goal Campaign: Hiking',
-      goalCode: _sportKind,
-      startDate: MvCalendar.formatDateIso(now),
-      weeks: weeks,
-      status: 'ACTIVE',
-      createdAt: now.millisecondsSinceEpoch,
-      updatedAt: now.millisecondsSinceEpoch,
-    );
-
-    widget.onCreate(campaign);
-    Navigator.pop(context);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final colors = context.colors;
-    final metrics = context.metrics;
-    final textTheme = Theme.of(context).textTheme;
-
-    return AlertDialog(
-      title: Text(
-        l10n?.mv_campaign_create ?? 'Create Training Campaign',
-        style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n?.mv_campaign_target_sport ?? 'Target Sport:', style: textTheme.labelMedium),
-            SizedBox(height: metrics.spaceXs),
-            Container(
-              padding: EdgeInsets.all(metrics.spaceSm),
-              decoration: BoxDecoration(
-                color: colors.surfaceElevated,
-                borderRadius: BorderRadius.circular(metrics.radiusField),
-                border: Border.all(color: colors.border),
-              ),
-              child: Row(
-                children: [
-                  const Text('🏔️'),
-                  SizedBox(width: metrics.spaceSm),
-                  Text(
-                    l10n?.mv_campaign_hiking_title(MvKindCodes.hiking) ??
-                        'Hiking & Trail (${MvKindCodes.hiking})',
-                    style: textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: metrics.spaceMd),
-            Text(l10n?.mv_campaign_target_date ?? 'Target Event Date:', style: textTheme.labelMedium),
-            SizedBox(height: metrics.spaceXs),
-            InkWell(
-              key: const ValueKey('mv_campaign_date_field'),
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: _targetDate,
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                );
-                if (picked != null) {
-                  setState(() {
-                    _targetDate = picked;
-                    _errorMessage = null;
-                  });
-                }
-              },
-              child: Container(
-                padding: EdgeInsets.all(metrics.spaceSm),
-                decoration: BoxDecoration(
-                  color: colors.surfaceElevated,
-                  borderRadius: BorderRadius.circular(metrics.radiusField),
-                  border: Border.all(color: colors.border),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_today_rounded, size: metrics.iconSm, color: colors.primary),
-                    SizedBox(width: metrics.spaceSm),
-                    Text(
-                      l10n?.mv_campaign_weeks_later(
-                            toPersianDigits((_targetDate.difference(DateTime.now()).inDays ~/ 7).toString()),
-                            toPersianDigits(MvCalendar.formatDateIso(_targetDate)),
-                          ) ??
-                          '${_targetDate.difference(DateTime.now()).inDays ~/ 7} weeks later',
-                      style: textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: metrics.spaceMd),
-            Text(l10n?.mv_campaign_body_weight ?? 'Body Weight (kg):', style: textTheme.labelMedium),
-            SizedBox(height: metrics.spaceXs),
-            TextField(
-              key: const ValueKey('mv_campaign_weight_field'),
-              controller: _weightController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                hintText: '75',
-                filled: true,
-                fillColor: colors.surfaceElevated,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(metrics.radiusField),
-                ),
-              ),
-            ),
-            if (_errorMessage != null) ...[
-              SizedBox(height: metrics.spaceSm),
-              Text(
-                _errorMessage!,
-                key: const ValueKey('mv_campaign_error_text'),
-                style: textTheme.bodySmall?.copyWith(color: colors.error, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l10n?.cancel ?? 'Cancel'),
-        ),
-        ElevatedButton(
-          key: const ValueKey('mv_campaign_submit_btn'),
-          onPressed: _submit,
-          child: Text(l10n?.mv_campaign_submit ?? 'Create Campaign'),
-        ),
       ],
     );
   }

@@ -363,18 +363,14 @@ class _MvHubScreenState extends State<MvHubScreen> {
           iconColor: colors.textSecondary,
           tooltip: l10n.mv_settings_tooltip,
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => MvSettingsScreen(
-                  initialProfile: _controller.profile,
-                  controller: _controller,
-                  onProfileSaved: (p) async {
-                    await _controller.saveProfile(p);
-                  },
-                  onRegenerateProgram: _controller.regenerateWeek,
-                ),
-              ),
+            MvSettingsSheet.show(
+              context: context,
+              initialProfile: _controller.profile,
+              controller: _controller,
+              onProfileSaved: (p) async {
+                await _controller.saveProfile(p);
+              },
+              onRegenerateProgram: _controller.regenerateWeek,
             );
           },
         ),

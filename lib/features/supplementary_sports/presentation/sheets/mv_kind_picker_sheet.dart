@@ -7,6 +7,7 @@ import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import '../components/components.dart';
+import 'mv_custom_kind_sheet.dart';
 
 /// Action Sheet: Full Taxonomy Movement Activity Picker (49 Sports - S1-T5 & ADR 0008).
 ///
@@ -188,60 +189,13 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
   }
 
   Future<void> _openCreateCustomDialog() async {
-    final l10n = AppLocalizations.of(context);
-    final titleController = TextEditingController();
-    final customKind = await showDialog<MvMovementKind>(
+    final customKind = await MvCustomKindSheet.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n?.mv_kind_picker_create_new ?? 'New Activity'),
-        content: TextField(
-          controller: titleController,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: l10n?.mv_day_plan_custom_title ?? 'Activity Name',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n?.cancel ?? 'Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final title = titleController.text.trim();
-              if (title.isEmpty) return;
-              final code = 'CUSTOM_${DateTime.now().millisecondsSinceEpoch}';
-              final newKind = MvMovementKind(
-                code: code,
-                titleFa: title,
-                emoji: '⚡',
-                family: MovementFamily.daily,
-                baseMet: 4.0,
-                metLow: 3.0,
-                metHigh: 5.0,
-                primaryMetric: MovementMetric.duration,
-                isOutdoor: false,
-                isSocial: false,
-                needsVenue: false,
-                jointImpact: 1,
-                isCustom: true,
-                isEnabled: true,
-                usageCount: 1,
-                sortOrder: 999,
-              );
-              Navigator.of(ctx).pop(newKind);
-            },
-            child: Text(l10n?.mv_action_save ?? 'Save'),
-          ),
-        ],
-      ),
+      useCase: _useCase,
     );
 
     if (customKind != null && mounted) {
-      final saved = await _useCase.saveCustomKind(customKind);
-      if (mounted) {
-        Navigator.of(context).pop(saved);
-      }
+      Navigator.of(context).pop(customKind);
     }
   }
 

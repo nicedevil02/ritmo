@@ -20,7 +20,7 @@ class MvAnimationStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
 
     String? effectiveAsset = animationAsset;

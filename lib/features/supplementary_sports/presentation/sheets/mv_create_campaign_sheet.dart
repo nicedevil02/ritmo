@@ -1,28 +1,38 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
-import 'mv_kind_picker_sheet.dart';
 
-/// Sheet: "ساخت دورهٔ تمرینی هدف‌دار" (Section 5.3, 5.8 & S8-T7).
-/// Connected to Ritmo canonical glass sheet scaffold, theme tokens, and Apple HIG detents.
+/// Smart Unified Sheet: "برنامه‌ریزی و ساخت دورهٔ تمرینی هدف‌دار"
+/// Merges sport kind selection, periodization timeline, physical metrics,
+/// and live smart phase calculations into a single fluid Apple HIG sheet with zero nested modals.
 class MvCreateCampaignSheet extends StatefulWidget {
   final ValueChanged<MvCampaign> onCreate;
+  final MvKindUseCase? kindUseCase;
 
   const MvCreateCampaignSheet({
     super.key,
     required this.onCreate,
+    this.kindUseCase,
   });
 
   static Future<void> show({
     required BuildContext context,
     required ValueChanged<MvCampaign> onCreate,
+    MvKindUseCase? kindUseCase,
   }) {
     return MvSheetScaffold.show(
       context: context,
-      builder: (ctx) => MvCreateCampaignSheet(onCreate: onCreate),
+      initialChildSize: 0.90,
+      maxChildSize: 0.96,
+      builder: (ctx) => MvCreateCampaignSheet(
+        onCreate: onCreate,
+        kindUseCase: kindUseCase,
+      ),
     );
   }
 
@@ -31,32 +41,103 @@ class MvCreateCampaignSheet extends StatefulWidget {
 }
 
 class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
+  late final MvKindUseCase _kindUseCase;
+  final _searchController = TextEditingController();
+  final _weightController = TextEditingController(text: '75');
+  final _packWeightController = TextEditingController(text: '5');
+
   DateTime _targetDate = DateTime.now().add(const Duration(days: 84)); // 12 weeks
-  String _sportKindCode = MvKindCodes.hiking;
-  String _sportKindTitleFa = 'کوهنوردی و پیمایش';
-  String _sportKindEmoji = '🏔️';
-  final TextEditingController _weightController = TextEditingController(text: '75');
+  String _selectedKindCode = MvKindCodes.hiking;
+  String _selectedKindTitleFa = 'کوهنوردی و پیمایش';
+  String _selectedKindEmoji = '🏔️';
+  bool _isOutdoorOrHiking = true;
+
+  bool _isSearching = false;
+  List<MvMovementKind> _allKinds = [];
+  List<MvMovementKind> _filteredKinds = [];
+  Timer? _debounceTimer;
   String? _errorMessage;
+
+  // Prominent Campaign Goal Sports
+  static const List<Map<String, String>> _featuredGoalSports = [
+    {'code': MvKindCodes.hiking, 'title': 'کوهنوردی و پیمایش', 'emoji': '🏔️'},
+    {'code': MvKindCodes.running, 'title': 'دویدن و ماراتن', 'emoji': '🏃'},
+    {'code': MvKindCodes.cycling, 'title': 'دوچرخه‌سواری', 'emoji': '🚴'},
+    {'code': MvKindCodes.swimming, 'title': 'شنا و سه‌گانه', 'emoji': '🏊'},
+    {'code': 'CLIMBING', 'title': 'سنگ‌نوردی', 'emoji': '🧗'},
+    {'code': MvKindCodes.football, 'title': 'فوتبال و تیمی', 'emoji': '⚽'},
+    {'code': 'MARTIAL_ARTS', 'title': 'هنرهای رزمی', 'emoji': '🥋'},
+    {'code': MvKindCodes.bodyweight, 'title': 'بدنسازی و قدرت', 'emoji': '🏋️'},
+  ];
+
+  // Timeline Preset Weeks
+  static const List<int> _timelinePresets = [8, 12, 16, 24];
+
+  @override
+  void initState() {
+    super.initState();
+    _kindUseCase = widget.kindUseCase ?? MvKindUseCase();
+    _loadAllKinds();
+  }
+
+  Future<void> _loadAllKinds() async {
+    final kinds = await _kindUseCase.getAllKinds();
+    if (mounted) {
+      setState(() {
+        _allKinds = kinds;
+        _filteredKinds = kinds;
+      });
+    }
+  }
 
   @override
   void dispose() {
+    _searchController.dispose();
     _weightController.dispose();
+    _packWeightController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
-  Future<void> _pickSportKind() async {
-    final selectedKind = await MvKindPickerSheet.show(
-      context: context,
-      initialCode: _sportKindCode,
-    );
-
-    if (selectedKind != null && mounted) {
+  void _onSearchChanged(String query) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 200), () {
+      if (!mounted) return;
+      final q = query.trim().toLowerCase();
       setState(() {
-        _sportKindCode = selectedKind.code;
-        _sportKindTitleFa = selectedKind.titleFa;
-        _sportKindEmoji = selectedKind.emoji;
+        if (q.isEmpty) {
+          _filteredKinds = _allKinds;
+        } else {
+          _filteredKinds = _allKinds
+              .where((k) =>
+                  k.titleFa.toLowerCase().contains(q) ||
+                  k.code.toLowerCase().contains(q))
+              .toList();
+        }
       });
-    }
+    });
+  }
+
+  void _selectSport(String code, String titleFa, String emoji) {
+    setState(() {
+      _selectedKindCode = code;
+      _selectedKindTitleFa = titleFa;
+      _selectedKindEmoji = emoji;
+      _isOutdoorOrHiking = code == MvKindCodes.hiking ||
+          code == 'CLIMBING' ||
+          code == 'TRAIL_RUNNING' ||
+          code.contains('OUTDOOR');
+      _isSearching = false;
+      _searchController.clear();
+      _errorMessage = null;
+    });
+  }
+
+  void _setPresetWeeks(int weeks) {
+    setState(() {
+      _targetDate = DateTime.now().add(Duration(days: weeks * 7));
+      _errorMessage = null;
+    });
   }
 
   void _submit() {
@@ -67,7 +148,7 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
     if (weeks < 4) {
       setState(() {
         _errorMessage = l10n?.mv_campaign_too_short ??
-            'Remaining time to event is less than 4 weeks';
+            'مدت زمان باقی‌مانده تا رویداد باید حداقل ۴ هفته باشد.';
       });
       return;
     }
@@ -75,9 +156,9 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
     final now = DateTime.now();
     final campaign = MvCampaign(
       id: 'camp_${now.millisecondsSinceEpoch}',
-      titleFa: l10n?.mv_campaign_hiking_title(_sportKindCode) ??
-          'Goal Campaign: $_sportKindTitleFa',
-      goalCode: _sportKindCode,
+      titleFa: l10n?.mv_campaign_hiking_title(_selectedKindCode) ??
+          'دورهٔ هدف‌دار: $_selectedKindTitleFa',
+      goalCode: _selectedKindCode,
       startDate: MvCalendar.formatDateIso(now),
       weeks: weeks,
       status: 'ACTIVE',
@@ -91,82 +172,204 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
 
-    final remainingWeeks = _targetDate.difference(DateTime.now()).inDays ~/ 7;
+    final days = _targetDate.difference(DateTime.now()).inDays;
+    final totalWeeks = (days ~/ 7).clamp(1, 52);
+
+    // Calculated Periodization Phases
+    final baseWeeks = (totalWeeks * 0.35).round().clamp(1, totalWeeks);
+    final buildWeeks = (totalWeeks * 0.40).round().clamp(1, totalWeeks);
+    final peakWeeks = (totalWeeks - baseWeeks - buildWeeks).clamp(1, totalWeeks);
 
     return MvSheetScaffold(
-      title: l10n?.mv_campaign_create ?? 'Create Training Campaign',
-      subtitle: 'برنامه‌ریزی معکوس و تمرین برای رویداد ورزشی',
+      title: 'برنامه‌ریزی و ساخت دورهٔ تمرینی',
+      subtitle: 'طراحی هوشمند بار تمرینی و فازبندی معکوس تا روز رویداد',
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 1. نوع ورزش هدف
-          Text(
-            l10n?.mv_campaign_target_sport ?? 'Target Sport:',
-            style: textTheme.labelLarge?.copyWith(
-              color: colors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
+          // ── بخش ۱: انتخاب رشتهٔ هدف ورزشی ────────────────────────────────────────
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '۱. رشتهٔ ورزشی رویداد هدف',
+                style: textTheme.titleSmall?.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              GestureDetector(
+                onTap: () => setState(() => _isSearching = !_isSearching),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _isSearching ? Icons.close_rounded : Icons.search_rounded,
+                      size: 16,
+                      color: colors.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _isSearching ? 'بستن جستجو' : 'سایر رشته‌ها...',
+                      style: textTheme.labelMedium?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          RitmoNeuSurface(
-            radius: 14,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            onTap: _pickSportKind,
-            child: Row(
-              children: [
-                Text(_sportKindEmoji, style: const TextStyle(fontSize: 22)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 8),
+
+          // Search Box (if searching)
+          if (_isSearching) ...[
+            RitmoNeuSurface(
+              sunken: true,
+              radius: 14,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+              child: Row(
+                children: [
+                  Icon(Icons.search_rounded, size: 18, color: colors.textSecondary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      onChanged: _onSearchChanged,
+                      style: textTheme.bodyMedium?.copyWith(color: colors.textPrimary),
+                      decoration: const InputDecoration(
+                        hintText: 'جستجوی نام ورزش (مثلاً اسکواش، پیلاتس، دوچرخه...)',
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 140),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: _filteredKinds.map((k) {
+                    final isSel = k.code == _selectedKindCode;
+                    return RitmoNeuSurface(
+                      sunken: isSel,
+                      radius: 12,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      onTap: () => _selectSport(k.code, k.titleFa, k.emoji),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(k.emoji, style: const TextStyle(fontSize: 14)),
+                          const SizedBox(width: 4),
+                          Text(
+                            k.titleFa,
+                            style: textTheme.labelSmall?.copyWith(
+                              color: isSel ? colors.primary : colors.textPrimary,
+                              fontWeight: isSel ? FontWeight.w800 : FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ] else ...[
+            // Quick Featured Sports Grid
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _featuredGoalSports.map((item) {
+                final isSel = item['code'] == _selectedKindCode;
+                return RitmoNeuSurface(
+                  sunken: isSel,
+                  radius: 14,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  onTap: () => _selectSport(
+                    item['code']!,
+                    item['title']!,
+                    item['emoji']!,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      Text(item['emoji']!, style: const TextStyle(fontSize: 18)),
+                      const SizedBox(width: 6),
                       Text(
-                        _sportKindTitleFa,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.w700,
+                        item['title']!,
+                        style: textTheme.labelMedium?.copyWith(
+                          color: isSel ? colors.primary : colors.textPrimary,
+                          fontWeight: isSel ? FontWeight.w800 : FontWeight.w500,
                         ),
                       ),
-                      Text(
-                        _sportKindCode,
-                        style: textTheme.labelSmall?.copyWith(
-                          color: colors.textSecondary,
-                        ),
-                      ),
+                      if (isSel) ...[
+                        const SizedBox(width: 6),
+                        Icon(Icons.check_circle_rounded, size: 16, color: colors.primary),
+                      ],
                     ],
                   ),
-                ),
-                Icon(
-                  Icons.chevron_left_rounded,
-                  color: colors.textSecondary,
-                ),
-              ],
+                );
+              }).toList(),
             ),
-          ),
-          const SizedBox(height: 16),
+          ],
+          const SizedBox(height: 20),
 
-          // 2. تاریخ رویداد هدف
+          // ── بخش ۲: زمان‌بندی و تاریخ رویداد هدف ──────────────────────────────────
           Text(
-            l10n?.mv_campaign_target_date ?? 'Target Event Date:',
-            style: textTheme.labelLarge?.copyWith(
-              color: colors.textSecondary,
-              fontWeight: FontWeight.w600,
+            '۲. مدت زمان و تاریخ رویداد هدف',
+            style: textTheme.titleSmall?.copyWith(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
+
+          // Preset Chips
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _timelinePresets.map((w) {
+              final isSel = totalWeeks == w;
+              return RitmoNeuSurface(
+                sunken: isSel,
+                radius: 12,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                onTap: () => _setPresetWeeks(w),
+                child: Text(
+                  '${toPersianDigits(w.toString())} هفته (${toPersianDigits((w ~/ 4).toString())} ماه)',
+                  style: textTheme.labelMedium?.copyWith(
+                    color: isSel ? colors.primary : colors.textSecondary,
+                    fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
+
+          // Custom Date Picker Card
           RitmoNeuSurface(
             radius: 14,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             onTap: () async {
               final picked = await showDatePicker(
                 context: context,
                 initialDate: _targetDate,
-                firstDate: DateTime.now(),
+                firstDate: DateTime.now().add(const Duration(days: 28)),
                 lastDate: DateTime.now().add(const Duration(days: 365)),
               );
               if (picked != null) {
@@ -178,67 +381,159 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
             },
             child: Row(
               children: [
-                Icon(
-                  Icons.calendar_today_rounded,
-                  size: 20,
-                  color: colors.primary,
-                ),
+                Icon(Icons.calendar_today_rounded, size: 18, color: colors.primary),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    l10n?.mv_campaign_weeks_later(
-                          toPersianDigits(remainingWeeks.toString()),
-                          toPersianDigits(MvCalendar.formatDateIso(_targetDate)),
-                        ) ??
-                        '$remainingWeeks weeks later (${MvCalendar.formatDateIso(_targetDate)})',
+                    '${toPersianDigits(totalWeeks.toString())} هفته باقی‌مانده (تاریخ هدف: ${toPersianDigits(MvCalendar.formatDateIso(_targetDate))})',
                     style: textTheme.bodyMedium?.copyWith(
                       color: colors.textPrimary,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                Icon(
-                  Icons.edit_calendar_rounded,
-                  size: 18,
-                  color: colors.textSecondary,
+                Icon(Icons.edit_calendar_rounded, size: 18, color: colors.textSecondary),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // ── بخش ۳: مشخصات بدنی و بار تمرینی ─────────────────────────────────────
+          Text(
+            '۳. پارامترهای فیزیکی',
+            style: textTheme.titleSmall?.copyWith(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              // وزن بدن
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'وزن بدن (کیلوگرم)',
+                      style: textTheme.labelSmall?.copyWith(color: colors.textSecondary),
+                    ),
+                    const SizedBox(height: 4),
+                    RitmoNeuSurface(
+                      sunken: true,
+                      radius: 12,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                      child: TextField(
+                        controller: _weightController,
+                        keyboardType: TextInputType.number,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: '75',
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              if (_isOutdoorOrHiking) ...[
+                const SizedBox(width: 12),
+                // وزن کوله هدف
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'وزن کوله هدف (کیلوگرم)',
+                        style: textTheme.labelSmall?.copyWith(color: colors.textSecondary),
+                      ),
+                      const SizedBox(height: 4),
+                      RitmoNeuSurface(
+                        sunken: true,
+                        radius: 12,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                        child: TextField(
+                          controller: _packWeightController,
+                          keyboardType: TextInputType.number,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: '5',
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // ── بخش ۴: پیش‌نمایش هوشمند فازبندی دوره ──────────────────────────────────
+          Text(
+            '۴. فازبندی هوشمند دوره (${toPersianDigits(totalWeeks.toString())} هفته)',
+            style: textTheme.titleSmall?.copyWith(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          RitmoNeuSurface(
+            sunken: true,
+            radius: 14,
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    _buildPhaseSegment(
+                      label: 'فاز پایه',
+                      weeks: baseWeeks,
+                      color: colors.primary,
+                      flex: baseWeeks,
+                    ),
+                    const SizedBox(width: 4),
+                    _buildPhaseSegment(
+                      label: 'فاز ساخت',
+                      weeks: buildWeeks,
+                      color: colors.accent,
+                      flex: buildWeeks,
+                    ),
+                    const SizedBox(width: 4),
+                    _buildPhaseSegment(
+                      label: 'اوج و تیپر',
+                      weeks: peakWeeks,
+                      color: colors.success,
+                      flex: peakWeeks,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'فازبندی معکوس شامل ایجاد ظرفیت هوازی پایه، شبیه‌سازی شیب و بار، و ۲ هفته کاهش حجم نهایی برای ریکاوری است.',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                    height: 1.35,
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-
-          // 3. وزن بدن (کیلوگرم)
-          Text(
-            l10n?.mv_campaign_body_weight ?? 'Body Weight (kg):',
-            style: textTheme.labelLarge?.copyWith(
-              color: colors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          RitmoNeuSurface(
-            sunken: true,
-            radius: 14,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            child: TextField(
-              key: const ValueKey('mv_campaign_weight_field'),
-              controller: _weightController,
-              keyboardType: TextInputType.number,
-              style: textTheme.bodyLarge?.copyWith(
-                color: colors.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
-              decoration: const InputDecoration(
-                hintText: '75',
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 8),
-              ),
-            ),
-          ),
 
           if (_errorMessage != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -247,12 +542,11 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline_rounded, size: 16, color: colors.error),
+                  Icon(Icons.error_outline_rounded, size: 16, color: colors.error),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       _errorMessage!,
-                      key: const ValueKey('mv_campaign_error_text'),
                       style: textTheme.bodySmall?.copyWith(
                         color: colors.error,
                         fontWeight: FontWeight.bold,
@@ -267,10 +561,54 @@ class _MvCreateCampaignSheetState extends State<MvCreateCampaignSheet> {
         ],
       ),
       bottomAction: MvPrimaryAction(
-        key: const ValueKey('mv_campaign_submit_btn'),
-        label: l10n?.mv_campaign_submit ?? 'Create Campaign',
-        icon: Icons.check_circle_outline_rounded,
+        label: 'ثبت و شروع دورهٔ هدف‌دار ($_selectedKindEmoji $_selectedKindTitleFa)',
+        icon: Icons.rocket_launch_rounded,
         onPressed: _submit,
+      ),
+    );
+  }
+
+  Widget _buildPhaseSegment({
+    required String label,
+    required int weeks,
+    required Color color,
+    required int flex,
+  }) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Expanded(
+      flex: flex,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              label,
+              style: textTheme.labelSmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${toPersianDigits(weeks.toString())} هـ',
+              style: textTheme.labelSmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

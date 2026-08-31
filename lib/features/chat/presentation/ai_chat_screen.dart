@@ -18,6 +18,7 @@ import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_orb_presence.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart';
 import 'package:ritmo/features/assistant/logic/assistant_action_registry.dart';
 import 'package:ritmo/features/assistant/logic/day_plan_composer.dart';
@@ -56,6 +57,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
+
+  /// هر بار یک تکه از پاسخ میرسد یکی بالا میرود تا تیله ذوق کند.
+  final ValueNotifier<int> _writingPulse = ValueNotifier<int>(0);
 
   StreamSubscription<StreamingChatEvent>? _sub;
   String? _streamingId;
@@ -639,6 +643,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _textController.dispose();
     _scrollController.dispose();
     _scrollOffset.dispose();
+    _writingPulse.dispose();
     super.dispose();
   }
 
@@ -1135,6 +1140,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       _scrollToBottom();
     } else if (e is ChatChunk) {
       RitmoAiStateService.instance.setMode(RitmoOrbMode.streaming);
+      _writingPulse.value++;
       final idx = _messages.indexWhere((m) => m.id == _streamingId);
       if (idx != -1) {
         setState(() {
@@ -1182,7 +1188,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
       setState(() {
         _sub = null;
         _streamingId = null;
-        _isAgentWorking = false;
+      });
+      Timer(const Duration(milliseconds: 420), () {
+        if (mounted) {
+          setState(() => _isAgentWorking = false);
+        }
       });
       _scrollToBottom();
     } else if (e is ChatErrorEvent) {
@@ -1473,58 +1483,75 @@ $suggestedSteps''';
                 child: _isLoading
                     ? _buildDayPlanningLoadingState(colors)
                     : _messages.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(32, contentTopPadding + 32, 32, 32),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                CupertinoIcons.sparkles,
-                                size: 44,
-                                color: colors.textSecondary.withValues(
-                                  alpha: 0.5,
-                                ),
+                    ? LayoutBuilder(
+                        builder: (context, constraints) {
+                          final compact = isKeyboardOpen || constraints.maxHeight < 380;
+                          return SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight,
                               ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'چگونه می‌توانم به ارتقای ریتم روزانه‌ات کمک کنم؟',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  color: colors.textSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              ElevatedButton.icon(
-                                onPressed: () => _send('روزم رو بچین'),
-                                icon: const Icon(
-                                  CupertinoIcons.calendar_badge_plus,
-                                  size: 18,
-                                ),
-                                label: const Text(
-                                  'روزم رو بچین ✨',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
+                              child: Center(
+                                child: Padding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    32,
+                                    compact ? 16 : (contentTopPadding + 16),
+                                    32,
+                                    compact ? 16 : 32,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      RitmoLivingOrb(
+                                        life: RitmoOrbLife.breathing,
+                                        size: compact ? 64 : 96,
+                                        onTap: () => _send('روزم رو بچین'),
+                                      ),
+                                      SizedBox(height: compact ? 10 : 16),
+                                      Text(
+                                        'چگونه می‌توانم به ارتقای ریتم روزانه‌ات کمک کنم؟',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: compact ? 12.5 : 13.5,
+                                          color: colors.textSecondary,
+                                        ),
+                                      ),
+                                      SizedBox(height: compact ? 14 : 24),
+                                      ElevatedButton.icon(
+                                        onPressed: () => _send('روزم رو بچین'),
+                                        icon: const Icon(
+                                          CupertinoIcons.calendar_badge_plus,
+                                          size: 18,
+                                        ),
+                                        label: const Text(
+                                          'روزم رو بچین ✨',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: colors.primary,
+                                          foregroundColor: Colors.white,
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: compact ? 20 : 24,
+                                            vertical: compact ? 10 : 12,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                          ),
+                                          elevation: 0,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: colors.primary,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  elevation: 0,
-                                ),
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          );
+                        },
                       )
                     : NotificationListener<ScrollNotification>(
                         onNotification: (notification) {
@@ -1699,6 +1726,7 @@ $suggestedSteps''';
                 steps: _agentSteps,
                 statusText: _agentStatusText,
                 isWorking: _isAgentWorking,
+                writingPulse: _writingPulse,
               ),
 
               // Agent Confirmation Card Host

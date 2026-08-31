@@ -247,6 +247,8 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
       });
     }
 
+    final safeMinChildSize = widget.minChildSize > 0.0 ? widget.minChildSize : 0.20;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: PopScope(
@@ -261,106 +263,111 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
         child: NotificationListener<DraggableScrollableNotification>(
           onNotification: (notification) {
             AppleCardDeckHost.activeForegroundSheetExtent.value = notification.extent;
-            if (notification.extent <= 0.05 && !_isDismissing) {
-              if (widget.isDirty) {
-                if (!_isConfirmationShowing) {
-                  if (_sheetController.isAttached) {
-                    unawaited(_sheetController.animateTo(
-                      widget.initialChildSize,
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeOutCubic,
-                    ));
-                  }
+            return true;
+          },
+          child: NotificationListener<ScrollEndNotification>(
+            onNotification: (notification) {
+              if (_isDismissing || !_sheetController.isAttached) return false;
+              if (_sheetController.size <= safeMinChildSize + 0.02) {
+                if (!widget.isDirty) {
+                  _isDismissing = true;
+                  Navigator.of(this.context).pop();
+                } else {
                   _handleDiscardConfirmation().then((canDismiss) {
                     if (!mounted) return;
                     if (canDismiss) {
                       _isDismissing = true;
                       Navigator.of(this.context).pop();
+                    } else if (_sheetController.isAttached) {
+                      unawaited(_sheetController.animateTo(
+                        widget.initialChildSize,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOutCubic,
+                      ));
                     }
                   });
                 }
-              } else {
-                _isDismissing = true;
-                Navigator.of(this.context).pop();
               }
-            }
-            return true;
-          },
-          child: DraggableScrollableSheet(
-            controller: _sheetController,
-            initialChildSize: widget.initialChildSize,
-            minChildSize: widget.minChildSize,
-            maxChildSize: widget.maxChildSize,
-            snap: true,
-            snapSizes: widget.snapSizes,
-            snapAnimationDuration: const Duration(milliseconds: 250),
-            expand: false,
-            builder: (context, scrollController) {
-              return AppleCardDeckHost(
-                animation: widget.deckAnimation,
-                topCornerRadius: widget.borderRadius?.topLeft.x ?? 28.0,
-                child: RitmoGlassSheet(
-                  borderRadius: widget.borderRadius,
-                  child: Material(
-                    type: MaterialType.transparency,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 1. Pinned Header with Drag Physics
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onVerticalDragUpdate: (details) {
-                        if (_isDismissing || !_sheetController.isAttached) return;
-                        final screenHeight = MediaQuery.of(context).size.height;
-                        if (screenHeight <= 0) return;
+              return false;
+            },
+            child: DraggableScrollableSheet(
+              controller: _sheetController,
+              initialChildSize: widget.initialChildSize,
+              minChildSize: safeMinChildSize,
+              maxChildSize: widget.maxChildSize,
+              snap: true,
+              snapSizes: [
+                safeMinChildSize,
+                ...widget.snapSizes.where((s) => s > safeMinChildSize),
+              ],
+              snapAnimationDuration: const Duration(milliseconds: 250),
+              expand: false,
+              builder: (context, scrollController) {
+                return AppleCardDeckHost(
+                  animation: widget.deckAnimation,
+                  topCornerRadius: widget.borderRadius?.topLeft.x ?? 28.0,
+                  child: RitmoGlassSheet(
+                    borderRadius: widget.borderRadius,
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. Pinned Header with Drag Physics
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onVerticalDragUpdate: (details) {
+                              if (_isDismissing || !_sheetController.isAttached) return;
+                              final screenHeight = MediaQuery.of(context).size.height;
+                              if (screenHeight <= 0) return;
 
-                        final deltaFraction = -details.delta.dy / screenHeight;
-                        final newSize = (_sheetController.size + deltaFraction).clamp(0.0, widget.maxChildSize);
-                        _sheetController.jumpTo(newSize);
-                        AppleCardDeckHost.activeForegroundSheetExtent.value = newSize;
-                      },
-                      onVerticalDragEnd: (details) async {
-                        if (_isDismissing || !_sheetController.isAttached) return;
-                        final currentSize = _sheetController.size;
-                        final velocity = details.primaryVelocity ?? 0.0;
+                              final deltaFraction = -details.delta.dy / screenHeight;
+                              final newSize = (_sheetController.size + deltaFraction).clamp(safeMinChildSize, widget.maxChildSize);
+                              _sheetController.jumpTo(newSize);
+                              AppleCardDeckHost.activeForegroundSheetExtent.value = newSize;
+                            },
+                            onVerticalDragEnd: (details) async {
+                              if (_isDismissing || !_sheetController.isAttached) return;
+                              final currentSize = _sheetController.size;
+                              final velocity = details.primaryVelocity ?? 0.0;
 
-                        if (velocity < -300 || (velocity <= 0 && currentSize > 0.72)) {
-                          unawaited(_sheetController.animateTo(
-                            widget.maxChildSize,
-                            duration: const Duration(milliseconds: 280),
-                            curve: Curves.easeOutCubic,
-                          ));
-                          return;
-                        }
+                              if (velocity < -300 || (velocity <= 0 && currentSize > 0.72)) {
+                                unawaited(_sheetController.animateTo(
+                                  widget.maxChildSize,
+                                  duration: const Duration(milliseconds: 280),
+                                  curve: Curves.easeOutCubic,
+                                ));
+                                return;
+                              }
 
-                        if (velocity > 400 || currentSize < 0.48) {
-                          if (!widget.isDirty) {
-                            _isDismissing = true;
-                            Navigator.of(this.context).pop();
-                            return;
-                          }
-                          final canDismiss = await _handleDiscardConfirmation();
-                          if (!mounted) return;
-                          if (canDismiss) {
-                            _isDismissing = true;
-                            Navigator.of(this.context).pop();
-                          } else if (_sheetController.isAttached) {
-                            unawaited(_sheetController.animateTo(
-                              widget.initialChildSize,
-                              duration: const Duration(milliseconds: 250),
-                              curve: Curves.easeOutCubic,
-                            ));
-                          }
-                          return;
-                        }
+                              if (velocity > 400 || currentSize < 0.45) {
+                                if (!widget.isDirty) {
+                                  _isDismissing = true;
+                                  Navigator.of(this.context).pop();
+                                  return;
+                                }
+                                final canDismiss = await _handleDiscardConfirmation();
+                                if (!mounted) return;
+                                if (canDismiss) {
+                                  _isDismissing = true;
+                                  Navigator.of(this.context).pop();
+                                } else if (_sheetController.isAttached) {
+                                  unawaited(_sheetController.animateTo(
+                                    widget.initialChildSize,
+                                    duration: const Duration(milliseconds: 250),
+                                    curve: Curves.easeOutCubic,
+                                  ));
+                                }
+                                return;
+                              }
 
-                        unawaited(_sheetController.animateTo(
-                          widget.initialChildSize,
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeOutCubic,
-                        ));
-                      },
+                              unawaited(_sheetController.animateTo(
+                                widget.initialChildSize,
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeOutCubic,
+                              ));
+                            },
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
                         child: Column(
@@ -535,11 +542,12 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
                 ),
               ),
             ),
-          );
-        },
-          ),
+            );
+          },
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 }

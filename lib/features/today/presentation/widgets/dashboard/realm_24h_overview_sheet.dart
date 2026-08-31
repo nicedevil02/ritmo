@@ -145,11 +145,8 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
   }
 
   void _onSheetDragListener() {
-    if (_isDismissing || !_sheetController.isAttached) return;
-    if (_sheetController.size < 0.30) {
-      _isDismissing = true;
-      Navigator.of(context).pop();
-    }
+    if (!_sheetController.isAttached) return;
+    AppleCardDeckHost.activeForegroundSheetExtent.value = _sheetController.size;
   }
 
   Future<void> _loadData() async {
@@ -788,15 +785,24 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: DraggableScrollableSheet(
-        controller: _sheetController,
-        initialChildSize: 0.94,
-        minChildSize: 0.0,
-        maxChildSize: 0.94,
-        snap: true,
-        snapSizes: const [0.0, 0.94],
-        snapAnimationDuration: const Duration(milliseconds: 250),
-        builder: (context, scrollController) {
+      child: NotificationListener<ScrollEndNotification>(
+        onNotification: (notification) {
+          if (_isDismissing || !_sheetController.isAttached) return false;
+          if (_sheetController.size <= 0.35) {
+            _isDismissing = true;
+            Navigator.of(context).pop();
+          }
+          return false;
+        },
+        child: DraggableScrollableSheet(
+          controller: _sheetController,
+          initialChildSize: 0.94,
+          minChildSize: 0.20,
+          maxChildSize: 0.94,
+          snap: true,
+          snapSizes: const [0.20, 0.94],
+          snapAnimationDuration: const Duration(milliseconds: 250),
+          builder: (context, scrollController) {
             return AppleCardDeckHost(
               animation: _childSheetAnimController,
               topCornerRadius: 32.0,
@@ -813,8 +819,9 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
                           final screenHeight = MediaQuery.of(context).size.height;
                           if (screenHeight <= 0) return;
                           final deltaFraction = -details.delta.dy / screenHeight;
-                          final newSize = (_sheetController.size + deltaFraction).clamp(0.0, 0.94);
+                          final newSize = (_sheetController.size + deltaFraction).clamp(0.20, 0.94);
                           _sheetController.jumpTo(newSize);
+                          AppleCardDeckHost.activeForegroundSheetExtent.value = newSize;
                         },
                         onVerticalDragEnd: (details) {
                           if (_isDismissing || !_sheetController.isAttached) return;
@@ -971,8 +978,9 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet>
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildWeekdaySelector(bool isDark, RitmoColors colors, bool isGlass) {
     return Container(

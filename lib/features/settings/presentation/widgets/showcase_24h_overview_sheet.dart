@@ -74,11 +74,8 @@ class _Showcase24hOverviewSheetState extends State<Showcase24hOverviewSheet>
   }
 
   void _onSheetDragListener() {
-    if (_isDismissing || !_sheetController.isAttached) return;
-    if (_sheetController.size < 0.30) {
-      _isDismissing = true;
-      Navigator.of(context).pop();
-    }
+    if (!_sheetController.isAttached) return;
+    AppleCardDeckHost.activeForegroundSheetExtent.value = _sheetController.size;
   }
 
   @override
@@ -121,51 +118,61 @@ class _Showcase24hOverviewSheetState extends State<Showcase24hOverviewSheet>
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: DraggableScrollableSheet(
-        controller: _sheetController,
-        initialChildSize: 0.94,
-        minChildSize: 0.0,
-        maxChildSize: 0.94,
-        snap: true,
-        snapSizes: const [0.0, 0.94],
-        snapAnimationDuration: const Duration(milliseconds: 250),
-        builder: (context, scrollController) {
-          return AppleCardDeckHost(
-            animation: _childSheetAnimController,
-            topCornerRadius: 32.0,
-            child: RitmoGlassSheet(
-              borderRadius: sheetRadius,
-              child: Material(
-                type: MaterialType.transparency,
-                child: ClipRect(
-                  child: Column(
-                    children: [
-                    // 1. Pinned Modal Header (Swipe down to dismiss)
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onVerticalDragUpdate: (details) {
-                        if (_isDismissing || !_sheetController.isAttached) return;
-                        final screenHeight = MediaQuery.of(context).size.height;
-                        if (screenHeight <= 0) return;
-                        final deltaFraction = -details.delta.dy / screenHeight;
-                        final newSize = (_sheetController.size + deltaFraction).clamp(0.0, 0.94);
-                        _sheetController.jumpTo(newSize);
-                      },
-                      onVerticalDragEnd: (details) {
-                        if (_isDismissing || !_sheetController.isAttached) return;
-                        final currentSize = _sheetController.size;
-                        final velocity = details.primaryVelocity ?? 0.0;
-                        if (velocity > 350 || currentSize < 0.65) {
-                          _isDismissing = true;
-                          Navigator.of(this.context).pop();
-                          return;
-                        }
-                        unawaited(_sheetController.animateTo(
-                          0.94,
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeOutCubic,
-                        ));
-                      },
+      child: NotificationListener<ScrollEndNotification>(
+        onNotification: (notification) {
+          if (_isDismissing || !_sheetController.isAttached) return false;
+          if (_sheetController.size <= 0.35) {
+            _isDismissing = true;
+            Navigator.of(context).pop();
+          }
+          return false;
+        },
+        child: DraggableScrollableSheet(
+          controller: _sheetController,
+          initialChildSize: 0.94,
+          minChildSize: 0.20,
+          maxChildSize: 0.94,
+          snap: true,
+          snapSizes: const [0.20, 0.94],
+          snapAnimationDuration: const Duration(milliseconds: 250),
+          builder: (context, scrollController) {
+            return AppleCardDeckHost(
+              animation: _childSheetAnimController,
+              topCornerRadius: 32.0,
+              child: RitmoGlassSheet(
+                borderRadius: sheetRadius,
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: ClipRect(
+                    child: Column(
+                      children: [
+                      // 1. Pinned Modal Header (Swipe down to dismiss)
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onVerticalDragUpdate: (details) {
+                          if (_isDismissing || !_sheetController.isAttached) return;
+                          final screenHeight = MediaQuery.of(context).size.height;
+                          if (screenHeight <= 0) return;
+                          final deltaFraction = -details.delta.dy / screenHeight;
+                          final newSize = (_sheetController.size + deltaFraction).clamp(0.20, 0.94);
+                          _sheetController.jumpTo(newSize);
+                          AppleCardDeckHost.activeForegroundSheetExtent.value = newSize;
+                        },
+                        onVerticalDragEnd: (details) {
+                          if (_isDismissing || !_sheetController.isAttached) return;
+                          final currentSize = _sheetController.size;
+                          final velocity = details.primaryVelocity ?? 0.0;
+                          if (velocity > 350 || currentSize < 0.65) {
+                            _isDismissing = true;
+                            Navigator.of(this.context).pop();
+                            return;
+                          }
+                          unawaited(_sheetController.animateTo(
+                            0.94,
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOutCubic,
+                          ));
+                        },
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                         child: Column(
@@ -341,7 +348,8 @@ class _Showcase24hOverviewSheetState extends State<Showcase24hOverviewSheet>
         );
       },
     ),
-  );
+  ),
+);
 }
 
   Widget _buildFilterSegmentSelector(bool isDark, RitmoColors colors, bool isGlass) {

@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
 
 /// ویجت مرجع و استاندارد تمام پنجره‌ها، شیت‌های شناور و دیالوگ‌های شیشه‌ای ریتمو (Single Source of Truth).
 ///
@@ -11,7 +12,8 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 /// 4. حاشیه تیتانیومی خاکستری مات در تم تاریک (`#94A3B8 @ 0.16` با ضخامت `0.9px`) و سفید صیقلی در تم روشن
 /// 5. گرادیان بازتاب نور افقی مات لبه بالا (`Matte Top Specular Sheen`)
 /// 6. مدیریت حالت کنتراست بالا و غیرفعال بودن شیشه (`opaqueFallback`)
-class RitmoGlassSheet extends StatelessWidget {
+/// 7. اندازه‌گیری هوشمند و داینامیک ارتفاع شیت جهت تنظیم هاله پشته‌ای (`AppleCardDeckHost`)
+class RitmoGlassSheet extends StatefulWidget {
   const RitmoGlassSheet({
     super.key,
     required this.child,
@@ -54,20 +56,51 @@ class RitmoGlassSheet extends StatelessWidget {
   );
 
   @override
+  State<RitmoGlassSheet> createState() => _RitmoGlassSheetState();
+}
+
+class _RitmoGlassSheetState extends State<RitmoGlassSheet> {
+  @override
+  void initState() {
+    super.initState();
+    _scheduleMeasurement();
+  }
+
+  @override
+  void didUpdateWidget(covariant RitmoGlassSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _scheduleMeasurement();
+  }
+
+  void _scheduleMeasurement() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final box = context.findRenderObject() as RenderBox?;
+      if (box != null && box.hasSize) {
+        final screenHeight = MediaQuery.sizeOf(context).height;
+        if (screenHeight > 0) {
+          final fraction = (box.size.height / screenHeight).clamp(0.15, 0.96);
+          AppleCardDeckHost.activeForegroundSheetExtent.value = fraction;
+        }
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
     final isGlass = context.isGlassEnabled;
     final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
     final materialSpec = context.materials.regular;
-    final effectiveRadius = borderRadius ?? defaultSheetRadius;
+    final effectiveRadius = widget.borderRadius ?? RitmoGlassSheet.defaultSheetRadius;
 
     final isOpaque = !isGlass || highContrast;
 
     // ۱. سایه‌های ۲ لایه‌ای (هاله نوری پالت در تاریک / سایه ملایم پالت در روشن)
-    final List<BoxShadow> effectiveShadows = customShadows ??
+    final List<BoxShadow> effectiveShadows = widget.customShadows ??
         (isDark
-            ? (enableAmbientGlow
+            ? (widget.enableAmbientGlow
                 ? [
                     BoxShadow(
                       color: colors.primary.withValues(alpha: 0.20),
@@ -100,7 +133,7 @@ class RitmoGlassSheet extends StatelessWidget {
     // ۲. حالت مات / Fallback بدون شیشه
     if (isOpaque) {
       return Container(
-        margin: margin,
+        margin: widget.margin,
         decoration: BoxDecoration(
           color: materialSpec.opaqueFallback,
           borderRadius: effectiveRadius,
@@ -112,10 +145,10 @@ class RitmoGlassSheet extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: effectiveRadius,
-          clipBehavior: clipBehavior,
+          clipBehavior: widget.clipBehavior,
           child: Padding(
-            padding: padding ?? EdgeInsets.zero,
-            child: child,
+            padding: widget.padding ?? EdgeInsets.zero,
+            child: widget.child,
           ),
         ),
       );
@@ -125,14 +158,14 @@ class RitmoGlassSheet extends StatelessWidget {
     final blur = materialSpec.sigma.clamp(0.0, 50.0);
 
     return Container(
-      margin: margin,
+      margin: widget.margin,
       decoration: BoxDecoration(
         borderRadius: effectiveRadius,
         boxShadow: effectiveShadows,
       ),
       child: ClipRRect(
         borderRadius: effectiveRadius,
-        clipBehavior: clipBehavior,
+        clipBehavior: widget.clipBehavior,
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
           child: DecoratedBox(
@@ -149,7 +182,7 @@ class RitmoGlassSheet extends StatelessWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: effectiveRadius,
-                gradient: enableSpecularSheen
+                gradient: widget.enableSpecularSheen
                     ? (isDark
                         ? LinearGradient(
                             begin: Alignment.topCenter,
@@ -174,8 +207,8 @@ class RitmoGlassSheet extends StatelessWidget {
                     : null,
               ),
               child: Padding(
-                padding: padding ?? EdgeInsets.zero,
-                child: child,
+                padding: widget.padding ?? EdgeInsets.zero,
+                child: widget.child,
               ),
             ),
           ),

@@ -4,7 +4,7 @@
 //  لایه‌ها از پایین به بالا:
 //    ۱) هالهٔ خیلی ملایمِ چسبیده به پوسته
 //    ۲) جدارهٔ شیشه
-//    ۳) بالشتکِ شیری + پَرهای رنگی (clip شده داخل پوسته)
+//    ۳) عمق + ربان‌های تابیده (clip شده داخلِ پوسته)
 //    ۴) سایه، تاجِ برآمدگی، برقِ سطح، لبهٔ نور
 //
 //  API عمداً هم‌شکلِ RitmoSiriOrb است تا جایگزینیِ درونِ RitmoLivingOrb یک‌خطی باشد.
@@ -35,6 +35,8 @@ class RitmoMarbleCore extends StatefulWidget {
     this.seed = 11,
     this.shellWobble = 1.0,
     this.bulgeStrength = 1.0,
+    this.pulse = 0.0,
+    this.wink = 0.0,
   });
 
   final double size;
@@ -58,11 +60,17 @@ class RitmoMarbleCore extends StatefulWidget {
 
   final int seed;
 
-  /// شدت ارتعاشِ پوسته (۰ = خاموش).
+  /// شدتِ ارتعاشِ پوسته (۰ = خاموش).
   final double shellWobble;
 
-  /// شدت برآمدگی‌های موضعی (۰ = خاموش).
+  /// شدتِ برآمدگی‌های موضعی (۰ = خاموش).
   final double bulgeStrength;
+
+  /// تکانِ لحطه‌ای همزمان با تایپ کردنِ مدل (۰..۱).
+  final double pulse;
+
+  /// چشمک (۰..۱).
+  final double wink;
 
   @override
   State<RitmoMarbleCore> createState() => _RitmoMarbleCoreState();
@@ -180,7 +188,8 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore>
     _energy += (target - _energy) * (1.0 - math.exp(-dt * 3.4));
 
     final double sp = widget.speed.clamp(0.2, 3.0);
-    _t += dt * (0.70 + 0.90 * _energy) * sp;
+    final double kick = widget.pulse.clamp(0.0, 1.0);
+    _t += dt * (0.70 + 0.90 * _energy + 0.55 * kick) * sp;
 
     final double bulge = widget.bulgeStrength.clamp(0.0, 2.0);
     if (bulge > 0.02 && _t >= _nextBulge) {
@@ -238,6 +247,8 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore>
                 tilt: widget.tiltOffset,
                 squeeze: widget.squeezeFactor,
                 wobble: widget.shellWobble,
+                pulse: widget.pulse,
+                wink: widget.wink,
                 bulges: bulges,
                 plumes: _plumes,
                 seed: widget.seed,
@@ -262,6 +273,8 @@ class _MarblePainter extends CustomPainter {
     required this.tilt,
     required this.squeeze,
     required this.wobble,
+    required this.pulse,
+    required this.wink,
     required this.bulges,
     required this.plumes,
     required this.seed,
@@ -277,6 +290,8 @@ class _MarblePainter extends CustomPainter {
   final Offset tilt;
   final double squeeze;
   final double wobble;
+  final double pulse;
+  final double wink;
   final List<RitmoShellBulge> bulges;
   final List<RitmoPlume> plumes;
   final int seed;
@@ -290,7 +305,8 @@ class _MarblePainter extends CustomPainter {
     if (dim <= 2.0) return;
 
     final Offset center = Offset(size.width / 2.0, size.height / 2.0);
-    final double radius = dim * 0.5 * 0.88;
+    final double pu = pulse.clamp(0.0, 1.0);
+    final double radius = dim * 0.5 * 0.88 * (1.0 + 0.018 * pu);
     final double e = energy.clamp(0.0, 1.0);
     final double sq = squeeze.clamp(0.80, 1.25);
 
@@ -304,7 +320,7 @@ class _MarblePainter extends CustomPainter {
       center: center,
       radius: radius,
       t: t,
-      wobble: wobble,
+      wobble: wobble * (1.0 + 0.45 * pu),
       energy: e,
       bulges: bulges,
       samples: samples,
@@ -316,7 +332,8 @@ class _MarblePainter extends CustomPainter {
         shell,
         Paint()
           ..isAntiAlias = true
-          ..color = palette.aura.withValues(alpha: 0.10 + 0.09 * e)
+          ..color = palette.aura
+              .withValues(alpha: 0.10 + 0.09 * e + 0.10 * pu)
           ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.22),
       );
     }
@@ -341,6 +358,7 @@ class _MarblePainter extends CustomPainter {
       energy: e,
       intensity: intensity,
       parallax: tilt,
+      pulse: pu,
     );
 
     ritmoPaintPlumes(
@@ -355,6 +373,8 @@ class _MarblePainter extends CustomPainter {
       swirl: t * (0.055 + 0.075 * e),
       parallax: tilt,
       detailed: detailed,
+      pulse: pu,
+      wink: wink,
     );
 
     canvas.restore();
@@ -384,6 +404,8 @@ class _MarblePainter extends CustomPainter {
         squeeze != old.squeeze ||
         tilt != old.tilt ||
         wobble != old.wobble ||
+        pulse != old.pulse ||
+        wink != old.wink ||
         intensity != old.intensity ||
         detailed != old.detailed ||
         isDark != old.isDark ||

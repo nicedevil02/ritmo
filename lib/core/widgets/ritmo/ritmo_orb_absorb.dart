@@ -1,100 +1,111 @@
 // =============================================================================
-//  Ritmo Orb Absorb — جذب شدنِ تیله در کادرِ تایپ پیام
+//  Ritmo Orb Absorb v2 — جذب شدنِ گوی در کادرِ تایپ
 //
-//  تیله موقع رفتن، پایین می‌رود و به کادر می‌خورد. این فایل همان برخورد را
-//  می‌گیرد و رنگ‌ها را دورِ کادر می‌دواند؛ بعد یک ته‌رنگِ نفس‌کشنده می‌ماند:
-//  تیله رفته، ولی حضورش در کادر زنده است.
+//  درس‌های نسخهٔ قبل:
+//    × blur پهن بود → روی متنِ بالا می‌زد و مثل «یک کادرِ اضافه» دیده می‌شد.
+//    × بعد از جذب تقریباً ناپیدا می‌شد.
 //
-//  همهٔ اعلان‌ها فازِ فریم را چک می‌کنند، پس هرگز «setState during build» نمی‌دهند.
+//  نسخهٔ جدید:
+//    ✓ فقط ۸ پیکسل ارتفاعِ لی‌اوت می‌گیرد و حلقه را پایین‌تر از خودش می‌کشد
+//      → هیچ چیزی به صفحهٔ چت نمی‌زند.
+//    ✓ خطِ تیز (بدون blur) + یک bloom خیلی کوتاه.
+//    ✓ بعد از جذب، یک حلقهٔ رنگین‌کمانی می‌ماند که آرام می‌چرخد.
 // =============================================================================
 
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
+import 'package:flutter/scheduler.dart'
+    show SchedulerBinding, SchedulerPhase;
 import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart'
     show RitmoOrbPalette;
 
+/// اتوبوسِ پیام بینِ گوی و کادرِ تایپ.
 class RitmoOrbAbsorb {
   RitmoOrbAbsorb._();
 
   static final RitmoOrbAbsorb instance = RitmoOrbAbsorb._();
 
-  /// میزان نزدیک شدنِ تیله به کادر (۰..۱).
+  /// چقدر از گوی دارد فرو می‌رود (۰..۱).
   final ValueNotifier<double> level = ValueNotifier<double>(0.0);
 
-  /// هر بار یکی بالا می‌رود = یک برخورد/برخاستن.
+  /// هر بار برخورد، یکی زیاد می‌شود.
   final ValueNotifier<int> impact = ValueNotifier<int>(0);
 
-  /// ته‌رنگِ باقی‌مانده دورِ کادر روشن باشد یا نه.
-  final ValueNotifier<bool> residue = ValueNotifier<bool>(false);
+  /// حضورِ باقی‌مانده دورِ کادر (۰..۱).
+  final ValueNotifier<double> residue = ValueNotifier<double>(0.0);
 
-  RitmoOrbPalette palette = RitmoOrbPalette.coral;
+  final ValueNotifier<RitmoOrbPalette?> palette =
+      ValueNotifier<RitmoOrbPalette?>(null);
 
-  /// true = نور دارد از کادر برمی‌گردد داخلِ تیله (برگشتِ تیله).
-  bool lifting = false;
+  /// گوی دارد از کادر بالا می‌آید.
+  final ValueNotifier<bool> lifting = ValueNotifier<bool>(false);
 
   void _safe(VoidCallback fn) {
-    final SchedulerBinding binding = SchedulerBinding.instance;
-    if (binding.schedulerPhase == SchedulerPhase.persistentCallbacks) {
-      binding.addPostFrameCallback((Duration _) => fn());
-    } else {
+    final SchedulerPhase phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.idle ||
+        phase == SchedulerPhase.postFrameCallbacks) {
       fn();
+      return;
     }
+    SchedulerBinding.instance.addPostFrameCallback((_) => fn());
   }
 
-  void report(double value, RitmoOrbPalette p) {
-    palette = p;
-    final double c = value.clamp(0.0, 1.0);
-    if ((c - level.value).abs() < 0.005) return;
+  /// گوی در حالِ فرو رفتن است.
+  void report({required double sink, RitmoOrbPalette? tint}) {
+    final double v = sink.clamp(0.0, 1.0);
     _safe(() {
-      level.value = c;
+      if (tint != null) palette.value = tint;
+      if ((level.value - v).abs() > 0.004) level.value = v;
     });
   }
 
-  /// تیله به کادر خورد: رنگ‌ها دورِ کادر پخش شوند.
-  void splash(RitmoOrbPalette p) {
-    palette = p;
-    lifting = false;
+  /// لحظهٔ برخورد با کادر.
+  void splash({RitmoOrbPalette? tint}) {
     _safe(() {
-      residue.value = true;
-      impact.value = impact.value + 1;
-    });
-  }
-
-  /// تیله دارد از کادر بلند می‌شود: نور برگردد به تیله.
-  void lift(RitmoOrbPalette p) {
-    palette = p;
-    lifting = true;
-    _safe(() {
+      if (tint != null) palette.value = tint;
       level.value = 0.0;
-      residue.value = false;
+      residue.value = 1.0;
+      lifting.value = false;
       impact.value = impact.value + 1;
+    });
+  }
+
+  /// گوی دارد از کادر بیرون می‌آید.
+  void lift() {
+    _safe(() {
+      lifting.value = true;
+      residue.value = 0.0;
+      level.value = 0.0;
     });
   }
 
   void reset() {
-    lifting = false;
     _safe(() {
       level.value = 0.0;
-      residue.value = false;
+      residue.value = 0.0;
+      lifting.value = false;
     });
   }
 }
 
-Path _edgePath(double w, double topY, double corner, double inset) {
-  final double half = w / 2.0;
-  final double c = math.max(2.0, math.min(corner, half - inset - 2.0));
-  final Path p = Path()..moveTo(half, topY);
-  p.lineTo(w - inset - c, topY);
-  p.arcToPoint(
-    Offset(w - inset, topY + c),
-    radius: Radius.circular(c),
-    clockwise: true,
-  );
-  p.lineTo(w - inset, topY + c * 2.2);
-  return p;
+/// مسیری که از وسطِ بالای کادر شروع و نیمهٔ راست را دور می‌زند.
+Path _halfLoop(Rect r, double corner) {
+  final double c = corner.clamp(0.0, math.min(r.width, r.height) / 2.0);
+  return Path()
+    ..moveTo(r.center.dx, r.top)
+    ..lineTo(r.right - c, r.top)
+    ..arcToPoint(
+      Offset(r.right, r.top + c),
+      radius: Radius.circular(c),
+    )
+    ..lineTo(r.right, r.bottom - c)
+    ..arcToPoint(
+      Offset(r.right - c, r.bottom),
+      radius: Radius.circular(c),
+    )
+    ..lineTo(r.center.dx, r.bottom);
 }
 
 void _runner(
@@ -105,38 +116,49 @@ void _runner(
   double tailFraction,
 ) {
   for (final ui.PathMetric m in path.computeMetrics()) {
-    final double len = m.length;
-    if (len <= 0.5) continue;
-    final double head = (progress * 1.10).clamp(0.0, 1.0) * len;
-    final double tail = math.max(0.0, head - len * tailFraction);
-    if (head - tail < 0.5) return;
-    canvas.drawPath(m.extractPath(tail, head), paint);
-    return;
+    final double total = m.length;
+    if (total <= 0.5) continue;
+    final double end = (progress * total).clamp(0.0, total);
+    final double start = math.max(0.0, end - tailFraction * total);
+    if (end - start < 0.6) continue;
+    canvas.drawPath(m.extractPath(start, end), paint);
   }
 }
 
-/// نوارِ نوریِ نازکی که دقیقاً بالای کادرِ تایپ پیام می‌نشیند.
+/// نواری که دقیقاً بالای کادرِ تایپ می‌نشیند و حلقه را دورِ آن می‌کشد.
 class RitmoOrbAbsorbLip extends StatefulWidget {
   const RitmoOrbAbsorbLip({
     super.key,
-    this.height = 18.0,
-    this.inset = 12.0,
+    this.height = 8.0,
+    this.gap = 6.0,
+    this.frameHeight = 52.0,
+    this.inset = 10.0,
     this.cornerRadius = 26.0,
+    this.thickness = 1.7,
+    this.bleed = 1.6,
     this.strength = 1.0,
     this.idleGlow = true,
   });
 
+  /// ارتفاعِ لی‌اوتی — عمداً کوچک.
   final double height;
 
-  /// فاصلهٔ افقیِ کادرِ تایپ از لبهٔ صفحه (همان padding نوارِ پایین).
+  /// فاصله تا بالای کادرِ تایپ.
+  final double gap;
+
+  /// ارتفاعِ خودِ کادرِ تایپ.
+  final double frameHeight;
+
+  /// پدینگِ افقیِ کادرِ تایپ.
   final double inset;
 
-  /// شعاع گوشهٔ کادرِ تایپ.
   final double cornerRadius;
+  final double thickness;
+
+  /// چقدر خط بیرون‌تر از لبهٔ کادر بنشیند.
+  final double bleed;
 
   final double strength;
-
-  /// ته‌رنگِ نفس‌کشنده بعد از جذب.
   final bool idleGlow;
 
   @override
@@ -145,80 +167,82 @@ class RitmoOrbAbsorbLip extends StatefulWidget {
 
 class _RitmoOrbAbsorbLipState extends State<RitmoOrbAbsorbLip>
     with TickerProviderStateMixin {
-  late final AnimationController _splash;
-  late final AnimationController _breath;
+  late final AnimationController _splash = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1050),
+  );
+  late final AnimationController _spin = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 9000),
+  );
+  late final AnimationController _breath = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 4200),
+  );
+
+  final RitmoOrbAbsorb _bus = RitmoOrbAbsorb.instance;
+  int _seen = 0;
 
   @override
   void initState() {
     super.initState();
-    _splash = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1150),
-    );
-    _breath = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 5200),
-    );
-
-    final RitmoOrbAbsorb bus = RitmoOrbAbsorb.instance;
-    bus.impact.addListener(_onImpact);
-    bus.residue.addListener(_onResidue);
-    if (bus.residue.value) _onResidue();
+    _seen = _bus.impact.value;
+    _bus.impact.addListener(_onImpact);
+    _spin.repeat();
+    _breath.repeat(reverse: true);
   }
 
   @override
   void dispose() {
-    RitmoOrbAbsorb.instance.impact.removeListener(_onImpact);
-    RitmoOrbAbsorb.instance.residue.removeListener(_onResidue);
+    _bus.impact.removeListener(_onImpact);
     _splash.dispose();
+    _spin.dispose();
     _breath.dispose();
     super.dispose();
   }
 
   void _onImpact() {
     if (!mounted) return;
+    if (_bus.impact.value == _seen) return;
+    _seen = _bus.impact.value;
     _splash.forward(from: 0.0);
-  }
-
-  void _onResidue() {
-    if (!mounted) return;
-    final bool on = RitmoOrbAbsorb.instance.residue.value && widget.idleGlow;
-    if (on && !_breath.isAnimating) {
-      _breath.repeat(reverse: true);
-    } else if (!on && _breath.isAnimating) {
-      _breath.stop();
-      _breath.value = 0.0;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final RitmoOrbAbsorb bus = RitmoOrbAbsorb.instance;
+    final bool reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 
     return IgnorePointer(
-      child: SizedBox(
-        height: widget.height,
-        width: double.infinity,
-        child: RepaintBoundary(
+      child: RepaintBoundary(
+        child: SizedBox(
+          width: double.infinity,
+          height: widget.height,
           child: AnimatedBuilder(
             animation: Listenable.merge(<Listenable>[
               _splash,
+              _spin,
               _breath,
-              bus.level,
-              bus.residue,
+              _bus.level,
+              _bus.residue,
+              _bus.palette,
             ]),
             builder: (BuildContext context, Widget? _) {
               return CustomPaint(
                 painter: _LipPainter(
-                  level: bus.level.value,
-                  splash: _splash.value,
-                  breath: Curves.easeInOutSine.transform(_breath.value),
-                  residue: bus.residue.value && widget.idleGlow,
-                  lifting: bus.lifting,
-                  palette: bus.palette,
+                  splash: reduce ? 0.0 : _splash.value,
+                  spin: reduce ? 0.0 : _spin.value,
+                  breath: reduce ? 0.5 : _breath.value,
+                  level: _bus.level.value,
+                  residue: _bus.residue.value,
+                  palette: _bus.palette.value ?? RitmoOrbPalette.coral,
+                  gap: widget.gap,
+                  frameHeight: widget.frameHeight,
                   inset: widget.inset,
                   corner: widget.cornerRadius,
+                  thickness: widget.thickness,
+                  bleed: widget.bleed,
                   strength: widget.strength,
+                  idleGlow: widget.idleGlow,
                 ),
               );
             },
@@ -231,161 +255,206 @@ class _RitmoOrbAbsorbLipState extends State<RitmoOrbAbsorbLip>
 
 class _LipPainter extends CustomPainter {
   const _LipPainter({
-    required this.level,
     required this.splash,
+    required this.spin,
     required this.breath,
+    required this.level,
     required this.residue,
-    required this.lifting,
     required this.palette,
+    required this.gap,
+    required this.frameHeight,
     required this.inset,
     required this.corner,
+    required this.thickness,
+    required this.bleed,
     required this.strength,
+    required this.idleGlow,
   });
 
-  final double level;
   final double splash;
+  final double spin;
   final double breath;
-  final bool residue;
-  final bool lifting;
+  final double level;
+  final double residue;
   final RitmoOrbPalette palette;
+  final double gap;
+  final double frameHeight;
   final double inset;
   final double corner;
+  final double thickness;
+  final double bleed;
   final double strength;
+  final bool idleGlow;
 
   @override
   void paint(Canvas canvas, Size size) {
     final double w = size.width;
-    final double h = size.height;
-    if (w <= 8.0 || h <= 1.0) return;
+    if (w <= 24.0) return;
 
-    final double s = strength.clamp(0.0, 2.0);
-    if (s <= 0.01) return;
+    final double k = strength.clamp(0.0, 2.0);
+    if (k <= 0.01) return;
 
-    final double topY = h - 0.5;
-    final Offset hit = Offset(w / 2.0, topY);
-    final double lv = level.clamp(0.0, 1.0);
+    final Rect frame = Rect.fromLTWH(
+      inset - bleed,
+      size.height + gap - bleed,
+      w - (inset - bleed) * 2.0,
+      frameHeight + bleed * 2.0,
+    );
+    if (frame.width <= 8.0) return;
 
-    // ۱) نور قبل از برخورد دارد جمع می‌شود
-    if (lv > 0.01) {
-      final double rr = math.max(2.0, w * (0.10 + 0.26 * lv));
-      canvas.drawCircle(
-        hit,
-        rr,
+    final double r =
+        (corner + bleed).clamp(0.0, math.min(frame.width, frame.height) / 2.0);
+    final RRect ring = RRect.fromRectAndRadius(frame, Radius.circular(r));
+    final Offset top = Offset(frame.center.dx, frame.top);
+
+    final List<Color> ramp = <Color>[
+      palette.hot,
+      palette.core,
+      palette.mid,
+      palette.milk,
+      palette.violet,
+      palette.aura,
+      palette.hot,
+    ];
+
+    // ── ۱) حلقهٔ ماندگار — تیز و دیده‌شدنی.
+    if (idleGlow && residue > 0.01) {
+      final double pulse = 0.72 + 0.28 * breath;
+      final double a = (0.46 * residue * pulse * k).clamp(0.0, 0.85);
+      final double phase = spin * math.pi * 2.0;
+
+      final Paint core = Paint()
+        ..isAntiAlias = true
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = thickness
+        ..shader = ui.Gradient.sweep(
+          frame.center,
+          <Color>[
+            for (final Color c in ramp) c.withValues(alpha: a),
+          ],
+          const <double>[0.0, 0.17, 0.34, 0.5, 0.66, 0.83, 1.0],
+          TileMode.clamp,
+          phase,
+          phase + math.pi * 2.0,
+        );
+      canvas.drawRRect(ring, core);
+
+      // bloom خیلی کوتاه — حداکثر ۲ پیکسل، تا به متن نزند.
+      canvas.drawRRect(
+        ring,
         Paint()
           ..isAntiAlias = true
-          ..shader = ui.Gradient.radial(
-            hit,
-            rr,
-            <Color>[
-              palette.hot.withValues(alpha: (0.30 * lv * s).clamp(0.0, 0.45)),
-              palette.aura.withValues(alpha: (0.14 * lv * s).clamp(0.0, 0.25)),
-              palette.aura.withValues(alpha: 0.0),
-            ],
-            const <double>[0.0, 0.48, 1.0],
-          )
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, h * 0.85),
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = thickness * 2.1
+          ..color = palette.aura.withValues(alpha: a * 0.30)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0),
       );
     }
 
-    // ۲) دویدنِ رنگ دورِ کادر
-    final double p = splash.clamp(0.0, 1.0);
-    if (p > 0.002 && p < 0.998) {
-      final double travel = lifting ? 1.0 - p : p;
-      final double fade =
-          math.sin(math.min(1.0, p * 1.12) * math.pi).clamp(0.0, 1.0);
-      final Path edge = _edgePath(w, topY, corner, inset);
+    // ── ۲) جمع شدنِ رنگ در نقطهٔ تماس.
+    final double lv = level.clamp(0.0, 1.0);
+    if (lv > 0.02) {
+      final double spread = frame.width * (0.06 + 0.30 * lv);
+      canvas.drawPath(
+        Path()
+          ..moveTo(top.dx - spread, frame.top)
+          ..lineTo(top.dx + spread, frame.top),
+        Paint()
+          ..isAntiAlias = true
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = thickness * (1.0 + 0.9 * lv)
+          ..shader = ui.Gradient.linear(
+            Offset(top.dx - spread, frame.top),
+            Offset(top.dx + spread, frame.top),
+            <Color>[
+              palette.core.withValues(alpha: 0.0),
+              palette.milk.withValues(alpha: (0.80 * lv * k).clamp(0.0, 0.92)),
+              palette.core.withValues(alpha: 0.0),
+            ],
+            const <double>[0.0, 0.5, 1.0],
+          ),
+      );
+      canvas.drawCircle(
+        top,
+        thickness * (1.2 + 1.6 * lv),
+        Paint()
+          ..isAntiAlias = true
+          ..color = palette.milk.withValues(alpha: (0.70 * lv).clamp(0.0, 0.9)),
+      );
+    }
+
+    // ── ۳) دو دوندهٔ نور که دورِ کادر می‌دوند.
+    if (splash > 0.001 && splash < 0.999) {
+      final double p = Curves.easeOutCubic.transform(splash);
+      final double fade = 1.0 - math.pow(splash, 2.4).toDouble();
+      final Path half = _halfLoop(frame, r);
 
       final Paint runner = Paint()
         ..isAntiAlias = true
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = math.max(1.4, h * 0.17)
-        ..color = Color.lerp(palette.hot, palette.milk, 0.22)!
-            .withValues(alpha: (0.58 * fade * s).clamp(0.0, 0.85))
-        ..maskFilter =
-            MaskFilter.blur(BlurStyle.normal, math.max(1.5, h * 0.24));
+        ..strokeWidth = thickness * 1.35
+        ..color = palette.milk.withValues(alpha: (0.92 * fade * k).clamp(0.0, 1.0));
 
-      _runner(canvas, edge, travel, runner, 0.32);
+      final Paint trail = Paint()
+        ..isAntiAlias = true
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = thickness * 2.4
+        ..color = palette.core.withValues(alpha: (0.34 * fade * k).clamp(0.0, 0.7))
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.8);
+
+      _runner(canvas, half, p, trail, 0.42);
+      _runner(canvas, half, p, runner, 0.20);
+
       canvas.save();
       canvas.translate(w, 0.0);
       canvas.scale(-1.0, 1.0);
-      _runner(canvas, edge, travel, runner, 0.32);
+      final Path mirrored = _halfLoop(
+        Rect.fromLTRB(
+          w - frame.right,
+          frame.top,
+          w - frame.left,
+          frame.bottom,
+        ),
+        r,
+      );
+      _runner(canvas, mirrored, p, trail, 0.42);
+      _runner(canvas, mirrored, p, runner, 0.20);
       canvas.restore();
 
-      // شکوفهٔ لحطهٔ برخورد
-      final double burst = math.max(0.0, 1.0 - p * 3.2);
-      if (burst > 0.01 && !lifting) {
-        final double rr = math.max(2.0, w * (0.14 + 0.34 * (1.0 - burst)));
+      // جرقهٔ لحظهٔ برخورد.
+      final double burst = math.max(0.0, 1.0 - splash * 3.4);
+      if (burst > 0.01) {
         canvas.drawCircle(
-          hit,
-          rr,
+          top,
+          thickness * (2.0 + 7.0 * (1.0 - burst)),
           Paint()
             ..isAntiAlias = true
-            ..shader = ui.Gradient.radial(
-              hit,
-              rr,
-              <Color>[
-                palette.milk.withValues(alpha: 0.34 * burst * s),
-                palette.hot.withValues(alpha: 0.18 * burst * s),
-                palette.hot.withValues(alpha: 0.0),
-              ],
-              const <double>[0.0, 0.45, 1.0],
-            )
-            ..maskFilter = MaskFilter.blur(BlurStyle.normal, h * 0.70),
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = thickness * 1.1 * burst
+            ..color = palette.milk.withValues(alpha: 0.85 * burst),
         );
       }
     }
-
-    // ۳) ته‌رنگِ ماندگار: تیله رفته، حضورش مانده
-    if (!residue) return;
-
-    final double br = 0.45 + 0.55 * breath.clamp(0.0, 1.0);
-    final Path edge = _edgePath(w, topY, corner, inset);
-    final Paint glow = Paint()
-      ..isAntiAlias = true
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = math.max(1.0, h * 0.11)
-      ..color = palette.aura
-          .withValues(alpha: ((0.09 + 0.08 * br) * s).clamp(0.0, 0.28))
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(2.0, h * 0.32));
-
-    canvas.drawPath(edge, glow);
-    canvas.save();
-    canvas.translate(w, 0.0);
-    canvas.scale(-1.0, 1.0);
-    canvas.drawPath(edge, glow);
-    canvas.restore();
-
-    final double rr = math.max(2.0, w * 0.15);
-    canvas.drawCircle(
-      hit,
-      rr,
-      Paint()
-        ..isAntiAlias = true
-        ..shader = ui.Gradient.radial(
-          hit,
-          rr,
-          <Color>[
-            palette.hot.withValues(alpha: (0.10 * br * s).clamp(0.0, 0.18)),
-            palette.hot.withValues(alpha: 0.0),
-          ],
-          const <double>[0.0, 1.0],
-        )
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, h * 0.60),
-    );
   }
 
   @override
   bool shouldRepaint(_LipPainter old) {
-    return level != old.level ||
-        splash != old.splash ||
+    return splash != old.splash ||
+        spin != old.spin ||
         breath != old.breath ||
+        level != old.level ||
         residue != old.residue ||
-        lifting != old.lifting ||
-        strength != old.strength ||
+        palette != old.palette ||
+        gap != old.gap ||
+        frameHeight != old.frameHeight ||
         inset != old.inset ||
         corner != old.corner ||
-        palette != old.palette;
+        thickness != old.thickness ||
+        bleed != old.bleed ||
+        strength != old.strength ||
+        idleGlow != old.idleGlow;
   }
 }

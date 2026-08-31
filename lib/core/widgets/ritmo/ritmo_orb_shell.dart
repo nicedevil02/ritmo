@@ -140,16 +140,16 @@ void ritmoPaintGlassBody({
   if (radius <= 1.0) return;
 
   const List<Color> darkRamp = <Color>[
-    Color(0xFFFDFDFF),
-    Color(0xFFE4E8F2),
-    Color(0xFFAEB6C8),
-    Color(0xFF666F86),
+    Color(0xFFFFFFFF),
+    Color(0xFFF0F4FA),
+    Color(0xFFD0D7E6),
+    Color(0xFF98A2B8),
   ];
   const List<Color> lightRamp = <Color>[
     Color(0xFFFFFFFF),
-    Color(0xFFFEFAFA),
-    Color(0xFFF2EEF4),
-    Color(0xFFDBD6E2),
+    Color(0xFFFAF9FD),
+    Color(0xFFEDEAF3),
+    Color(0xFFD4CFDF),
   ];
   final List<Color> ramp = isDark ? darkRamp : lightRamp;
   final Offset focal = center + Offset(-radius * 0.30, -radius * 0.34);

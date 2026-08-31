@@ -142,6 +142,7 @@ class AppleCardDeckHost extends StatelessWidget {
   final Animation<double>? animation;
   final ValueNotifier<double>? foregroundExtentNotifier;
   final double topCornerRadius; // 30.0
+  final bool fullCoverageScrim;
 
   /// Global reactive coordinator for foreground sheet extent (0.0 to 1.0)
   static final ValueNotifier<double> activeForegroundSheetExtent = ValueNotifier<double>(0.60);
@@ -152,6 +153,7 @@ class AppleCardDeckHost extends StatelessWidget {
     this.animation,
     this.foregroundExtentNotifier,
     this.topCornerRadius = 30.0,
+    this.fullCoverageScrim = true,
   });
 
   @override
@@ -220,38 +222,42 @@ class AppleCardDeckHost extends StatelessWidget {
               children: [
                 staticChild,
 
-                // 1. Occlusion-Aware Visible-Band Scrim with soft feathering & exact matching rounded corners
-                // ONLY dims the visible band above the foreground sheet,
-                // leaving the area behind the foreground sheet 100% pristine.
-                if (progress > 0.001 && visibleTopHeightFactor > 0.001)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    child: IgnorePointer(
-                      ignoring: true,
-                      child: ClipRRect(
-                        borderRadius: clipBorderRadius,
-                        clipBehavior: Clip.antiAlias,
-                        child: Container(
-                          height: MediaQuery.of(context).size.height * visibleTopHeightFactor,
-                          decoration: BoxDecoration(
-                            borderRadius: clipBorderRadius,
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                dimColor,
-                                dimColor,
-                                dimColor.withValues(alpha: 0.0),
-                              ],
-                              stops: const [0.0, 0.94, 1.0],
+                // 1. Adaptive Card Deck Scrim (Seamless & Zero-Gap)
+                // Dims the background card deck smoothly without light gaps, cutoff lines, or height mismatches.
+                if (progress > 0.001)
+                  if (fullCoverageScrim)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        ignoring: true,
+                        child: ClipRRect(
+                          borderRadius: clipBorderRadius,
+                          clipBehavior: Clip.antiAlias,
+                          child: ColoredBox(
+                            color: dimColor,
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (visibleTopHeightFactor > 0.001)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: IgnorePointer(
+                        ignoring: true,
+                        child: ClipRRect(
+                          borderRadius: clipBorderRadius,
+                          clipBehavior: Clip.antiAlias,
+                          child: Container(
+                            height: (MediaQuery.of(context).size.height * visibleTopHeightFactor) + 40.0,
+                            decoration: BoxDecoration(
+                              borderRadius: clipBorderRadius,
+                              color: dimColor,
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
 
                 // 2. Preserved Crisp Glass Rim & Border (renders ON TOP of scrim)
                 // Ensures the outer 1px white border and curve remain razor-sharp without dark occlusion artifacts.

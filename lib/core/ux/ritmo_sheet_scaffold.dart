@@ -138,22 +138,22 @@ class RitmoSheetScaffold extends StatelessWidget {
 /// background transformation (4.5% scale-down at 60% up to 8.0% at 95%, 20dp rounded top corners,
 /// occlusion-aware visible-only dimming overlay, and upward peek translation) when a modal sheet is pushed on top.
 class AppleCardDeckHost extends StatelessWidget {
+  /// Global reactive coordinator for foreground sheet extent (0.0 to 1.0)
+  static final ValueNotifier<double> activeForegroundSheetExtent = ValueNotifier<double>(0.94);
+
   final Widget child;
   final Animation<double>? animation;
   final ValueNotifier<double>? foregroundExtentNotifier;
+  final double? foregroundExtent;
   final double topCornerRadius; // 30.0
-  final bool fullCoverageScrim;
-
-  /// Global reactive coordinator for foreground sheet extent (0.0 to 1.0)
-  static final ValueNotifier<double> activeForegroundSheetExtent = ValueNotifier<double>(0.60);
 
   const AppleCardDeckHost({
     super.key,
     required this.child,
     this.animation,
     this.foregroundExtentNotifier,
+    this.foregroundExtent,
     this.topCornerRadius = 30.0,
-    this.fullCoverageScrim = true,
   });
 
   @override
@@ -168,7 +168,8 @@ class AppleCardDeckHost extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     Widget buildTransform(double progress, double extent, Widget staticChild) {
-      final clampedExtent = extent.clamp(0.0, 1.0);
+      final effectiveExtent = foregroundExtent ?? extent;
+      final clampedExtent = effectiveExtent.clamp(0.0, 1.0);
 
       // Normalized progress between 60% and 95%
       final tExtent = ((clampedExtent - 0.60) / (0.95 - 0.60)).clamp(0.0, 1.0);
@@ -178,13 +179,17 @@ class AppleCardDeckHost extends StatelessWidget {
       final targetScaleDown = (0.045 + (0.035 * tExtent)) * scaleFactorBelow60;
       final scale = progress <= 0.0 ? 1.0 : 1.0 - (targetScaleDown * progress);
 
-      // Fixed Static Corner Radius (locked at 30px)
+      // Fixed Static Corner Radius (locked at topCornerRadius)
       final radius = topCornerRadius;
       final clipBorderRadius = BorderRadius.vertical(top: Radius.circular(radius));
 
       // Top Peek Y-Shift: -10px at 60% to -16px at 95%
       final targetShift = (10.0 + (6.0 * tExtent)) * scaleFactorBelow60;
       final translateY = progress <= 0.0 ? 0.0 : -targetShift * progress;
+
+      // Visible-Only Scrim Height: exactly (1.0 - extent)
+      // Strictly covers the area ABOVE the foreground sheet and does NOT go underneath it.
+      final visibleTopHeightFactor = (1.0 - (clampedExtent * progress)).clamp(0.0, 1.0);
 
       // Dynamic Scrim Density / Opacity based on foreground extent:
       // At 60%: standard nominal opacity (1.0x)
@@ -206,6 +211,8 @@ class AppleCardDeckHost extends StatelessWidget {
           : Colors.white.withValues(alpha: (0.70 * progress).clamp(0.0, 1.0));
       final borderWidth = isDark ? 0.9 : 1.0;
 
+      final screenHeight = MediaQuery.sizeOf(context).height;
+
       return Transform.translate(
         offset: Offset(0, translateY),
         child: Transform.scale(
@@ -219,20 +226,24 @@ class AppleCardDeckHost extends StatelessWidget {
               children: [
                 staticChild,
 
-                // 1. Dynamic & Adaptive Gapless Scrim
-                // Dims the background card seamlessly without any white strip or gap,
-                // while dynamically responding to the foreground sheet animation progress.
-                if (progress > 0.001)
-                  Positioned.fill(
+                // 1. Occlusion-Aware Visible-Band Scrim
+                // Strictly dims ONLY the visible band strictly above the foreground sheet,
+                // leaving the area behind the foreground sheet 100% pristine with ZERO gap.
+                if (progress > 0.001 && visibleTopHeightFactor > 0.001)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
                     child: IgnorePointer(
                       ignoring: true,
                       child: ClipRRect(
                         borderRadius: clipBorderRadius,
                         clipBehavior: Clip.antiAlias,
-                        child: DecoratedBox(
+                        child: Container(
+                          height: screenHeight * visibleTopHeightFactor,
                           decoration: BoxDecoration(
-                            color: dimColor,
                             borderRadius: clipBorderRadius,
+                            color: dimColor,
                           ),
                         ),
                       ),
@@ -240,7 +251,7 @@ class AppleCardDeckHost extends StatelessWidget {
                   ),
 
                 // 2. Preserved Crisp Glass Rim & Border (renders ON TOP of scrim)
-                // Ensures the outer 1px border and curve remain razor-sharp without dark occlusion artifacts.
+                // Ensures the outer 1px white border and curve remain razor-sharp without dark occlusion artifacts.
                 if (progress > 0.001)
                   Positioned.fill(
                     child: IgnorePointer(

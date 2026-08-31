@@ -28,7 +28,7 @@ class RitmoGlassSurface extends StatelessWidget {
     final isDark = context.isDark;
 
     final effectiveRadius =
-        borderRadius ?? BorderRadius.circular(RitmoRadius.card);
+        borderRadius ?? BorderRadius.circular(context.metrics.radiusCard);
 
     if (!context.isGlassEnabled || highContrast) {
       return Container(

@@ -259,7 +259,8 @@ class _RitmoCardState extends State<RitmoCard> {
     final isDark = context.isDark;
     final isGlass = context.isGlassEnabled;
     final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
-    final effectiveRadius = widget.borderRadius ?? BorderRadius.circular(24);
+    final effectiveRadius =
+        widget.borderRadius ?? BorderRadius.circular(context.metrics.radiusCard);
 
     final baseColor = widget.backgroundColor ?? colors.surfaceElevated;
 

@@ -6,7 +6,7 @@
 
 ## ۱. کلاس‌های اندازه و نقطه‌شکست‌ها (Breakpoints)
 
-تمامی تعاریف هندسی در کلاس [`RitmoBreakpoints`](file:///c:/Users/bahman/Desktop/Besme-Allah/Ritmo3/ritmo/lib/core/theme/tokens/ritmo_breakpoints.dart) متمرکز هستند.
+تمامی تعاریف هندسی در کلاس [`RitmoBreakpoints`](../../lib/core/theme/tokens/ritmo_breakpoints.dart) متمرکز هستند.
 
 ### کلاس‌های عرض (`RitmoWidthClass`)
 | کلاس | محدوده عرض منطقی (Logical Px) | نمونه دستگاه‌های واقعی |
@@ -67,7 +67,7 @@ RitmoSheetScaffold.present(
 - ارتفاع خانه: `71 / 2.2 = 32` پیکسل.
 - در مقیاس متن `1.3x` یا `1.6x`، یک متن دو خطی به بیش از ۵۰ پیکسل ارتفاع نیاز دارد؛ بنابراین قفل بودن نسبت ابعاد منجر به سرریز حتمی (`RenderFlex overflowed`) می‌شود.
 
-### راه‌حل استاندارد: [`RitmoAdaptiveGrid`](file:///c:/Users/bahman/Desktop/Besme-Allah/Ritmo3/ritmo/lib/core/widgets/ritmo_adaptive_grid.dart)
+### راه‌حل استاندارد: [`RitmoAdaptiveGrid`](../../lib/core/widgets/ritmo_adaptive_grid.dart)
 محاسبه پویای ستون‌ها بر مبنای کمینه عرض مورد نیاز هر خانه (`tileMinWidth`) با چیدمان بر مبنای `Wrap` که ارتفاع سطر از بلندترین محتوای آن به صورت خودکار تعیین می‌گردد.
 
 ---
@@ -83,7 +83,7 @@ RitmoSheetScaffold.present(
 | `regular` | 390 × 844 | ✅ | ✅ | ✅ | ✅ | `compact`, `comfortable`, `spacious`, `xl` |
 | `large` | 430 × 932 | ✅ | ✅ | ✅ | ✅ | `compact`, `comfortable`, `spacious`, `xl` |
 
-ابزار تست: [`testAcrossViewports`](file:///c:/Users/bahman/Desktop/Besme-Allah/Ritmo3/ritmo/test/support/responsive_harness.dart) و [`ui_scale_matrix_test.dart`](file:///c:/Users/bahman/Desktop/Besme-Allah/Ritmo3/ritmo/test/theme/ui_scale_matrix_test.dart).
+ابزار تست: [`testAcrossViewports`](../../test/support/responsive_harness.dart) و [`ui_scale_matrix_test.dart`](../../test/theme/ui_scale_matrix_test.dart).
 
 ---
 

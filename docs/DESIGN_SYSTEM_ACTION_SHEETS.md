@@ -1,34 +1,87 @@
-# Ritmo Design System — Unified Action Sheets
+# معماری پنجره‌ها و اکشن‌شیت‌های ریتمو (Ritmo Action Sheets & Modals)
 
-## Overview
-This document defines the architecture and grammar for bottom action sheets in the Ritmo application.
+## ۱. نمای کلی و ساختار ۳ لایه‌ای
+پنجره‌ها و شیت‌های شناور در ریتمو از یک ساختار دقیق ۳ لایه‌ای پیروی می‌کنند تا یکپارچگی بصری، انیمیشن‌های فیزیکی اپل و کارایی حداکثری تضمین شود.
 
-## Core Pattern: One Shell, Three Behaviors, N Contents
+```
+┌─────────────────────────────────────────────────────────────┐
+│             لایه‌بندی ۳ سطحی معماری پنجره‌ها در ریتمو           │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 3: Behavioral Blueprints (قالب‌های رفتاری)             │
+│   ├── RitmoActionSheet  (اکشن‌های دامنه‌ای ۵ منطقه‌ای)        │
+│   ├── RitmoPickerSheet  (سلکتور و جستجوی مقادیر)             │
+│   ├── RitmoFormSheet    (ویزارد چندمرحله‌ای فرم‌ها)          │
+│   └── RitmoFormSheetScaffold (فرم‌های مقیاس‌پذیر پیشرفته)    │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 2: Structural Scaffolding (پوسته و فریم ساختاری)     │
+│   └── RitmoSheetScaffold.present()                          │
+│       (هندل، هپتیک، بریک‌پوینت، کیبورد، عنوان، دکمه ثابت)     │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 1: Visual Primitives (المان‌های بصری پایه)           │
+│   ├── RitmoGlassSheet       (محاسبه بلور، حاشیه و افکت شیشه)│
+│   ├── RitmoGlassActionSheet (پاپ‌آپ کپسولی نیتیو iOS)       │
+│   └── RitmoDialog           (دیالوگ‌های تاییدیه مرکزی)       │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### 1. The Shell: `RitmoSheetScaffold`
-Located at `lib/core/ux/ritmo_sheet_scaffold.dart`.
-- Single visual primitive for glassmorphism backdrop, handle bar, RTL text direction, keyboard inset padding, height constraints, and haptics.
-- Exposes static `RitmoSheetScaffold.present<T>()`.
+---
 
-### 2. The Three Behaviors
+## ۲. لایه دوم — پوسته مرجع: `RitmoSheetScaffold`
+مستقر در `lib/core/widgets/sheet/ritmo_sheet_scaffold.dart`.
+- تنها پوسته مجاز برای باز کردن شیت‌های پایینی در برنامه.
+- مجهز به استاندارد Detents ریتمو (۹۴٪ تمام‌صفحه و بسته‌شدن با کشیدن به پایین).
+- مدیریت یکپارچه صفحه‌کلید (`viewInsets.bottom`)، دایرکشن RTL، هپتیک فیدبک و انیمیشن مقیاس صفحه زیرین (`AppleCardDeckHost`).
 
-1. **`RitmoActionSheet`** (`lib/core/widgets/action/ritmo_action_sheet.dart`)
-   - 5-Zone Architecture:
-     - Zone 1: Identity Header (Domain Icon, Title, Subtitle, Domain Badge)
-     - Zone 2: Domain ActionBody (`ActionBody`)
-     - Zone 3: Single Primary Submit Action (Full width)
-     - Zone 4: Secondary & Handoff Actions (Max 2 in a row)
-     - Zone 5: Collapsible ExpansionTile for Destructive / Skip / Edit actions.
-   - Lifecycle: Submissions execute INSIDE sheet. On failure, sheet stays open displaying the error message.
+### نحوه استفاده استاندارد:
+```dart
+RitmoSheetScaffold.present<T>(
+  context: context,
+  title: 'عنوان شیت',
+  subtitle: 'توضیحات کوتاه اختیاری',
+  footer: RitmoPrimaryButton(label: 'ثبت', onPressed: () => submit()),
+  builder: (sheetContext) => MySheetBodyWidget(),
+);
+```
 
-2. **`RitmoPickerSheet`** (`lib/core/widgets/sheet/ritmo_picker_sheet.dart`)
-   - Selection-only generic list picker returning `Future<T?>`. Never writes directly.
+---
 
-3. **`RitmoFormSheet`** (`lib/core/widgets/sheet/ritmo_form_sheet.dart`)
-   - Multi-step form wizard shell with progress bar, next/previous buttons, step validation, and loading spinners.
+## ۳. لایه سوم — رفتارهای سه‌گانه رسمی (The Three Behaviors)
 
-## Rules for Adding New Domain Bodies
-1. Inherit from `ActionBody` (`lib/core/widgets/action/action_sheet_registry.dart`).
-2. Declare capabilities via `ActionCapabilities`.
-3. Provide `getSubmitActions(context)` and `getHandoffActions(context)`.
-4. Register in `ActionSheetRegistry` during app initialization.
+### ۱. اکشن‌شیت دامنه‌ای (`RitmoActionSheet`)
+مستقر در `lib/core/widgets/action/ritmo_action_sheet.dart`.
+* معماری ۵ منطقه‌ای:
+  1. هدر شناسه (آیکون حوزه، عنوان، زیرعنوان، بج ماژول)
+  2. بدنه اکشن دامنه‌ای (`ActionBody`)
+  3. دکمه ثبت اصلی تمام‌عرض
+  4. اکشن‌های ثانویه و هندآف (حداکثر ۲ دکمه در یک سطر)
+  5. بخش کشویی برای اکشن‌های تخریبی/ویرایشی
+* چرخه حیات: عملیات ثبت درون خود شیت انجام می‌شود. در صورت بروز خطا، شیت باز مانده و پیام خطا را نمایش می‌دهد.
+
+### ۲. شیت انتخابگر (`RitmoPickerSheet`)
+مستقر در `lib/core/widgets/sheet/ritmo_picker_sheet.dart`.
+* شیت ژنریک برای جستجو و انتخاب آیتم از لیست که `Future<T?>` بازمی‌گرداند و مستقیماً تغییری در پایگاه داده نمی‌دهد.
+
+### ۳. شیت فرم چندمرحله‌ای (`RitmoFormSheet` و `RitmoFormSheetScaffold`)
+مستقر در `lib/core/widgets/sheet/`.
+* پوسته ویزارد فرم با نوار پیشرفت مراحل، اعتبارسنجی ورودی‌ها، و دکمه‌های ناوبری قبلی/بعدی.
+
+---
+
+## ۴. پاپ‌آپ‌های مستقل و دیالوگ‌ها
+
+### ۱. پاپ‌آپ کپسولی اپل (`RitmoGlassActionSheet`)
+مستقر در `lib/core/widgets/ritmo/ritmo_glass_action_sheet.dart`.
+* پاپ‌آپ نیتیو دو کپسولی iOS (مشابه شیت حذف یا تایید خروج `showDiscard`).
+
+### ۲. دیالوگ‌های مرکزی (`RitmoDialog`)
+مستقر در `lib/core/widgets/ritmo/ritmo_dialog.dart`.
+* دیالوگ تاییدیه مرکزی نئومورفیک شیشه‌ای برای هشدارهای بحرانی و حذف اطلاعات.
+
+---
+
+## ۵. قوانین کارایی و لایه‌بندی شیشه (Glass Nesting Policy)
+
+1. **شیشه روی شیشه ممنوع (No Nested BackdropFilters):**
+   * قرار دادن یک لایه شیشه‌ای (`RitmoGlassSurface` یا `RitmoGlassSheet`) درون شیت شیشه‌ای دیگر ممنوع است؛ زیرا باعث پردازش گرافیکی مکرر و افت فریم می‌شود.
+   * لایه‌های داخلی درون شیت باید از کانتینرهای سطح مات (`colors.surfaceElevated`) یا کارت‌های نئومورفیک بدون بلور استفاده کنند.
+2. **سقف بودجه شیشه:** در هر صفحه حداکثر ۱ الی ۲ `BackdropFilter` فعال مجاز است.

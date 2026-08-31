@@ -9,13 +9,13 @@ class RitmoHeroCard extends StatelessWidget {
     super.key,
     required this.child,
     this.moduleColor,
-    this.padding = const EdgeInsets.all(RitmoSpacing.xl),
+    this.padding,
     this.showGlow = false,
   });
 
   final Widget child;
   final Color? moduleColor;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
   final bool showGlow;
 
   @override
@@ -23,9 +23,10 @@ class RitmoHeroCard extends StatelessWidget {
     final colors = context.colors;
     final isDark = context.isDark;
     final accentColor = moduleColor ?? colors.primary;
+    final effectivePadding = padding ?? EdgeInsets.all(context.metrics.spaceXl);
 
     return Container(
-      padding: padding,
+      padding: effectivePadding,
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
         borderRadius: BorderRadius.circular(context.metrics.radiusHero),

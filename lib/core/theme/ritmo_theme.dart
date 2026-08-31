@@ -30,7 +30,7 @@ export 'package:ritmo/core/widgets/ritmo/ritmo_glass_segmented_control.dart';
 export 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
 export 'package:ritmo/core/widgets/ritmo/ritmo_collapsing_glass_bar.dart';
 export 'package:ritmo/core/widgets/ritmo/ritmo_glass_sheet.dart';
-export 'package:ritmo/core/widgets/ritmo/ritmo_action_sheet.dart';
+export 'package:ritmo/core/widgets/ritmo/ritmo_glass_action_sheet.dart';
 export 'package:ritmo/core/widgets/ritmo/ritmo_sub_header_timer_banner.dart';
 export 'package:ritmo/core/timer/ritmo_timer_hub.dart';
 export 'package:ritmo/core/widgets/sheet/ritmo_form_sheet_scaffold.dart';

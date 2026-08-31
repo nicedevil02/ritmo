@@ -10,6 +10,7 @@ import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/health/data/medication_repository.dart';
+import 'package:ritmo/features/health/presentation/pages/medication_form_page.dart';
 import 'package:ritmo/features/health/presentation/widgets/medication_form_sheet.dart';
 
 class MedicationsSection extends StatefulWidget {
@@ -1438,22 +1439,17 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
   }
 
   void _showAddEditMedicationSheet({Map<String, dynamic>? medication, MedicationFormData? prefillData}) {
-    MedicationFormSheet.show(
-      context,
-      medication: medication,
-      prefillData: prefillData,
-      onFormCompleted: (data) {
-        // Form collected → show preview; only saves when user confirms in preview
-        MedicationPreviewSheet.show(
-          context,
-          data: data,
-          onSaved: _loadData,
-          onEdit: () {
-            // Re-open form with this collected data to allow editing
-            _showAddEditMedicationSheet(medication: medication, prefillData: data);
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (_) => MedicationFormPage(
+          medication: medication,
+          prefillData: prefillData,
+          onFormCompleted: (data) async {
+            await MedicationSaveHelper.save(data);
+            await _loadData();
           },
-        );
-      },
+        ),
+      ),
     );
   }
 }

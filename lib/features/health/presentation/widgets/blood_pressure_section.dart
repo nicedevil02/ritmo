@@ -282,49 +282,25 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ─── Header & Export Action ───
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        CupertinoIcons.heart_circle_fill,
-                        color: colors.primary,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.bloodPressureTitle,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                if (_logs.isNotEmpty)
-                  TextButton.icon(
-                    onPressed: _copyDoctorReport,
-                    style: TextButton.styleFrom(
-                      foregroundColor: colors.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      backgroundColor: colors.primary.withValues(alpha: 0.08),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    icon: const Icon(CupertinoIcons.doc_text_fill, size: 14),
-                    label: const Text(
-                      'گزارش پزشک',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
+            if (_logs.isNotEmpty)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: _copyDoctorReport,
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    backgroundColor: colors.primary.withValues(alpha: 0.08),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-              ],
-            ),
-            const SizedBox(height: 14),
+                  icon: const Icon(CupertinoIcons.doc_text_fill, size: 14),
+                  label: const Text(
+                    'گزارش پزشک',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
 
             // ─── Time Horizon Filter Pills ───
             _buildTimeRangeSelector(colors),
@@ -1019,18 +995,22 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
             ),
           ),
           const SizedBox(height: 12),
-          ElevatedButton.icon(
-            onPressed: _saveLog,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colors.primary,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 0,
-            ),
-            icon: const Icon(CupertinoIcons.check_mark_circled_solid, color: Colors.white, size: 18),
-            label: Text(
-              l10n.bloodPressureSave,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          RitmoNeuButton(
+            onTap: _saveLog,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.checkmark_seal_fill, color: colors.primary, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.bloodPressureSave,
+                  style: TextStyle(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1236,33 +1216,19 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
     );
   }
 
-  void _confirmDelete(String id) {
-    final colors = context.colors;
-    showDialog(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.surface,
-          title: const Text('حذف سنجش', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: const Text('آیا مطمئن هستید که می‌خواهید این سنجش فشار خون را حذف کنید؟'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('انصراف'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _deleteLog(id);
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: colors.error),
-              child: const Text('حذف', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+  Future<void> _confirmDelete(String id) async {
+    final res = await RitmoGlassDialog.show(
+      context,
+      title: 'حذف سنجش',
+      content: 'آیا مطمئن هستید که می‌خواهید این سنجش فشار خون را حذف کنید؟',
+      confirmLabel: 'حذف دائمی',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
+      icon: CupertinoIcons.trash_fill,
     );
+    if (res == true) {
+      await _deleteLog(id);
+    }
   }
 }
 

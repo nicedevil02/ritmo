@@ -7,25 +7,46 @@ import 'package:ritmo/features/health/presentation/widgets/doctor_visit_summary_
 import 'package:ritmo/features/health/presentation/widgets/doctor_visits_section.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 
-class VisitsPage extends StatelessWidget {
+import 'package:ritmo/features/health/presentation/pages/doctor_visit_form_page.dart';
+
+class VisitsPage extends StatefulWidget {
   const VisitsPage({super.key});
+
+  @override
+  State<VisitsPage> createState() => _VisitsPageState();
+}
+
+class _VisitsPageState extends State<VisitsPage> {
+  final GlobalKey<DoctorVisitsSectionState> _sectionKey = GlobalKey<DoctorVisitsSectionState>();
+
+  void _openDoctorVisitSummarySheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const Directionality(
+        textDirection: TextDirection.rtl,
+        child: DoctorVisitSummarySheet(),
+      ),
+    );
+  }
+
+  void _openAddVisitPage() {
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (_) => DoctorVisitFormPage(
+          onSave: (visit) {
+            _sectionKey.currentState?.saveVisit(visit);
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
-
-    void openDoctorVisitSummarySheet() {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => const Directionality(
-          textDirection: TextDirection.rtl,
-          child: DoctorVisitSummarySheet(),
-        ),
-      );
-    }
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -44,7 +65,7 @@ class VisitsPage extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                onPressed: openDoctorVisitSummarySheet,
+                onPressed: _openDoctorVisitSummarySheet,
                 icon: Icon(CupertinoIcons.doc_text_fill, size: 14, color: colors.primary),
                 label: Text(
                   'خلاصه برای پزشک',
@@ -58,9 +79,29 @@ class VisitsPage extends StatelessWidget {
             ),
           ],
         ),
-        body: const SingleChildScrollView(
-          physics: BouncingScrollPhysics(),
-          child: DoctorVisitsSection(),
+        body: DoctorVisitsSection(key: _sectionKey),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: RitmoNeuButton(
+              onTap: _openAddVisitPage,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.add_circled_solid, color: colors.primary, size: 19),
+                  const SizedBox(width: 8),
+                  Text(
+                    l10n.doctorVisitsAddTitle,
+                    style: TextStyle(
+                      color: colors.primary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

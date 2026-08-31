@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/analytics/health_engine.dart';
@@ -272,28 +273,43 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
                     Row(
                       children: [
                         Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _copyToClipboard,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: colors.primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              elevation: 0,
+                          child: RitmoNeuButton(
+                            onTap: _copyToClipboard,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(CupertinoIcons.doc_on_clipboard_fill, size: 17, color: colors.primary),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'کپی متن گزارش',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.primary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            icon: const Icon(Icons.copy, size: 18),
-                            label: const Text('کپی متن گزارش', style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ),
                         const SizedBox(width: 12),
-                        OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: colors.border),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        RitmoNeuButton(
+                          onTap: () => Navigator.pop(context),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.xmark, size: 15, color: colors.textSecondary),
+                              const SizedBox(width: 6),
+                              Text(
+                                'بستن',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
-                          child: Text('بستن', style: TextStyle(color: colors.textPrimary)),
                         ),
                       ],
                     ),

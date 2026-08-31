@@ -662,8 +662,10 @@ class RitmoCardHeader extends StatelessWidget {
 class RitmoCardTile extends StatefulWidget {
   const RitmoCardTile({
     super.key,
-    required this.title,
+    this.title = '',
+    this.titleWidget,
     this.subtitle,
+    this.subtitleWidget,
     this.leading,
     this.trailing,
     this.onTap,
@@ -674,7 +676,9 @@ class RitmoCardTile extends StatefulWidget {
   });
 
   final String title;
+  final Widget? titleWidget;
   final String? subtitle;
+  final Widget? subtitleWidget;
   final Widget? leading;
   final Widget? trailing;
   final VoidCallback? onTap;
@@ -730,16 +734,22 @@ class _RitmoCardTileState extends State<RitmoCardTile> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  widget.title,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Vazirmatn',
-                    color: colors.textPrimary,
+                if (widget.titleWidget != null)
+                  widget.titleWidget!
+                else if (widget.title.isNotEmpty)
+                  Text(
+                    widget.title,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Vazirmatn',
+                      color: colors.textPrimary,
+                    ),
                   ),
-                ),
-                if (widget.subtitle != null) ...[
+                if (widget.subtitleWidget != null) ...[
+                  const SizedBox(height: 2),
+                  widget.subtitleWidget!,
+                ] else if (widget.subtitle != null) ...[
                   const SizedBox(height: 1.5),
                   Text(
                     widget.subtitle!,
@@ -753,7 +763,10 @@ class _RitmoCardTileState extends State<RitmoCardTile> {
               ],
             ),
           ),
-          ?widget.trailing,
+          if (widget.trailing != null) ...[
+            const SizedBox(width: 8),
+            widget.trailing!,
+          ],
         ],
       ),
     );

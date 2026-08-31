@@ -12,13 +12,14 @@ import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
-import 'package:ritmo/features/health/presentation/pages/health_insights_page.dart';
-// Import new subpages
 import 'package:ritmo/features/health/presentation/pages/medications_page.dart';
 import 'package:ritmo/features/health/presentation/pages/monitoring_page.dart';
 import 'package:ritmo/features/health/presentation/pages/records_page.dart';
 import 'package:ritmo/features/health/presentation/pages/visits_page.dart';
-// Import sheets
+import 'package:ritmo/features/health/presentation/widgets/adherence_card.dart';
+import 'package:ritmo/features/health/presentation/widgets/doctor_visit_summary_sheet.dart';
+import 'package:ritmo/features/health/presentation/widgets/health_correlation_section.dart';
+import 'package:ritmo/features/health/presentation/widgets/health_trends_section.dart';
 
 class HealthScreen extends StatefulWidget {
   const HealthScreen({super.key});
@@ -44,6 +45,7 @@ class _HealthScreenState extends State<HealthScreen> {
   List<String> _criticalAlerts = [];
 
   HealthEngineOutput? _engineOutput;
+  bool _hasAdherenceData = false;
   Timer? _countdownTimer;
   final ValueNotifier<String> _countdownNotifier = ValueNotifier<String>('در حال محاسبه زمان دوز بعدی...');
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
@@ -310,6 +312,7 @@ class _HealthScreenState extends State<HealthScreen> {
       );
 
       final engineOutput = HealthEngine.calculateSync(engineInput);
+      final hasAdherenceData = medLogsList.isNotEmpty;
 
       if (mounted) {
         setState(() {
@@ -323,6 +326,7 @@ class _HealthScreenState extends State<HealthScreen> {
           
           _criticalAlerts = alerts;
           _engineOutput = engineOutput;
+          _hasAdherenceData = hasAdherenceData;
           _isLoading = false;
         });
 
@@ -378,6 +382,18 @@ class _HealthScreenState extends State<HealthScreen> {
     );
   }
 
+  void _openDoctorVisitSummarySheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const Directionality(
+        textDirection: TextDirection.rtl,
+        child: DoctorVisitSummarySheet(),
+      ),
+    );
+  }
+
   void _navigateToPage(Widget page) {
     Navigator.push(
       context,
@@ -389,121 +405,167 @@ class _HealthScreenState extends State<HealthScreen> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final topPadding = MediaQuery.paddingOf(context).top;
-    final contentTopPadding = topPadding + 130.0;
+    final topInset = MediaQuery.paddingOf(context).top;
+    final contentTopPadding = topInset + 185.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: colors.bg,
-        body: Stack(
-          children: [
-            // Layer 1: Body Content
-            Positioned.fill(
-              child: _isLoading
-                  ? Padding(
-                      padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 16),
-                      child: _buildSkeletonLoading(),
-                    )
-                  : NotificationListener<ScrollNotification>(
-                      onNotification: (notification) {
-                        if (notification.metrics.axis == Axis.vertical) {
-                          _scrollOffset.value = notification.metrics.pixels;
-                        }
-                        return false;
-                      },
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                        padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (_criticalAlerts.isNotEmpty) ...[
-                              SlideFadeTransition(
-                                delay: const Duration(milliseconds: 100),
-                                child: _buildAlertsBanner(),
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-                            SlideFadeTransition(
-                              delay: const Duration(milliseconds: 150),
-                              child: _buildStatusHero(),
-                            ),
-                            const SizedBox(height: 16),
-                            SlideFadeTransition(
-                              delay: const Duration(milliseconds: 200),
-                              child: _buildGridMenu(),
-                            ),
-                            const SizedBox(height: 16),
-                            SlideFadeTransition(
-                              delay: const Duration(milliseconds: 250),
-                              child: _buildTrendsCard(
-                                onTap: () => _navigateToPage(const HealthInsightsPage()),
-                              ),
-                            ),
-                            const SizedBox(height: 40),
-                          ],
-                        ),
-                      ),
-                    ),
+      child: RitmoTabbedMorphingScaffold(
+        title: 'دارو و سلامت',
+        subtitle: 'یادآور دارو، ثبت علائم حیاتی و پرونده پزشکی',
+        statusBadge: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+          decoration: BoxDecoration(
+            color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: colors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
+              width: 0.8,
             ),
-
-            // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: AnimatedBuilder(
-                animation: _scrollOffset,
-                builder: (context, _) {
-                  return RitmoAppleMorphingGlassHeader(
-                    title: 'دارو و سلامت',
-                    subtitle: 'یادآور دارو، ثبت علائم حیاتی و پرونده پزشکی',
-                    scrollOffset: _scrollOffset.value,
-                    collapseDistance: 55.0,
-                    onBack: () => Navigator.maybePop(context),
-                    statusBadge: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: colors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
-                          width: 0.8,
-                        ),
-                      ),
-                      child: Text(
-                        'فعال',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          color: colors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    actions: [
-                      RitmoVibrancyActionButton(
-                        icon: CupertinoIcons.sparkles,
-                        iconColor: colors.primary,
-                        isAiButton: true,
-                        accentColor: colors.primary,
-                        tooltip: 'دستیار هوشمند سلامت',
-                        onTap: _openAiAssistant,
-                      ),
-                      const SizedBox(width: 8),
-                      RitmoVibrancyActionButton(
-                        icon: CupertinoIcons.chart_bar_square_fill,
-                        iconColor: colors.textSecondary,
-                        tooltip: 'تحلیل‌ها و نمودارها',
-                        onTap: () => _navigateToPage(const HealthInsightsPage()),
-                      ),
-                    ],
-                  );
-                },
-              ),
+          ),
+          child: Text(
+            'فعال',
+            style: TextStyle(
+              fontSize: 10.5,
+              color: colors.primary,
+              fontWeight: FontWeight.bold,
             ),
-          ],
+          ),
         ),
+        actions: [
+          RitmoVibrancyActionButton(
+            icon: CupertinoIcons.sparkles,
+            iconColor: colors.primary,
+            isAiButton: true,
+            accentColor: colors.primary,
+            tooltip: 'دستیار هوشمند سلامت',
+            onTap: _openAiAssistant,
+          ),
+        ],
+        tabItems: const [
+          RitmoTabItem<int>(
+            title: 'داشبورد سلامت',
+            icon: CupertinoIcons.square_grid_2x2_fill,
+            value: 0,
+          ),
+          RitmoTabItem<int>(
+            title: 'روندها و تحلیل سلامت',
+            icon: CupertinoIcons.chart_bar_alt_fill,
+            value: 1,
+          ),
+        ],
+        tabBuilders: [
+          (context, scrollController) => _buildDashboardTab(scrollController, contentTopPadding),
+          (context, scrollController) => _buildInsightsTab(scrollController, contentTopPadding),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashboardTab(ScrollController scrollController, double contentTopPadding) {
+    if (_isLoading) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 16),
+        child: _buildSkeletonLoading(),
+      );
+    }
+
+    return SingleChildScrollView(
+      controller: scrollController,
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_criticalAlerts.isNotEmpty) ...[
+            SlideFadeTransition(
+              delay: const Duration(milliseconds: 100),
+              child: _buildAlertsBanner(),
+            ),
+            const SizedBox(height: 16),
+          ],
+          SlideFadeTransition(
+            delay: const Duration(milliseconds: 150),
+            child: _buildStatusHero(),
+          ),
+          const SizedBox(height: 16),
+          SlideFadeTransition(
+            delay: const Duration(milliseconds: 200),
+            child: _buildGridMenu(),
+          ),
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInsightsTab(ScrollController scrollController, double contentTopPadding) {
+    final colors = context.colors;
+    if (_isLoading) {
+      return Padding(
+        padding: EdgeInsets.only(top: contentTopPadding),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_engineOutput == null) {
+      return Padding(
+        padding: EdgeInsets.only(top: contentTopPadding),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.chart_bar, size: 48, color: colors.textSecondary.withValues(alpha: 0.4)),
+                const SizedBox(height: 12),
+                Text(
+                  'داده‌ای برای تحلیل سلامت وجود ندارد.',
+                  style: TextStyle(color: colors.textSecondary, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      controller: scrollController,
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 100),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AdherenceCard(
+            stats: _engineOutput!.adherence,
+            hasData: _hasAdherenceData,
+          ),
+          const SizedBox(height: 16),
+          HealthTrendsSection(trends: _engineOutput!.trends),
+          const SizedBox(height: 16),
+          HealthCorrelationSection(correlations: _engineOutput!.correlations),
+          const SizedBox(height: 20),
+          RitmoNeuButton(
+            onTap: _openDoctorVisitSummarySheet,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.doc_text_fill, color: colors.primary, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  'تولید خلاصه برای پزشک',
+                  style: TextStyle(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 40),
+        ],
       ),
     );
   }
@@ -599,20 +661,32 @@ class _HealthScreenState extends State<HealthScreen> {
                 size: 17,
               ),
             ),
-            title: 'وضعیت نوبت بعدی',
-            trailing: ValueListenableBuilder<String>(
+            title: hasMeds ? 'نوبت بعدی دارو' : 'وضعیت نوبت بعدی',
+            subtitleWidget: ValueListenableBuilder<String>(
               valueListenable: _countdownNotifier,
               builder: (context, countdownText, _) {
                 return Text(
                   _toPersianDigits(countdownText),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11.5,
+                    height: 1.35,
                     fontWeight: hasMeds ? FontWeight.bold : FontWeight.normal,
                     color: hasMeds ? colors.textPrimary : colors.textSecondary,
                   ),
                 );
               },
             ),
+            trailing: Icon(
+              CupertinoIcons.chevron_left,
+              size: 14,
+              color: colors.textSecondary.withValues(alpha: 0.4),
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                CupertinoPageRoute(builder: (_) => const MedicationsPage()),
+              );
+            },
           ),
         ],
       ),
@@ -721,51 +795,7 @@ class _HealthScreenState extends State<HealthScreen> {
     );
   }
 
-  Widget _buildTrendsCard({required VoidCallback onTap}) {
-    final colors = context.colors;
 
-    return RitmoCard.neumorphic(
-      onTap: onTap,
-      backgroundColor: colors.card,
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(CupertinoIcons.chart_bar_square, color: colors.primary, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'روندها و تحلیل سلامت',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'مشاهده نمودارهای قند، فشار و همبستگی خواب و انرژی',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: colors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(CupertinoIcons.chevron_left, color: colors.textSecondary, size: 16),
-        ],
-      ),
-    );
-  }
 
   Widget _buildSkeletonLoading() {
     final colors = context.colors;

@@ -2,9 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as path_utils;
-import 'package:path_provider/path_provider.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/notifications/notification_channel.dart';
@@ -12,8 +9,8 @@ import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/utils/ritmo_date_picker.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
+import 'package:ritmo/features/health/presentation/pages/doctor_visit_form_page.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -24,14 +21,17 @@ class DoctorVisitsSection extends StatefulWidget {
   });
 
   @override
-  State<DoctorVisitsSection> createState() => _DoctorVisitsSectionState();
+  State<DoctorVisitsSection> createState() => DoctorVisitsSectionState();
 }
 
-class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTickerProviderStateMixin {
+class DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<DoctorVisit> _upcomingVisits = [];
   List<DoctorVisit> _pastVisits = [];
   bool _isLoading = true;
+
+  void saveVisit(DoctorVisit visit) => _saveVisit(visit);
+  void loadData() => _loadData();
 
   @override
   void initState() {
@@ -297,21 +297,12 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
     );
   }
 
-  void _showAddEditSheet({DoctorVisit? visit}) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: RitmoTheme.glassCardLight(
-          child: _DoctorVisitForm(
-            visit: visit,
-            onSave: (newVisit) {
-              _saveVisit(newVisit);
-              Navigator.pop(context);
-            },
-          ),
+  void _openAddEditPage({DoctorVisit? visit}) {
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (_) => DoctorVisitFormPage(
+          visit: visit,
+          onSave: _saveVisit,
         ),
       ),
     );
@@ -322,37 +313,12 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
 
-
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                l10n.doctorVisits,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              ElevatedButton.icon(
-                onPressed: _showAddEditSheet,
-                icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                label: Text(l10n.doctorVisitsAddTitle, style: const TextStyle(color: Colors.white, fontSize: 13)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          AnimatedBuilder(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: AnimatedBuilder(
             animation: _tabController,
             builder: (context, _) {
               return RitmoGlassSegmentedControl<int>(
@@ -378,21 +344,20 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
               );
             },
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 350,
-            child: _isLoading
-                ? Center(child: CircularProgressIndicator(color: colors.primary))
-                : TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildVisitsList(_upcomingVisits, isPast: false),
-                      _buildVisitsList(_pastVisits, isPast: true),
-                    ],
-                  ),
-          ),
-        ],
-      ),
+        ),
+        Expanded(
+          child: _isLoading
+              ? Center(child: CircularProgressIndicator(color: colors.primary))
+              : TabBarView(
+                  controller: _tabController,
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                    _buildVisitsList(_upcomingVisits, isPast: false),
+                    _buildVisitsList(_pastVisits, isPast: true),
+                  ],
+                ),
+        ),
+      ],
     );
   }
 
@@ -402,9 +367,28 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
 
     if (visits.isEmpty) {
       return Center(
-        child: Text(
-          isPast ? l10n.doctorVisitsNoPast : l10n.doctorVisitsNoUpcoming,
-          style: TextStyle(color: colors.textSecondary),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isPast ? CupertinoIcons.clock : CupertinoIcons.calendar_badge_plus,
+                size: 48,
+                color: colors.textSecondary.withValues(alpha: 0.35),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                isPast ? l10n.doctorVisitsNoPast : l10n.doctorVisitsNoUpcoming,
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -539,7 +523,7 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
                   children: [
                     IconButton(
                       icon: Icon(Icons.edit, size: 18, color: colors.primary),
-                      onPressed: () => _showAddEditSheet(visit: visit),
+                      onPressed: () => _openAddEditPage(visit: visit),
                     ),
                     IconButton(
                       icon: Icon(Icons.delete_outline, size: 18, color: colors.medicalRed),
@@ -606,448 +590,19 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
     );
   }
 
-  void _confirmDelete(String id) {
-    final colors = context.colors;
+  Future<void> _confirmDelete(String id) async {
     final l10n = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.card,
-          title: Text(
-            l10n.doctorVisitsDelete,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          content: Text(
-            l10n.doctorVisitsDeleteConfirm,
-            style: const TextStyle(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n.doctorVisitsCancel, style: const TextStyle()),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _deleteVisit(id);
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
-              child: Text(
-                l10n.doctorVisitsConfirm,
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-      ),
+    final res = await RitmoGlassDialog.show(
+      context,
+      title: l10n.doctorVisitsDelete,
+      content: l10n.doctorVisitsDeleteConfirm,
+      confirmLabel: l10n.doctorVisitsConfirm,
+      cancelLabel: l10n.doctorVisitsCancel,
+      isDestructive: true,
+      icon: CupertinoIcons.trash_fill,
     );
-  }
-}
-
-class _DoctorVisitForm extends StatefulWidget {
-
-  const _DoctorVisitForm({this.visit, required this.onSave});
-  final DoctorVisit? visit;
-  final Function(DoctorVisit) onSave;
-
-  @override
-  State<_DoctorVisitForm> createState() => _DoctorVisitFormState();
-}
-
-class _DoctorVisitFormState extends State<_DoctorVisitForm> {
-  final _formKey = GlobalKey<FormState>();
-
-  late TextEditingController _doctorNameController;
-  late TextEditingController _specialtyController;
-  late TextEditingController _clinicNameController;
-  late TextEditingController _clinicAddressController;
-  late TextEditingController _clinicPhoneController;
-  late TextEditingController _reasonController;
-  late TextEditingController _notesController;
-
-  late DateTime _selectedDate;
-  late TimeOfDay _selectedTime;
-  String _visitType = 'IN_PERSON';
-  int _reminderBefore = 60;
-  String? _attachmentPath;
-
-  @override
-  void initState() {
-    super.initState();
-    final v = widget.visit;
-    _doctorNameController = TextEditingController(text: v?.doctorName ?? '');
-    _specialtyController = TextEditingController(text: v?.specialty ?? '');
-    _clinicNameController = TextEditingController(text: v?.clinicName ?? '');
-    _clinicAddressController = TextEditingController(text: v?.clinicAddress ?? '');
-    _clinicPhoneController = TextEditingController(text: v?.clinicPhone ?? '');
-    _reasonController = TextEditingController(text: v?.reason ?? '');
-    _notesController = TextEditingController(text: v?.doctorNotes ?? '');
-
-    if (v != null) {
-      final dt = DateTime.fromMillisecondsSinceEpoch(v.visitDateTime);
-      _selectedDate = DateTime(dt.year, dt.month, dt.day);
-      _selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute);
-      _visitType = v.visitType;
-      _reminderBefore = v.reminderBefore;
-      _attachmentPath = v.attachmentPath;
-    } else {
-      final now = DateTime.now();
-      _selectedDate = DateTime(now.year, now.month, now.day);
-      _selectedTime = const TimeOfDay(hour: 10, minute: 0);
+    if (res == true) {
+      await _deleteVisit(id);
     }
-  }
-
-  @override
-  void dispose() {
-    _doctorNameController.dispose();
-    _specialtyController.dispose();
-    _clinicNameController.dispose();
-    _clinicAddressController.dispose();
-    _clinicPhoneController.dispose();
-    _reasonController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  String _toPersianDigits(String input) {
-    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    var result = input;
-    for (var i = 0; i < english.length; i++) {
-      result = result.replaceAll(english[i], persian[i]);
-    }
-    return result;
-  }
-
-  String _normalizeDigits(String input) {
-    const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    var result = input;
-    for (var i = 0; i < 10; i++) {
-      result = result.replaceAll(persian[i], english[i]).replaceAll(arabic[i], english[i]);
-    }
-    return result;
-  }
-
-  Future<void> _pickDate() async {
-    final picked = await RitmoDatePicker.showJalali(
-      context: context,
-      initialDate: Jalali.fromDateTime(_selectedDate),
-      firstDate: Jalali.fromDateTime(DateTime.now().subtract(const Duration(days: 365))),
-      lastDate: Jalali.fromDateTime(DateTime.now().add(const Duration(days: 365 * 2))),
-    );
-
-    if (picked != null) {
-      setState(() {
-        _selectedDate = picked.toDateTime();
-      });
-    }
-  }
-
-  Future<void> _pickTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: context.colors.primary,
-              onPrimary: Colors.white,
-              surface: context.colors.card,
-              onSurface: context.colors.textPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
-  }
-
-  Future<void> _pickImage() async {
-    try {
-      final picker = ImagePicker();
-      final picked = await picker.pickImage(source: ImageSource.gallery);
-      if (picked != null) {
-        final appDir = await getApplicationDocumentsDirectory();
-        final fileName = 'visit_attachment_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final savedFile = await File(picked.path).copy(path_utils.join(appDir.path, fileName));
-        setState(() {
-          _attachmentPath = savedFile.path;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error picking image: $e');
-    }
-  }
-
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return;
-
-    final finalDateTime = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-      _selectedTime.hour,
-      _selectedTime.minute,
-    ).millisecondsSinceEpoch;
-
-    final cleanPhone = _normalizeDigits(_clinicPhoneController.text.trim());
-    final now = DateTime.now().millisecondsSinceEpoch;
-
-    final visit = DoctorVisit(
-      id: widget.visit?.id ?? 'visit_${DateTime.now().millisecondsSinceEpoch}',
-      doctorName: _doctorNameController.text.trim(),
-      specialty: _specialtyController.text.trim().isEmpty ? null : _specialtyController.text.trim(),
-      clinicName: _clinicNameController.text.trim().isEmpty ? null : _clinicNameController.text.trim(),
-      clinicAddress: _clinicAddressController.text.trim().isEmpty ? null : _clinicAddressController.text.trim(),
-      clinicPhone: cleanPhone.isEmpty ? null : cleanPhone,
-      visitDateTime: finalDateTime,
-      visitType: _visitType,
-      status: widget.visit?.status ?? 'UPCOMING',
-      reason: _reasonController.text.trim().isEmpty ? null : _reasonController.text.trim(),
-      doctorNotes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-      userNotes: widget.visit?.userNotes,
-      followUpDate: widget.visit?.followUpDate,
-      reminderBefore: _reminderBefore,
-      attachmentPath: _attachmentPath,
-      createdAt: widget.visit?.createdAt ?? now,
-      updatedAt: now,
-    );
-
-    widget.onSave(visit);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final l10n = AppLocalizations.of(context)!;
-    final mediaQuery = MediaQuery.of(context);
-
-    return Container(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 20,
-        bottom: mediaQuery.viewInsets.bottom + 16,
-      ),
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                widget.visit == null ? l10n.doctorVisitsAddTitle : l10n.doctorVisitsEditTitle,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                  ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _doctorNameController,
-                style: TextStyle(color: colors.textPrimary),
-                decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsDoctorName, icon: Icons.person),
-                validator: (val) => val == null || val.trim().isEmpty ? 'لطفاً نام پزشک را وارد کنید' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _specialtyController,
-                style: TextStyle(color: colors.textPrimary),
-                decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsSpecialty, icon: Icons.star_border),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: _visitType,
-                style: TextStyle(color: colors.textPrimary),
-                decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsType, icon: Icons.category),
-                dropdownColor: colors.card,
-                items: [
-                  DropdownMenuItem(value: 'IN_PERSON', child: Text(l10n.doctorVisitsTypeInPerson)),
-                  DropdownMenuItem(value: 'ONLINE', child: Text(l10n.doctorVisitsTypeOnline)),
-                  DropdownMenuItem(value: 'TELEPHONE', child: Text(l10n.doctorVisitsTypeTelephone)),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() {
-                      _visitType = val;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _pickDate,
-                      icon: Icon(Icons.calendar_today, color: colors.primary, size: 18),
-                      label: Text(
-                        _toPersianDigits(
-                          '${Jalali.fromDateTime(_selectedDate).year}/${Jalali.fromDateTime(_selectedDate).month}/${Jalali.fromDateTime(_selectedDate).day}',
-                        ),
-                        style: TextStyle(color: colors.textPrimary),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: colors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _pickTime,
-                      icon: Icon(Icons.access_time, color: colors.primary, size: 18),
-                      label: Text(
-                        _toPersianDigits('${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}'),
-                        style: TextStyle(color: colors.textPrimary),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: colors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _clinicNameController,
-                style: TextStyle(color: colors.textPrimary),
-                decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsClinicName, icon: Icons.business),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _clinicAddressController,
-                style: TextStyle(color: colors.textPrimary),
-                decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsClinicAddress, icon: Icons.location_on),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _clinicPhoneController,
-                keyboardType: TextInputType.phone,
-                style: TextStyle(color: colors.textPrimary),
-                decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsClinicPhone, icon: Icons.phone),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<int>(
-                initialValue: _reminderBefore,
-                style: TextStyle(color: colors.textPrimary),
-                decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsReminder, icon: Icons.notifications),
-                dropdownColor: colors.card,
-                items: [
-                  DropdownMenuItem(value: 0, child: Text(l10n.doctorVisitsReminderNone)),
-                  DropdownMenuItem(value: 15, child: Text(l10n.doctorVisitsReminder15m)),
-                  DropdownMenuItem(value: 30, child: Text(l10n.doctorVisitsReminder30m)),
-                  DropdownMenuItem(value: 60, child: Text(l10n.doctorVisitsReminder1h)),
-                  DropdownMenuItem(value: 120, child: Text(l10n.doctorVisitsReminder2h)),
-                  DropdownMenuItem(value: 1440, child: Text(l10n.doctorVisitsReminder1d)),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() {
-                      _reminderBefore = val;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _reasonController,
-                style: TextStyle(color: colors.textPrimary),
-                decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsReason, icon: Icons.question_answer),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _notesController,
-                style: TextStyle(color: colors.textPrimary),
-                decoration: RitmoTheme.inputDecoration(context, label: l10n.doctorVisitsNotes, icon: Icons.notes),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _pickImage,
-                      icon: Icon(Icons.add_photo_alternate, color: colors.primary),
-                      label: Text(
-                        _attachmentPath == null ? l10n.doctorVisitsAddAttachment : 'تغییر نسخه / سند',
-                        style: TextStyle(color: colors.textPrimary, fontSize: 13),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: colors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                  if (_attachmentPath != null) ...[
-                    const SizedBox(width: 12),
-                    InkWell(
-                      onTap: () {
-                        setState(() {
-                          _attachmentPath = null;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: colors.medicalRed),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(Icons.delete_forever, color: colors.medicalRed),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              if (_attachmentPath != null) ...[
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(
-                    File(_attachmentPath!),
-                    height: 150,
-                    cacheHeight: 300,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text(
-                  l10n.doctorVisitsSave,
-                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

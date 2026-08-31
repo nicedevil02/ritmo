@@ -223,30 +223,23 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ─── Header & Diabetes Toggle ───
+            // ─── Diabetes Toggle Bar ───
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  l10n.bloodSugarTitle,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  l10n.bloodSugarDiabeticFlag,
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary, fontWeight: FontWeight.bold),
                 ),
-                Row(
-                  children: [
-                    Text(
-                      l10n.bloodSugarDiabeticFlag,
-                      style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                    ),
-                    Switch(
-                      value: _isDiabetic,
-                      activeTrackColor: colors.primary,
-                      onChanged: _toggleDiabetic,
-                    ),
-                  ],
+                const SizedBox(width: 8),
+                Switch.adaptive(
+                  value: _isDiabetic,
+                  activeTrackColor: colors.primary,
+                  onChanged: _toggleDiabetic,
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
             // ─── Time Range Selector ───
             _buildTimeRangeSelector(),
@@ -842,17 +835,22 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
             ),
           ),
           const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: _saveLog,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colors.primary,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 0,
-            ),
-            child: Text(
-              l10n.bloodSugarSave,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          RitmoNeuButton(
+            onTap: _saveLog,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.checkmark_seal_fill, color: colors.primary, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.bloodSugarSave,
+                  style: TextStyle(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -969,33 +967,19 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
     );
   }
 
-  void _confirmDelete(String id) {
-    final colors = context.colors;
-    showDialog(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.card,
-          title: const Text('حذف سنجش', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: const Text('آیا مطمئن هستید که می‌خواهید این سنجش قند خون را حذف کنید؟'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('انصراف'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _deleteLog(id);
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
-              child: const Text('حذف', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+  Future<void> _confirmDelete(String id) async {
+    final res = await RitmoGlassDialog.show(
+      context,
+      title: 'حذف سنجش',
+      content: 'آیا مطمئن هستید که می‌خواهید این سنجش قند خون را حذف کنید؟',
+      confirmLabel: 'حذف دائمی',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
+      icon: CupertinoIcons.trash_fill,
     );
+    if (res == true) {
+      await _deleteLog(id);
+    }
   }
 }
 

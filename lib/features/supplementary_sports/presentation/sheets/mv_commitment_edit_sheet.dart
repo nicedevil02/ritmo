@@ -241,7 +241,7 @@ class _MvCommitmentEditSheetState extends State<MvCommitmentEditSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final isEdit = widget.commitment != null;
@@ -253,127 +253,138 @@ class _MvCommitmentEditSheetState extends State<MvCommitmentEditSheet> {
       body: _isLoadingKinds
           ? const Center(
               child: Padding(
-                padding: EdgeInsets.all(24.0),
+                padding: EdgeInsets.all(32),
                 child: CircularProgressIndicator(),
               ),
             )
           : SingleChildScrollView(
-              padding: EdgeInsets.symmetric(
-                horizontal: metrics.spaceMd,
-                vertical: metrics.spaceSm,
-              ),
+              padding: const EdgeInsets.only(bottom: 24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. نوع ورزش (تراشه + دکمه بیشتر)
+                  // 1. انتخاب نوع ورزش (MvKindPickerSheet)
                   Text(
-                    l10n.mv_library_tab_kinds,
+                    l10n.mv_kind_picker_title,
                     style: textTheme.labelLarge?.copyWith(
                       color: colors.textSecondary,
                     ),
                   ),
-                  SizedBox(height: metrics.spaceXs),
-                  Row(
-                    children: [
-                      if (_selectedKind != null)
-                        MvChip(
-                          label: '${_selectedKind!.emoji} ${_selectedKind!.titleFa}',
-                          isSelected: true,
-                          onTap: _pickKind,
+                  const SizedBox(height: 4),
+                  RitmoCard.neumorphic(
+                    key: const ValueKey('mv_commitment_kind_picker_btn'),
+                    onTap: _pickKind,
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Text(
+                          _selectedKind?.emoji ?? '🏃',
+                          style: textTheme.headlineSmall,
                         ),
-                      SizedBox(width: metrics.spaceSm),
-                      MvChip(
-                        key: const ValueKey('mv_commitment_pick_kind'),
-                        label: l10n.mv_commitment_pick_more,
-                        isSelected: false,
-                        onTap: _pickKind,
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _selectedKind?.titleFa ?? l10n.mv_kind_picker_title,
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colors.textPrimary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              if (_selectedKind != null)
+                                Text(
+                                  _selectedKind!.family.titleFa,
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_left_rounded,
+                          color: colors.textSecondary,
+                        ),
+                      ],
+                    ),
                   ),
-                  SizedBox(height: metrics.spaceMd),
+                  const SizedBox(height: 16),
 
-                  // 2. عنوان (TextField)
+                  // 2. عنوان دلخواه (اختیاری)
+                  Text(
+                    l10n.mv_custom_kind_name,
+                    style: textTheme.labelLarge?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   TextField(
                     key: const ValueKey('mv_commitment_title_field'),
                     controller: _titleController,
-                    decoration: InputDecoration(
-                      labelText: l10n.mv_custom_kind_name,
-                      filled: true,
-                      fillColor: colors.surfaceElevated,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(metrics.radiusField),
-                        borderSide: BorderSide.none,
-                      ),
+                    decoration: const InputDecoration(
+                      hintText: 'e.g. Wednesday Futsal',
                     ),
-                    style: textTheme.bodyLarge,
                   ),
-                  SizedBox(height: metrics.spaceMd),
+                  const SizedBox(height: 16),
 
-                  // 3. روز هفته (۷ تراشه شنبه=۰)
+                  // 3. روز هفته (انتخاب تکی از شنبه تا جمعه)
                   Text(
                     l10n.mv_commitment_day_label,
                     style: textTheme.labelLarge?.copyWith(
                       color: colors.textSecondary,
                     ),
                   ),
-                  SizedBox(height: metrics.spaceXs),
+                  const SizedBox(height: 4),
                   Wrap(
-                    spacing: metrics.spaceXs,
-                    runSpacing: metrics.spaceXs,
+                    spacing: 8,
+                    runSpacing: 8,
                     children: List.generate(7, (sat0) {
                       final selected = _selectedDaySat0 == sat0;
                       return MvChip(
-                        key: ValueKey('mv_day_chip_$sat0'),
+                        key: ValueKey('mv_commitment_day_$sat0'),
                         label: _dayLabel(sat0),
                         isSelected: selected,
-                        onTap: () {
-                          setState(() => _selectedDaySat0 = sat0);
-                        },
+                        onTap: () =>
+                            setState(() => _selectedDaySat0 = sat0),
                       );
                     }),
                   ),
-                  SizedBox(height: metrics.spaceMd),
+                  const SizedBox(height: 16),
 
-                  // 4. ساعت شروع (TimePicker)
+                  // 4. زمان شروع (TimePicker)
                   Text(
                     l10n.mv_commitment_time_label,
                     style: textTheme.labelLarge?.copyWith(
                       color: colors.textSecondary,
                     ),
                   ),
-                  SizedBox(height: metrics.spaceXs),
-                  InkWell(
+                  const SizedBox(height: 4),
+                  RitmoNeuSurface(
                     key: const ValueKey('mv_commitment_time_picker_btn'),
                     onTap: _pickTime,
-                    borderRadius: BorderRadius.circular(metrics.radiusField),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: metrics.spaceMd,
-                        vertical: metrics.spaceSm,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.surfaceElevated,
-                        borderRadius: BorderRadius.circular(metrics.radiusField),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.access_time_rounded,
-                            size: metrics.iconSm,
-                            color: colors.accent,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 18,
+                          color: colors.accent,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatTimeOfDay(_selectedTime),
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
                           ),
-                          SizedBox(width: metrics.spaceSm),
-                          Text(
-                            _formatTimeOfDay(_selectedTime),
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: metrics.spaceMd),
+                  const SizedBox(height: 16),
 
                   // 5. مدت (دقیقه) (۳۰/۴۵/۶۰/۹۰/۱۲۰)
                   Text(

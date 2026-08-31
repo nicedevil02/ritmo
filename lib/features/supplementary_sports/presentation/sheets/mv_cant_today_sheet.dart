@@ -65,7 +65,6 @@ class MvCantTodaySheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final metrics = context.metrics;
     final l10n = AppLocalizations.of(context);
 
     return MvSheetScaffold(
@@ -85,7 +84,7 @@ class MvCantTodaySheet extends StatelessWidget {
               onTap: onCancelAnchorThisWeek!,
               isRecommended: true,
             ),
-            SizedBox(height: metrics.spaceSm),
+            const SizedBox(height: 8),
           ],
           _buildOption(
             context: context,
@@ -95,7 +94,7 @@ class MvCantTodaySheet extends StatelessWidget {
             onTap: onMinimalDose,
             isRecommended: !slot.isLocked,
           ),
-          SizedBox(height: metrics.spaceSm),
+          const SizedBox(height: 8),
           _buildOption(
             context: context,
             icon: Icons.self_improvement_rounded,
@@ -103,7 +102,7 @@ class MvCantTodaySheet extends StatelessWidget {
             description: l10n?.mv_cant_today_option_stretch_desc ?? 'Light sweat-free stretching',
             onTap: onChangeToStretch,
           ),
-          SizedBox(height: metrics.spaceSm),
+          const SizedBox(height: 8),
           _buildOption(
             context: context,
             icon: Icons.event_repeat_rounded,
@@ -111,7 +110,7 @@ class MvCantTodaySheet extends StatelessWidget {
             description: l10n?.mv_cant_today_option_tomorrow_desc ?? 'Rest today and workout tomorrow',
             onTap: onMoveToTomorrow,
           ),
-          SizedBox(height: metrics.spaceSm),
+          const SizedBox(height: 8),
           _buildOption(
             context: context,
             icon: Icons.close_rounded,
@@ -120,7 +119,7 @@ class MvCantTodaySheet extends StatelessWidget {
             onTap: onSkipEntirely,
             isDestructive: true,
           ),
-          SizedBox(height: metrics.spaceLg),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -136,104 +135,73 @@ class MvCantTodaySheet extends StatelessWidget {
     bool isRecommended = false,
     bool isDestructive = false,
   }) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
-    final Color itemBg = isRecommended
-        ? colors.primary.withValues(alpha: 0.1)
-        : colors.surface;
-    final Color itemBorder = isRecommended
-        ? colors.primary.withValues(alpha: 0.5)
-        : colors.border;
     final Color iconColor = isDestructive
         ? colors.textSecondary
         : isRecommended
         ? colors.primary
         : colors.textPrimary;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: key,
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(metrics.radiusCard),
-        child: Container(
-          padding: EdgeInsets.all(metrics.spaceMd),
-          decoration: BoxDecoration(
-            color: itemBg,
-            borderRadius: BorderRadius.circular(metrics.radiusCard),
-            border: Border.all(color: itemBorder),
+    return RitmoCard.neumorphic(
+      key: key,
+      onTap: onTap,
+      isSelected: isRecommended,
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          RitmoNeuSurface(
+            width: 40,
+            height: 40,
+            radius: 12,
+            padding: EdgeInsets.zero,
+            child: Center(
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
           ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(metrics.spaceSm),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colors.surfaceElevated,
-                ),
-                child: Icon(icon, color: iconColor, size: metrics.iconMd),
-              ),
-              SizedBox(width: metrics.spaceMd),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          title,
-                          style: textTheme.titleSmall?.copyWith(
-                            color: isDestructive
-                                ? colors.textSecondary
-                                : colors.textPrimary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        if (isRecommended) ...[
-                          SizedBox(width: metrics.spaceSm),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colors.primary,
-                              borderRadius: BorderRadius.circular(
-                                RitmoRadius.pill,
-                              ),
-                            ),
-                            child: Text(
-                              l10n?.mv_cant_today_recommended ?? 'Recommended',
-                              style: textTheme.labelSmall?.copyWith(
-                                color: colors.onPrimary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    SizedBox(height: metrics.spaceXs),
                     Text(
-                      description,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colors.textSecondary,
+                      title,
+                      style: textTheme.titleSmall?.copyWith(
+                        color: isDestructive
+                            ? colors.textSecondary
+                            : colors.textPrimary,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
+                    if (isRecommended) ...[
+                      const SizedBox(width: 8),
+                      RitmoCardBadge(
+                        label: l10n?.mv_cant_today_recommended ?? 'Recommended',
+                        color: colors.primary,
+                      ),
+                    ],
                   ],
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: metrics.iconSm,
-                color: colors.textSecondary,
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: colors.textSecondary,
+          ),
+        ],
       ),
     );
   }

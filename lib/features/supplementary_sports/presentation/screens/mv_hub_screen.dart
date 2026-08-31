@@ -298,10 +298,10 @@ class _MvHubScreenState extends State<MvHubScreen> {
         );
 
     final l10n = AppLocalizations.of(context)!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.colors;
     final topPadding = MediaQuery.paddingOf(context).top;
     final contentTopPadding = topPadding + 190.0;
-    const accentColor = Color(0xFF10B981);
+    final accentColor = colors.modules.sports;
 
     return RitmoTabbedMorphingScaffold(
       title: l10n.mv_hub_title,
@@ -329,7 +329,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
         const SizedBox(width: 8),
         RitmoVibrancyActionButton(
           icon: CupertinoIcons.square_grid_2x2,
-          iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+          iconColor: colors.textSecondary,
           tooltip: l10n.mv_library_tooltip,
           onTap: () {
             Navigator.push(
@@ -344,7 +344,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
         const SizedBox(width: 8),
         RitmoVibrancyActionButton(
           icon: CupertinoIcons.lock_shield,
-          iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+          iconColor: colors.textSecondary,
           tooltip: l10n.mv_commitments_title,
           onTap: () {
             Navigator.push(
@@ -360,7 +360,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
         const SizedBox(width: 8),
         RitmoVibrancyActionButton(
           icon: CupertinoIcons.settings,
-          iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+          iconColor: colors.textSecondary,
           tooltip: l10n.mv_settings_tooltip,
           onTap: () {
             Navigator.push(

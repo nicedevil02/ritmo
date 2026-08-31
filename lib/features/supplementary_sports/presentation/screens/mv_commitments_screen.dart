@@ -4,7 +4,6 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
-import '../components/components.dart';
 import '../sheets/mv_commitment_edit_sheet.dart';
 
 /// Screen: مدیریت ورزش‌های ثابت و لنگرهای هفتگی (S8-T3 & Decision W-A).
@@ -104,64 +103,36 @@ class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: colors.surface,
       appBar: AppBar(
-        title: Text(
-          l10n.mv_commitments_title,
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: colors.textPrimary,
+        title: Text(l10n.mv_commitments_title),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            key: const ValueKey('mv_commitments_add_btn'),
+            icon: const Icon(Icons.add_rounded),
+            onPressed: () => _openEditSheet(),
           ),
-        ),
-        backgroundColor: colors.surface,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      floatingActionButton: FloatingActionButton(
-        key: const ValueKey('mv_add_commitment_fab'),
-        backgroundColor: colors.accent,
-        foregroundColor: Colors.white,
-        onPressed: () => _openEditSheet(),
-        child: Icon(Icons.add, size: metrics.iconMd),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _commitments.isEmpty
               ? Padding(
-                  padding: EdgeInsets.all(metrics.spaceLg),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      MvInsufficientData(
-                        title: l10n.mv_commitments_title,
-                        requirementDescription: l10n.mv_commitments_empty,
-                      ),
-                      SizedBox(height: metrics.spaceLg),
-                      ElevatedButton.icon(
-                        key: const ValueKey('mv_add_commitment_empty_btn'),
-                        icon: Icon(Icons.add, size: metrics.iconSm),
-                        label: Text(l10n.mv_commitment_add),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.accent,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: metrics.spaceLg,
-                            vertical: metrics.spaceSm,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(metrics.radiusCard),
-                          ),
-                        ),
-                        onPressed: () => _openEditSheet(),
-                      ),
-                    ],
+                  padding: const EdgeInsets.all(24),
+                  child: Center(
+                    child: RitmoNeuEmptyCard(
+                      icon: Icons.lock_clock_outlined,
+                      title: l10n.mv_commitments_title,
+                      subtitle: l10n.mv_commitments_empty,
+                      actionLabel: l10n.mv_commitment_add,
+                      onActionTap: () => _openEditSheet(),
+                    ),
                   ),
                 )
               : ListView.separated(
@@ -174,69 +145,57 @@ class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
                     final kind = _kindsMap[c.kindCode];
                     final emoji = kind?.emoji ?? '🏃';
 
-                    return InkWell(
+                    return RitmoCard.neumorphic(
                       key: ValueKey('mv_commitment_card_${c.id}'),
                       onTap: () => _openEditSheet(c),
-                      borderRadius: BorderRadius.circular(metrics.radiusCard),
-                      child: Container(
-                        padding: EdgeInsets.all(metrics.spaceMd),
-                        decoration: BoxDecoration(
-                          color: colors.surfaceElevated,
-                          borderRadius:
-                              BorderRadius.circular(metrics.radiusCard),
-                          border: Border.all(
-                            color: colors.border.withValues(alpha: 0.5),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: colors.surfaceElevated,
-                                shape: BoxShape.circle,
-                              ),
-                              alignment: Alignment.center,
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          RitmoNeuSurface(
+                            width: 44,
+                            height: 44,
+                            radius: 12,
+                            padding: EdgeInsets.zero,
+                            child: Center(
                               child: Text(
                                 emoji,
                                 style: textTheme.titleMedium,
                               ),
                             ),
-                            SizedBox(width: metrics.spaceMd),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    c.titleFa ?? l10n.mv_exercise_fallback,
-                                    style: textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.textPrimary,
-                                    ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  c.titleFa ?? l10n.mv_exercise_fallback,
+                                  style: textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.textPrimary,
                                   ),
-                                  SizedBox(height: metrics.spaceXs),
-                                  Text(
-                                    l10n.mv_commitment_recurrence_summary(
-                                      _dayLabel(c.dayOfWeekSat0),
-                                      toPersianDigits(c.startTime),
-                                      toPersianDigits(c.durationMinutes.toString()),
-                                    ),
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: colors.textSecondary,
-                                    ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  l10n.mv_commitment_recurrence_summary(
+                                    _dayLabel(c.dayOfWeekSat0),
+                                    toPersianDigits(c.startTime),
+                                    toPersianDigits(c.durationMinutes.toString()),
                                   ),
-                                ],
-                              ),
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Switch(
-                              key: ValueKey('mv_commitment_switch_${c.id}'),
-                              value: c.isActive,
-                              activeTrackColor: colors.accent,
-                              onChanged: (val) => _toggleActive(c, val),
-                            ),
-                          ],
-                        ),
+                          ),
+                          Switch(
+                            key: ValueKey('mv_commitment_switch_${c.id}'),
+                            value: c.isActive,
+                            activeTrackColor: colors.accent,
+                            onChanged: (val) => _toggleActive(c, val),
+                          ),
+                        ],
                       ),
                     );
                   },

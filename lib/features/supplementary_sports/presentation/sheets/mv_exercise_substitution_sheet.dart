@@ -79,8 +79,7 @@ class _MvExerciseSubstitutionSheetState
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
@@ -102,8 +101,8 @@ class _MvExerciseSubstitutionSheetState
           children: [
             // 1. Reason Chips
             Wrap(
-              spacing: metrics.spaceSm,
-              runSpacing: metrics.spaceSm,
+              spacing: 8,
+              runSpacing: 8,
               children: reasons.map((r) {
                 final isSel = r['code'] == _selectedReason;
                 return MvChip(
@@ -119,23 +118,19 @@ class _MvExerciseSubstitutionSheetState
                 );
               }).toList(),
             ),
-            SizedBox(height: metrics.spaceLg),
+            const SizedBox(height: 16),
 
             // 2. Reason Explanation
-            Container(
-              padding: EdgeInsets.all(metrics.spaceMd),
-              decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(metrics.radiusField),
-              ),
+            RitmoCard.neumorphic(
+              padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
                   Icon(
                     Icons.auto_awesome_rounded,
                     color: colors.primary,
-                    size: metrics.iconMd,
+                    size: 20,
                   ),
-                  SizedBox(width: metrics.spaceSm),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _decision.reasonFa,
@@ -148,7 +143,7 @@ class _MvExerciseSubstitutionSheetState
                 ],
               ),
             ),
-            SizedBox(height: metrics.spaceLg),
+            const SizedBox(height: 16),
 
             // 3. Suggested Substitutes
             Text(
@@ -158,11 +153,11 @@ class _MvExerciseSubstitutionSheetState
                 fontWeight: FontWeight.w700,
               ),
             ),
-            SizedBox(height: metrics.spaceSm),
+            const SizedBox(height: 8),
 
             if (_decision.value.isEmpty)
               Padding(
-                padding: EdgeInsets.symmetric(vertical: metrics.spaceXl),
+                padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Center(
                   child: Text(
                     l10n?.mv_substitute_empty ?? 'No matching substitute found.',
@@ -176,71 +171,56 @@ class _MvExerciseSubstitutionSheetState
               ...List.generate(_decision.value.length, (index) {
                 final ex = _decision.value[index];
                 return Padding(
-                  padding: EdgeInsets.only(bottom: metrics.spaceSm),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => widget.onExerciseSubstituted(ex),
-                      borderRadius: BorderRadius.circular(metrics.radiusCard),
-                      child: Container(
-                        padding: EdgeInsets.all(metrics.spaceMd),
-                        decoration: BoxDecoration(
-                          color: colors.surface,
-                          borderRadius: BorderRadius.circular(
-                            metrics.radiusCard,
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: RitmoCard.neumorphic(
+                    onTap: () => widget.onExerciseSubstituted(ex),
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        RitmoNeuSurface(
+                          width: 48,
+                          height: 48,
+                          radius: 12,
+                          padding: EdgeInsets.zero,
+                          child: Center(
+                            child: Icon(
+                              Icons.fitness_center_rounded,
+                              color: colors.primary,
+                            ),
                           ),
-                          border: Border.all(color: colors.border),
                         ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: colors.surfaceElevated,
-                                borderRadius: BorderRadius.circular(
-                                  metrics.radiusField,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                ex.name,
+                                style: textTheme.bodyLarge?.copyWith(
+                                  color: colors.textPrimary,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              child: Icon(
-                                Icons.fitness_center_rounded,
-                                color: colors.primary,
+                              const SizedBox(height: 4),
+                              Text(
+                                ex.category,
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: colors.textSecondary,
+                                ),
                               ),
-                            ),
-                            SizedBox(width: metrics.spaceMd),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    ex.name,
-                                    style: textTheme.bodyLarge?.copyWith(
-                                      color: colors.textPrimary,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  SizedBox(height: metrics.spaceXs),
-                                  Text(
-                                    ex.category,
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: colors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            MvPrimaryAction(
-                              label: l10n?.mv_substitute_select ?? 'Select',
-                              onPressed: () => widget.onExerciseSubstituted(ex),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+                        MvPrimaryAction(
+                          label: l10n?.mv_substitute_select ?? 'Select',
+                          onPressed: () => widget.onExerciseSubstituted(ex),
+                        ),
+                      ],
                     ),
                   ),
                 );
               }),
-            SizedBox(height: metrics.spaceLg),
+            const SizedBox(height: 16),
           ],
         ),
       ),

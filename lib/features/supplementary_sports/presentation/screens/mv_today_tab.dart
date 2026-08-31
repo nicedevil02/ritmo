@@ -44,9 +44,9 @@ class MvTodayTab extends StatelessWidget {
     required this.onStartSession,
     this.onContinueSession,
     this.isSessionInProgress = false,
-    this.kindUseCase,
     required this.onSlotUpdated,
     required this.onCheckinSaved,
+    this.kindUseCase,
     required this.onQuickLogSaved,
     required this.onDateSelected,
     this.topPadding = 16.0,
@@ -54,7 +54,7 @@ class MvTodayTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
@@ -85,27 +85,17 @@ class MvTodayTab extends StatelessWidget {
 
           // Tomorrow Anchor Notice (S2-T6, S8-T5)
           if (showTomorrowAnchor) ...[
-            Container(
+            RitmoCard.neumorphic(
               key: const ValueKey('mv_tomorrow_anchor_banner'),
-              padding: EdgeInsets.symmetric(
-                horizontal: metrics.spaceMd,
-                vertical: metrics.spaceSm,
-              ),
-              decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(metrics.radiusCard),
-                border: Border.all(
-                  color: colors.primary.withValues(alpha: 0.3),
-                ),
-              ),
+              padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
                   Icon(
                     Icons.lock_clock_rounded,
-                    size: metrics.iconSm,
+                    size: 20,
                     color: colors.accent,
                   ),
-                  SizedBox(width: metrics.spaceSm),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       l10n != null && tomorrowSlot.plannedTime != null

@@ -98,7 +98,7 @@ class MvProgressTab extends StatelessWidget {
 
   /// 1. کارت سلامت این هفته (دقیقهٔ معادل متوسط / ۱۵۰ و تعداد روز قدرتی / ۲)
   Widget _buildWeeklyHealthCard(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
@@ -122,13 +122,7 @@ class MvProgressTab extends StatelessWidget {
     final strDays = budget.strengthDays;
     final strProgress = (strDays / targetStr).clamp(0.0, 1.5);
 
-    return Container(
-      padding: EdgeInsets.all(metrics.spaceLg),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(metrics.radiusCard),
-        border: Border.all(color: colors.border),
-      ),
+    return RitmoCard.neumorphic(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -224,41 +218,38 @@ class MvProgressTab extends StatelessWidget {
 
   /// 2. کارت بار تمرینی (۷ روز در برابر میانگین ۲۸ روز + نسبت ACWR)
   Widget _buildTrainingLoadCard(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
     final load = loadSnapshot;
-    if (load == null || !load.hasEnoughData) {
+    if (load == null || load.acuteLoad == 0.0) {
       return MvInsufficientData(
-        key: const ValueKey('mv_load_insufficient_data'),
-        title: l10n?.mv_training_load_title ?? 'Training Load & Balance',
-        requirementDescription: l10n?.mv_training_load_insufficient ??
-            'At least 14 days of history and recorded sessions are required to calculate ACWR accurately.',
+        title: 'Training Load (ACWR)',
+        requirementDescription: l10n?.mv_insufficient_data_generic ??
+            'Requires at least 7 days of activity to calculate Acute:Chronic Workload Ratio.',
       );
     }
 
-    Color badgeColor = colors.success;
-    if (load.bandKey == 'mv_load_band_watch') {
+    final Color badgeColor;
+    if (load.bandKey == 'mv_load_band_optimal') {
+      badgeColor = colors.success;
+    } else if (load.bandKey == 'mv_load_band_high') {
       badgeColor = colors.warning;
     } else if (load.bandKey == 'mv_load_band_spike') {
       badgeColor = colors.error;
     } else if (load.bandKey == 'mv_load_band_low') {
       badgeColor = colors.textSecondary;
+    } else {
+      badgeColor = colors.primary;
     }
 
     final ratioVal = load.ratio ?? 1.0;
     final normalizedProgress = (ratioVal / 2.0).clamp(0.0, 1.0);
 
-    return Container(
+    return RitmoCard.neumorphic(
       key: const ValueKey('mv_training_load_card'),
-      padding: EdgeInsets.all(metrics.spaceLg),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(metrics.radiusCard),
-        border: Border.all(color: colors.border),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -357,7 +348,7 @@ class MvProgressTab extends StatelessWidget {
 
   /// 3. کارت توزیع ورزش‌ها (سهم هر نوع از دقیقهٔ ماه جاری)
   Widget _buildKindDistributionCard(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
@@ -375,13 +366,7 @@ class MvProgressTab extends StatelessWidget {
     final sorted = kindMinutes.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    return Container(
-      padding: EdgeInsets.all(metrics.spaceLg),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(metrics.radiusCard),
-        border: Border.all(color: colors.border),
-      ),
+    return RitmoCard.neumorphic(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -473,7 +458,7 @@ class MvProgressTab extends StatelessWidget {
 
   /// 4. کارت رکوردها به تفکیک نوع (Partitioned PRs)
   Widget _buildPersonalRecordsCard(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
@@ -486,13 +471,7 @@ class MvProgressTab extends StatelessWidget {
       );
     }
 
-    return Container(
-      padding: EdgeInsets.all(metrics.spaceLg),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(metrics.radiusCard),
-        border: Border.all(color: colors.border),
-      ),
+    return RitmoCard.neumorphic(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -555,7 +534,7 @@ class MvProgressTab extends StatelessWidget {
 
   /// 5. دورهٔ هدف‌دار فعال (Active Goal Campaign)
   Widget _buildActiveCampaignCard(BuildContext context, MvCampaign campaign) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
@@ -579,14 +558,8 @@ class MvProgressTab extends StatelessWidget {
 
     final packWeight = weekPlan?.packWeightKg ?? 0.0;
 
-    return Container(
+    return RitmoCard.neumorphic(
       key: const ValueKey('mv_active_campaign_card'),
-      padding: EdgeInsets.all(metrics.spaceLg),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(metrics.radiusCard),
-        border: Border.all(color: colors.primary.withValues(alpha: 0.4)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -610,19 +583,9 @@ class MvProgressTab extends StatelessWidget {
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(RitmoRadius.pill),
-                ),
-                child: Text(
-                  phaseTitle,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+              RitmoCardBadge(
+                label: phaseTitle,
+                color: colors.primary,
               ),
             ],
           ),
@@ -661,19 +624,13 @@ class MvProgressTab extends StatelessWidget {
 
   /// 5b. کارت دورهٔ هدف‌دار غیرفعال (CTA ساخت دوره)
   Widget _buildInactiveCampaignCard(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
-    return Container(
+    return RitmoCard.neumorphic(
       key: const ValueKey('mv_campaign_inactive_card'),
-      padding: EdgeInsets.all(metrics.spaceLg),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(metrics.radiusCard),
-        border: Border.all(color: colors.border),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -731,30 +688,24 @@ class MvProgressTab extends StatelessWidget {
 
   /// Hero streak
   Widget _buildStreakHero(BuildContext context, int weeks) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
-    return Container(
+    return RitmoCard.neumorphic(
       padding: EdgeInsets.all(metrics.spaceLg),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [colors.primary, colors.primary.withValues(alpha: 0.8)],
-        ),
-        borderRadius: BorderRadius.circular(metrics.radiusHero),
-      ),
       child: Row(
         children: [
           Container(
             padding: EdgeInsets.all(metrics.spaceMd),
             decoration: BoxDecoration(
-              color: colors.onPrimary.withValues(alpha: 0.2),
+              color: colors.primary.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.local_fire_department_rounded,
-              color: colors.onPrimary,
+              color: colors.primary,
               size: metrics.iconLg,
             ),
           ),
@@ -766,7 +717,7 @@ class MvProgressTab extends StatelessWidget {
                 Text(
                   l10n?.mv_streak_continuous_weeks ?? 'Active Continuous Weeks',
                   style: textTheme.labelMedium?.copyWith(
-                    color: colors.onPrimary.withValues(alpha: 0.9),
+                    color: colors.textSecondary,
                   ),
                 ),
                 SizedBox(height: metrics.spaceXs),
@@ -774,7 +725,7 @@ class MvProgressTab extends StatelessWidget {
                   l10n?.mv_streak_weeks_count(toPersianDigits(weeks.toString())) ??
                       '${toPersianDigits(weeks.toString())} weeks',
                   style: textTheme.headlineMedium?.copyWith(
-                    color: colors.onPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -791,8 +742,7 @@ class MvProgressTab extends StatelessWidget {
     BuildContext context,
     List<MvInsight> insightsList,
   ) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
@@ -805,9 +755,9 @@ class MvProgressTab extends StatelessWidget {
             Icon(
               Icons.lightbulb_outline_rounded,
               color: colors.accent,
-              size: metrics.iconSm,
+              size: 20,
             ),
-            SizedBox(width: metrics.spaceXs),
+            const SizedBox(width: 6),
             Text(
               l10n?.mv_progress_insights ?? 'Progress Insights',
               style: textTheme.titleSmall?.copyWith(
@@ -817,56 +767,53 @@ class MvProgressTab extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: metrics.spaceSm),
+        const SizedBox(height: 8),
         ...insightsList.map((insight) {
-          return Container(
-            key: ValueKey(insight.key),
-            margin: EdgeInsets.only(bottom: metrics.spaceSm),
-            padding: EdgeInsets.all(metrics.spaceMd),
-            decoration: BoxDecoration(
-              color: colors.surfaceElevated,
-              borderRadius: BorderRadius.circular(metrics.radiusCard),
-              border: Border.all(color: colors.border.withValues(alpha: 0.6)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(metrics.spaceXs),
-                  decoration: BoxDecoration(
-                    color: colors.accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(metrics.radiusField),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: RitmoCard.neumorphic(
+              key: ValueKey(insight.key),
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: colors.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 18,
+                      color: colors.accent,
+                    ),
                   ),
-                  child: Icon(
-                    Icons.auto_awesome_rounded,
-                    size: metrics.iconSm,
-                    color: colors.accent,
-                  ),
-                ),
-                SizedBox(width: metrics.spaceMd),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        insight.titleFa,
-                        style: textTheme.labelLarge?.copyWith(
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.w700,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          insight.titleFa,
+                          style: textTheme.labelLarge?.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: metrics.spaceXs),
-                      Text(
-                        insight.descriptionFa,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colors.textSecondary,
-                          height: 1.4,
+                        const SizedBox(height: 4),
+                        Text(
+                          insight.descriptionFa,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colors.textSecondary,
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }),
@@ -928,7 +875,7 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
 

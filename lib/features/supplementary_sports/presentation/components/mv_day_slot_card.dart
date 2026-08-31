@@ -5,6 +5,7 @@ import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 
 /// Day Slot Card for Week Tab (Section 5.2 & 5.10).
+/// Refactored to RitmoCard.neumorphic with canonical badges.
 class MvDaySlotCard extends StatelessWidget {
   final MvSlot slot;
   final VoidCallback? onTap;
@@ -13,8 +14,7 @@ class MvDaySlotCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
@@ -40,157 +40,92 @@ class MvDaySlotCard extends StatelessWidget {
         break;
     }
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(metrics.radiusCard),
-        child: Container(
-          padding: EdgeInsets.all(metrics.spaceLg),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(metrics.radiusCard),
-            border: Border.all(color: colors.border.withValues(alpha: 0.7)),
-          ),
-          child: Row(
-            children: [
-              // Day Indicator Box
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: colors.surfaceElevated,
-                  borderRadius: BorderRadius.circular(metrics.radiusField),
-                  border: Border.all(color: colors.border),
-                ),
-                child: Center(
-                  child: Text(
-                    dt.day.toString(),
-                    style: textTheme.titleMedium?.copyWith(
-                      color: colors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+    return RitmoCard.neumorphic(
+      onTap: onTap,
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          // Day Indicator Box
+          RitmoNeuSurface(
+            width: 44,
+            height: 44,
+            radius: 12,
+            sunken: true,
+            padding: EdgeInsets.zero,
+            child: Center(
+              child: Text(
+                toPersianDigits(dt.day.toString()),
+                style: textTheme.titleMedium?.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(width: metrics.spaceMd),
+            ),
+          ),
+          const SizedBox(width: 12),
 
-              // Title and details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          // Title and details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          weekdayName,
-                          style: textTheme.labelSmall?.copyWith(
-                            color: colors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (slot.isLocked) ...[
-                          SizedBox(width: metrics.spaceXs),
-                          Container(
-                            key: const ValueKey('mv_slot_anchor_badge'),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: metrics.spaceXs,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colors.accent.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(
-                                RitmoRadius.pill,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.lock_rounded,
-                                  key: const ValueKey('mv_slot_lock_icon'),
-                                  size: metrics.iconSm,
-                                  color: colors.accent,
-                                ),
-                                SizedBox(width: metrics.spaceXs),
-                                Text(
-                                  l10n?.mv_slot_anchor_badge_label ?? 'Fixed',
-                                  style: textTheme.labelSmall?.copyWith(
-                                    color: colors.accent,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                        if (slot.isRest) ...[
-                          SizedBox(width: metrics.spaceSm),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colors.surfaceSunken,
-                              borderRadius: BorderRadius.circular(
-                                RitmoRadius.pill,
-                              ),
-                            ),
-                            child: Text(
-                              l10n?.mv_slot_rest_badge_label ?? 'Rest',
-                              style: textTheme.labelSmall?.copyWith(
-                                color: colors.textSecondary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    SizedBox(height: metrics.spaceXs),
                     Text(
-                      slot.headlineFa,
-                      style: textTheme.bodyLarge?.copyWith(
-                        color: colors.textPrimary,
-                        fontWeight: FontWeight.w700,
+                      weekdayName,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w600,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    if (!slot.isRest) ...[
-                      SizedBox(height: metrics.spaceXs),
-                      Text(
-                        '${toPersianDigits(slot.targetMinutes.toString())} ${l10n?.mv_unit_min ?? 'min'} · ${slot.intensityTier.titleFa}${slot.plannedTime != null ? ' · ${l10n?.mv_at_time(toPersianDigits(slot.plannedTime)) ?? 'at ${slot.plannedTime}'}' : ''}',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colors.textSecondary,
-                        ),
+                    if (slot.isLocked) ...[
+                      const SizedBox(width: 6),
+                      RitmoCardBadge(
+                        key: const ValueKey('mv_slot_anchor_badge'),
+                        label: l10n?.mv_slot_anchor_badge_label ?? 'Fixed',
+                        color: colors.accent,
+                        icon: Icons.lock_rounded,
+                      ),
+                    ],
+                    if (slot.isRest) ...[
+                      const SizedBox(width: 6),
+                      RitmoCardBadge(
+                        label: l10n?.mv_slot_rest_badge_label ?? 'Rest',
+                        color: colors.textSecondary,
+                        isOutlined: true,
                       ),
                     ],
                   ],
                 ),
-              ),
-
-              // Status Badge
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: metrics.spaceSm,
-                  vertical: metrics.spaceXs,
-                ),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(RitmoRadius.pill),
-                ),
-                child: Text(
-                  slot.status.titleFa,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: statusColor,
+                const SizedBox(height: 4),
+                Text(
+                  slot.headlineFa,
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w700,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+                if (!slot.isRest) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '${toPersianDigits(slot.targetMinutes.toString())} ${l10n?.mv_unit_min ?? 'min'} · ${slot.intensityTier.titleFa}${slot.plannedTime != null ? ' · ${l10n?.mv_at_time(toPersianDigits(slot.plannedTime)) ?? 'at ${slot.plannedTime}'}' : ''}',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
+
+          // Status Badge
+          RitmoCardBadge(
+            label: slot.status.titleFa,
+            color: statusColor,
+          ),
+        ],
       ),
     );
   }

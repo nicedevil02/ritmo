@@ -23,8 +23,7 @@ class MvDayDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
@@ -52,37 +51,18 @@ class MvDayDetailScreen extends StatelessWidget {
         ],
       ),
       body: ListView(
-        padding: EdgeInsets.all(metrics.spaceLg),
+        padding: const EdgeInsets.all(16),
         children: [
           // Headline Hero Card
-          Container(
-            padding: EdgeInsets.all(metrics.spaceLg),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(metrics.radiusHero),
-              border: Border.all(color: colors.border),
-            ),
+          RitmoCard.neumorphic(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(RitmoRadius.pill),
-                      ),
-                      child: Text(
-                        slot.slotType.titleFa,
-                        style: textTheme.labelSmall?.copyWith(
-                          color: colors.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                    RitmoCardBadge(
+                      label: slot.slotType.titleFa,
+                      color: colors.primary,
                     ),
                     const Spacer(),
                     Text(
@@ -94,7 +74,7 @@ class MvDayDetailScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: metrics.spaceMd),
+                const SizedBox(height: 12),
                 Text(
                   slot.headlineFa,
                   style: textTheme.titleLarge?.copyWith(
@@ -103,7 +83,7 @@ class MvDayDetailScreen extends StatelessWidget {
                 ),
                 if (slot.coachNoteFa != null &&
                     slot.coachNoteFa!.isNotEmpty) ...[
-                  SizedBox(height: metrics.spaceSm),
+                  const SizedBox(height: 8),
                   Text(
                     slot.coachNoteFa!,
                     style: textTheme.bodyMedium?.copyWith(
@@ -114,7 +94,7 @@ class MvDayDetailScreen extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: metrics.spaceLg),
+          const SizedBox(height: 16),
 
           // Exercise List
           if (!slot.isRest && plannedExercises.isNotEmpty) ...[
@@ -125,69 +105,75 @@ class MvDayDetailScreen extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            SizedBox(height: metrics.spaceSm),
+            const SizedBox(height: 8),
             ...plannedExercises.map((ex) {
               final repsStr = ex.defaultReps > 0
                   ? (l10n?.mv_day_detail_reps_count(ex.defaultReps) ?? '${ex.defaultReps} reps')
                   : (l10n?.mv_day_detail_timed ?? 'Timed');
-              return Container(
-                margin: EdgeInsets.only(bottom: metrics.spaceSm),
-                padding: EdgeInsets.all(metrics.spaceMd),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  borderRadius: BorderRadius.circular(metrics.radiusCard),
-                  border: Border.all(color: colors.border),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: colors.surfaceElevated,
-                        borderRadius: BorderRadius.circular(
-                          metrics.radiusField,
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: RitmoCard.neumorphic(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      RitmoNeuSurface(
+                        width: 44,
+                        height: 44,
+                        radius: 12,
+                        padding: EdgeInsets.zero,
+                        child: Icon(
+                          Icons.fitness_center_rounded,
+                          color: colors.primary,
                         ),
                       ),
-                      child: Icon(
-                        Icons.fitness_center_rounded,
-                        color: colors.primary,
-                      ),
-                    ),
-                    SizedBox(width: metrics.spaceMd),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            ex.name,
-                            style: textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              ex.name,
+                              style: textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          Text(
-                            '${ex.category} · $repsStr',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colors.textSecondary,
+                            Text(
+                              '${ex.category} · $repsStr',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colors.textSecondary,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             }),
-            SizedBox(height: metrics.spaceLg),
           ],
 
-          if (!slot.isRest && !slot.isCompleted)
-            MvPrimaryAction(
-              label: l10n?.mv_day_detail_start_session ?? 'Start Session',
-              icon: Icons.play_arrow_rounded,
-              onPressed: onStartSession,
+          if (slot.isRest)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: RitmoNeuEmptyCard(
+                icon: Icons.spa_rounded,
+                title: 'Active Rest Day',
+                subtitle: l10n?.mv_reason_rest_guaranteed ??
+                    'Essential rest day for physiological recovery.',
+              ),
             ),
-          SizedBox(height: metrics.spaceXxl),
+
+          const SizedBox(height: 24),
+          if (!slot.isRest)
+            MvPrimaryAction(
+              label: l10n?.mv_day_detail_start_session ?? 'Start Today Session',
+              icon: Icons.play_arrow_rounded,
+              onPressed: () {
+                Navigator.pop(context);
+                onStartSession();
+              },
+            ),
         ],
       ),
     );

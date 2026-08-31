@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 /// Stat Tile for metrics and streaks in Progress Tab (Section 5.3 & 5.10).
+/// Powered by RitmoCard.neumorphic with central theme tokens.
 class MvStatTile extends StatelessWidget {
   final String title;
   final String value;
@@ -20,19 +21,13 @@ class MvStatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
 
     final effectiveColor = accentColor ?? colors.primary;
 
-    return Container(
-      padding: EdgeInsets.all(metrics.spaceLg),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(metrics.radiusCard),
-        border: Border.all(color: colors.border.withValues(alpha: 0.7)),
-      ),
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -48,10 +43,10 @@ class MvStatTile extends StatelessWidget {
                 ),
               ),
               if (icon != null)
-                Icon(icon, size: metrics.iconMd, color: effectiveColor),
+                Icon(icon, size: 18, color: effectiveColor),
             ],
           ),
-          SizedBox(height: metrics.spaceMd),
+          const SizedBox(height: 8),
 
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -65,7 +60,7 @@ class MvStatTile extends StatelessWidget {
                 ),
               ),
               if (unit != null) ...[
-                SizedBox(width: metrics.spaceXs),
+                const SizedBox(width: 4),
                 Text(
                   unit!,
                   style: textTheme.labelSmall?.copyWith(

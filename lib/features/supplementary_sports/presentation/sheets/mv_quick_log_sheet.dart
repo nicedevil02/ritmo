@@ -199,7 +199,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString()),
-            backgroundColor: context.ritmoColors.error,
+            backgroundColor: context.colors.error,
           ),
         );
       }
@@ -210,7 +210,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context)!;
@@ -336,52 +336,37 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
     String emoji,
     String label,
   ) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
 
     final isSelected = _feeling == feeling;
 
     return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          key: ValueKey('feeling_${feeling.name}'),
-          onTap: () => setState(() => _feeling = isSelected ? null : feeling),
-          borderRadius: BorderRadius.circular(metrics.radiusCard),
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              vertical: metrics.spaceSm,
-              horizontal: 4,
-            ),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? colors.primary.withValues(alpha: 0.12)
-                  : colors.surface,
-              borderRadius: BorderRadius.circular(metrics.radiusCard),
-              border: Border.all(
-                color: isSelected ? colors.primary : colors.border,
+      child: RitmoCard.neumorphic(
+        key: ValueKey('feeling_${feeling.name}'),
+        onTap: () => setState(() => _feeling = isSelected ? null : feeling),
+        isSelected: isSelected,
+        padding: const EdgeInsets.symmetric(
+          vertical: 10,
+          horizontal: 4,
+        ),
+        child: Column(
+          children: [
+            Text(emoji, style: textTheme.headlineSmall),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: textTheme.labelSmall?.copyWith(
+                color: isSelected ? colors.primary : colors.textSecondary,
+                fontWeight: isSelected
+                    ? FontWeight.w700
+                    : FontWeight.normal,
               ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            child: Column(
-              children: [
-                Text(emoji, style: textTheme.headlineSmall),
-                SizedBox(height: metrics.spaceXs),
-                Text(
-                  label,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: isSelected ? colors.primary : colors.textSecondary,
-                    fontWeight: isSelected
-                        ? FontWeight.w700
-                        : FontWeight.normal,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );

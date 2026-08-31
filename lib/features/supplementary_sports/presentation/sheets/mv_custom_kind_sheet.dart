@@ -188,7 +188,7 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
@@ -240,26 +240,16 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
               runSpacing: metrics.spaceSm,
               children: _emojiOptions.map((em) {
                 final isSel = em == _selectedEmoji;
-                return InkWell(
+                return RitmoNeuSurface(
                   key: ValueKey('emoji_$em'),
+                  width: 44,
+                  height: 44,
+                  radius: metrics.radiusField,
+                  sunken: isSel,
                   onTap: () => setState(() => _selectedEmoji = em),
-                  borderRadius: BorderRadius.circular(metrics.radiusField),
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: isSel
-                          ? colors.primary.withValues(alpha: 0.15)
-                          : colors.surface,
-                      borderRadius: BorderRadius.circular(metrics.radiusField),
-                      border: Border.all(
-                        color: isSel ? colors.primary : colors.border,
-                        width: isSel ? 2 : 1,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(em, style: textTheme.headlineSmall),
-                    ),
+                  padding: EdgeInsets.zero,
+                  child: Center(
+                    child: Text(em, style: textTheme.headlineSmall),
                   ),
                 );
               }).toList(),

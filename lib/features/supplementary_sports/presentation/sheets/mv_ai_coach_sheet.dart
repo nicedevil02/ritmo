@@ -81,7 +81,7 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
     } else if (qLower.contains('apartment') ||
         qLower.contains('noise') ||
         qLower.contains('\u0622\u067e\u0627\u0631\u062a\u0645\u0627\u0646') ||
-        qLower.contains('\u0635\u062f\u0627')) {
+        qLower.contains('\u0635\u062f\u062f\u0627')) {
       reply = l10n?.mv_coach_reply_noise ??
           'Turn on Neighbor Friendly mode in settings to automatically filter out noisy and jump movements.';
     } else if (qLower.contains('stretch') ||
@@ -106,8 +106,7 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
@@ -122,29 +121,10 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
       title: l10n?.mv_coach_title ?? 'Ritmo AI Coach',
       subtitle: l10n?.mv_coach_subtitle ?? 'Your training guide and workout companion',
       headerActions: [
-        Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: metrics.spaceSm,
-            vertical: metrics.spaceXs,
-          ),
-          decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(RitmoRadius.pill),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.auto_awesome_rounded, color: colors.primary, size: metrics.iconSm),
-              SizedBox(width: metrics.spaceXs),
-              Text(
-                'AI Coach',
-                style: textTheme.labelSmall?.copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
+        RitmoCardBadge(
+          label: 'AI Coach',
+          icon: Icons.auto_awesome_rounded,
+          color: colors.primary,
         ),
       ],
       body: SizedBox(
@@ -155,7 +135,7 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
             Expanded(
               child: ListView.separated(
                 itemCount: _messages.length,
-                separatorBuilder: (_, _) => SizedBox(height: metrics.spaceSm),
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final msg = _messages[index];
                   final isUser = msg['role'] == 'user';
@@ -164,30 +144,42 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
                     alignment: isUser
                         ? Alignment.centerLeft
                         : Alignment.centerRight,
-                    child: Container(
-                      padding: EdgeInsets.all(metrics.spaceMd),
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width * 0.75,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isUser ? colors.primary : colors.surface,
-                        borderRadius: BorderRadius.circular(metrics.radiusCard),
-                        border: isUser
-                            ? null
-                            : Border.all(color: colors.border),
-                      ),
-                      child: Text(
-                        msg['text']!,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: isUser ? colors.onPrimary : colors.textPrimary,
-                        ),
-                      ),
-                    ),
+                    child: isUser
+                        ? Container(
+                            padding: const EdgeInsets.all(12),
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width * 0.75,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colors.primary,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              msg['text']!,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colors.onPrimary,
+                              ),
+                            ),
+                          )
+                        : ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width * 0.75,
+                            ),
+                            child: RitmoCard.neumorphic(
+                              padding: const EdgeInsets.all(12),
+                              child: Text(
+                                msg['text']!,
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ),
                   );
                 },
               ),
             ),
-            SizedBox(height: metrics.spaceSm),
+            const SizedBox(height: 8),
 
             // Quick Prompts
             SingleChildScrollView(
@@ -195,7 +187,7 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
               child: Row(
                 children: promptPresets.map((p) {
                   return Padding(
-                    padding: EdgeInsets.only(left: metrics.spaceSm),
+                    padding: const EdgeInsets.only(left: 8),
                     child: ActionChip(
                       label: Text(p, style: textTheme.labelSmall),
                       onPressed: () => _sendMessage(p),
@@ -204,7 +196,7 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
                 }).toList(),
               ),
             ),
-            SizedBox(height: metrics.spaceSm),
+            const SizedBox(height: 8),
 
             // Input Field
             Row(
@@ -217,25 +209,23 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
                       filled: true,
                       fillColor: colors.surface,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          metrics.radiusField,
-                        ),
+                        borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(color: colors.border),
                       ),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: metrics.spaceMd,
-                        vertical: metrics.spaceSm,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
                     ),
                     onSubmitted: _sendMessage,
                   ),
                 ),
-                SizedBox(width: metrics.spaceSm),
+                const SizedBox(width: 8),
                 IconButton(
                   icon: Icon(
                     Icons.send_rounded,
                     color: colors.onPrimary,
-                    size: metrics.iconMd,
+                    size: 20,
                   ),
                   style: IconButton.styleFrom(
                     backgroundColor: colors.primary,

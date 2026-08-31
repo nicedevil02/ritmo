@@ -41,9 +41,9 @@ class MvQuickCheckinSheet extends StatefulWidget {
 class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
   int _energy = 4;
   int _soreness = 1;
-  int _fatigue = 1;
+  int _fatigue = 2;
   int _pain = 0;
-  bool _showDeepSliders = false;
+  bool _showDetails = false;
 
   void _handleQuickOption(int energy, int soreness, int fatigue) {
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -61,7 +61,7 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
@@ -73,68 +73,58 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 3 Quick Smiley Options
+            // 3 Big 1-Tap Smiley Options
             Row(
               children: [
                 _buildQuickCard(
                   emoji: '⚡',
-                  title: l10n?.mv_checkin_great_title ?? 'Great',
-                  desc: l10n?.mv_checkin_great_desc ?? 'Ready for full session',
+                  title: l10n?.mv_checkin_great_title ?? 'Great & High Energy',
+                  desc: l10n?.mv_checkin_great_desc ?? 'Ready for full load',
                   color: colors.success,
                   onTap: () => _handleQuickOption(5, 1, 1),
                 ),
-                SizedBox(width: metrics.spaceSm),
+                const SizedBox(width: 8),
                 _buildQuickCard(
                   emoji: '🌤️',
-                  title: l10n?.mv_checkin_good_title ?? 'Good',
-                  desc: l10n?.mv_checkin_good_desc ?? 'Balanced energy',
-                  color: colors.primary,
-                  onTap: () => _handleQuickOption(3, 2, 2),
+                  title: l10n?.mv_checkin_good_title ?? 'Good & Moderate',
+                  desc: l10n?.mv_checkin_good_desc ?? 'Moderate energy',
+                  color: colors.accent,
+                  onTap: () => _handleQuickOption(3, 2, 3),
                 ),
-                SizedBox(width: metrics.spaceSm),
+                const SizedBox(width: 8),
                 _buildQuickCard(
-                  emoji: '😴',
-                  title: l10n?.mv_checkin_tired_title ?? 'Tired',
-                  desc: l10n?.mv_checkin_tired_desc ?? 'Suggest lighter session',
+                  emoji: '🛋️',
+                  title: l10n?.mv_checkin_tired_title ?? 'Tired / Heavy Legs',
+                  desc: l10n?.mv_checkin_tired_desc ?? 'Minimal or stretch',
                   color: colors.warning,
-                  onTap: () => _handleQuickOption(2, 4, 4),
+                  onTap: () => _handleQuickOption(1, 4, 4),
                 ),
               ],
             ),
-            SizedBox(height: metrics.spaceLg),
+            const SizedBox(height: 16),
 
-            // Toggle for Deep Sliders
-            InkWell(
-              onTap: () => setState(() => _showDeepSliders = !_showDeepSliders),
-              borderRadius: BorderRadius.circular(metrics.radiusField),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: metrics.spaceSm),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _showDeepSliders
-                          ? (l10n?.mv_checkin_close_details ?? 'Close details')
-                          : (l10n?.mv_checkin_open_details ?? 'More details...'),
-                      style: textTheme.labelMedium?.copyWith(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Icon(
-                      _showDeepSliders
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
-                      color: colors.primary,
-                      size: metrics.iconSm,
-                    ),
-                  ],
+            // Expand Deep Check-in Toggle
+            TextButton.icon(
+              onPressed: () => setState(() => _showDetails = !_showDetails),
+              icon: Icon(
+                _showDetails
+                    ? Icons.keyboard_arrow_up_rounded
+                    : Icons.tune_rounded,
+                size: metrics.iconSm,
+                color: colors.textSecondary,
+              ),
+              label: Text(
+                _showDetails
+                    ? (l10n?.mv_checkin_close_details ?? 'Close fine details')
+                    : (l10n?.mv_checkin_open_details ?? 'More details (soreness, fatigue, pain)...'),
+                style: textTheme.labelMedium?.copyWith(
+                  color: colors.textSecondary,
                 ),
               ),
             ),
 
-            if (_showDeepSliders) ...[
-              SizedBox(height: metrics.spaceMd),
+            if (_showDetails) ...[
+              const SizedBox(height: 12),
               _buildSliderRow(
                 l10n?.mv_checkin_energy_label ?? 'Energy level (1 to 5):',
                 _energy.toDouble(),
@@ -163,14 +153,14 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
                 10,
                 (v) => setState(() => _pain = v.round()),
               ),
-              SizedBox(height: metrics.spaceLg),
+              const SizedBox(height: 16),
               MvPrimaryAction(
                 label: l10n?.mv_checkin_submit_details ?? 'Save detailed check-in',
                 onPressed: () =>
                     _handleQuickOption(_energy, _soreness, _fatigue),
               ),
             ],
-            SizedBox(height: metrics.spaceMd),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -184,49 +174,34 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
     required Color color,
     required VoidCallback onTap,
   }) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
 
     return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(metrics.radiusCard),
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              vertical: metrics.spaceLg,
-              horizontal: metrics.spaceXs,
+      child: RitmoCard.neumorphic(
+        onTap: onTap,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        child: Column(
+          children: [
+            Text(emoji, style: textTheme.headlineMedium),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: textTheme.labelMedium?.copyWith(
+                color: colors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.center,
             ),
-            decoration: BoxDecoration(
-              color: colors.surfaceElevated,
-              borderRadius: BorderRadius.circular(metrics.radiusCard),
-              border: Border.all(color: colors.border),
+            const SizedBox(height: 4),
+            Text(
+              desc,
+              style: textTheme.bodySmall?.copyWith(
+                color: colors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
             ),
-            child: Column(
-              children: [
-                Text(emoji, style: textTheme.headlineMedium),
-                SizedBox(height: metrics.spaceSm),
-                Text(
-                  title,
-                  style: textTheme.labelMedium?.copyWith(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: metrics.spaceXs),
-                Text(
-                  desc,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colors.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );
@@ -240,7 +215,7 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
     ValueChanged<double> onChanged,
   ) {
     final textTheme = Theme.of(context).textTheme;
-    final colors = context.ritmoColors;
+    final colors = context.colors;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/features/supplementary_sports/application/mv_hub_controller.dart';
+import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
@@ -67,7 +67,7 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context)!;
@@ -301,7 +301,7 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: context.ritmoColors.textPrimary,
+          color: context.colors.textPrimary,
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -309,22 +309,10 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
   }
 
   Widget _buildCard({required List<Widget> children}) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
-
-    return Material(
-      color: colors.surface,
-      borderRadius: BorderRadius.circular(metrics.radiusCard),
-      child: Container(
-        padding: EdgeInsets.all(metrics.spaceMd),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(metrics.radiusCard),
-          border: Border.all(color: colors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: children,
-        ),
+    return RitmoCard.neumorphic(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
       ),
     );
   }

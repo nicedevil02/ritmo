@@ -6,7 +6,7 @@ import 'package:ritmo/l10n/app_localizations.dart';
 import 'mv_primary_action.dart';
 
 /// Hero Card for Today Tab (Section 5.1 & 5.10).
-/// Strictly renders max 1 primary action and 1 secondary action (AC-02).
+/// Powered by RitmoCard.neumorphic with tactile buttons and zero hardcoded styles.
 class MvHeroCard extends StatelessWidget {
   final MvSlot slot;
   final MvReadinessTier readinessTier;
@@ -29,8 +29,7 @@ class MvHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
-    final metrics = context.metrics;
+    final colors = context.colors;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
@@ -49,56 +48,35 @@ class MvHeroCard extends StatelessWidget {
         ? (l10n?.mv_hero_minimal_subtitle ?? 'Just 10 minutes today.')
         : '${toPersianDigits(slot.targetMinutes.toString())} ${l10n?.mv_unit_min ?? 'min'} · ${slot.intensityTier.titleFa}';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surfaceElevated,
-        borderRadius: BorderRadius.circular(metrics.radiusHero),
-        border: Border.all(color: colors.border.withValues(alpha: 0.8)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
+    return RitmoCard.neumorphic(
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Animation / Hero Banner
           if (animationWidget != null && !isRest)
-            SizedBox(
-              height: 180,
-              width: double.infinity,
-              child: animationWidget,
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.card)),
+              child: SizedBox(
+                height: 180,
+                width: double.infinity,
+                child: animationWidget,
+              ),
             ),
 
           // Content Area
           Padding(
-            padding: EdgeInsets.all(metrics.spaceLg),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Focus Chip / Badge
                 Row(
                   children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: metrics.spaceSm,
-                        vertical: metrics.spaceXs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(RitmoRadius.pill),
-                      ),
-                      child: Text(
-                        isRest ? (l10n?.mv_slot_rest_badge_label ?? 'Rest') : slot.slotType.titleFa,
-                        style: textTheme.labelSmall?.copyWith(
-                          color: colors.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                    RitmoCardBadge(
+                      label: isRest ? (l10n?.mv_slot_rest_badge_label ?? 'Rest') : slot.slotType.titleFa,
+                      color: isRest ? colors.accent : colors.primary,
+                      icon: isRest ? Icons.spa_rounded : Icons.fitness_center_rounded,
                     ),
                     const Spacer(),
                     if (!isRest)
@@ -111,7 +89,7 @@ class MvHeroCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                SizedBox(height: metrics.spaceMd),
+                const SizedBox(height: 12),
 
                 // Title
                 Text(
@@ -121,7 +99,7 @@ class MvHeroCard extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                SizedBox(height: metrics.spaceXs),
+                const SizedBox(height: 4),
 
                 // Subtitle
                 Text(
@@ -130,16 +108,17 @@ class MvHeroCard extends StatelessWidget {
                     color: colors.textSecondary,
                   ),
                 ),
-                SizedBox(height: metrics.spaceLg),
+                const SizedBox(height: 16),
 
                 // Primary & Secondary Actions
                 if (slot.isCompleted)
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(metrics.spaceMd),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: colors.success.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(metrics.radiusField),
+                      borderRadius: BorderRadius.circular(RitmoRadius.field),
+                      border: Border.all(color: colors.success.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -147,9 +126,9 @@ class MvHeroCard extends StatelessWidget {
                         Icon(
                           Icons.check_circle_rounded,
                           color: colors.success,
-                          size: metrics.iconMd,
+                          size: 20,
                         ),
-                        SizedBox(width: metrics.spaceSm),
+                        const SizedBox(width: 8),
                         Text(
                           l10n?.mv_hero_completed ?? 'Today session completed',
                           style: textTheme.labelLarge?.copyWith(
@@ -184,7 +163,7 @@ class MvHeroCard extends StatelessWidget {
                           onPressed: onStart,
                         ),
                       ),
-                      SizedBox(width: metrics.spaceSm),
+                      const SizedBox(width: 8),
                       Expanded(
                         flex: 2,
                         child: MvPrimaryAction(

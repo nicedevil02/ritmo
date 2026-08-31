@@ -247,7 +247,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
@@ -277,10 +277,10 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            SizedBox(height: metrics.spaceSm),
+            const SizedBox(height: 8),
             Wrap(
-              spacing: metrics.spaceSm,
-              runSpacing: metrics.spaceSm,
+              spacing: 8,
+              runSpacing: 8,
               children: _allowedSlotTypes.map((type) {
                 return MvChip(
                   key: ValueKey('slot_type_${type.code}'),
@@ -290,7 +290,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                 );
               }).toList(),
             ),
-            SizedBox(height: metrics.spaceMd),
+            const SizedBox(height: 16),
 
             // ۱. انتخاب نوع ورزش (برای تمام حالت‌های غیر استراحت)
             if (!isRest) ...[
@@ -301,88 +301,70 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: metrics.spaceSm),
-              InkWell(
+              const SizedBox(height: 8),
+              RitmoCard.neumorphic(
                 key: const ValueKey('day_plan_kind_picker_tile'),
                 onTap: _openKindPicker,
-                borderRadius: BorderRadius.circular(metrics.radiusCard),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: metrics.spaceMd,
-                    vertical: metrics.spaceSm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.surface,
-                    borderRadius: BorderRadius.circular(metrics.radiusCard),
-                    border: Border.all(color: colors.primary),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        _kind?.emoji ?? '🏃',
-                        style: textTheme.headlineSmall,
-                      ),
-                      SizedBox(width: metrics.spaceSm),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Text(
+                      _kind?.emoji ?? '🏃',
+                      style: textTheme.headlineSmall,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _kind?.titleFa ?? (l10n?.mv_day_plan_kind_picker_prompt ?? 'Select activity kind...'),
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (_kind != null)
                             Text(
-                              _kind?.titleFa ?? (l10n?.mv_day_plan_kind_picker_prompt ?? 'Select activity kind...'),
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: colors.textPrimary,
-                                fontWeight: FontWeight.w700,
+                              l10n?.mv_day_plan_met_factor(toPersianDigits(_kind!.baseMet.toString())) ?? 'MET Factor: ${_kind!.baseMet}',
+                              style: textTheme.labelSmall?.copyWith(
+                                color: colors.textSecondary,
                               ),
                             ),
-                            if (_kind != null)
-                              Text(
-                                l10n?.mv_day_plan_met_factor(toPersianDigits(_kind!.baseMet.toString())) ?? 'MET Factor: ${_kind!.baseMet}',
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: colors.textSecondary,
-                                ),
-                              ),
-                          ],
-                        ),
+                        ],
                       ),
-                      TextButton.icon(
-                        key: const ValueKey('mv_change_kind_btn'),
-                        onPressed: _openKindPicker,
-                        icon: Icon(
-                          Icons.swap_horiz_rounded,
-                          size: metrics.iconSm,
+                    ),
+                    TextButton.icon(
+                      key: const ValueKey('mv_change_kind_btn'),
+                      onPressed: _openKindPicker,
+                      icon: Icon(
+                        Icons.swap_horiz_rounded,
+                        size: 18,
+                        color: colors.accent,
+                      ),
+                      label: Text(
+                        l10n?.mv_day_plan_change ?? 'Change',
+                        style: textTheme.labelMedium?.copyWith(
                           color: colors.accent,
-                        ),
-                        label: Text(
-                          l10n?.mv_day_plan_change ?? 'Change',
-                          style: textTheme.labelMedium?.copyWith(
-                            color: colors.accent,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: metrics.spaceMd),
+              const SizedBox(height: 16),
             ],
 
             // کارت توضیحات ورزش تخصصی (S8-T6)
             if (isSport && _kind != null) ...[
-              Container(
+              RitmoCard.neumorphic(
                 key: const ValueKey('mv_sport_kind_info_card'),
-                padding: EdgeInsets.all(metrics.spaceMd),
-                decoration: BoxDecoration(
-                  color: colors.surfaceElevated,
-                  borderRadius: BorderRadius.circular(metrics.radiusCard),
-                  border: Border.all(
-                    color: colors.border.withValues(alpha: 0.6),
-                  ),
-                ),
+                padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
                     Text(_kind!.emoji, style: textTheme.titleLarge),
-                    SizedBox(width: metrics.spaceMd),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,7 +376,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                               color: colors.textPrimary,
                             ),
                           ),
-                          SizedBox(height: metrics.spaceXs),
+                          const SizedBox(height: 4),
                           Text(
                             l10n?.mv_day_plan_custom_desc(toPersianDigits(_kind!.baseMet.toString())) ??
                                 'Specialized Sport (${_kind!.baseMet} MET)',
@@ -408,7 +390,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                   ],
                 ),
               ),
-              SizedBox(height: metrics.spaceMd),
+              const SizedBox(height: 16),
             ],
 
             if (_slotType != MvSlotType.rest) ...[
@@ -420,10 +402,10 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: metrics.spaceSm),
+              const SizedBox(height: 8),
               Wrap(
-                spacing: metrics.spaceSm,
-                runSpacing: metrics.spaceSm,
+                spacing: 8,
+                runSpacing: 8,
                 children: _durationOptions.map((d) {
                   return MvChip(
                     key: ValueKey('day_plan_duration_$d'),
@@ -433,7 +415,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                   );
                 }).toList(),
               ),
-              SizedBox(height: metrics.spaceMd),
+              const SizedBox(height: 16),
 
               // ۳. ساعت شروع (plannedTime) اختیاری
               Text(
@@ -443,8 +425,8 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: metrics.spaceSm),
-              InkWell(
+              const SizedBox(height: 8),
+              RitmoNeuSurface(
                 key: const ValueKey('day_plan_time_picker'),
                 onTap: () async {
                   final picked = await showTimePicker(
@@ -456,40 +438,32 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                     setState(() => _plannedTime = picked);
                   }
                 },
-                borderRadius: BorderRadius.circular(metrics.radiusField),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: metrics.spaceMd,
-                    vertical: metrics.spaceSm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.surface,
-                    borderRadius: BorderRadius.circular(metrics.radiusField),
-                    border: Border.all(color: colors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.access_time_rounded,
-                        color: colors.textSecondary,
-                        size: metrics.iconSm,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.access_time_rounded,
+                      color: colors.textSecondary,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _plannedTime != null
+                          ? '${toPersianDigits(_plannedTime!.hour.toString().padLeft(2, '0'))}:${toPersianDigits(_plannedTime!.minute.toString().padLeft(2, '0'))}'
+                          : (l10n?.mv_day_plan_not_set ?? 'Not Set'),
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: _plannedTime != null
+                            ? colors.textPrimary
+                            : colors.textSecondary,
                       ),
-                      SizedBox(width: metrics.spaceSm),
-                      Text(
-                        _plannedTime != null
-                            ? '${toPersianDigits(_plannedTime!.hour.toString().padLeft(2, '0'))}:${toPersianDigits(_plannedTime!.minute.toString().padLeft(2, '0'))}'
-                            : (l10n?.mv_day_plan_not_set ?? 'Not Set'),
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: _plannedTime != null
-                              ? colors.textPrimary
-                              : colors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: metrics.spaceMd),
+              const SizedBox(height: 16),
 
               // ۴. مکان (venueNote) — فقط اگر kind.needsVenue == true
               if (needsVenue) ...[

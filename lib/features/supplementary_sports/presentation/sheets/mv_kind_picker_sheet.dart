@@ -247,7 +247,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
@@ -405,126 +405,58 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                         final kind = _displayedKinds[index];
                         final isSelected = kind.code == widget.initialCode;
 
-                        return InkWell(
+                        return RitmoCard.neumorphic(
                           key: ValueKey('kind_${kind.code}'),
                           onTap: () => _selectKind(kind),
-                          borderRadius: BorderRadius.circular(
-                            metrics.radiusCard,
-                          ),
-                          child: Container(
-                            padding: EdgeInsets.all(metrics.spaceMd),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? colors.primary.withValues(alpha: 0.1)
-                                  : colors.surface,
-                              borderRadius: BorderRadius.circular(
-                                metrics.radiusCard,
+                          isSelected: isSelected,
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              Text(
+                                kind.emoji,
+                                style: textTheme.headlineMedium,
                               ),
-                              border: Border.all(
-                                color: isSelected
-                                    ? colors.primary
-                                    : colors.border,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  kind.emoji,
-                                  style: textTheme.headlineMedium,
-                                ),
-                                SizedBox(width: metrics.spaceMd),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        kind.titleFa,
-                                        style: textTheme.bodyLarge?.copyWith(
-                                          color: colors.textPrimary,
-                                          fontWeight: FontWeight.w700,
-                                        ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      kind.titleFa,
+                                      style: textTheme.bodyLarge?.copyWith(
+                                        color: colors.textPrimary,
+                                        fontWeight: FontWeight.w700,
                                       ),
-                                      SizedBox(height: metrics.spaceXs),
-                                      Wrap(
-                                        spacing: metrics.spaceSm,
-                                        runSpacing: 4,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: colors.surfaceElevated,
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                    metrics.radiusCard,
-                                                  ),
-                                            ),
-                                            child: Text(
-                                              kind.family.titleFa,
-                                              style: textTheme.labelSmall
-                                                  ?.copyWith(
-                                                    color: colors.textSecondary,
-                                                  ),
-                                            ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 4,
+                                      children: [
+                                        RitmoCardBadge(
+                                          label: kind.family.titleFa,
+                                          color: colors.primary,
+                                        ),
+                                        if (kind.isOutdoor)
+                                          RitmoCardBadge(
+                                            label: l10n?.mv_kind_picker_outdoor ?? 'Outdoor 🌿',
+                                            color: colors.accent,
                                           ),
-                                          if (kind.isOutdoor)
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: colors.surfaceElevated,
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                      metrics.radiusCard,
-                                                    ),
-                                              ),
-                                              child: Text(
-                                                l10n?.mv_kind_picker_outdoor ?? 'Outdoor 🌿',
-                                                style: textTheme.labelSmall
-                                                    ?.copyWith(
-                                                      color:
-                                                          colors.textSecondary,
-                                                    ),
-                                              ),
-                                            ),
-                                          if (kind.needsVenue)
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: colors.surfaceElevated,
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                      metrics.radiusCard,
-                                                    ),
-                                              ),
-                                              child: Text(
-                                                l10n?.mv_kind_picker_hall ?? 'Indoor Hall 🏟',
-                                                style: textTheme.labelSmall
-                                                    ?.copyWith(
-                                                      color:
-                                                          colors.textSecondary,
-                                                    ),
-                                              ),
-                                            ),
-                                          if (kind.jointImpact > 0)
-                                            Text(
-                                              l10n?.mv_kind_picker_impact(toPersianDigits(kind.jointImpact.toString())) ??
-                                                  'Impact: ${kind.jointImpact}/3',
-                                              style: textTheme.labelSmall
-                                                  ?.copyWith(
-                                                    color: colors.textSecondary,
-                                                  ),
-                                            ),
+                                        if (kind.needsVenue)
+                                          RitmoCardBadge(
+                                            label: l10n?.mv_kind_picker_hall ?? 'Indoor Hall 🏟',
+                                            color: colors.textSecondary,
+                                          ),
+                                        if (kind.jointImpact > 0)
+                                          Text(
+                                            l10n?.mv_kind_picker_impact(toPersianDigits(kind.jointImpact.toString())) ??
+                                                'Impact: ${kind.jointImpact}/3',
+                                            style: textTheme.labelSmall
+                                                ?.copyWith(
+                                                  color: colors.textSecondary,
+                                                ),
+                                          ),
                                           if (kind
                                               .primaryMetric
                                               .unitFa
@@ -548,10 +480,9 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                                 ),
                               ],
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
                   SizedBox(height: metrics.spaceLg),
 
                   // 6. Create Custom Sport Button

@@ -36,7 +36,7 @@ class MvWeekTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.ritmoColors;
+    final colors = context.colors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context)!;
@@ -61,7 +61,7 @@ class MvWeekTab extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  SizedBox(height: metrics.spaceXs),
+                  const SizedBox(height: 4),
                   Text(
                     isDeloadWeek
                         ? l10n.mv_week_deload_subtitle
@@ -73,22 +73,9 @@ class MvWeekTab extends StatelessWidget {
                 ],
               ),
               if (isDeloadWeek)
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: metrics.spaceSm,
-                    vertical: metrics.spaceXs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.accent.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(RitmoRadius.pill),
-                  ),
-                  child: Text(
-                    l10n.mv_week_deload_badge,
-                    style: textTheme.labelSmall?.copyWith(
-                      color: colors.accent,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                RitmoCardBadge(
+                  label: l10n.mv_week_deload_badge,
+                  color: colors.accent,
                 ),
             ],
           ),
@@ -96,7 +83,7 @@ class MvWeekTab extends StatelessWidget {
 
           // Anchor CTA Card if no commitments (S8-T4)
           if (commitments.isEmpty) ...[
-            InkWell(
+            RitmoCard.neumorphic(
               key: const ValueKey('mv_week_anchor_cta'),
               onTap: onOpenCommitments ??
                   () {
@@ -107,52 +94,42 @@ class MvWeekTab extends StatelessWidget {
                       ),
                     );
                   },
-              borderRadius: BorderRadius.circular(metrics.radiusCard),
-              child: Container(
-                padding: EdgeInsets.all(metrics.spaceMd),
-                decoration: BoxDecoration(
-                  color: colors.accent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(metrics.radiusCard),
-                  border: Border.all(
-                    color: colors.accent.withValues(alpha: 0.3),
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.lock_clock,
+                    color: colors.accent,
+                    size: 24,
                   ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.lock_clock,
-                      color: colors.accent,
-                      size: metrics.iconMd,
-                    ),
-                    SizedBox(width: metrics.spaceMd),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.mv_week_anchor_cta,
-                            style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
-                            ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.mv_week_anchor_cta,
+                          style: textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
                           ),
-                          SizedBox(height: metrics.spaceXs),
-                          Text(
-                            l10n.mv_week_anchor_cta_text,
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colors.textSecondary,
-                            ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.mv_week_anchor_cta_text,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colors.textSecondary,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: metrics.iconSm,
-                      color: colors.textSecondary,
-                    ),
-                  ],
-                ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 16,
+                    color: colors.textSecondary,
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -160,24 +137,17 @@ class MvWeekTab extends StatelessWidget {
 
           // Back-to-Back Conflict Banner (S2-T6, ADJ-6)
           if (_hasBackToBackAnchors(weekSlots)) ...[
-            Container(
+            RitmoCard.neumorphic(
               key: const ValueKey('mv_conflict_back_to_back'),
-              padding: EdgeInsets.all(metrics.spaceMd),
-              decoration: BoxDecoration(
-                color: colors.warning.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(metrics.radiusCard),
-                border: Border.all(
-                  color: colors.warning.withValues(alpha: 0.5),
-                ),
-              ),
+              padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
                   Icon(
                     Icons.info_outline_rounded,
                     color: colors.warning,
-                    size: metrics.iconSm,
+                    size: 20,
                   ),
-                  SizedBox(width: metrics.spaceSm),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       l10n.mv_conflict_back_to_back,

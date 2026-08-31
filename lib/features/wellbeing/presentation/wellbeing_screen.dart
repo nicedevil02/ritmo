@@ -613,29 +613,13 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   }
 
   void _showGoldenWindowDialog() {
-    final colors = context.colors;
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
-        ),
-        title: Text(
-          'پنجرهٔ طلایی انرژی',
-          style: RitmoTextStyles.cardTitle(colors.textPrimary),
-        ),
-        content: Text(
+    RitmoDialog.show(
+      context,
+      title: 'پنجرهٔ طلایی انرژی',
+      content:
           'در بازهٔ ${_energyOutput?.peakPerformanceWindow ?? "نامشخص"} معمولاً بیشترین انرژی را داری. کارهای مهم یا سخت‌تر خودت را از برنامهٔ «امروزِ من» به این بازه منتقل کن تا از این انرژی استفاده کنی.',
-          style: RitmoTextStyles.body(colors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('باشه', style: RitmoTextStyles.label(colors.primary)),
-          ),
-        ],
-      ),
+      confirmLabel: 'متوجه شدم',
+      icon: CupertinoIcons.sparkles,
     );
   }
 

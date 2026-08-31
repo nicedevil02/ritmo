@@ -7,6 +7,7 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -259,59 +260,55 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
         Row(
           children: [
             Expanded(
-              child: InkWell(
+              child: RitmoCard.neumorphic(
                 onTap: _selectBedtime,
-                borderRadius: BorderRadius.circular(RitmoRadius.card),
-                child: Container(
-                  padding: const EdgeInsets.all(RitmoSpacing.md),
-                  decoration: BoxDecoration(
-                    color: colors.surface,
-                    borderRadius: BorderRadius.circular(RitmoRadius.card),
-                    border: Border.all(color: colors.border),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'زمان خوابیدن',
-                        style: RitmoTextStyles.caption(colors.textSecondary),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${RitmoNumber.faInt(_bedtime.hour).padLeft(2, '۰')}:${RitmoNumber.faInt(_bedtime.minute).padLeft(2, '۰')}',
-                        style: RitmoTextStyles.cardTitle(colors.textPrimary),
-                      ),
-                    ],
-                  ),
+                padding: const EdgeInsets.all(RitmoSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(CupertinoIcons.moon_stars_fill, size: 14, color: colors.sleepAccent),
+                        const SizedBox(width: 6),
+                        Text(
+                          'زمان خوابیدن',
+                          style: RitmoTextStyles.caption(colors.textSecondary),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${RitmoNumber.faInt(_bedtime.hour).padLeft(2, '۰')}:${RitmoNumber.faInt(_bedtime.minute).padLeft(2, '۰')}',
+                      style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    ),
+                  ],
                 ),
               ),
             ),
             const SizedBox(width: RitmoSpacing.md),
             Expanded(
-              child: InkWell(
+              child: RitmoCard.neumorphic(
                 onTap: _selectWakeTime,
-                borderRadius: BorderRadius.circular(RitmoRadius.card),
-                child: Container(
-                  padding: const EdgeInsets.all(RitmoSpacing.md),
-                  decoration: BoxDecoration(
-                    color: colors.surface,
-                    borderRadius: BorderRadius.circular(RitmoRadius.card),
-                    border: Border.all(color: colors.border),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'زمان بیدار شدن',
-                        style: RitmoTextStyles.caption(colors.textSecondary),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${RitmoNumber.faInt(_wakeTime.hour).padLeft(2, '۰')}:${RitmoNumber.faInt(_wakeTime.minute).padLeft(2, '۰')}',
-                        style: RitmoTextStyles.cardTitle(colors.textPrimary),
-                      ),
-                    ],
-                  ),
+                padding: const EdgeInsets.all(RitmoSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(CupertinoIcons.sun_max_fill, size: 14, color: Color(0xFFF59E0B)),
+                        const SizedBox(width: 6),
+                        Text(
+                          'زمان بیدار شدن',
+                          style: RitmoTextStyles.caption(colors.textSecondary),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${RitmoNumber.faInt(_wakeTime.hour).padLeft(2, '۰')}:${RitmoNumber.faInt(_wakeTime.minute).padLeft(2, '۰')}',
+                      style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -320,13 +317,8 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
         const SizedBox(height: RitmoSpacing.md),
 
         // Calculated Duration Card
-        Container(
+        RitmoCard.neumorphicSunken(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          decoration: BoxDecoration(
-            color: colors.sleepAccent.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(RitmoRadius.card),
-            border: Border.all(color: colors.sleepAccent.withValues(alpha: 0.25)),
-          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -345,13 +337,8 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
         ),
         if (_showWorkoutWarning) ...[
           const SizedBox(height: RitmoSpacing.md),
-          Container(
+          RitmoCard.neumorphicSunken(
             padding: const EdgeInsets.all(RitmoSpacing.md),
-            decoration: BoxDecoration(
-              color: colors.cautionAccent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(RitmoRadius.card),
-              border: Border.all(color: colors.cautionAccent.withValues(alpha: 0.3)),
-            ),
             child: Row(
               children: [
                 Icon(CupertinoIcons.exclamationmark_triangle_fill, color: colors.cautionAccent, size: 18),
@@ -379,26 +366,17 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
           children: SleepQuality.values.map((q) {
             final isSelected = _quality == q;
             return Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() {
-                    _quality = q;
-                  });
-                },
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: RitmoCard.neumorphic(
+                  isSelected: isSelected,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      _quality = q;
+                    });
+                  },
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? colors.sleepAccent.withValues(alpha: 0.15)
-                        : colors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected ? colors.sleepAccent : colors.border,
-                      width: 1.5,
-                    ),
-                  ),
                   child: Column(
                     children: [
                       Text(q.emoji, style: const TextStyle(fontSize: 22)),
@@ -419,91 +397,69 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
         const SizedBox(height: RitmoSpacing.lg),
 
         // Wakeups counter
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'دفعات بیدار شدن در شب:',
-              style: RitmoTextStyles.titleMedium(colors.textPrimary),
-            ),
-            Row(
-              children: [
-                IconButton(
-                  icon: Icon(CupertinoIcons.minus_circle, color: colors.textSecondary),
-                  onPressed: _awakenings > 0
-                      ? () {
-                          HapticFeedback.lightImpact();
-                          setState(() => _awakenings--);
-                        }
-                      : null,
-                ),
-                Container(
-                  width: 32,
-                  alignment: Alignment.center,
-                  child: Text(
-                    RitmoNumber.faInt(_awakenings),
-                    style: RitmoTextStyles.cardTitle(colors.textPrimary),
+        RitmoCard.neumorphic(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'دفعات بیدار شدن در شب:',
+                style: RitmoTextStyles.titleMedium(colors.textPrimary),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(CupertinoIcons.minus_circle, color: colors.textSecondary),
+                    onPressed: _awakenings > 0
+                        ? () {
+                            HapticFeedback.lightImpact();
+                            setState(() => _awakenings--);
+                          }
+                        : null,
                   ),
-                ),
-                IconButton(
-                  icon: Icon(CupertinoIcons.plus_circle, color: colors.textSecondary),
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    setState(() => _awakenings++);
-                  },
-                ),
-              ],
-            ),
-          ],
+                  Container(
+                    width: 32,
+                    alignment: Alignment.center,
+                    child: Text(
+                      RitmoNumber.faInt(_awakenings),
+                      style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(CupertinoIcons.plus_circle, color: colors.textSecondary),
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      setState(() => _awakenings++);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: RitmoSpacing.md),
 
         // Note
-        TextField(
-          controller: _noteController,
-          style: RitmoTextStyles.body(colors.textPrimary),
-          maxLines: 2,
-          decoration: InputDecoration(
-            hintText: 'جزئیات بیشتر یا دلیل بیداری (اختیاری)',
-            hintStyle: RitmoTextStyles.caption(colors.textSecondary.withValues(alpha: 0.5)),
-            fillColor: colors.surface,
-            filled: true,
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(RitmoRadius.card),
-              borderSide: BorderSide(color: colors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(RitmoRadius.card),
-              borderSide: BorderSide(color: colors.sleepAccent),
+        RitmoCard.neumorphicSunken(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: TextField(
+            controller: _noteController,
+            style: RitmoTextStyles.body(colors.textPrimary),
+            maxLines: 2,
+            decoration: InputDecoration(
+              hintText: 'جزئیات بیشتر یا دلیل بیداری (اختیاری)',
+              hintStyle: RitmoTextStyles.caption(colors.textSecondary.withValues(alpha: 0.5)),
+              border: InputBorder.none,
             ),
           ),
         ),
         const SizedBox(height: RitmoSpacing.xl),
 
         // Save button
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: colors.sleepAccent,
-            foregroundColor: colors.onPrimary,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(RitmoRadius.card),
-            ),
-          ),
+        RitmoPrimaryButton(
+          label: 'تایید و ثبت وضعیت خواب',
+          isLoading: _isSaving,
           onPressed: _isSaving ? null : _saveSleepLog,
-          child: _isSaving
-              ? SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    color: colors.onPrimary,
-                    strokeWidth: 2,
-                  ),
-                )
-              : Text(
-                  'تایید و ثبت وضعیت خواب',
-                  style: RitmoTextStyles.label(colors.onPrimary),
-                ),
         ),
       ],
     );

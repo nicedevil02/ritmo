@@ -215,7 +215,7 @@ class _DynamicEnergyCardState extends State<DynamicEnergyCard> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'عوامل مؤثر بر این عدد (${RitmoNumber.faInt(explanations.length)} عامل)',
+                          'چرا این عدد؟',
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
@@ -358,24 +358,24 @@ class _DynamicEnergyCardState extends State<DynamicEnergyCard> {
   }
 
   String _energyStatusTitle(int percent) {
-    if (percent >= 80) return 'انرژی در اوج ⚡';
-    if (percent >= 60) return 'انرژی مطلوب و پایدار';
-    if (percent >= 40) return 'انرژی متوسط';
-    if (percent >= 20) return 'افت تدریجی انرژی';
+    if (percent >= 75) return 'انرژی در اوج ⚡';
+    if (percent >= 55) return 'انرژی مطلوب و پایدار';
+    if (percent >= 35) return 'انرژی متوسط';
+    if (percent >= 15) return 'افت تدریجی انرژی';
     return 'نیاز فوری به بازیابی و استراحت';
   }
 
   String _energyStatusDescription(int percent) {
-    if (percent >= 80) {
+    if (percent >= 75) {
       return 'زمان ایده‌آل برای کارهای عمیق، تصمیم‌گیری‌های کلیدی و چالش‌های فکری سنگین.';
     }
-    if (percent >= 60) {
+    if (percent >= 55) {
       return 'توان و تمرکز در وضعیت مناسب برای پیشبرد فعالیت‌های اصلی و روتین‌های روزانه.';
     }
-    if (percent >= 40) {
+    if (percent >= 35) {
       return 'سطح توان متوسط؛ مناسب برای وظایف با پیچیدگی معمولی یا اداری.';
     }
-    if (percent >= 20) {
+    if (percent >= 15) {
       return 'بدن شما نشانه‌های خستگی را نشان می‌دهد؛ نوشیدن آب و کمی کشش پیشنهاد می‌شود.';
     }
     return 'خستگی ملموس؛ استراحت کوتاه، تنفس عمیق یا خواب نیمروزی برای شارژ مجدد ضروری است.';

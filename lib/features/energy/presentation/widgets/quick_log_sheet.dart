@@ -4,6 +4,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/energy/models/energy_mood_models.dart';
 import 'package:ritmo/features/wellbeing/logic/wellbeing_log_gateway.dart';
 
@@ -126,7 +127,8 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
               emoji = '⚡';
             }
 
-            return GestureDetector(
+            return RitmoCard.neumorphic(
+              isSelected: isSelected,
               onTap: () {
                 HapticFeedback.selectionClick();
                 setState(() {
@@ -137,37 +139,25 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
                   }
                 });
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? activeColor.withValues(alpha: 0.15)
-                      : colors.surface,
-                  borderRadius: BorderRadius.circular(RitmoRadius.card),
-                  border: Border.all(
-                    color: isSelected ? activeColor : colors.border,
-                    width: 1.5,
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(emoji, style: const TextStyle(fontSize: 22)),
-                    const SizedBox(height: 4),
-                    Text(
-                      level.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: RitmoTextStyles.caption(
-                        isSelected ? activeColor : colors.textSecondary,
-                      ).copyWith(
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(emoji, style: const TextStyle(fontSize: 22)),
+                  const SizedBox(height: 4),
+                  Text(
+                    level.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: RitmoTextStyles.caption(
+                      isSelected ? activeColor : colors.textSecondary,
+                    ).copyWith(
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             );
           }).toList(),
@@ -188,7 +178,8 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
             for (final mood in Mood.values) ...[
               () {
                 final isSelected = _selectedMood == mood;
-                return GestureDetector(
+                return RitmoCard.neumorphic(
+                  isSelected: isSelected,
                   onTap: () {
                     HapticFeedback.selectionClick();
                     setState(() {
@@ -200,38 +191,26 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
                       }
                     });
                   },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? colors.reflectionAccent.withValues(alpha: 0.15)
-                          : colors.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected ? colors.reflectionAccent : colors.border,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(mood.emoji, style: const TextStyle(fontSize: 22)),
-                        const SizedBox(height: 4),
-                        Text(
-                          mood.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: RitmoTextStyles.caption(
-                            isSelected ? colors.reflectionAccent : colors.textSecondary,
-                          ).copyWith(
-                            fontWeight:
-                                isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(mood.emoji, style: const TextStyle(fontSize: 22)),
+                      const SizedBox(height: 4),
+                      Text(
+                        mood.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: RitmoTextStyles.caption(
+                          isSelected ? colors.reflectionAccent : colors.textSecondary,
+                        ).copyWith(
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 );
               }(),
@@ -241,92 +220,75 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
         const SizedBox(height: RitmoSpacing.lg),
 
         // 3. Valence Slider
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                'میزان خوشایی (رضایت ذهنی):',
-                style: RitmoTextStyles.titleMedium(colors.textPrimary),
+        RitmoCard.neumorphic(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'میزان خوشایی (رضایت ذهنی):',
+                      style: RitmoTextStyles.titleMedium(colors.textPrimary),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${RitmoNumber.faInt(_valence.toInt())} از ۵',
+                    style: RitmoTextStyles.label(colors.reflectionAccent),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '${RitmoNumber.faInt(_valence.toInt())} از ۵',
-              style: RitmoTextStyles.label(colors.reflectionAccent),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Slider(
-          value: _valence,
-          min: 1,
-          max: 5,
-          divisions: 4,
-          activeColor: colors.reflectionAccent,
-          inactiveColor: colors.border,
-          onChanged: (v) {
-            setState(() {
-              _valence = v;
-            });
-          },
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('خیلی ناخوشایند 😞', style: RitmoTextStyles.caption(colors.textSecondary)),
-            Text('خنثی 😐', style: RitmoTextStyles.caption(colors.textSecondary)),
-            Text('خیلی خوشایند 🥰', style: RitmoTextStyles.caption(colors.textSecondary)),
-          ],
+              const SizedBox(height: 4),
+              Slider(
+                value: _valence,
+                min: 1,
+                max: 5,
+                divisions: 4,
+                activeColor: colors.reflectionAccent,
+                inactiveColor: colors.border,
+                onChanged: (v) {
+                  setState(() {
+                    _valence = v;
+                  });
+                },
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('خیلی ناخوشایند 😞', style: RitmoTextStyles.caption(colors.textSecondary)),
+                  Text('خنثی 😐', style: RitmoTextStyles.caption(colors.textSecondary)),
+                  Text('خیلی خوشایند 🥰', style: RitmoTextStyles.caption(colors.textSecondary)),
+                ],
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: RitmoSpacing.lg),
 
         // 4. Note
-        TextField(
-          controller: _noteController,
-          style: RitmoTextStyles.body(colors.textPrimary),
-          maxLines: 2,
-          decoration: InputDecoration(
-            hintText: 'توضیحات بیشتر یا علت این حس و حال (اختیاری)...',
-            hintStyle: RitmoTextStyles.caption(colors.textSecondary.withValues(alpha: 0.5)),
-            fillColor: colors.surface,
-            filled: true,
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(RitmoRadius.card),
-              borderSide: BorderSide(color: colors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(RitmoRadius.card),
-              borderSide: BorderSide(color: colors.primary),
+        RitmoCard.neumorphicSunken(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: TextField(
+            controller: _noteController,
+            style: RitmoTextStyles.body(colors.textPrimary),
+            maxLines: 2,
+            decoration: InputDecoration(
+              hintText: 'توضیحات بیشتر یا علت این حس و حال (اختیاری)...',
+              hintStyle: RitmoTextStyles.caption(colors.textSecondary.withValues(alpha: 0.5)),
+              border: InputBorder.none,
             ),
           ),
         ),
         const SizedBox(height: RitmoSpacing.xl),
 
         // Save button
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: colors.primary,
-            foregroundColor: colors.onPrimary,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(RitmoRadius.card),
-            ),
-          ),
+        RitmoPrimaryButton(
+          label: 'ثبت و ذخیره وضعیت کنونی',
+          isLoading: _isSaving,
           onPressed: _isSaving ? null : _saveLogs,
-          child: _isSaving
-              ? SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    color: colors.onPrimary,
-                    strokeWidth: 2,
-                  ),
-                )
-              : Text(
-                  'ثبت و ذخیره وضعیت کنونی',
-                  style: RitmoTextStyles.label(colors.onPrimary),
-                ),
         ),
       ],
     );

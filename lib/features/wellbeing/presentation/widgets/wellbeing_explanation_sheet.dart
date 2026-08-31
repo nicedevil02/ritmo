@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/analytics/wellbeing_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -54,12 +55,8 @@ class WellbeingExplanationSheet extends StatelessWidget {
           style: RitmoTextStyles.cardTitle(colors.textPrimary),
         ),
         const SizedBox(height: RitmoSpacing.md),
-        Container(
+        RitmoCard.neumorphicSunken(
           padding: const EdgeInsets.all(RitmoSpacing.lg),
-          decoration: BoxDecoration(
-            color: colors.surfaceSunken,
-            borderRadius: BorderRadius.circular(RitmoRadius.card),
-          ),
           child: Column(
             children: [
               _buildWaterfallRow(context, 'پایهٔ محاسباتی', 50.0, isBase: true),
@@ -107,16 +104,20 @@ class WellbeingExplanationSheet extends StatelessWidget {
         const SizedBox(height: RitmoSpacing.xl),
 
         // Section 4: Generated local summary sentence
-        Container(
+        RitmoCard.neumorphicSunken(
           padding: const EdgeInsets.all(RitmoSpacing.lg),
-          decoration: BoxDecoration(
-            color: colors.primaryContainer,
-            borderRadius: BorderRadius.circular(RitmoRadius.card),
-            border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
-          ),
-          child: Text(
-            _generateSummarySentence(),
-            style: RitmoTextStyles.body(colors.textPrimary),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(CupertinoIcons.sparkles, color: colors.primary, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _generateSummarySentence(),
+                  style: RitmoTextStyles.body(colors.textPrimary),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -172,37 +173,28 @@ class WellbeingExplanationSheet extends StatelessWidget {
         ? 'زیاد'
         : (c.confidence >= 0.5 ? 'متوسط' : 'کم');
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: RitmoSpacing.md),
-      padding: const EdgeInsets.all(RitmoSpacing.md),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: colors.border),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              '${_signalName(c.signal)} — ${RitmoNumber.faInt(c.score)} از ۱۰۰ — وزن ${RitmoNumber.faPercent((c.weight * 100).round())} — ${RitmoNumber.faInt(c.sampleCount)} نمونه — اطمینان $confText',
-              style: RitmoTextStyles.caption(colors.textPrimary),
-            ),
-          ),
-          if (c.isAiDerived) ...[
-            const SizedBox(width: RitmoSpacing.xs),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: colors.accent,
-                borderRadius: BorderRadius.circular(RitmoRadius.pill),
-              ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: RitmoSpacing.md),
+      child: RitmoCard.neumorphic(
+        padding: const EdgeInsets.all(RitmoSpacing.md),
+        child: Row(
+          children: [
+            Expanded(
               child: Text(
-                'AI',
-                style: RitmoTextStyles.badge(colors.textOnColor),
+                '${_signalName(c.signal)} — ${RitmoNumber.faInt(c.score)} از ۱۰۰ — وزن ${RitmoNumber.faPercent((c.weight * 100).round())} — ${RitmoNumber.faInt(c.sampleCount)} نمونه — اطمینان $confText',
+                style: RitmoTextStyles.caption(colors.textPrimary),
               ),
             ),
+            if (c.isAiDerived) ...[
+              const SizedBox(width: RitmoSpacing.xs),
+              RitmoCardBadge(
+                label: 'AI',
+                color: colors.accent,
+                icon: CupertinoIcons.sparkles,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -210,23 +202,22 @@ class WellbeingExplanationSheet extends StatelessWidget {
   Widget _buildMissingCard(BuildContext context, WellbeingMissingSignal m) {
     final colors = context.colors;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: RitmoSpacing.md),
-      padding: const EdgeInsets.all(RitmoSpacing.md),
-      decoration: BoxDecoration(
-        color: colors.surfaceSunken,
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: colors.divider),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              '${_signalName(m.signal)} — ${RitmoNumber.faInt(m.have)} ثبت از ${RitmoNumber.faInt(m.need)} ثبت لازم',
-              style: RitmoTextStyles.caption(colors.textSecondary),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: RitmoSpacing.md),
+      child: RitmoCard.neumorphicSunken(
+        padding: const EdgeInsets.all(RitmoSpacing.md),
+        child: Row(
+          children: [
+            Icon(CupertinoIcons.info_circle, size: 16, color: colors.textTertiary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '${_signalName(m.signal)} — ${RitmoNumber.faInt(m.have)} ثبت از ${RitmoNumber.faInt(m.need)} ثبت لازم',
+                style: RitmoTextStyles.caption(colors.textSecondary),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

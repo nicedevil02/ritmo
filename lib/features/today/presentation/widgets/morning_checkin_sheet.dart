@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Modal bottom sheet for morning mood & energy check-in.
 class MorningCheckinSheet extends StatefulWidget {
-
   /// Constructs a [MorningCheckinSheet].
   const MorningCheckinSheet({required this.onSaved, super.key});
   /// Callback triggered when the check-in is saved.
@@ -139,179 +139,147 @@ class _MorningCheckinSheetState extends State<MorningCheckinSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoTheme.glassCardLight(
-        borderRadius: 28,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            14,
-            20,
-            14,
-            MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
+      child: RitmoGlassSheet(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          12,
+          16,
+          MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Drag Handle
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+
+              // Header
+              Row(
+                children: [
+                  RitmoNeuButton(
+                    onTap: () => Navigator.pop(context),
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      CupertinoIcons.xmark,
+                      color: colors.textSecondary,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
                       'ارزیابی و چک‌این صبحگاهی',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: colors.cardTitle,
-                        ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        CupertinoIcons.xmark,
-                        color: colors.iconSecondary,
-                        size: 20,
+                        color: colors.textPrimary,
                       ),
-                      onPressed: () => Navigator.pop(context),
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: 36), // Symmetrical spacer
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'ریتم و وضعیت امروز خود را ثبت کنید تا سطح انرژی شما کالیبره شود.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colors.textSecondary,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'ریتم و وضعیت امروز خود را ثبت کنید تا سطح انرژی شما کالیبره شود.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colors.textSecondary,
-                    ),
-                ),
-                const SizedBox(height: 20),
+              ),
+              const SizedBox(height: 16),
 
-                // Mood Selection List
-                ..._moods.map((mood) {
-                  final isSelected = _selectedMood == mood['key'];
-                  final mColor = mood['color'] as Color;
+              // Mood Selection List
+              ..._moods.map((mood) {
+                final isSelected = _selectedMood == mood['key'];
+                final mColor = mood['color'] as Color;
 
-                  return GestureDetector(
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: RitmoCard.neumorphic(
+                    isSelected: isSelected,
                     onTap: () async {
                       await HapticFeedback.selectionClick();
                       setState(() {
                         _selectedMood = mood['key'] as String;
                       });
                     },
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color:
-                            isSelected
-                                ? mColor.withValues(alpha: 0.08)
-                                : colors.cardFill,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color:
-                              isSelected
-                                  ? mColor.withValues(alpha: 0.4)
-                                  : colors.glassBorder,
-                          width: 1.5,
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Icon(
+                          mood['icon'] as IconData,
+                          color: isSelected ? mColor : colors.textSecondary,
+                          size: 22,
                         ),
-                      ),
-                      child: Row(
-                        children: [
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            mood['label'] as String,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight:
+                                  isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        if (isSelected)
                           Icon(
-                            mood['icon'] as IconData,
-                            color: isSelected ? mColor : colors.textSecondary,
-                            size: 24,
+                            CupertinoIcons.checkmark_alt,
+                            color: mColor,
+                            size: 18,
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              mood['label'] as String,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight:
-                                    isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                color:
-                                    isSelected
-                                        ? colors.cardTitle
-                                        : colors.textPrimary,
-                                ),
-                            ),
-                          ),
-                          if (isSelected)
-                            Icon(
-                              CupertinoIcons.checkmark_alt,
-                              color: mColor,
-                              size: 20,
-                            ),
-                        ],
-                      ),
+                      ],
                     ),
-                  );
-                }),
-                const SizedBox(height: 16),
+                  ),
+                );
+              }),
+              const SizedBox(height: 14),
 
-                // Optional note text field
-                TextField(
+              // Optional note text field
+              RitmoCard.neumorphicSunken(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: TextField(
                   controller: _noteController,
                   style: TextStyle(
-                    color: colors.cardTitle,
-                    fontSize: 13,
-                    ),
+                    color: colors.textPrimary,
+                    fontSize: 12.5,
+                  ),
                   maxLines: 2,
                   decoration: InputDecoration(
                     hintText: 'یادداشت کوتاه از احساس امروز (اختیاری)',
                     hintStyle: TextStyle(
-                      color: colors.textSecondary.withValues(alpha: 0.5),
-                      fontSize: 12,
+                      color: colors.textTertiary.withValues(alpha: 0.6),
+                      fontSize: 11.5,
                     ),
-                    fillColor: colors.inputBackground,
-                    filled: true,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: colors.glassBorder),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: colors.primary.withValues(alpha: 0.4),
-                      ),
-                    ),
+                    border: InputBorder.none,
                   ),
                 ),
-                const SizedBox(height: 20),
+              ),
+              const SizedBox(height: 16),
 
-                // Save button
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  onPressed: _isSaving ? null : _saveCheckin,
-                  child:
-                      _isSaving
-                          ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                          : const Text(
-                            'تایید و ثبت وضعیت',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              ),
-                          ),
-                ),
-              ],
-            ),
+              // Save button
+              RitmoPrimaryButton(
+                label: 'تایید و ثبت وضعیت',
+                isLoading: _isSaving,
+                onPressed: _isSaving ? null : _saveCheckin,
+              ),
+            ],
           ),
         ),
       ),

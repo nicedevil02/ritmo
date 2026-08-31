@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/energy/presentation/widgets/quick_log_sheet.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
@@ -33,7 +32,7 @@ class WellbeingDaySheet extends StatelessWidget {
     RitmoHapticsPolicy.tap();
     return RitmoSheetScaffold.present(
       context: context,
-      title: 'ورق روز — ${RitmoNumber.fa(day.dateStr)}',
+      title: 'ورق روز — ',
       builder: (ctx) => WellbeingDaySheet(
         day: day,
         sleepTarget: sleepTarget,
@@ -47,120 +46,269 @@ class WellbeingDaySheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Padding(
-      padding: const EdgeInsets.all(RitmoSpacing.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // بخش خواب
-          ListTile(
-            leading: Icon(Icons.bedtime, color: colors.sleepAccent),
-            title: Text(
-              day.sleepHours != null
-                  ? 'خواب: ${RitmoNumber.faHours(day.sleepHours!)}'
-                  : 'خواب ثبت نشده است',
-              style: RitmoTextStyles.body(colors.textPrimary),
-            ),
-            trailing: TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                RitmoSheetScaffold.present(
-                  context: context,
-                  title: 'ثبت خواب',
-                  builder: (_) => SleepLogSheet(
-                    onSaved: () {
-                      onLogChanged?.call();
-                    },
-                    target: sleepTarget ?? SleepTarget.defaultTarget(),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ۱. بخش خواب
+        RitmoCard.neumorphic(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: colors.sleepAccent.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(CupertinoIcons.moon_stars_fill, color: colors.sleepAccent, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'خواب شبانه',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      day.sleepHours != null
+                          ? 'خواب: '
+                          : 'خواب ثبت نشده است',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              RitmoNeuButton(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                onTap: () {
+                  Navigator.pop(context);
+                  RitmoSheetScaffold.present(
+                    context: context,
+                    title: 'ثبت خواب',
+                    builder: (_) => SleepLogSheet(
+                      onSaved: () {
+                        onLogChanged?.call();
+                      },
+                      target: sleepTarget ?? SleepTarget.defaultTarget(),
+                    ),
+                  );
+                },
+                child: Text(
+                  day.sleepHours != null ? 'ویرایش' : 'ثبت',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: colors.primary,
                   ),
-                );
-              },
-              child: Text(
-                'ثبت / ویرایش',
-                style: RitmoTextStyles.label(colors.primary),
+                ),
               ),
-            ),
+            ],
           ),
-          const Divider(height: 1),
+        ),
+        const SizedBox(height: 10),
 
-          // بخش انرژی
-          ListTile(
-            leading: Icon(Icons.bolt, color: colors.energyAccent),
-            title: Text(
-              day.energyLevel != null
-                  ? 'انرژی: ${RitmoNumber.faInt((day.energyLevel! * 33.33).round().clamp(0, 100))}٪'
-                  : 'انرژی ثبت نشده است',
-              style: RitmoTextStyles.body(colors.textPrimary),
-            ),
-            trailing: TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                RitmoSheetScaffold.present(
-                  context: context,
-                  title: 'ثبت انرژی',
-                  builder: (_) => QuickLogSheet(
-                    onSaved: () {
-                      onLogChanged?.call();
-                    },
+        // ۲. بخش انرژی
+        RitmoCard.neumorphic(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: colors.energyAccent.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(CupertinoIcons.bolt_fill, color: colors.energyAccent, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'سطح انرژی روزانه',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      day.energyLevel != null
+                          ? 'انرژی: ٪'
+                          : 'انرژی ثبت نشده است',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              RitmoNeuButton(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                onTap: () {
+                  Navigator.pop(context);
+                  RitmoSheetScaffold.present(
+                    context: context,
+                    title: 'ثبت انرژی',
+                    builder: (_) => QuickLogSheet(
+                      onSaved: () {
+                        onLogChanged?.call();
+                      },
+                    ),
+                  );
+                },
+                child: Text(
+                  day.energyLevel != null ? 'ویرایش' : 'ثبت',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: colors.primary,
                   ),
-                );
-              },
-              child: Text(
-                'ثبت / ویرایش',
-                style: RitmoTextStyles.label(colors.primary),
+                ),
               ),
-            ),
+            ],
           ),
-          const Divider(height: 1),
+        ),
+        const SizedBox(height: 10),
 
-          // بخش حال
-          ListTile(
-            leading: Icon(
-              Icons.sentiment_satisfied_alt,
-              color: colors.reflectionAccent,
-            ),
-            title: Text(
-              day.moodScore != null
-                  ? 'حال: ${RitmoNumber.fa(day.moodScore!.toStringAsFixed(1))} از ۵'
-                  : 'حال ثبت نشده است',
-              style: RitmoTextStyles.body(colors.textPrimary),
-            ),
-            subtitle: (moodNote != null && moodNote!.isNotEmpty)
-                ? Text(
-                    moodNote!,
-                    style: RitmoTextStyles.caption(colors.textSecondary),
-                  )
-                : null,
-          ),
-          const Divider(height: 1),
-
-          // بخش بازتاب
-          ListTile(
-            leading: Icon(Icons.edit_note, color: colors.primary),
-            title: Text(
-              day.hasReflection
-                  ? 'بازتاب ثبت شده است ✅'
-                  : 'بازتاب ثبت نشده است',
-              style: RitmoTextStyles.body(colors.textPrimary),
-            ),
-            trailing: TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                DailyReflectionSheet.show(
-                  context: context,
-                  date: day.dateStr,
-                  onSaved: onLogChanged,
-                );
-              },
-              child: Text(
-                'ثبت بازتاب',
-                style: RitmoTextStyles.label(colors.primary),
+        // ۳. بخش حال روحی
+        RitmoCard.neumorphic(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: colors.reflectionAccent.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(CupertinoIcons.heart_fill, color: colors.reflectionAccent, size: 18),
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'حال و رضایت درونی',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      day.moodScore != null
+                          ? 'حال:  از ۵'
+                          : 'حال ثبت نشده است',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    if (moodNote != null && moodNote!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        moodNote!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+
+        // ۴. بخش بازتاب
+        RitmoCard.neumorphic(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(CupertinoIcons.pencil_ellipsis_rectangle, color: colors.primary, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'تأمل و بازتاب شبانه',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      day.hasReflection
+                          ? 'بازتاب ثبت شده است ✅'
+                          : 'بازتاب ثبت نشده است',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              RitmoNeuButton(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                onTap: () {
+                  Navigator.pop(context);
+                  DailyReflectionSheet.show(
+                    context: context,
+                    date: day.dateStr,
+                    onSaved: onLogChanged,
+                  );
+                },
+                child: Text(
+                  day.hasReflection ? 'ویرایش' : 'ثبت بازتاب',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: colors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

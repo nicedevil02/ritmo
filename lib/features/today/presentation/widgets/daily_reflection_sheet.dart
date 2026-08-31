@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_pressable.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/reflection/models/reflection_models.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:sqflite/sqflite.dart';
@@ -222,442 +222,277 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
     final colors = context.colors;
     final isDark = context.isDark;
     final dateStr = DailyReflectionSheet._formatHeaderDate(widget.date);
-    const sheetRadius = BorderRadius.vertical(top: Radius.circular(24));
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
-    final sheetContent = Container(
+    final sheetContent = ConstrainedBox(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
+        maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Minimal Grabber Bar
+          // Drag Handle
           Center(
             child: Container(
-              margin: const EdgeInsets.only(top: 8, bottom: 4),
+              margin: const EdgeInsets.only(top: 10, bottom: 6),
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: colors.textTertiary.withValues(alpha: 0.3),
+                color: colors.border.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
 
-                  // Compact, Low-Profile Header
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-                    child: Row(
-                      children: [
+          // Symmetrical Glass Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                RitmoNeuButton(
+                  onTap: () => Navigator.pop(context),
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(
+                    CupertinoIcons.xmark,
+                    size: 16,
+                    color: colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons.moon_stars_fill,
+                        size: 17,
+                        color: colors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'تأمل و ارزیابی روزانه',
+                        style: TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      if (dateStr.isNotEmpty) ...[
+                        const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: colors.primary.withValues(alpha: 0.12),
-                            shape: BoxShape.circle,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
                           ),
-                          child: Icon(
-                            Icons.nightlight_round,
-                            size: 16,
-                            color: colors.primary,
+                          decoration: BoxDecoration(
+                            color: colors.surfaceSunken,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: colors.border.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          child: Text(
+                            dateStr,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: colors.textSecondary,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 36), // Symmetrical balancing
+              ],
+            ),
+          ),
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: colors.divider,
+          ),
+
+          // Scrollable Body
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 1. Mood Selector
+                  RitmoCard.neumorphic(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 2, bottom: 8),
                           child: Row(
                             children: [
+                              Icon(
+                                CupertinoIcons.heart_fill,
+                                size: 16,
+                                color: colors.reflectionAccent,
+                              ),
+                              const SizedBox(width: 6),
                               Text(
-                                'تأمل و ارزیابی روزانه',
+                                'حس و حال کلی امروز:',
                                 style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
                                   color: colors.textPrimary,
                                 ),
                               ),
-                              if (dateStr.isNotEmpty) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 7,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: colors.surfaceSunken.withValues(
-                                      alpha: 0.7,
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: colors.border.withValues(
-                                        alpha: 0.4,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    dateStr,
-                                    style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w500,
-                                      color: colors.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ],
                           ),
                         ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: Icon(
-                            Icons.close,
-                            size: 18,
-                            color: colors.textSecondary,
-                          ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 32,
-                          ),
-                          tooltip: 'بستن',
-                        ),
-                      ],
-                    ),
-                  ),
-                  Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: colors.border.withValues(alpha: 0.35),
-                  ),
+                        Row(
+                          children: _moodOptions.map((opt) {
+                            final score = opt['score'] as int;
+                            final isSelected = _moodScore == score;
+                            final moodColor = _getMoodColor(score, colors);
 
-                  // Scrollable Body (Edge-to-Edge with 14px padding)
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // 1. Mood Selector (Compact 5-Column Row)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colors.surfaceSunken.withValues(
-                                alpha: isDark ? 0.35 : 0.55,
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: colors.border.withValues(
-                                  alpha: isDark ? 0.3 : 0.5,
-                                ),
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    right: 4,
-                                    bottom: 8,
-                                  ),
-                                  child: Row(
+                            return Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                                child: RitmoCard.neumorphic(
+                                  isSelected: isSelected,
+                                  onTap: () {
+                                    RitmoHapticsPolicy.selection();
+                                    setState(() => _moodScore = score);
+                                  },
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(
-                                        Icons.sentiment_satisfied_alt_rounded,
-                                        size: 15,
-                                        color: colors.primary,
-                                      ),
-                                      const SizedBox(width: 6),
                                       Text(
-                                        'حس و حال کلی امروز:',
+                                        opt['emoji'] as String,
                                         style: TextStyle(
-                                          fontFamily: 'Vazirmatn',
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: colors.textPrimary,
+                                          fontSize: isSelected ? 20 : 17,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        opt['label'] as String,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: isSelected
+                                              ? FontWeight.w800
+                                              : FontWeight.w500,
+                                          color: isSelected
+                                              ? moodColor
+                                              : colors.textSecondary,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                Row(
-                                  children: _moodOptions.map((opt) {
-                                    final score = opt['score'] as int;
-                                    final isSelected = _moodScore == score;
-                                    final moodColor = _getMoodColor(
-                                      score,
-                                      colors,
-                                    );
-
-                                    return Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 2.5,
-                                        ),
-                                        child: RitmoPressable(
-                                          onTap: () {
-                                            RitmoHapticsPolicy.selection();
-                                            setState(() => _moodScore = score);
-                                          },
-                                          semanticLabel: opt['label'] as String,
-                                          child: AnimatedContainer(
-                                            duration: const Duration(
-                                              milliseconds: 160,
-                                            ),
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 6,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: isSelected
-                                                  ? moodColor.withValues(
-                                                      alpha: isDark
-                                                          ? 0.25
-                                                          : 0.16,
-                                                    )
-                                                  : colors.surface.withValues(
-                                                      alpha: 0.5,
-                                                    ),
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              border: Border.all(
-                                                color: isSelected
-                                                    ? moodColor
-                                                    : colors.border.withValues(
-                                                        alpha: 0.4,
-                                                      ),
-                                                width: isSelected ? 1.5 : 0.9,
-                                              ),
-                                            ),
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text(
-                                                  opt['emoji'] as String,
-                                                  style: TextStyle(
-                                                    fontSize: isSelected
-                                                        ? 20
-                                                        : 17,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 3),
-                                                Text(
-                                                  opt['label'] as String,
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  textAlign: TextAlign.center,
-                                                  style: TextStyle(
-                                                    fontFamily: 'Vazirmatn',
-                                                    fontSize: 9.5,
-                                                    fontWeight: isSelected
-                                                        ? FontWeight.w800
-                                                        : FontWeight.w500,
-                                                    color: isSelected
-                                                        ? (isDark
-                                                              ? Colors.white
-                                                              : moodColor)
-                                                        : colors.textSecondary,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          // 2. Wins & Achievements
-                          _buildFieldTile(
-                            controller: _winsController,
-                            title: 'بردها و دستاوردهای امروز',
-                            hint:
-                                'چه کارهایی خوب پیش رفت؟ (اتمام کار مهم، ورزش، تمرکز...)',
-                            icon: Icons.emoji_events_rounded,
-                            accentColor: colors.warning,
-                            colors: colors,
-                            isDark: isDark,
-                          ),
-                          const SizedBox(height: 8),
-
-                          // 3. Gratitude
-                          _buildFieldTile(
-                            controller: _gratitudeController,
-                            title: 'شکرگزاری امروز',
-                            hint:
-                                'بابت چه چیزهایی سپاس‌گزارید؟ (مکالمه خوب، سلامتی، آرامش...)',
-                            icon: Icons.favorite_rounded,
-                            accentColor: colors.error,
-                            colors: colors,
-                            isDark: isDark,
-                          ),
-                          const SizedBox(height: 8),
-
-                          // 4. Challenges
-                          _buildFieldTile(
-                            controller: _challengesController,
-                            title: 'چالش‌ها و موانع',
-                            hint:
-                                'چه چیزهایی سخت بود یا انرژی گرفت؟ (خستگی، حواس‌پرتی...)',
-                            icon: Icons.bolt_rounded,
-                            accentColor: colors.warning,
-                            colors: colors,
-                            isDark: isDark,
-                          ),
-                          const SizedBox(height: 8),
-
-                          // 5. Learnings
-                          _buildFieldTile(
-                            controller: _learningsController,
-                            title: 'درس‌های آموخته‌شده',
-                            hint:
-                                'امروز چه درسی گرفتید؟ (نیاز به استراحت، برنامه‌ریزی بهتر...)',
-                            icon: Icons.menu_book_rounded,
-                            accentColor: colors.primary,
-                            colors: colors,
-                            isDark: isDark,
-                          ),
-                          const SizedBox(height: 8),
-
-                          // 6. Tomorrow Focus
-                          _buildFieldTile(
-                            controller: _tomorrowFocusController,
-                            title: 'تمرکز اصلی فردا',
-                            hint:
-                                'مهم‌ترین اولویت فردا چیست؟ (پروژه اصلی، خواب به‌موقع...)',
-                            icon: Icons.track_changes_rounded,
-                            accentColor: colors.success,
-                            colors: colors,
-                            isDark: isDark,
-                          ),
-                          const SizedBox(height: 8),
-
-                          // 7. Free Reflection
-                          _buildFieldTile(
-                            controller: _reflectionController,
-                            title: 'یادداشت و تحلیل آزاد',
-                            hint: 'هر نکته، دلنوشته یا جریانی از افکار روز...',
-                            icon: Icons.edit_note_rounded,
-                            accentColor: colors.primary,
-                            colors: colors,
-                            isDark: isDark,
-                            maxLines: 3,
-                          ),
-                          const SizedBox(height: 10),
-
-                          // Privacy Switch
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colors.surfaceSunken.withValues(
-                                alpha: isDark ? 0.35 : 0.55,
                               ),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: colors.border.withValues(
-                                  alpha: isDark ? 0.3 : 0.45,
-                                ),
-                              ),
-                            ),
-                            child: SwitchListTile(
-                              title: Row(
-                                children: [
-                                  Icon(
-                                    _isPrivate
-                                        ? Icons.lock_rounded
-                                        : Icons.lock_open_rounded,
-                                    size: 15,
-                                    color: _isPrivate
-                                        ? colors.primary
-                                        : colors.textSecondary,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'یادداشت محرمانه (عدم تحلیل توسط AI)',
-                                    style: TextStyle(
-                                      fontFamily: 'Vazirmatn',
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: colors.textPrimary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              subtitle: Text(
-                                'صرفاً روی حافظهٔ دستگاه شما باقی می‌ماند.',
-                                style: TextStyle(
-                                  fontFamily: 'Vazirmatn',
-                                  fontSize: 10,
-                                  color: colors.textSecondary,
-                                ),
-                              ),
-                              value: _isPrivate,
-                              onChanged: (val) {
-                                RitmoHapticsPolicy.selection();
-                                setState(() => _isPrivate = val);
-                              },
-                              activeTrackColor: colors.primary,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-
-                          // Submit Button
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: colors.primary,
-                              foregroundColor: colors.onPrimary,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            onPressed: _isSaving ? null : _saveReflection,
-                            icon: _isSaving
-                                ? SizedBox(
-                                    height: 16,
-                                    width: 16,
-                                    child: CircularProgressIndicator(
-                                      color: colors.onPrimary,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.check_circle_rounded,
-                                    size: 18,
-                                  ),
-                            label: Text(
-                              _isSaving
-                                  ? 'در حال ذخیره‌سازی...'
-                                  : 'ثبت و ذخیرهٔ تأمل روزانه',
-                              style: const TextStyle(
-                                fontFamily: 'Vazirmatn',
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
                     ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // 2. Day highlights (Wins)
+                  _buildFieldTile(
+                    controller: _winsController,
+                    title: 'دستاوردهای امروز (حتی کوچک)',
+                    hint: 'امروز چه کاری رو خوب انجام دادی؟',
+                    icon: CupertinoIcons.sparkles,
+                    accentColor: const Color(0xFFF59E0B),
+                    colors: colors,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 3. Difficulties & Friction
+                  _buildFieldTile(
+                    controller: _challengesController,
+                    title: 'چالش‌ها یا اصطکاک‌های امروز',
+                    hint: 'کجا حس کردی انرژی یا تمرکزت افت کرد؟',
+                    icon: CupertinoIcons.flame_fill,
+                    accentColor: colors.error,
+                    colors: colors,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 4. Learnings & Notes
+                  _buildFieldTile(
+                    controller: _learningsController,
+                    title: 'یادگیری‌ها یا یادداشت آزاد',
+                    hint: 'نکته‌ای که برای روزهای آینده به دردت می‌خوره...',
+                    icon: CupertinoIcons.lightbulb_fill,
+                    accentColor: colors.primary,
+                    colors: colors,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 5. Tomorrow's main intention
+                  _buildFieldTile(
+                    controller: _tomorrowFocusController,
+                    title: 'تمرکز اصلی فردا',
+                    hint: 'یک کاری که فردا اولویت اصلیته چیه؟',
+                    icon: CupertinoIcons.arrow_right_circle_fill,
+                    accentColor: colors.secondary,
+                    colors: colors,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // 6. Privacy toggle
+                  RitmoCard.neumorphic(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    child: SwitchListTile(
+                      title: Text(
+                        'ثبت خصوصی (محرمانه)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'صرفاً روی حافظهٔ دستگاه شما باقی می‌ماند.',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                      value: _isPrivate,
+                      onChanged: (val) {
+                        RitmoHapticsPolicy.selection();
+                        setState(() => _isPrivate = val);
+                      },
+                      activeTrackColor: colors.primary,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Submit Button
+                  RitmoPrimaryButton(
+                    label: 'ثبت و ذخیرهٔ تأمل روزانه',
+                    isLoading: _isSaving,
+                    onPressed: _isSaving ? null : _saveReflection,
                   ),
                 ],
               ),
-            );
+            ),
+          ),
+        ],
+      ),
+    );
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -683,28 +518,19 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
     required bool isDark,
     int maxLines = 2,
   }) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-      decoration: BoxDecoration(
-        color: colors.surfaceSunken.withValues(alpha: isDark ? 0.35 : 0.55),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colors.border.withValues(alpha: isDark ? 0.28 : 0.45),
-          width: 1,
-        ),
-      ),
+    return RitmoCard.neumorphicSunken(
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: accentColor, size: 15),
+              Icon(icon, color: accentColor, size: 16),
               const SizedBox(width: 6),
               Text(
                 title,
                 style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 11.5,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: colors.textPrimary,
                 ),
@@ -715,34 +541,21 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
           TextField(
             controller: controller,
             style: TextStyle(
-              fontFamily: 'Vazirmatn',
               color: colors.textPrimary,
-              fontSize: 12,
+              fontSize: 12.5,
             ),
             maxLines: maxLines,
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
-                fontFamily: 'Vazirmatn',
-                color: colors.textTertiary.withValues(alpha: 0.6),
-                fontSize: 10.5,
+                color: colors.textTertiary.withValues(alpha: 0.7),
+                fontSize: 11,
               ),
-              fillColor: colors.surface.withValues(alpha: isDark ? 0.5 : 0.8),
-              filled: true,
+              border: InputBorder.none,
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 8,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                  color: colors.border.withValues(alpha: isDark ? 0.25 : 0.4),
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: accentColor, width: 1.3),
+                horizontal: 4,
+                vertical: 6,
               ),
             ),
           ),

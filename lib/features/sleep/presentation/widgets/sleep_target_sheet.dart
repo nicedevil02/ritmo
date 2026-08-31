@@ -6,6 +6,7 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/services/sleep_winddown_reminder_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/sleep/data/sleep_program_repository.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
 import 'package:sqflite/sqflite.dart';
@@ -212,59 +213,55 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
         Row(
           children: [
             Expanded(
-              child: InkWell(
+              child: RitmoCard.neumorphic(
                 onTap: _selectBedtime,
-                borderRadius: BorderRadius.circular(RitmoRadius.card),
-                child: Container(
-                  padding: const EdgeInsets.all(RitmoSpacing.md),
-                  decoration: BoxDecoration(
-                    color: colors.surface,
-                    borderRadius: BorderRadius.circular(RitmoRadius.card),
-                    border: Border.all(color: colors.border),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ساعت خواب هدف',
-                        style: RitmoTextStyles.caption(colors.textSecondary),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${RitmoNumber.faInt(_bedtime.hour).padLeft(2, '۰')}:${RitmoNumber.faInt(_bedtime.minute).padLeft(2, '۰')}',
-                        style: RitmoTextStyles.cardTitle(colors.textPrimary),
-                      ),
-                    ],
-                  ),
+                padding: const EdgeInsets.all(RitmoSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(CupertinoIcons.moon_stars_fill, size: 14, color: colors.sleepAccent),
+                        const SizedBox(width: 6),
+                        Text(
+                          'ساعت خواب هدف',
+                          style: RitmoTextStyles.caption(colors.textSecondary),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${RitmoNumber.faInt(_bedtime.hour).padLeft(2, '۰')}:${RitmoNumber.faInt(_bedtime.minute).padLeft(2, '۰')}',
+                      style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    ),
+                  ],
                 ),
               ),
             ),
             const SizedBox(width: RitmoSpacing.md),
             Expanded(
-              child: InkWell(
+              child: RitmoCard.neumorphic(
                 onTap: _selectWakeTime,
-                borderRadius: BorderRadius.circular(RitmoRadius.card),
-                child: Container(
-                  padding: const EdgeInsets.all(RitmoSpacing.md),
-                  decoration: BoxDecoration(
-                    color: colors.surface,
-                    borderRadius: BorderRadius.circular(RitmoRadius.card),
-                    border: Border.all(color: colors.border),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ساعت بیداری هدف',
-                        style: RitmoTextStyles.caption(colors.textSecondary),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${RitmoNumber.faInt(_wakeTime.hour).padLeft(2, '۰')}:${RitmoNumber.faInt(_wakeTime.minute).padLeft(2, '۰')}',
-                        style: RitmoTextStyles.cardTitle(colors.textPrimary),
-                      ),
-                    ],
-                  ),
+                padding: const EdgeInsets.all(RitmoSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(CupertinoIcons.sun_max_fill, size: 14, color: Color(0xFFF59E0B)),
+                        const SizedBox(width: 6),
+                        Text(
+                          'ساعت بیداری هدف',
+                          style: RitmoTextStyles.caption(colors.textSecondary),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${RitmoNumber.faInt(_wakeTime.hour).padLeft(2, '۰')}:${RitmoNumber.faInt(_wakeTime.minute).padLeft(2, '۰')}',
+                      style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -273,13 +270,8 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
         const SizedBox(height: RitmoSpacing.md),
 
         // Target Duration Adjuster
-        Container(
+        RitmoCard.neumorphic(
           padding: const EdgeInsets.all(RitmoSpacing.md),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(RitmoRadius.card),
-            border: Border.all(color: colors.border),
-          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -331,144 +323,135 @@ class _SleepTargetSheetState extends State<SleepTargetSheet> {
         const SizedBox(height: RitmoSpacing.md),
 
         // Winddown Switch
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(
-            'یادآور پیش‌خواب (Wind-down)',
-            style: RitmoTextStyles.titleMedium(colors.textPrimary),
+        RitmoCard.neumorphic(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            children: [
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  'یادآور پیش‌خواب (Wind-down)',
+                  style: RitmoTextStyles.titleMedium(colors.textPrimary),
+                ),
+                subtitle: Text(
+                  'ارسال اعلان ملایم برای آماده‌شدن جهت خواب',
+                  style: RitmoTextStyles.caption(colors.textSecondary),
+                ),
+                value: _winddownEnabled,
+                activeThumbColor: colors.sleepAccent,
+                onChanged: (val) {
+                  HapticFeedback.selectionClick();
+                  setState(() {
+                    _winddownEnabled = val;
+                  });
+                },
+              ),
+              if (_winddownEnabled) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'زمان یادآوری: ${RitmoNumber.faInt(_winddownMinutes)} دقیقه قبل از خواب',
+                  style: RitmoTextStyles.caption(colors.textSecondary),
+                ),
+                Slider(
+                  value: _winddownMinutes.toDouble(),
+                  min: 15,
+                  max: 120,
+                  divisions: 7,
+                  activeColor: colors.sleepAccent,
+                  inactiveColor: colors.border,
+                  label: '${RitmoNumber.faInt(_winddownMinutes)} دقیقه',
+                  onChanged: (val) {
+                    setState(() {
+                      _winddownMinutes = val.toInt();
+                    });
+                  },
+                ),
+              ],
+            ],
           ),
-          subtitle: Text(
-            'ارسال اعلان ملایم برای آماده‌شدن جهت خواب',
-            style: RitmoTextStyles.caption(colors.textSecondary),
-          ),
-          value: _winddownEnabled,
-          activeThumbColor: colors.sleepAccent,
-          onChanged: (val) {
-            HapticFeedback.selectionClick();
-            setState(() {
-              _winddownEnabled = val;
-            });
-          },
         ),
-        if (_winddownEnabled) ...[
-          const SizedBox(height: 4),
-          Text(
-            'زمان یادآوری: ${RitmoNumber.faInt(_winddownMinutes)} دقیقه قبل از خواب',
-            style: RitmoTextStyles.caption(colors.textSecondary),
-          ),
-          Slider(
-            value: _winddownMinutes.toDouble(),
-            min: 15,
-            max: 120,
-            divisions: 7,
-            activeColor: colors.sleepAccent,
-            inactiveColor: colors.border,
-            label: '${RitmoNumber.faInt(_winddownMinutes)} دقیقه',
-            onChanged: (val) {
-              setState(() {
-                _winddownMinutes = val.toInt();
-              });
-            },
-          ),
-        ],
         const SizedBox(height: RitmoSpacing.md),
 
         // Free night ChoiceChip
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'شب آزاد هفتگی',
-              style: RitmoTextStyles.titleMedium(colors.textPrimary),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'یک شب در هفته که برنامه هیچ انتظاری از شما ندارد و از سنجش پایبندی حذف می‌شود.',
-              style: RitmoTextStyles.caption(colors.textSecondary),
-            ),
-            const SizedBox(height: 10),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  ChoiceChip(
-                    label: Text(
-                      'بدون شب آزاد',
-                      style: RitmoTextStyles.caption(
-                        _freeNightWeekday == null ? colors.onPrimary : colors.textPrimary,
-                      ),
-                    ),
-                    selected: _freeNightWeekday == null,
-                    selectedColor: colors.sleepAccent,
-                    onSelected: (selected) {
-                      if (selected) {
-                        HapticFeedback.selectionClick();
-                        setState(() => _freeNightWeekday = null);
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  ...[
-                    {'day': DateTime.saturday, 'name': 'شنبه'},
-                    {'day': DateTime.sunday, 'name': 'یکشنبه'},
-                    {'day': DateTime.monday, 'name': 'دوشنبه'},
-                    {'day': DateTime.tuesday, 'name': 'سه‌شنبه'},
-                    {'day': DateTime.wednesday, 'name': 'چهارشنبه'},
-                    {'day': DateTime.thursday, 'name': 'پنج‌شنبه'},
-                    {'day': DateTime.friday, 'name': 'جمعه'},
-                  ].map((w) {
-                    final day = w['day'] as int;
-                    final name = w['name'] as String;
-                    final isSelected = _freeNightWeekday == day;
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 6),
-                      child: ChoiceChip(
-                        label: Text(
-                          name,
-                          style: RitmoTextStyles.caption(
-                            isSelected ? colors.onPrimary : colors.textPrimary,
-                          ),
-                        ),
-                        selected: isSelected,
-                        selectedColor: colors.sleepAccent,
-                        onSelected: (selected) {
-                          HapticFeedback.selectionClick();
-                          setState(() => _freeNightWeekday = selected ? day : null);
-                        },
-                      ),
-                    );
-                  }),
-                ],
+        RitmoCard.neumorphic(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'شب آزاد هفتگی',
+                style: RitmoTextStyles.titleMedium(colors.textPrimary),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                'یک شب در هفته که برنامه هیچ انتظاری از شما ندارد و از سنجش پایبندی حذف می‌شود.',
+                style: RitmoTextStyles.caption(colors.textSecondary),
+              ),
+              const SizedBox(height: 10),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    ChoiceChip(
+                      label: Text(
+                        'بدون شب آزاد',
+                        style: RitmoTextStyles.caption(
+                          _freeNightWeekday == null ? colors.onPrimary : colors.textPrimary,
+                        ),
+                      ),
+                      selected: _freeNightWeekday == null,
+                      selectedColor: colors.sleepAccent,
+                      onSelected: (selected) {
+                        if (selected) {
+                          HapticFeedback.selectionClick();
+                          setState(() => _freeNightWeekday = null);
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    ...[
+                      {'day': DateTime.saturday, 'name': 'شنبه'},
+                      {'day': DateTime.sunday, 'name': 'یکشنبه'},
+                      {'day': DateTime.monday, 'name': 'دوشنبه'},
+                      {'day': DateTime.tuesday, 'name': 'سه‌شنبه'},
+                      {'day': DateTime.wednesday, 'name': 'چهارشنبه'},
+                      {'day': DateTime.thursday, 'name': 'پنج‌شنبه'},
+                      {'day': DateTime.friday, 'name': 'جمعه'},
+                    ].map((w) {
+                      final day = w['day'] as int;
+                      final name = w['name'] as String;
+                      final isSelected = _freeNightWeekday == day;
+                      return Padding(
+                        padding: const EdgeInsets.only(left: 6),
+                        child: ChoiceChip(
+                          label: Text(
+                            name,
+                            style: RitmoTextStyles.caption(
+                              isSelected ? colors.onPrimary : colors.textPrimary,
+                            ),
+                          ),
+                          selected: isSelected,
+                          selectedColor: colors.sleepAccent,
+                          onSelected: (selected) {
+                            HapticFeedback.selectionClick();
+                            setState(() => _freeNightWeekday = selected ? day : null);
+                          },
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: RitmoSpacing.xl),
 
         // Save button
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: colors.sleepAccent,
-            foregroundColor: colors.onPrimary,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(RitmoRadius.card),
-            ),
-          ),
+        RitmoPrimaryButton(
+          label: 'ذخیره اهداف خواب',
+          isLoading: _isSaving,
           onPressed: _isSaving ? null : _saveTargets,
-          child: _isSaving
-              ? SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    color: colors.onPrimary,
-                    strokeWidth: 2,
-                  ),
-                )
-              : Text(
-                  'ذخیره اهداف خواب',
-                  style: RitmoTextStyles.label(colors.onPrimary),
-                ),
         ),
       ],
     );

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 
 class CyclePersonalForecastCard extends StatelessWidget {

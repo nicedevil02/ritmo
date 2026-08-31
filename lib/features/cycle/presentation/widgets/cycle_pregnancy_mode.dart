@@ -12,6 +12,7 @@ import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/pregnancy_reminder_scheduler.dart';
@@ -328,109 +329,63 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
     await PregnancyReminderScheduler.cancelAll();
 
     if (mounted) {
-      unawaited(
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('تبریک! این سفر به زیباترین مقصد رسید. 🌸'),
-            content: const Text(
-              'امیدواریم قدم نو رسیده مبارک و پر از برکت باشد. مایلید ردیابی چرخه قاعدگی را چگونه ادامه دهید؟',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  widget.onDeactivated();
-                },
-                child: const Text('بازگشت فوری به چرخه'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.of(ctx).pop();
-                  final remindDate = CycleClock.now.add(
-                    const Duration(days: 40),
-                  );
-                  await PregnancyReminderScheduler.scheduleCycleResume(
-                    reminderDate: remindDate,
-                  );
-                  widget.onDeactivated();
-                },
-                child: const Text(
-                  'یادآوری ۴۰ روز بعد (دوره نفاس/پس از زایمان)',
-                ),
-              ),
-            ],
-          ),
-        ),
+      final chooseReminder = await RitmoDialog.show(
+        context,
+        title: 'تبریک! این سفر به زیباترین مقصد رسید. 🌸',
+        content:
+            'امیدواریم قدم نو رسیده مبارک و پر از برکت باشد. مایلید ردیابی چرخه قاعدگی را چگونه ادامه دهید؟',
+        confirmLabel: 'یادآوری ۴۰ روز بعد (دوره نفاس)',
+        cancelLabel: 'بازگشت فوری به چرخه',
       );
+
+      if (chooseReminder == true) {
+        final remindDate = CycleClock.now.add(
+          const Duration(days: 40),
+        );
+        await PregnancyReminderScheduler.scheduleCycleResume(
+          reminderDate: remindDate,
+        );
+      }
+      widget.onDeactivated();
     }
   }
 
   Future<void> _handleLossPath() async {
-    final colors = context.colors;
     await PregnancyReminderScheduler.cancelAll();
 
     if (!mounted) return;
 
-    unawaited(
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('از صمیم قلب در کنارتان هستیم 🤍'),
-          content: const Text(
-            'می‌دانیم این دوران چقدر می‌تواند حساس و دشوار باشد. داده‌های شما با احترام کامل حفظ می‌شوند و تمام اعلان‌های مرتبط با بارداری فوراً متوقف خواهند شد. هر زمان که آماده بودید، در کنارتان هستیم.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.of(ctx).pop();
-                final db = await DatabaseHelper.instance.database;
-                await PregnancySettings.saveSetting(
-                  PregnancySettings.keySectionHidden,
-                  'true',
-                  db,
-                );
-                widget.onDeactivated();
-              },
-              child: const Text('پنهان‌سازی بخش بارداری و بازگشت به چرخه'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: colors.error),
-              onPressed: () async {
-                Navigator.of(ctx).pop();
-                await _purgeAllPregnancyTables();
-                widget.onDeactivated();
-              },
-              child: const Text(
-                'حذف کامل داده‌های این دوره',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-      ),
+    final shouldPurge = await RitmoDialog.show(
+      context,
+      title: 'از صمیم قلب در کنارتان هستیم 🤍',
+      content:
+          'می‌دانیم این دوران چقدر می‌تواند حساس و دشوار باشد. داده‌های شما با احترام کامل حفظ می‌شوند و تمام اعلان‌های مرتبط با بارداری فوراً متوقف خواهند شد.',
+      confirmLabel: 'حذف کامل داده‌های این دوره',
+      cancelLabel: 'پنهان‌سازی بخش و بازگشت به چرخه',
+      isDestructive: true,
     );
+
+    if (shouldPurge == true) {
+      await _purgeAllPregnancyTables();
+    } else {
+      final db = await DatabaseHelper.instance.database;
+      await PregnancySettings.saveSetting(
+        PregnancySettings.keySectionHidden,
+        'true',
+        db,
+      );
+    }
+    widget.onDeactivated();
   }
 
   Future<void> _handleMistakePath() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('خروج از حالت بارداری'),
-        content: const Text(
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'خروج از حالت بارداری',
+      content:
           'حالت بارداری غیرفعال شده و به چرخهٔ عادی بازمی‌گردید. تاریخچه و داده‌های دوره‌های پیشین بدون تغییر باقی می‌مانند.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('انصراف'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('بازگشت به چرخه'),
-          ),
-        ],
-      ),
+      confirmLabel: 'بازگشت به چرخه',
+      cancelLabel: 'انصراف',
     );
 
     if (confirmed == true && mounted) {
@@ -467,33 +422,55 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
     final colors = context.colors;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: colors.surfaceElevated,
-      builder: (sheetCtx) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              CupertinoIcons.lock_shield_fill,
-              size: 36,
-              color: colors.success,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
+          ),
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Icon(
+                  CupertinoIcons.lock_shield_fill,
+                  size: 40,
+                  color: colors.success,
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'حریم خصوصی کامل',
+                  style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'اطلاعات بارداری شما صرفاً روی حافظهٔ امن همین گوشی ذخیره می‌شود و به هیچ سروری ارسال نمی‌گردد.',
+                  style: RitmoTextStyles.caption(colors.textSecondary).copyWith(height: 1.45),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                RitmoPrimaryButton(
+                  label: 'متوجه شدم',
+                  onPressed: () => Navigator.of(sheetCtx).pop(),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              'اطلاعات بارداری شما فقط روی همین گوشی ذخیره می‌شود.',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: colors.textPrimary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => Navigator.of(sheetCtx).pop(),
-              child: const Text('متوجه شدم'),
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -1,10 +1,10 @@
 // C-43, C-44: CyclePredictionDetailSheet
 // F-38: Transparent, clinically honest explanation sheet for predicted cycle days.
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/util/ritmo_number.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
@@ -30,7 +30,6 @@ class CyclePredictionDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final jDate = Jalali.fromDateTime(selectedDate);
     final cycle = mark.predictedCycle;
     final isPast = CycleDateContract.isSameOrBefore(
@@ -102,181 +101,162 @@ class CyclePredictionDetailSheet extends StatelessWidget {
         engineOutput?.predictionDisclaimer ??
         'این تاریخ‌ها صرفاً تخمین آماری هستند و نباید به عنوان روش قطعی پیشگیری یا تشخیص پزشکی تلقی شوند.';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border.all(color: colors.border.withValues(alpha: 0.5)),
-      ),
-      padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colors.textSecondary.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-
-            // Header Row
-            Row(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+        ),
+        child: RitmoGlassSheet(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: headerColor.withValues(alpha: isDark ? 0.20 : 0.12),
-                    borderRadius: BorderRadius.circular(14),
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                  child: Icon(icon, color: headerColor, size: 22),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
+                const SizedBox(height: 12),
+
+                // Header Row
+                Row(
+                  children: [
+                    RitmoNeuButton(
+                      padding: const EdgeInsets.all(8),
+                      radius: 10,
+                      onTap: () => Navigator.pop(context),
+                      child: Icon(
+                        CupertinoIcons.xmark,
+                        size: 16,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: headerColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(icon, color: headerColor, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${RitmoNumber.faInt(jDate.day)} ${jDate.formatter.mN} ${RitmoNumber.faInt(jDate.year)}',
+                            style: RitmoTextStyles.caption(colors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (confidenceLevel != null)
+                      RitmoCardBadge(
+                        label: confidenceLabel,
+                        color: headerColor,
+                      ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                // Uncertainty Window Range (if cycle available)
+                if (cycle != null) ...[
+                  RitmoCard.neumorphicSunken(
+                    padding: const EdgeInsets.all(12),
+                    child: _buildInfoRow(
+                      icon: CupertinoIcons.arrow_left_right_circle,
+                      title: 'بازه جابجایی احتمالی',
+                      value:
+                          '${_formatJalaliDate(cycle.windowStart)} تا ${_formatJalaliDate(cycle.windowEnd)}',
+                      colors: colors,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+
+                // Estimation Basis
+                RitmoCard.neumorphicSunken(
+                  padding: const EdgeInsets.all(12),
+                  child: _buildInfoRow(
+                    icon: CupertinoIcons.info_circle,
+                    title: 'مبنای محاسبه',
+                    value: basisDescription,
+                    colors: colors,
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Probable Symptoms (if any)
+                if (symptomForecasts.isNotEmpty) ...[
+                  RitmoCard.neumorphicSunken(
+                    padding: const EdgeInsets.all(12),
+                    child: _buildInfoRow(
+                      icon: CupertinoIcons.heart,
+                      title: 'علائم احتمالی بر اساس الگوهای پیشین',
+                      value: symptomForecasts
+                          .map((s) => _translateSymptom(s.symptomKey))
+                          .join('، '),
+                      colors: colors,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+
+                // Clinical Disclaimer (F-38 requirement)
+                RitmoCard.neumorphicSunken(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: RitmoTextStyles.titleMedium(
-                          colors.textPrimary,
-                        ).copyWith(fontWeight: FontWeight.bold),
+                      Icon(
+                        CupertinoIcons.shield_lefthalf_fill,
+                        size: 16,
+                        color: colors.primary,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${PersianDigits.toFa(jDate.day.toString())} ${jDate.formatter.mN} ${PersianDigits.toFa(jDate.year.toString())}',
-                        style: RitmoTextStyles.caption(
-                          colors.textSecondary,
-                        ).copyWith(fontWeight: FontWeight.w600),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          disclaimer,
+                          style: RitmoTextStyles.caption(colors.textSecondary).copyWith(height: 1.45),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                if (confidenceLevel != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: headerColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: headerColor.withValues(alpha: 0.3),
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Text(
-                      confidenceLabel,
-                      style: RitmoTextStyles.badge(
-                        headerColor,
-                      ).copyWith(fontWeight: FontWeight.bold),
-                    ),
-                  ),
+
+                const SizedBox(height: 18),
+
+                // CTA Button: "ثبت شروع دوره از این روز"
+                RitmoPrimaryButton(
+                  label: 'ثبت شروع قاعدگی از این روز',
+                  icon: CupertinoIcons.plus_circle_fill,
+                  onPressed: () {
+                    Navigator.pop(context);
+                    onRecordPeriodFromDate(selectedDate);
+                  },
+                ),
+                const SizedBox(height: 12),
               ],
             ),
-
-            const SizedBox(height: 16),
-            Divider(color: colors.border.withValues(alpha: 0.4), height: 1),
-            const SizedBox(height: 16),
-
-            // Uncertainty Window Range (if cycle available)
-            if (cycle != null) ...[
-              _buildInfoRow(
-                icon: CupertinoIcons.arrow_left_right_circle,
-                title: 'بازه جابجایی احتمالی',
-                value:
-                    '${_formatJalaliDate(cycle.windowStart)} تا ${_formatJalaliDate(cycle.windowEnd)}',
-                colors: colors,
-              ),
-              const SizedBox(height: 12),
-            ],
-
-            // Estimation Basis
-            _buildInfoRow(
-              icon: CupertinoIcons.info_circle,
-              title: 'مبنای محاسبه',
-              value: basisDescription,
-              colors: colors,
-            ),
-            const SizedBox(height: 12),
-
-            // Probable Symptoms (if any)
-            if (symptomForecasts.isNotEmpty) ...[
-              _buildInfoRow(
-                icon: CupertinoIcons.heart,
-                title: 'علائم احتمالی بر اساس الگوهای پیشین',
-                value: symptomForecasts
-                    .map((s) => _translateSymptom(s.symptomKey))
-                    .join('، '),
-                colors: colors,
-              ),
-              const SizedBox(height: 12),
-            ],
-
-            // Clinical Disclaimer (F-38 requirement)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colors.textSecondary.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    CupertinoIcons.shield_lefthalf_fill,
-                    size: 16,
-                    color: colors.textSecondary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      disclaimer,
-                      style: RitmoTextStyles.badge(
-                        colors.textSecondary,
-                      ).copyWith(height: 1.4),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // CTA Button: "ثبت شروع دوره از این روز"
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.error,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  onRecordPeriodFromDate(selectedDate);
-                },
-                icon: const Icon(CupertinoIcons.plus_circle_fill, size: 18),
-                label: Text(
-                  'ثبت شروع قاعدگی از این روز',
-                  style: RitmoTextStyles.label(Colors.white),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -299,16 +279,21 @@ class CyclePredictionDetailSheet extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: RitmoTextStyles.badge(
-                  colors.textSecondary,
-                ).copyWith(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textSecondary,
+                ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(
                 value,
-                style: RitmoTextStyles.caption(
-                  colors.textPrimary,
-                ).copyWith(fontWeight: FontWeight.w600, height: 1.35),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                  height: 1.4,
+                ),
               ),
             ],
           ),
@@ -319,7 +304,7 @@ class CyclePredictionDetailSheet extends StatelessWidget {
 
   String _formatJalaliDate(DateTime dt) {
     final j = Jalali.fromDateTime(dt);
-    return '${PersianDigits.toFa(j.day.toString())} ${j.formatter.mN}';
+    return '${RitmoNumber.faInt(j.day)} ${j.formatter.mN}';
   }
 
   static String _translateSymptom(String key) {

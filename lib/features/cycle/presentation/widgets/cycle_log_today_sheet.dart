@@ -9,8 +9,8 @@ import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
-import 'package:ritmo/features/cycle/presentation/widgets/cycle_animated_background.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CycleLogTodaySheet extends StatefulWidget {
@@ -39,22 +39,24 @@ class CycleLogTodaySheet extends StatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
-      enableDrag: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.60,
-        minChildSize: 0.40,
-        maxChildSize: 0.95,
-        snap: true,
-        snapSizes: const [0.60, 0.95],
-        expand: false,
-        builder: (context, scrollController) => CycleLogTodaySheet(
-          todayStr: todayStr,
-          todayLog: todayLog,
-          activePhaseColor: activePhaseColor,
-          onSaved: onSaved,
-          scrollController: scrollController,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(ctx, factor: 0.94),
+            ),
+            child: CycleLogTodaySheet(
+              todayStr: todayStr,
+              todayLog: todayLog,
+              activePhaseColor: activePhaseColor,
+              onSaved: onSaved,
+            ),
+          ),
         ),
       ),
     );
@@ -118,7 +120,6 @@ class _CycleLogTodaySheetState extends State<CycleLogTodaySheet> {
     IconData icon,
     String title,
     RitmoColors colors,
-    bool isDark,
   ) {
     return Row(
       children: [
@@ -127,7 +128,7 @@ class _CycleLogTodaySheetState extends State<CycleLogTodaySheet> {
         Text(
           title,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13.5,
             color: colors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
@@ -136,448 +137,333 @@ class _CycleLogTodaySheetState extends State<CycleLogTodaySheet> {
     );
   }
 
+  Widget _buildSelectableChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    IconData? icon,
+  }) {
+    return RitmoCard.neumorphic(
+      isSelected: isSelected,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(
+              icon,
+              size: 15,
+              color: isSelected ? context.colors.primary : context.colors.textSecondary,
+            ),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected ? context.colors.primary : context.colors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (showSuccessLottie) {
-      return Directionality(
-        textDirection: TextDirection.rtl,
-        child: RitmoSheetGlassCard(
-          child: Container(
-            height: 350,
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 150,
-                  height: 150,
-                  child: Lottie.asset(
-                    'assets/animations/workout_success.json',
-                    repeat: false,
-                  ),
+      return RitmoGlassSheet(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        padding: const EdgeInsets.all(24),
+        child: Container(
+          height: 320,
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 140,
+                height: 140,
+                child: Lottie.asset(
+                  'assets/animations/workout_success.json',
+                  repeat: false,
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'احوال امروز با موفقیت ثبت شد 🌸',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'احوال امروز با موفقیت ثبت شد 🌸',
+                style: RitmoTextStyles.cardTitle(colors.textPrimary),
+              ),
+            ],
           ),
         ),
       );
     }
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: RitmoSheetGlassCard(
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            top: 12,
-            left: 14,
-            right: 14,
-          ),
-          child: SingleChildScrollView(
-            controller: widget.scrollController,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return RitmoGlassSheet(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + RitmoSpacing.lg,
+        top: RitmoSpacing.sm,
+        left: RitmoSpacing.lg,
+        right: RitmoSpacing.lg,
+      ),
+      child: SingleChildScrollView(
+        controller: widget.scrollController,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.border.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Symmetrical Header
+            Row(
               children: [
-                Center(
-                  child: Container(
-                    width: 38,
-                    height: 4.5,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
+                RitmoNeuButton(
+                  padding: const EdgeInsets.all(8),
+                  radius: 10,
+                  onTap: () => Navigator.pop(context),
+                  child: Icon(
+                    CupertinoIcons.xmark,
+                    size: 16,
+                    color: colors.textSecondary,
                   ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        'انصراف',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      'ثبت علائم و احوال امروز',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: colors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 48), // Balancing spacer
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Section 1: Flow
-                _buildSectionHeader(
-                  CupertinoIcons.drop,
-                  'میزان خونریزی یا ترشح بدنی',
-                  colors,
-                  isDark,
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children:
-                      [
-                        {'key': 'NONE', 'label': 'هیچ'},
-                        {'key': 'LIGHT', 'label': 'خفیف'},
-                        {'key': 'MEDIUM', 'label': 'متوسط'},
-                        {'key': 'HEAVY', 'label': 'شدید'},
-                      ].map((item) {
-                        final f = item['key']!;
-                        final label = item['label']!;
-                        final active = flowLevel == f;
-                        return ChoiceChip(
-                          label: Text(
-                            label,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: active
-                                  ? Colors.white
-                                  : colors.textSecondary,
-                            ),
-                          ),
-                          selected: active,
-                          selectedColor: widget.activePhaseColor,
-                          backgroundColor: isDark
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : colors.surface,
-                          checkmarkColor: Colors.white,
-                          side: BorderSide(color: colors.border),
-                          onSelected: (selected) {
-                            if (selected) {
-                              setState(() => flowLevel = f);
-                            }
-                          },
-                        );
-                      }).toList(),
-                ),
-                const SizedBox(height: 16),
-
-                // Section 2: Mood
-                _buildSectionHeader(
-                  CupertinoIcons.smiley,
-                  'حس و خُلق‌وخو',
-                  colors,
-                  isDark,
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children:
-                      [
-                        {'key': 'HAPPY', 'label': 'عالی'},
-                        {'key': 'NEUTRAL', 'label': 'معمولی'},
-                        {'key': 'SAD', 'label': 'بی‌حوصله'},
-                        {'key': 'ANXIOUS', 'label': 'مضطرب'},
-                        {'key': 'IRRITABLE', 'label': 'کلافه'},
-                      ].map((item) {
-                        final m = item['key']!;
-                        final label = item['label']!;
-                        final active = mood == m;
-                        return ChoiceChip(
-                          label: Text(
-                            label,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: active
-                                  ? Colors.white
-                                  : colors.textSecondary,
-                            ),
-                          ),
-                          selected: active,
-                          selectedColor: widget.activePhaseColor,
-                          backgroundColor: isDark
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : colors.surface,
-                          checkmarkColor: Colors.white,
-                          side: BorderSide(color: colors.border),
-                          onSelected: (selected) {
-                            if (selected) {
-                              setState(() => mood = m);
-                            }
-                          },
-                        );
-                      }).toList(),
-                ),
-                const SizedBox(height: 16),
-
-                // Section 3: Energy
-                _buildSectionHeader(
-                  CupertinoIcons.bolt,
-                  'سطح انرژی بدنی',
-                  colors,
-                  isDark,
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children:
-                      [
-                        {'key': 'HIGH', 'label': 'پرانرژی'},
-                        {'key': 'MEDIUM', 'label': 'معمولی'},
-                        {'key': 'LOW', 'label': 'نیاز به استراحت'},
-                      ].map((item) {
-                        final e = item['key']!;
-                        final label = item['label']!;
-                        final active = energyTag == e;
-                        return ChoiceChip(
-                          label: Text(
-                            label,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: active
-                                  ? Colors.white
-                                  : colors.textSecondary,
-                            ),
-                          ),
-                          selected: active,
-                          selectedColor: widget.activePhaseColor,
-                          backgroundColor: isDark
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : colors.surface,
-                          checkmarkColor: Colors.white,
-                          side: BorderSide(color: colors.border),
-                          onSelected: (selected) {
-                            if (selected) {
-                              setState(() => energyTag = e);
-                            }
-                          },
-                        );
-                      }).toList(),
-                ),
-                const SizedBox(height: 16),
-
-                // Section 4: Symptoms
-                _buildSectionHeader(
-                  CupertinoIcons.doc_plaintext,
-                  'علائم جسمی شایع (انتخاب چندگانه)',
-                  colors,
-                  isDark,
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: symptomsList.map((s) {
-                    final key = s['key']!;
-                    final label = s['label']!;
-                    final active = symptoms.contains(key);
-
-                    var activeColor = colors.primary;
-                    var symIcon = CupertinoIcons.tag;
-                    if (key == 'cramps') {
-                      activeColor = colors.error;
-                      symIcon = CupertinoIcons.bolt_horizontal_fill;
-                    } else if (key == 'headache') {
-                      activeColor = colors.accent;
-                      symIcon = CupertinoIcons.sparkles;
-                    } else if (key == 'bloating') {
-                      activeColor = colors.success;
-                      symIcon = CupertinoIcons.wind;
-                    } else if (key == 'fatigue') {
-                      activeColor = colors.accent;
-                      symIcon = CupertinoIcons.battery_25;
-                    } else if (key == 'backache') {
-                      activeColor = colors.warning;
-                      symIcon = CupertinoIcons.arrow_down_right_arrow_up_left;
-                    } else if (key == 'mood_swings') {
-                      activeColor = colors.primary;
-                      symIcon = CupertinoIcons.heart_slash_fill;
-                    }
-
-                    return GestureDetector(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        setState(() {
-                          if (active) {
-                            symptoms.remove(key);
-                          } else {
-                            symptoms.add(key);
-                          }
-                        });
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        curve: Curves.easeOutCubic,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: active
-                              ? activeColor.withValues(alpha: 0.12)
-                              : (isDark
-                                    ? Colors.white.withValues(alpha: 0.04)
-                                    : colors.surface),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: active ? activeColor : colors.border,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              symIcon,
-                              color: active
-                                  ? activeColor
-                                  : colors.textSecondary,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              label,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: active
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                                color: active
-                                    ? activeColor
-                                    : colors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 16),
-
-                // Section 5: Notes
-                _buildSectionHeader(
-                  CupertinoIcons.pencil,
-                  'یادداشت شخصی',
-                  colors,
-                  isDark,
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: noteController,
-                  style: TextStyle(color: colors.textPrimary, fontSize: 14),
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    hintText: 'جزئیات یا مشاهدات خود را بنویسید...',
-                    hintStyle: TextStyle(
-                      color: colors.textTertiary,
-                      fontSize: 13,
-                    ),
-                    filled: true,
-                    fillColor: isDark
-                        ? Colors.white.withValues(alpha: 0.04)
-                        : colors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colors.border),
-                    ),
+                Expanded(
+                  child: Text(
+                    'ثبت علائم و احوال امروز',
+                    textAlign: TextAlign.center,
+                    style: RitmoTextStyles.cardTitle(colors.textPrimary),
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // Action Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: widget.activePhaseColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () async {
-                      final nowMs = CycleClock.nowMillisecondsSinceEpoch;
-                      final logId = widget.todayLog != null
-                          ? widget.todayLog!['id'] as String
-                          : 'daylog_$nowMs';
-                      final symptomsJson = jsonEncode(symptoms);
-                      final db = await DatabaseHelper.instance.database;
-
-                      await db.insert(
-                        'cycle_day_logs',
-                        {
-                          'id': logId,
-                          'logDate': widget.todayStr,
-                          'flowLevel': flowLevel,
-                          'symptomsJson': symptomsJson,
-                          'mood': mood,
-                          'energyTag': energyTag,
-                          'note': noteController.text.trim(),
-                          'createdAt': nowMs,
-                          'updatedAt': nowMs,
-                        },
-                        conflictAlgorithm: ConflictAlgorithm.replace,
-                      );
-
-                      CycleEngine().invalidate();
-
-                      RitmoEventBus().fire(
-                        RitmoEvent(
-                          type: 'CycleLogged',
-                          payload: {'date': widget.todayStr},
-                        ),
-                      );
-
-                      setState(() {
-                        showSuccessLottie = true;
-                      });
-
-                      await Future.delayed(const Duration(milliseconds: 1400));
-
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                      }
-                      widget.onSaved();
-                    },
-                    child: const Text(
-                      'ذخیره احوال امروز',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
+                const SizedBox(width: 34),
               ],
             ),
-          ),
+            const SizedBox(height: 16),
+
+            // Section 1: Flow
+            _buildSectionHeader(
+              CupertinoIcons.drop,
+              'میزان خونریزی یا ترشح بدنی',
+              colors,
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                {'key': 'NONE', 'label': 'هیچ'},
+                {'key': 'LIGHT', 'label': 'خفیف'},
+                {'key': 'MEDIUM', 'label': 'متوسط'},
+                {'key': 'HEAVY', 'label': 'شدید'},
+              ].map((item) {
+                final f = item['key']!;
+                final label = item['label']!;
+                final active = flowLevel == f;
+                return _buildSelectableChip(
+                  label: label,
+                  isSelected: active,
+                  onTap: () => setState(() => flowLevel = f),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 18),
+
+            // Section 2: Mood
+            _buildSectionHeader(
+              CupertinoIcons.smiley,
+              'حس و خُلق‌وخو',
+              colors,
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                {'key': 'HAPPY', 'label': 'عالی'},
+                {'key': 'NEUTRAL', 'label': 'معمولی'},
+                {'key': 'SAD', 'label': 'بی‌حوصله'},
+                {'key': 'ANXIOUS', 'label': 'مضطرب'},
+                {'key': 'IRRITABLE', 'label': 'کلافه'},
+              ].map((item) {
+                final m = item['key']!;
+                final label = item['label']!;
+                final active = mood == m;
+                return _buildSelectableChip(
+                  label: label,
+                  isSelected: active,
+                  onTap: () => setState(() => mood = m),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 18),
+
+            // Section 3: Energy
+            _buildSectionHeader(
+              CupertinoIcons.bolt,
+              'سطح انرژی بدنی',
+              colors,
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                {'key': 'HIGH', 'label': 'پرانرژی'},
+                {'key': 'MEDIUM', 'label': 'معمولی'},
+                {'key': 'LOW', 'label': 'نیاز به استراحت'},
+              ].map((item) {
+                final e = item['key']!;
+                final label = item['label']!;
+                final active = energyTag == e;
+                return _buildSelectableChip(
+                  label: label,
+                  isSelected: active,
+                  onTap: () => setState(() => energyTag = e),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 18),
+
+            // Section 4: Symptoms
+            _buildSectionHeader(
+              CupertinoIcons.doc_plaintext,
+              'علائم جسمی شایع (انتخاب چندگانه)',
+              colors,
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: symptomsList.map((s) {
+                final key = s['key']!;
+                final label = s['label']!;
+                final active = symptoms.contains(key);
+
+                var symIcon = CupertinoIcons.tag;
+                if (key == 'cramps') {
+                  symIcon = CupertinoIcons.bolt_horizontal_fill;
+                } else if (key == 'headache') {
+                  symIcon = CupertinoIcons.sparkles;
+                } else if (key == 'bloating') {
+                  symIcon = CupertinoIcons.wind;
+                } else if (key == 'fatigue') {
+                  symIcon = CupertinoIcons.battery_25;
+                } else if (key == 'backache') {
+                  symIcon = CupertinoIcons.arrow_down_right_arrow_up_left;
+                } else if (key == 'mood_swings') {
+                  symIcon = CupertinoIcons.heart_slash_fill;
+                }
+
+                return _buildSelectableChip(
+                  label: label,
+                  isSelected: active,
+                  icon: symIcon,
+                  onTap: () {
+                    if (active) {
+                      symptoms.remove(key);
+                    } else {
+                      symptoms.add(key);
+                    }
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 18),
+
+            // Section 5: Notes
+            _buildSectionHeader(
+              CupertinoIcons.pencil,
+              'یادداشت شخصی',
+              colors,
+            ),
+            const SizedBox(height: 10),
+            RitmoCard.neumorphicSunken(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: TextField(
+                controller: noteController,
+                style: TextStyle(color: colors.textPrimary, fontSize: 14),
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'جزئیات یا مشاهدات خود را بنویسید...',
+                  hintStyle: TextStyle(
+                    color: colors.textTertiary,
+                    fontSize: 13,
+                  ),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+
+            // Action Button
+            RitmoPrimaryButton(
+              label: 'ذخیره احوال امروز',
+              onPressed: () async {
+                final nowMs = CycleClock.nowMillisecondsSinceEpoch;
+                final logId = widget.todayLog != null
+                    ? widget.todayLog!['id'] as String
+                    : 'daylog_$nowMs';
+                final symptomsJson = jsonEncode(symptoms);
+                final db = await DatabaseHelper.instance.database;
+
+                await db.insert(
+                  'cycle_day_logs',
+                  {
+                    'id': logId,
+                    'logDate': widget.todayStr,
+                    'flowLevel': flowLevel,
+                    'symptomsJson': symptomsJson,
+                    'mood': mood,
+                    'energyTag': energyTag,
+                    'note': noteController.text.trim(),
+                    'createdAt': nowMs,
+                    'updatedAt': nowMs,
+                  },
+                  conflictAlgorithm: ConflictAlgorithm.replace,
+                );
+
+                CycleEngine().invalidate();
+
+                RitmoEventBus().fire(
+                  RitmoEvent(
+                    type: 'CycleLogged',
+                    payload: {'date': widget.todayStr},
+                  ),
+                );
+
+                setState(() {
+                  showSuccessLottie = true;
+                });
+
+                await Future.delayed(const Duration(milliseconds: 1400));
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
+                widget.onSaved();
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
         ),
       ),
     );

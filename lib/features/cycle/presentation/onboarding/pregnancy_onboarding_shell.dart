@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
 import 'package:ritmo/features/cycle/logic/pregnancy_settings.dart';
@@ -71,38 +72,14 @@ class _PregnancyOnboardingShellState extends State<PregnancyOnboardingShell> {
   Future<bool> _confirmExit() async {
     if (_controller.currentStep == 0 && !widget.isEditMode) return true;
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: context.colors.surface,
-          title: const Text(
-            'خروج از راه‌اندازی',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          content: const Text(
-            'اگر الان خارج شوی، حالت بارداری فعال نمی‌شود و اطلاعات واردشده ذخیره نمی‌شوند.',
-            style: TextStyle(fontSize: 13, height: 1.5),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('ادامه می‌دهم', style: TextStyle()),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text(
-                'خروج',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    final confirm = await RitmoDialog.show(
+      context,
+      title: 'خروج از راه‌اندازی',
+      content:
+          'اگر الان خارج شوی، حالت بارداری فعال نمی‌شود و اطلاعات واردشده ذخیره نمی‌شوند.',
+      confirmLabel: 'خروج',
+      cancelLabel: 'ادامه می‌دهم',
+      isDestructive: true,
     );
 
     return confirm ?? false;
@@ -200,157 +177,154 @@ class _PregnancyOnboardingShellState extends State<PregnancyOnboardingShell> {
 
           return Directionality(
             textDirection: TextDirection.rtl,
-            child: Container(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.9,
-              ),
-              margin: EdgeInsets.only(bottom: viewInsets.bottom),
-              decoration: BoxDecoration(
-                color: colors.surfaceElevated,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
+            child: Padding(
+              padding: EdgeInsets.only(bottom: viewInsets.bottom),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
                 ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header bar
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(CupertinoIcons.xmark),
-                          color: colors.textSecondary,
-                          onPressed: () async {
-                            final canExit = await _confirmExit();
-                            if (canExit && context.mounted) {
-                              (widget.onCancel ??
-                                  () => Navigator.of(context).pop())();
-                            }
-                          },
-                        ),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              Text(
-                                widget.isEditMode
-                                    ? 'بازبینی راه‌اندازی بارداری'
-                                    : 'راه‌اندازی بارداری',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: colors.textPrimary,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'گام ${RitmoNumber.fa((_controller.currentStep + 1).toString())} از ۵',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: colors.textSecondary,
-                                ),
-                              ),
-                            ],
+                child: RitmoGlassSheet(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(28),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Handle
+                      Center(
+                        child: Container(
+                          width: 36,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: colors.border.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
-                        const SizedBox(width: 48), // Balance for close button
-                      ],
-                    ),
-                  ),
-
-                  // 5-segment Progress bar
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: List.generate(5, (index) {
-                        final isActive = index <= _controller.currentStep;
-                        final isCurrent = index == _controller.currentStep;
-                        return Expanded(
-                          child: Container(
-                            height: 4,
-                            margin: const EdgeInsets.symmetric(horizontal: 2),
-                            decoration: BoxDecoration(
-                              color: isCurrent
-                                  ? colors.primary
-                                  : (isActive
-                                        ? colors.primary.withValues(alpha: 0.5)
-                                        : colors.border),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-
-                  // Step Body
-                  Flexible(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: _buildStepWidget(
-                        context,
-                        currentData,
-                        colors,
-                        isDark,
                       ),
-                    ),
-                  ),
+                      const SizedBox(height: 12),
 
-                  // Bottom action buttons for Steps 0, 1, 2, 3 (Step 4 has its own confirmation buttons)
-                  if (_controller.currentStep < 4)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-                      child: Row(
+                      // Header bar
+                      Row(
                         children: [
-                          if (_controller.currentStep > 0) ...[
-                            OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              onPressed: _controller.previousStep,
-                              child: const Text('مرحله قبل'),
-                            ),
-                            const SizedBox(width: 12),
-                          ],
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: colors.primary,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              onPressed: _isSaving
-                                  ? null
-                                  : () => _controller.nextStep(),
-                              child: const Text(
-                                'مرحله بعد',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
+                          RitmoNeuButton(
+                            padding: const EdgeInsets.all(8),
+                            radius: 10,
+                            onTap: () async {
+                              final canExit = await _confirmExit();
+                              if (canExit && context.mounted) {
+                                (widget.onCancel ??
+                                    () => Navigator.of(context).pop())();
+                              }
+                            },
+                            child: Icon(
+                              CupertinoIcons.xmark,
+                              size: 16,
+                              color: colors.textSecondary,
                             ),
                           ),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text(
+                                  widget.isEditMode
+                                      ? 'بازبینی راه‌اندازی بارداری'
+                                      : 'راه‌اندازی بارداری',
+                                  style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'گام ${RitmoNumber.fa((_controller.currentStep + 1).toString())} از ۵',
+                                  style: RitmoTextStyles.caption(colors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 34),
                         ],
                       ),
-                    ),
-                ],
+
+                      // 5-segment Progress bar
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          children: List.generate(5, (index) {
+                            final isActive = index <= _controller.currentStep;
+                            final isCurrent = index == _controller.currentStep;
+                            return Expanded(
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 250),
+                                height: 4,
+                                margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                                decoration: BoxDecoration(
+                                  color: isCurrent
+                                      ? colors.primary
+                                      : (isActive
+                                            ? colors.primary.withValues(alpha: 0.5)
+                                            : colors.borderSubtle),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+
+                      // Step Body
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                          child: _buildStepWidget(
+                            context,
+                            currentData,
+                            colors,
+                            isDark,
+                          ),
+                        ),
+                      ),
+
+                      // Bottom action buttons for Steps 0, 1, 2, 3 (Step 4 has its own confirmation buttons)
+                      if (_controller.currentStep < 4) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            if (_controller.currentStep > 0) ...[
+                              RitmoNeuButton(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 13,
+                                ),
+                                radius: 16,
+                                onTap: _controller.previousStep,
+                                child: Text(
+                                  'مرحله قبل',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                            ],
+                            Expanded(
+                              child: RitmoPrimaryButton(
+                                label: 'مرحله بعد',
+                                onPressed: _isSaving
+                                    ? null
+                                    : () => _controller.nextStep(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
           );

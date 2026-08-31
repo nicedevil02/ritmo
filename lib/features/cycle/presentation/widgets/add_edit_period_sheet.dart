@@ -1,13 +1,11 @@
 // C-43, C-44: AddEditPeriodSheet
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
-import 'package:ritmo/features/cycle/presentation/widgets/cycle_animated_background.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class AddEditPeriodSheet extends StatefulWidget {
@@ -66,166 +64,135 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
 
   String _formatJalaliDate(DateTime dt) {
     final jal = Jalali.fromDateTime(dt);
-    return '${PersianDigits.toFa(jal.year.toString())}/${PersianDigits.toFa(jal.month.toString().padLeft(2, '0'))}/${PersianDigits.toFa(jal.day.toString().padLeft(2, '0'))}';
+    return '${RitmoNumber.faInt(jal.year)}/${RitmoNumber.faInt(jal.month).padLeft(2, '۰')}/${RitmoNumber.faInt(jal.day).padLeft(2, '۰')}';
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoSheetGlassCard(
-        child: Padding(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+        ),
+        child: RitmoGlassSheet(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            top: 12,
-            left: 14,
-            right: 14,
+            bottom: MediaQuery.of(context).viewInsets.bottom + RitmoSpacing.lg,
+            top: RitmoSpacing.sm,
+            left: RitmoSpacing.lg,
+            right: RitmoSpacing.lg,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 38,
-                  height: 4.5,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: colors.textPrimary.withValues(alpha: isDark ? 0.18 : 0.22),
-                    borderRadius: BorderRadius.circular(3),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Drag handle
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      'انصراف',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                const SizedBox(height: 12),
+
+                // Symmetrical Header
+                Row(
+                  children: [
+                    RitmoNeuButton(
+                      padding: const EdgeInsets.all(8),
+                      radius: 10,
+                      onTap: () => Navigator.pop(context),
+                      child: Icon(
+                        CupertinoIcons.xmark,
+                        size: 16,
                         color: colors.textSecondary,
                       ),
                     ),
-                  ),
-                  Text(
-                    widget.period != null
-                        ? 'ویرایش تاریخ‌های دوره قاعدگی'
-                        : 'افزودن دوره قاعدگی جدید',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: colors.textPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 48), // Balancing spacer
-                ],
-              ),
-              const SizedBox(height: 16),
-              if (_errorText != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: colors.error.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: colors.error.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        CupertinoIcons.exclamationmark_circle_fill,
-                        color: colors.error,
-                        size: 16,
+                    Expanded(
+                      child: Text(
+                        widget.period != null
+                            ? 'ویرایش تاریخ‌های دوره'
+                            : 'افزودن دوره جدید',
+                        textAlign: TextAlign.center,
+                        style: RitmoTextStyles.cardTitle(colors.textPrimary),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _errorText!,
-                          style: TextStyle(color: colors.error, fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 34), // Symmetrical balancing
+                  ],
                 ),
                 const SizedBox(height: 16),
-              ],
-              Text(
-                'تاریخ شروع دوره:',
-                style: TextStyle(fontSize: 13, color: colors.textSecondary),
-              ),
-              const SizedBox(height: 8),
-              InkWell(
-                onTap: () async {
-                  final picked = await RitmoDatePicker.showJalali(
-                    context: context,
-                    initialDate: Jalali.fromDateTime(_startDate),
-                    firstDate: Jalali.fromDateTime(
-                      CycleClock.now.subtract(const Duration(days: 365)),
-                    ),
-                    lastDate: Jalali.fromDateTime(
-                      CycleClock.now.add(const Duration(days: 30)),
-                    ),
-                    builder: (context, child) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Theme(
-                            data: Theme.of(context).copyWith(
-                              colorScheme: ColorScheme.dark(
-                                primary: colors.primary,
-                                onPrimary: Colors.white,
-                                surface: colors.surface,
-                              ),
-                              dialogTheme: DialogThemeData(
-                                backgroundColor: colors.surfaceElevated,
-                              ),
+
+                if (_errorText != null) ...[
+                  RitmoCard.neumorphicSunken(
+                    padding: const EdgeInsets.all(RitmoSpacing.md),
+                    child: Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.exclamationmark_circle_fill,
+                          color: colors.error,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _errorText!,
+                            style: TextStyle(
+                              color: colors.error,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
                             ),
-                            child: child!,
                           ),
                         ),
-                      );
-                    },
-                  );
-                  if (picked != null) {
-                    setState(() {
-                      _startDate = picked.toDateTime();
-                      if (_isOldPeriod) {
-                        _hasEndDate = true;
-                        if (_endDate == null || _endDate!.isBefore(_startDate)) {
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                Text(
+                  'تاریخ شروع دوره:',
+                  style: TextStyle(fontSize: 13, color: colors.textSecondary, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                RitmoCard.neumorphic(
+                  onTap: () async {
+                    final picked = await RitmoDatePicker.showJalali(
+                      context: context,
+                      initialDate: Jalali.fromDateTime(_startDate),
+                      firstDate: Jalali.fromDateTime(
+                        CycleClock.now.subtract(const Duration(days: 365)),
+                      ),
+                      lastDate: Jalali.fromDateTime(
+                        CycleClock.now.add(const Duration(days: 30)),
+                      ),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        _startDate = picked.toDateTime();
+                        if (_isOldPeriod) {
+                          _hasEndDate = true;
+                          if (_endDate == null || _endDate!.isBefore(_startDate)) {
+                            _endDate = _startDate.add(const Duration(days: 5));
+                          }
+                        } else if (_endDate != null &&
+                            _endDate!.isBefore(_startDate)) {
                           _endDate = _startDate.add(const Duration(days: 5));
                         }
-                      } else if (_endDate != null &&
-                          _endDate!.isBefore(_startDate)) {
-                        _endDate = _startDate.add(const Duration(days: 5));
-                      }
-                      _errorText = null;
-                    });
-                  }
-                },
-                child: Container(
+                        _errorText = null;
+                      });
+                    }
+                  },
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.04)
-                        : Colors.black.withValues(alpha: 0.02),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colors.border),
+                    vertical: 14,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -235,6 +202,7 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
                         style: TextStyle(
                           color: colors.textPrimary,
                           fontSize: 14,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       Icon(
@@ -245,92 +213,71 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              if (!_isOldPeriod) ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'این دوره پایان یافته است',
-                      style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                const SizedBox(height: 16),
+
+                if (!_isOldPeriod) ...[
+                  RitmoCard.neumorphic(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'این دوره پایان یافته است',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        CupertinoSwitch(
+                          value: _hasEndDate,
+                          activeTrackColor: colors.primary,
+                          onChanged: (v) {
+                            setState(() {
+                              _hasEndDate = v;
+                              if (v && _endDate == null) {
+                                _endDate = _startDate.add(const Duration(days: 5));
+                              }
+                              _errorText = null;
+                            });
+                          },
+                        ),
+                      ],
                     ),
-                    CupertinoSwitch(
-                      value: _hasEndDate,
-                      activeTrackColor: colors.primary,
-                      onChanged: (v) {
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                if (_hasEndDate || _isOldPeriod) ...[
+                  Text(
+                    'تاریخ پایان دوره:',
+                    style: TextStyle(fontSize: 13, color: colors.textSecondary, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  RitmoCard.neumorphic(
+                    onTap: () async {
+                      final picked = await RitmoDatePicker.showJalali(
+                        context: context,
+                        initialDate: Jalali.fromDateTime(
+                          (_endDate == null || _endDate!.isBefore(_startDate))
+                              ? _startDate
+                              : _endDate!,
+                        ),
+                        firstDate: Jalali.fromDateTime(_startDate),
+                        lastDate: Jalali.fromDateTime(
+                          CycleClock.now.add(const Duration(days: 30)),
+                        ),
+                      );
+                      if (picked != null) {
                         setState(() {
-                          _hasEndDate = v;
-                          if (v && _endDate == null) {
-                            _endDate = _startDate.add(const Duration(days: 5));
-                          }
+                          _endDate = picked.toDateTime();
                           _errorText = null;
                         });
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-              ],
-              if (_hasEndDate || _isOldPeriod) ...[
-                Text(
-                  'تاریخ پایان دوره:',
-                  style: TextStyle(fontSize: 13, color: colors.textSecondary),
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () async {
-                    final picked = await RitmoDatePicker.showJalali(
-                      context: context,
-                      initialDate: Jalali.fromDateTime(
-                        (_endDate == null || _endDate!.isBefore(_startDate))
-                            ? _startDate
-                            : _endDate!,
-                      ),
-                      firstDate: Jalali.fromDateTime(_startDate),
-                      lastDate: Jalali.fromDateTime(
-                        CycleClock.now.add(const Duration(days: 30)),
-                      ),
-                      builder: (context, child) {
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Theme(
-                              data: Theme.of(context).copyWith(
-                                colorScheme: ColorScheme.dark(
-                                  primary: colors.primary,
-                                  onPrimary: Colors.white,
-                                  surface: colors.surface,
-                                ),
-                                dialogTheme: DialogThemeData(
-                                  backgroundColor: colors.surfaceElevated,
-                                ),
-                              ),
-                              child: child!,
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _endDate = picked.toDateTime();
-                        _errorText = null;
-                      });
-                    }
-                  },
-                  child: Container(
+                      }
+                    },
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.04)
-                          : Colors.black.withValues(alpha: 0.02),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: colors.border),
+                      vertical: 14,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -338,10 +285,11 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
                         Text(
                           _endDate != null
                               ? _formatJalaliDate(_endDate!)
-                              : 'انتخاب تاریخ',
+                              : 'انتخاب تاریخ پایان',
                           style: TextStyle(
                             color: colors.textPrimary,
                             fontSize: 14,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         Icon(
@@ -352,20 +300,12 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
                       ],
                     ),
                   ),
-                ),
-              ],
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                const SizedBox(height: 12),
+                RitmoPrimaryButton(
+                  label: widget.period != null ? 'ذخیره تغییرات' : 'افزودن دوره',
                   onPressed: () {
                     final effectiveEndDate =
                         (_isOldPeriod || _hasEndDate) ? _endDate : null;
@@ -388,17 +328,10 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
                     widget.onSave(_startDate, effectiveEndDate);
                     Navigator.pop(context);
                   },
-                  child: Text(
-                    widget.period != null ? 'ذخیره تغییرات' : 'افزودن دوره',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-            ],
+                const SizedBox(height: 12),
+              ],
+            ),
           ),
         ),
       ),

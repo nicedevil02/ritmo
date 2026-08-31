@@ -340,7 +340,6 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -348,138 +347,135 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: RitmoTheme.glassCardLight(
-          borderRadius: 28,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Drag handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colors.textSecondary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+          ),
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Drag handle
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colors.border.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        CupertinoIcons.xmark,
-                        size: 20,
-                        color: colors.textSecondary,
+                  // Header
+                  Row(
+                    children: [
+                      RitmoNeuButton(
+                        padding: const EdgeInsets.all(8),
+                        radius: 10,
+                        onTap: () => Navigator.pop(context, false),
+                        child: Icon(
+                          CupertinoIcons.xmark,
+                          size: 16,
+                          color: colors.textSecondary,
+                        ),
                       ),
-                      onPressed: () => Navigator.pop(context, false),
+                      Expanded(
+                        child: Text(
+                          _getTitle(),
+                          textAlign: TextAlign.center,
+                          style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                        ),
+                      ),
+                      const SizedBox(width: 34),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Subtitle
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      _getSubtitle(),
+                      textAlign: TextAlign.center,
+                      style: RitmoTextStyles.caption(colors.textSecondary).copyWith(height: 1.45),
                     ),
-                    Expanded(
-                      child: Text(
-                        _getTitle(),
+                  ),
+                  const SizedBox(height: 18),
+
+                  if (_currentMode == CyclePasscodeSheetMode.chooseSource)
+                    _buildChooseSourceView(colors, context.isDark)
+                  else ...[
+                    // 4 Dots Indicator
+                    AnimatedBuilder(
+                      animation: _shakeAnimation,
+                      builder: (context, child) {
+                        return Transform.translate(
+                          offset: Offset(
+                            _shakeAnimation.value *
+                                (_shakeController.isAnimating
+                                    ? (1 - _shakeController.value)
+                                    : 0),
+                            0,
+                          ),
+                          child: child,
+                        );
+                      },
+                      child: _buildPinDots(colors),
+                    ),
+
+                    // Error message
+                    if (_errorMessage.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        _errorMessage,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 40), // Balance close button
-                  ],
-                ),
-                const SizedBox(height: 6),
-
-                // Subtitle
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    _getSubtitle(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colors.textSecondary,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                if (_currentMode == CyclePasscodeSheetMode.chooseSource)
-                  _buildChooseSourceView(colors, isDark)
-                else ...[
-                  // 4 Dots Indicator
-                  AnimatedBuilder(
-                    animation: _shakeAnimation,
-                    builder: (context, child) {
-                      return Transform.translate(
-                        offset: Offset(
-                          _shakeAnimation.value *
-                              (_shakeController.isAnimating
-                                  ? (1 - _shakeController.value)
-                                  : 0),
-                          0,
-                        ),
-                        child: child,
-                      );
-                    },
-                    child: _buildPinDots(colors),
-                  ),
-
-                  // Error message
-                  if (_errorMessage.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      _errorMessage,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.medicalRed,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 20),
-
-                  // Numeric Keypad
-                  _buildKeypad(colors, isDark),
-
-                  // Forgot Password / Reset Link (Zero-Lockout safety net)
-                  if (_currentMode ==
-                          CyclePasscodeSheetMode.verifyBeforeEnable ||
-                      (_currentMode == CyclePasscodeSheetMode.change &&
-                          _step == 1)) ...[
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _currentMode = CyclePasscodeSheetMode.setup;
-                          _step = 1;
-                          _enteredPin = '';
-                          _firstEnteredPin = null;
-                          _errorMessage = '';
-                        });
-                      },
-                      child: Text(
-                        'رمز قبلی را به یاد ندارم (تعریف رمز جدید)',
-                        style: TextStyle(
                           fontSize: 12,
+                          color: colors.error,
                           fontWeight: FontWeight.bold,
-                          color: colors.primary,
                         ),
                       ),
-                    ),
+                    ],
+
+                    const SizedBox(height: 20),
+
+                    // Numeric Keypad
+                    _buildKeypad(colors, context.isDark),
+
+                    // Forgot Password / Reset Link (Zero-Lockout safety net)
+                    if (_currentMode ==
+                            CyclePasscodeSheetMode.verifyBeforeEnable ||
+                        (_currentMode == CyclePasscodeSheetMode.change &&
+                            _step == 1)) ...[
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _currentMode = CyclePasscodeSheetMode.setup;
+                            _step = 1;
+                            _enteredPin = '';
+                            _firstEnteredPin = null;
+                            _errorMessage = '';
+                          });
+                        },
+                        child: Text(
+                          'رمز قبلی را به یاد ندارم (تعریف رمز جدید)',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: colors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -533,56 +529,46 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
     required String subtitle,
     required VoidCallback onTap,
   }) {
-    return InkWell(
+    return RitmoCard.neumorphic(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.03),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colors.border.withValues(alpha: 0.5)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary as Color,
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle,
-                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 11, color: colors.textSecondary as Color),
+                ),
+              ],
             ),
-            Icon(
-              CupertinoIcons.chevron_left,
-              color: colors.textSecondary,
-              size: 14,
-            ),
-          ],
-        ),
+          ),
+          Icon(
+            CupertinoIcons.chevron_left,
+            color: colors.textSecondary as Color,
+            size: 14,
+          ),
+        ],
       ),
     );
   }
@@ -681,20 +667,12 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               // Biometric key
-              InkResponse(
-                onTap: _authenticateBiometrics,
-                radius: 36,
-                child: Container(
-                  width: 68,
-                  height: 68,
-                  decoration: BoxDecoration(
-                    color: (colors.primary as Color).withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: (colors.primary as Color).withValues(alpha: 0.25),
-                      width: 1.2,
-                    ),
-                  ),
+              SizedBox(
+                width: 68,
+                height: 68,
+                child: RitmoNeuButton(
+                  radius: 34,
+                  onTap: _authenticateBiometrics,
                   child: Center(
                     child: Icon(
                       Icons.fingerprint,
@@ -706,26 +684,12 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
               ),
               _buildKeyButton('0', persianDigits[0], colors, isDark),
               // Backspace key
-              InkResponse(
-                onTap: _onBackspace,
-                radius: 36,
-                child: Container(
-                  width: 68,
-                  height: 68,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.black.withValues(alpha: 0.04),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isDark
-                          ? (colors.borderSubtle as Color).withValues(
-                              alpha: 0.4,
-                            )
-                          : colors.borderSubtle as Color,
-                      width: 1.0,
-                    ),
-                  ),
+              SizedBox(
+                width: 68,
+                height: 68,
+                child: RitmoNeuButton(
+                  radius: 34,
+                  onTap: _onBackspace,
                   child: Center(
                     child: Icon(
                       CupertinoIcons.delete_left,
@@ -748,31 +712,12 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
     dynamic colors,
     bool isDark,
   ) {
-    return InkResponse(
-      onTap: () => _onKeyTap(val),
-      radius: 36,
-      child: Container(
-        width: 68,
-        height: 68,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: isDark
-              ? (colors.surfaceElevated as Color)
-              : (colors.surface as Color),
-          border: Border.all(
-            color: isDark
-                ? (colors.borderSubtle as Color).withValues(alpha: 0.5)
-                : colors.borderSubtle as Color,
-            width: 1.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+    return SizedBox(
+      width: 68,
+      height: 68,
+      child: RitmoNeuButton(
+        radius: 34,
+        onTap: () => _onKeyTap(val),
         child: Center(
           child: Text(
             label,

@@ -1,6 +1,5 @@
 // C-43, C-44: CycleAnimatedBackground, RitmoSheetGlassCard, CycleProgressRingPainter
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -199,42 +198,10 @@ class RitmoSheetGlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colors = context.colors;
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.08 : 0.03),
-            blurRadius: 24,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              color: colors.surfaceElevated.withValues(
-                alpha: isDark ? 0.85 : 0.92,
-              ),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-              border: Border(
-                top: BorderSide(color: colors.border, width: 1.5),
-                left: BorderSide(color: colors.border, width: 1.5),
-                right: BorderSide(color: colors.border, width: 1.5),
-              ),
-            ),
-            child: child,
-          ),
-        ),
-      ),
+    return RitmoGlassSheet(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      padding: EdgeInsets.zero,
+      child: child,
     );
   }
 }

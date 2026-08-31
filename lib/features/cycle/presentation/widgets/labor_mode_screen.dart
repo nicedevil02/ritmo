@@ -8,6 +8,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 
 /// UX-05 Fullscreen Labor Mode Screen with wakelock_plus, big central pulse button (>=200px),
@@ -289,53 +290,99 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
 
   Future<String?> _showPhoneInputDialog() {
     final controller = TextEditingController();
-    return showDialog<String>(
+    final colors = context.colors;
+
+    return showModalBottomSheet<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('شماره تماس بیمارستان یا پزشک', style: TextStyle()),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.phone,
-          decoration: const InputDecoration(
-            hintText: 'مثلاً ۰۲۱۱۲۳۴۵۶۷۸',
-            border: OutlineInputBorder(),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'شماره تماس بیمارستان یا پزشک',
+                  style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 14),
+                RitmoCard.neumorphicSunken(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  child: TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.phone,
+                    style: TextStyle(color: colors.textPrimary, fontSize: 15),
+                    decoration: InputDecoration(
+                      hintText: 'مثلاً ۰۲۱۱۲۳۴۵۶۷۸',
+                      hintStyle: TextStyle(color: colors.textTertiary),
+                      border: InputBorder.none,
+                      prefixIcon: Icon(CupertinoIcons.phone, color: colors.primary, size: 20),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: RitmoNeuButton(
+                        onTap: () => Navigator.of(ctx).pop(),
+                        child: Text(
+                          'لغو',
+                          style: TextStyle(
+                            color: colors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: RitmoPrimaryButton(
+                        label: 'ذخیره و تماس',
+                        onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('لغو', style: TextStyle()),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('ذخیره و تماس', style: TextStyle()),
-          ),
-        ],
       ),
     );
   }
 
   Future<bool> _onWillPop() async {
-    final res = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('خروج از حالت زایمان؟', style: TextStyle()),
-        content: const Text(
+    final res = await RitmoDialog.show(
+      context,
+      title: 'خروج از حالت زایمان؟',
+      content:
           'آیا از خروج از حالت ثبت انقباض اطمینان دارید؟ داده‌های ثبت شده محفوظ می‌مانند.',
-          style: TextStyle(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('انصراف', style: TextStyle()),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('خروج', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+      confirmLabel: 'خروج',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
     return res ?? false;
   }

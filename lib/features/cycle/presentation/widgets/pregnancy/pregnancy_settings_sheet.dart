@@ -6,12 +6,12 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/pregnancy_engine.dart';
 import 'package:ritmo/features/cycle/logic/pregnancy_settings.dart';
 import 'package:ritmo/features/cycle/models/pregnancy_models.dart';
-import 'package:ritmo/features/cycle/presentation/widgets/cycle_animated_background.dart';
 
 class PregnancySettingsSheet extends StatefulWidget {
   const PregnancySettingsSheet({
@@ -50,21 +50,20 @@ class PregnancySettingsSheet extends StatefulWidget {
         snap: true,
         snapSizes: const [0.60, 0.94],
         expand: false,
-        builder: (context, scrollController) => RitmoSheetGlassCard(
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-              top: 12,
-            ),
-            child: SingleChildScrollView(
-              controller: scrollController,
-              child: PregnancySettingsSheet(
-                onDataReloadNeeded: onDataReloadNeeded,
-                onEndPregnancy: onEndPregnancy,
-                onExitPregnancy: onExitPregnancy,
-                onOpenGeneralSettings: onOpenGeneralSettings,
-                initialProfile: initialProfile,
-              ),
+        builder: (context, scrollController) => RitmoGlassSheet(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            top: 12,
+          ),
+          child: SingleChildScrollView(
+            controller: scrollController,
+            child: PregnancySettingsSheet(
+              onDataReloadNeeded: onDataReloadNeeded,
+              onEndPregnancy: onEndPregnancy,
+              onExitPregnancy: onExitPregnancy,
+              onOpenGeneralSettings: onOpenGeneralSettings,
+              initialProfile: initialProfile,
             ),
           ),
         ),
@@ -157,24 +156,13 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
   }) async {
     final shift = PregnancyDateEngine.dayShiftBetween(_profile.lmpDate, newLmp);
     if (shift != 0) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('تغییر تاریخ زایمان'),
-          content: Text(
+      final confirmed = await RitmoDialog.show(
+        context,
+        title: 'تغییر تاریخ زایمان',
+        content:
             'با این تغییر، سن بارداری و تمام یادآوری‌های بعدی ${PersianDigits.toFa(shift.abs().toString())} روز جابه‌جا می‌شوند. داده‌های ثبت‌شدهٔ گذشته حذف نمی‌شوند.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('انصراف'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('تأیید و به‌روزرسانی'),
-            ),
-          ],
-        ),
+        confirmLabel: 'تأیید و به‌روزرسانی',
+        cancelLabel: 'انصراف',
       );
 
       if (confirmed != true) return;
@@ -201,47 +189,37 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => RitmoSheetGlassCard(
+      builder: (sheetCtx) => Directionality(
+        textDirection: TextDirection.rtl,
         child: Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 20,
-            top: 16,
-            left: 20,
-            right: 20,
+            bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: colors.textSecondary.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              Text(
-                'ویرایش تاریخ بارداری',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
+                const SizedBox(height: 14),
+                Text(
+                  'ویرایش تاریخ بارداری',
+                  style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  leading: Icon(
-                    CupertinoIcons.calendar_today,
-                    color: colors.primary,
-                  ),
-                  title: const Text('بر اساس تاریخ آخرین پریود (LMP)'),
+                const SizedBox(height: 16),
+                RitmoCard.neumorphic(
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
                     final picked = await RitmoDatePicker.show(
@@ -262,16 +240,27 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                       );
                     }
                   },
-                ),
-              ),
-              Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  leading: Icon(
-                    CupertinoIcons.person_crop_circle_badge_checkmark,
-                    color: colors.primary,
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Icon(CupertinoIcons.calendar_today, color: colors.primary, size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'بر اساس تاریخ آخرین پریود (LMP)',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      Icon(CupertinoIcons.chevron_left, color: colors.textSecondary, size: 14),
+                    ],
                   ),
-                  title: const Text('بر اساس تاریخ اعلامی پزشک (EDD)'),
+                ),
+                const SizedBox(height: 10),
+                RitmoCard.neumorphic(
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
                     final picked = await RitmoDatePicker.show(
@@ -292,16 +281,27 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                       );
                     }
                   },
-                ),
-              ),
-              Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  leading: Icon(
-                    CupertinoIcons.waveform_path_ecg,
-                    color: colors.primary,
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Icon(CupertinoIcons.person_crop_circle_badge_checkmark, color: colors.primary, size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'بر اساس تاریخ اعلامی پزشک (EDD)',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      Icon(CupertinoIcons.chevron_left, color: colors.textSecondary, size: 14),
+                    ],
                   ),
-                  title: const Text('بر اساس جواب سونوگرافی'),
+                ),
+                const SizedBox(height: 10),
+                RitmoCard.neumorphic(
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
                     final picked = await RitmoDatePicker.show(
@@ -324,9 +324,27 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                       );
                     }
                   },
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Icon(CupertinoIcons.waveform_path_ecg, color: colors.primary, size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'بر اساس جواب سونوگرافی',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      Icon(CupertinoIcons.chevron_left, color: colors.textSecondary, size: 14),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -339,53 +357,38 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => RitmoSheetGlassCard(
+      builder: (sheetCtx) => Directionality(
+        textDirection: TextDirection.rtl,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: colors.textSecondary.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
+          ),
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              Text(
-                'انتخاب لحن همراهی',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
+                const SizedBox(height: 14),
+                Text(
+                  'انتخاب لحن همراهی',
+                  style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  leading: Icon(
-                    CupertinoIcons.heart_fill,
-                    color: _profile.tone == PregnancyTone.warm
-                        ? colors.primary
-                        : colors.textSecondary,
-                  ),
-                  title: const Text('گرما و صمیمانه'),
-                  subtitle: const Text(
-                    'با عبارات دلگرم‌کننده و پیام‌های محبت‌آمیز',
-                  ),
-                  trailing: _profile.tone == PregnancyTone.warm
-                      ? Icon(
-                          CupertinoIcons.checkmark_alt,
-                          color: colors.primary,
-                        )
-                      : null,
+                const SizedBox(height: 16),
+                RitmoCard.neumorphic(
+                  isSelected: _profile.tone == PregnancyTone.warm,
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
                     final updated = _profile.copyWith(tone: PregnancyTone.warm);
@@ -393,37 +396,86 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     if (mounted) setState(() => _profile = updated);
                     widget.onDataReloadNeeded?.call();
                   },
-                ),
-              ),
-              Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  leading: Icon(
-                    CupertinoIcons.doc_text_fill,
-                    color: _profile.tone == PregnancyTone.neutral
-                        ? colors.primary
-                        : colors.textSecondary,
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.heart_fill,
+                        color: _profile.tone == PregnancyTone.warm ? colors.primary : colors.textSecondary,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'گرما و صمیمانه',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'با عبارات دلگرم‌کننده و پیام‌های محبت‌آمیز',
+                              style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_profile.tone == PregnancyTone.warm)
+                        Icon(CupertinoIcons.checkmark_alt, color: colors.primary, size: 18),
+                    ],
                   ),
-                  title: const Text('آرام و علمی'),
-                  subtitle: const Text('اطلاعات دقیق، مختصر و بدون اغراق'),
-                  trailing: _profile.tone == PregnancyTone.neutral
-                      ? Icon(
-                          CupertinoIcons.checkmark_alt,
-                          color: colors.primary,
-                        )
-                      : null,
+                ),
+                const SizedBox(height: 10),
+                RitmoCard.neumorphic(
+                  isSelected: _profile.tone == PregnancyTone.neutral,
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
-                    final updated = _profile.copyWith(
-                      tone: PregnancyTone.neutral,
-                    );
+                    final updated = _profile.copyWith(tone: PregnancyTone.neutral);
                     await PregnancySettings.saveProfile(updated);
                     if (mounted) setState(() => _profile = updated);
                     widget.onDataReloadNeeded?.call();
                   },
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.doc_text_fill,
+                        color: _profile.tone == PregnancyTone.neutral ? colors.primary : colors.textSecondary,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'آرام و علمی',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'اطلاعات دقیق، مختصر و بدون اغراق',
+                              style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_profile.tone == PregnancyTone.neutral)
+                        Icon(CupertinoIcons.checkmark_alt, color: colors.primary, size: 18),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -436,51 +488,38 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => RitmoSheetGlassCard(
+      builder: (sheetCtx) => Directionality(
+        textDirection: TextDirection.rtl,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: colors.textSecondary.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
+          ),
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              Text(
-                'واحد نمایش سن بارداری',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
+                const SizedBox(height: 14),
+                Text(
+                  'واحد نمایش سن بارداری',
+                  style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  leading: Icon(
-                    CupertinoIcons.calendar,
-                    color: _profile.ageUnit == PregnancyAgeUnit.weeks
-                        ? colors.primary
-                        : colors.textSecondary,
-                  ),
-                  title: const Text('هفته و روز'),
-                  subtitle: const Text('مثال: هفتهٔ ۲۴ و ۳ روز'),
-                  trailing: _profile.ageUnit == PregnancyAgeUnit.weeks
-                      ? Icon(
-                          CupertinoIcons.checkmark_alt,
-                          color: colors.primary,
-                        )
-                      : null,
+                const SizedBox(height: 16),
+                RitmoCard.neumorphic(
+                  isSelected: _profile.ageUnit == PregnancyAgeUnit.weeks,
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
                     final updated = _profile.copyWith(
@@ -490,25 +529,43 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     if (mounted) setState(() => _profile = updated);
                     widget.onDataReloadNeeded?.call();
                   },
-                ),
-              ),
-              Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  leading: Icon(
-                    CupertinoIcons.calendar_badge_plus,
-                    color: _profile.ageUnit == PregnancyAgeUnit.months
-                        ? colors.primary
-                        : colors.textSecondary,
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.calendar,
+                        color: _profile.ageUnit == PregnancyAgeUnit.weeks ? colors.primary : colors.textSecondary,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'هفته و روز',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'مثال: هفتهٔ ۲۴ و ۳ روز',
+                              style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_profile.ageUnit == PregnancyAgeUnit.weeks)
+                        Icon(CupertinoIcons.checkmark_alt, color: colors.primary, size: 18),
+                    ],
                   ),
-                  title: const Text('ماه و هفته'),
-                  subtitle: const Text('مثال: ماه ۶، هفتهٔ ۲'),
-                  trailing: _profile.ageUnit == PregnancyAgeUnit.months
-                      ? Icon(
-                          CupertinoIcons.checkmark_alt,
-                          color: colors.primary,
-                        )
-                      : null,
+                ),
+                const SizedBox(height: 10),
+                RitmoCard.neumorphic(
+                  isSelected: _profile.ageUnit == PregnancyAgeUnit.months,
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
                     final updated = _profile.copyWith(
@@ -518,9 +575,42 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     if (mounted) setState(() => _profile = updated);
                     widget.onDataReloadNeeded?.call();
                   },
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.calendar_badge_plus,
+                        color: _profile.ageUnit == PregnancyAgeUnit.months ? colors.primary : colors.textSecondary,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'ماه و هفته',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'مثال: ماه ۶، هفتهٔ ۲',
+                              style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_profile.ageUnit == PregnancyAgeUnit.months)
+                        Icon(CupertinoIcons.checkmark_alt, color: colors.primary, size: 18),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -535,94 +625,94 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => StatefulBuilder(
-        builder: (ctx, setModalState) => RitmoSheetGlassCard(
+        builder: (ctx, setModalState) => Directionality(
+          textDirection: TextDirection.rtl,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: colors.textSecondary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Text(
-                  'فاصلهٔ یادآوری ویزیت مامایی',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.minus_circle_fill),
-                      iconSize: 32,
-                      color: selected > 1
-                          ? colors.primary
-                          : colors.textSecondary.withValues(alpha: 0.3),
-                      onPressed: selected > 1
-                          ? () => setModalState(() => selected--)
-                          : null,
-                    ),
-                    const SizedBox(width: 24),
-                    Text(
-                      '${PersianDigits.toFa(selected.toString())} روز قبل',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: colors.primary,
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
+            ),
+            child: RitmoGlassSheet(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colors.border.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    const SizedBox(width: 24),
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.plus_circle_fill),
-                      iconSize: 32,
-                      color: selected < 7
-                          ? colors.primary
-                          : colors.textSecondary.withValues(alpha: 0.3),
-                      onPressed: selected < 7
-                          ? () => setModalState(() => selected++)
-                          : null,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  onPressed: () async {
-                    Navigator.of(sheetCtx).pop();
-                    final updated = _profile.copyWith(
-                      visitReminderLeadDays: selected,
-                    );
-                    await PregnancySettings.saveProfile(updated);
-                    if (mounted) setState(() => _profile = updated);
-                    widget.onDataReloadNeeded?.call();
-                  },
-                  child: const Text(
-                    'تأیید و ذخیره',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  const SizedBox(height: 14),
+                  Text(
+                    'فاصلهٔ یادآوری ویزیت مامایی',
+                    style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      RitmoNeuButton(
+                        padding: const EdgeInsets.all(10),
+                        radius: 20,
+                        onTap: () {
+                          if (selected > 1) {
+                            setModalState(() => selected--);
+                          }
+                        },
+                        child: Icon(
+                          CupertinoIcons.minus,
+                          size: 20,
+                          color: selected > 1 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Text(
+                        '${RitmoNumber.faInt(selected)} روز قبل',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      RitmoNeuButton(
+                        padding: const EdgeInsets.all(10),
+                        radius: 20,
+                        onTap: () {
+                          if (selected < 7) {
+                            setModalState(() => selected++);
+                          }
+                        },
+                        child: Icon(
+                          CupertinoIcons.plus,
+                          size: 20,
+                          color: selected < 7 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  RitmoPrimaryButton(
+                    label: 'تأیید و ذخیره',
+                    onPressed: () async {
+                      Navigator.of(sheetCtx).pop();
+                      final updated = _profile.copyWith(
+                        visitReminderLeadDays: selected,
+                      );
+                      await PregnancySettings.saveProfile(updated);
+                      if (mounted) setState(() => _profile = updated);
+                      widget.onDataReloadNeeded?.call();
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -638,92 +728,92 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => StatefulBuilder(
-        builder: (ctx, setModalState) => RitmoSheetGlassCard(
+        builder: (ctx, setModalState) => Directionality(
+          textDirection: TextDirection.rtl,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: colors.textSecondary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Text(
-                  'ساعت ارسال یادآوری‌های بارداری',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.minus_circle_fill),
-                      iconSize: 32,
-                      color: selected > 6
-                          ? colors.primary
-                          : colors.textSecondary.withValues(alpha: 0.3),
-                      onPressed: selected > 6
-                          ? () => setModalState(() => selected--)
-                          : null,
-                    ),
-                    const SizedBox(width: 24),
-                    Text(
-                      'ساعت ${PersianDigits.toFa(selected.toString())}:۰۰',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: colors.primary,
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
+            ),
+            child: RitmoGlassSheet(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colors.border.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    const SizedBox(width: 24),
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.plus_circle_fill),
-                      iconSize: 32,
-                      color: selected < 22
-                          ? colors.primary
-                          : colors.textSecondary.withValues(alpha: 0.3),
-                      onPressed: selected < 22
-                          ? () => setModalState(() => selected++)
-                          : null,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  onPressed: () async {
-                    Navigator.of(sheetCtx).pop();
-                    final updated = _profile.copyWith(reminderHour: selected);
-                    await PregnancySettings.saveProfile(updated);
-                    if (mounted) setState(() => _profile = updated);
-                    widget.onDataReloadNeeded?.call();
-                  },
-                  child: const Text(
-                    'تأیید و ذخیره',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  const SizedBox(height: 14),
+                  Text(
+                    'ساعت ارسال یادآوری‌های بارداری',
+                    style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      RitmoNeuButton(
+                        padding: const EdgeInsets.all(10),
+                        radius: 20,
+                        onTap: () {
+                          if (selected > 6) {
+                            setModalState(() => selected--);
+                          }
+                        },
+                        child: Icon(
+                          CupertinoIcons.minus,
+                          size: 20,
+                          color: selected > 6 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Text(
+                        'ساعت ${RitmoNumber.faInt(selected)}:۰۰',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      RitmoNeuButton(
+                        padding: const EdgeInsets.all(10),
+                        radius: 20,
+                        onTap: () {
+                          if (selected < 22) {
+                            setModalState(() => selected++);
+                          }
+                        },
+                        child: Icon(
+                          CupertinoIcons.plus,
+                          size: 20,
+                          color: selected < 22 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  RitmoPrimaryButton(
+                    label: 'تأیید و ذخیره',
+                    onPressed: () async {
+                      Navigator.of(sheetCtx).pop();
+                      final updated = _profile.copyWith(reminderHour: selected);
+                      await PregnancySettings.saveProfile(updated);
+                      if (mounted) setState(() => _profile = updated);
+                      widget.onDataReloadNeeded?.call();
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -739,94 +829,94 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => StatefulBuilder(
-        builder: (ctx, setModalState) => RitmoSheetGlassCard(
+        builder: (ctx, setModalState) => Directionality(
+          textDirection: TextDirection.rtl,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: colors.textSecondary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Text(
-                  'تعداد هدف لگد',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.minus_circle_fill),
-                      iconSize: 32,
-                      color: selected > 5
-                          ? colors.primary
-                          : colors.textSecondary.withValues(alpha: 0.3),
-                      onPressed: selected > 5
-                          ? () => setModalState(() => selected--)
-                          : null,
-                    ),
-                    const SizedBox(width: 24),
-                    Text(
-                      '${PersianDigits.toFa(selected.toString())} حرکت',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: colors.primary,
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
+            ),
+            child: RitmoGlassSheet(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colors.border.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    const SizedBox(width: 24),
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.plus_circle_fill),
-                      iconSize: 32,
-                      color: selected < 20
-                          ? colors.primary
-                          : colors.textSecondary.withValues(alpha: 0.3),
-                      onPressed: selected < 20
-                          ? () => setModalState(() => selected++)
-                          : null,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  onPressed: () async {
-                    Navigator.of(sheetCtx).pop();
-                    final updated = _profile.copyWith(
-                      kickTargetCount: selected,
-                    );
-                    await PregnancySettings.saveProfile(updated);
-                    if (mounted) setState(() => _profile = updated);
-                    widget.onDataReloadNeeded?.call();
-                  },
-                  child: const Text(
-                    'تأیید و ذخیره',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  const SizedBox(height: 14),
+                  Text(
+                    'تعداد هدف لگد',
+                    style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      RitmoNeuButton(
+                        padding: const EdgeInsets.all(10),
+                        radius: 20,
+                        onTap: () {
+                          if (selected > 5) {
+                            setModalState(() => selected--);
+                          }
+                        },
+                        child: Icon(
+                          CupertinoIcons.minus,
+                          size: 20,
+                          color: selected > 5 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Text(
+                        '${RitmoNumber.faInt(selected)} حرکت',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      RitmoNeuButton(
+                        padding: const EdgeInsets.all(10),
+                        radius: 20,
+                        onTap: () {
+                          if (selected < 20) {
+                            setModalState(() => selected++);
+                          }
+                        },
+                        child: Icon(
+                          CupertinoIcons.plus,
+                          size: 20,
+                          color: selected < 20 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  RitmoPrimaryButton(
+                    label: 'تأیید و ذخیره',
+                    onPressed: () async {
+                      Navigator.of(sheetCtx).pop();
+                      final updated = _profile.copyWith(
+                        kickTargetCount: selected,
+                      );
+                      await PregnancySettings.saveProfile(updated);
+                      if (mounted) setState(() => _profile = updated);
+                      widget.onDataReloadNeeded?.call();
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -842,98 +932,98 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => StatefulBuilder(
-        builder: (ctx, setModalState) => RitmoSheetGlassCard(
+        builder: (ctx, setModalState) => Directionality(
+          textDirection: TextDirection.rtl,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: colors.textSecondary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Text(
-                  'مدت پنجرهٔ شمارش لگد',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.minus_circle_fill),
-                      iconSize: 32,
-                      color: selected > 30
-                          ? colors.primary
-                          : colors.textSecondary.withValues(alpha: 0.3),
-                      onPressed: selected > 30
-                          ? () => setModalState(
-                              () => selected = (selected - 15).clamp(30, 300),
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 24),
-                    Text(
-                      '${PersianDigits.toFa(selected.toString())} دقیقه',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: colors.primary,
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
+            ),
+            child: RitmoGlassSheet(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colors.border.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    const SizedBox(width: 24),
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.plus_circle_fill),
-                      iconSize: 32,
-                      color: selected < 300
-                          ? colors.primary
-                          : colors.textSecondary.withValues(alpha: 0.3),
-                      onPressed: selected < 300
-                          ? () => setModalState(
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'مدت پنجرهٔ شمارش لگد',
+                    style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      RitmoNeuButton(
+                        padding: const EdgeInsets.all(10),
+                        radius: 20,
+                        onTap: () {
+                          if (selected > 30) {
+                            setModalState(
+                              () => selected = (selected - 15).clamp(30, 300),
+                            );
+                          }
+                        },
+                        child: Icon(
+                          CupertinoIcons.minus,
+                          size: 20,
+                          color: selected > 30 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Text(
+                        '${RitmoNumber.faInt(selected)} دقیقه',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      RitmoNeuButton(
+                        padding: const EdgeInsets.all(10),
+                        radius: 20,
+                        onTap: () {
+                          if (selected < 300) {
+                            setModalState(
                               () => selected = (selected + 15).clamp(30, 300),
-                            )
-                          : null,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                            );
+                          }
+                        },
+                        child: Icon(
+                          CupertinoIcons.plus,
+                          size: 20,
+                          color: selected < 300 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ],
                   ),
-                  onPressed: () async {
-                    Navigator.of(sheetCtx).pop();
-                    final updated = _profile.copyWith(
-                      kickWindowMinutes: selected,
-                    );
-                    await PregnancySettings.saveProfile(updated);
-                    if (mounted) setState(() => _profile = updated);
-                    widget.onDataReloadNeeded?.call();
-                  },
-                  child: const Text(
-                    'تأیید و ذخیره',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  const SizedBox(height: 24),
+                  RitmoPrimaryButton(
+                    label: 'تأیید و ذخیره',
+                    onPressed: () async {
+                      Navigator.of(sheetCtx).pop();
+                      final updated = _profile.copyWith(
+                        kickWindowMinutes: selected,
+                      );
+                      await PregnancySettings.saveProfile(updated);
+                      if (mounted) setState(() => _profile = updated);
+                      widget.onDataReloadNeeded?.call();
+                    },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -1435,29 +1525,14 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
   }
 
   Future<void> _confirmExitPregnancy() async {
-    final colors = context.colors;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('خروج از حالت بارداری'),
-        content: const Text(
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'خروج از حالت بارداری',
+      content:
           'آیا مطمئن هستید که می‌خواهید حالت بارداری را غیرفعال کنید و به چرخهٔ عادی بازگردید؟',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('انصراف'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: colors.warning),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
-              'بله، بازگشت به چرخه',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
+      confirmLabel: 'بله، بازگشت به چرخه',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
 
     if (confirmed == true && mounted) {

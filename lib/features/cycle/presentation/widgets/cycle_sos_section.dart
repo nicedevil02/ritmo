@@ -1,7 +1,5 @@
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
@@ -127,28 +125,26 @@ class CycleSosSection extends StatelessWidget {
   void _showSosBottomSheet(BuildContext context) {
     final colors = context.colors;
 
-    showModalBottomSheet(
+    var sheetTitle = 'راهکارهای سریع تسکین درد';
+    var emoji = '🆘';
+    if (phase == CyclePhase.ovulation) {
+      sheetTitle = 'راهنمای بهبود باروری و شادابی';
+      emoji = '✨';
+    } else if (phase == CyclePhase.luteal) {
+      sheetTitle = 'مدیریت و تسکین علائم پیش‌قاعدگی';
+      emoji = '💆';
+    } else if (phase == CyclePhase.follicular) {
+      sheetTitle = 'راهنمای تقویت توان و انرژی بدنی';
+      emoji = '⚡';
+    }
+
+    showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       useSafeArea: true,
       enableDrag: true,
       builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-
-        var sheetTitle = 'راهکارهای سریع تسکین درد';
-        var emoji = '🆘';
-        if (phase == CyclePhase.ovulation) {
-          sheetTitle = 'راهنمای بهبود باروری و شادابی';
-          emoji = '✨';
-        } else if (phase == CyclePhase.luteal) {
-          sheetTitle = 'مدیریت و تسکین علائم پیش‌قاعدگی';
-          emoji = '💆';
-        } else if (phase == CyclePhase.follicular) {
-          sheetTitle = 'راهنمای تقویت توان و انرژی بدنی';
-          emoji = '⚡';
-        }
-
         return DraggableScrollableSheet(
           initialChildSize: 0.60,
           minChildSize: 0.40,
@@ -157,91 +153,71 @@ class CycleSosSection extends StatelessWidget {
           snapSizes: const [0.60, 0.94],
           expand: false,
           builder: (context, scrollController) {
-            return ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.black.withValues(alpha: 0.35)
-                        : Colors.white.withValues(alpha: 0.65),
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(24),
-                    ),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : Colors.black.withValues(alpha: 0.08),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      // Handle
-                      Container(
-                        margin: const EdgeInsets.only(top: 12, bottom: 8),
-                        width: 40,
-                        height: 5,
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: RitmoGlassSheet(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                child: Column(
+                  children: [
+                    // Handle
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white24 : Colors.black26,
-                          borderRadius: BorderRadius.circular(2.5),
+                          color: colors.border.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      // Title
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 16,
+                    ),
+                    const SizedBox(height: 12),
+                    // Title
+                    Row(
+                      children: [
+                        RitmoNeuButton(
+                          padding: const EdgeInsets.all(8),
+                          radius: 10,
+                          onTap: () => Navigator.pop(context),
+                          child: Icon(
+                            CupertinoIcons.xmark,
+                            size: 16,
+                            color: colors.textSecondary,
+                          ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  emoji,
-                                  style: const TextStyle(fontSize: 20),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  sheetTitle,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: colors.textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                CupertinoIcons.clear_circled_solid,
-                                color: colors.textSecondary,
-                              ),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ],
+                        const SizedBox(width: 8),
+                        Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 20),
                         ),
-                      ),
-                      Divider(
-                        color: isDark ? Colors.white12 : Colors.black12,
-                        height: 1,
-                      ),
-                      Expanded(
-                        child: ListView(
-                          controller: scrollController,
-                          padding: const EdgeInsets.all(16),
-                          children: [
-                            _buildAiAssistantCard(context),
-                            const SizedBox(height: 20),
-                            ..._buildPhaseSpecificContent(context),
-                          ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            sheetTitle,
+                            style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                          ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Divider(
+                      color: colors.border.withValues(alpha: 0.4),
+                      height: 1,
+                    ),
+                    Expanded(
+                      child: ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        children: [
+                          _buildAiAssistantCard(context),
+                          const SizedBox(height: 16),
+                          ..._buildPhaseSpecificContent(context),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -413,13 +389,8 @@ class CycleSosSection extends StatelessWidget {
               '۴ ثانیه نفس بکشید، ۷ ثانیه نگه دارید، ۸ ثانیه بازدم. ۴ بار تکرار. سیستم عصبی پاراسمپاتیک را فعال و ادراک درد را کاهش می‌دهد.',
         ),
         const SizedBox(height: 24),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colors.primary.withValues(alpha: 0.15)),
-          ),
+        RitmoCard.neumorphicSunken(
+          padding: const EdgeInsets.all(14),
           child: Row(
             children: [
               Icon(
@@ -432,7 +403,7 @@ class CycleSosSection extends StatelessWidget {
                 child: Text(
                   'همراه عزیز ریتمو، اگر درد شما بسیار شدید و غیرقابل تحمل است یا با علائمی چون تب یا خونریزی بسیار شدید همراه است، حتماً با پزشک مشورت کنید. 🌸',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: colors.textSecondary,
                     height: 1.5,
                   ),
@@ -472,49 +443,39 @@ class CycleSosSection extends StatelessWidget {
       themeColor = colors.accent;
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: themeColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: themeColor.withValues(alpha: 0.1),
-          width: 1.2,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, color: themeColor, size: 16),
-                  const SizedBox(width: 8),
-                ],
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: themeColor,
-                    ),
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, color: themeColor, size: 16),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: themeColor,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              description,
-              style: TextStyle(
-                fontSize: 13,
-                color: colors.textSecondary,
-                height: 1.5,
               ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 13,
+              color: colors.textSecondary,
+              height: 1.5,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -526,55 +487,40 @@ class CycleSosSection extends StatelessWidget {
     IconData? icon,
   }) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.02)
-            : Colors.black.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.05),
-          width: 1.2,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, color: colors.primary, size: 16),
-                  const SizedBox(width: 8),
-                ],
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, color: colors.primary, size: 16),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              description,
-              style: TextStyle(
-                fontSize: 13,
-                color: colors.textSecondary,
-                height: 1.5,
               ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 13,
+              color: colors.textSecondary,
+              height: 1.5,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

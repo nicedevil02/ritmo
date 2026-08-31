@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 
 class CycleOrbCard extends StatefulWidget {
   const CycleOrbCard({

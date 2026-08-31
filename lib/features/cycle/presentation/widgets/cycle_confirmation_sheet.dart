@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/util/ritmo_number.dart';
+import 'package:ritmo/core/utils/ritmo_date_picker.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_confirmation_service.dart';
 import 'package:ritmo/features/cycle/models/cycle_confirmation_models.dart';
@@ -22,22 +24,25 @@ class CycleConfirmationSheet extends StatefulWidget {
     required CycleConfirmationRequest request,
     required VoidCallback onAnswered,
   }) async {
-    await showModalBottomSheet(
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
-      enableDrag: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.60,
-        minChildSize: 0.40,
-        maxChildSize: 0.94,
-        snap: true,
-        snapSizes: const [0.60, 0.94],
-        expand: false,
-        builder: (context, scrollController) => CycleConfirmationSheet(
-          request: request,
-          onAnswered: onAnswered,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+            ),
+            child: CycleConfirmationSheet(
+              request: request,
+              onAnswered: onAnswered,
+            ),
+          ),
         ),
       ),
     );
@@ -59,7 +64,7 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
 
   String _formatJalali(DateTime dt) {
     final j = Jalali.fromDateTime(dt);
-    return '${PersianDigits.toFa(j.year.toString())}/${PersianDigits.toFa(j.month.toString().padLeft(2, '0'))}/${PersianDigits.toFa(j.day.toString().padLeft(2, '0'))}';
+    return '${RitmoNumber.faInt(j.year)}/${RitmoNumber.faInt(j.month).padLeft(2, '۰')}/${RitmoNumber.faInt(j.day).padLeft(2, '۰')}';
   }
 
   Future<void> _submitAnswer(
@@ -99,14 +104,11 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
   Future<void> _pickCustomDate() async {
     final now = CycleClock.now;
 
-    final picked = await showDatePicker(
+    final picked = await RitmoDatePicker.showJalali(
       context: context,
-      initialDate: now,
-      firstDate: now.subtract(const Duration(days: 30)),
-      lastDate: now,
-      helpText: _isStartKind ? 'انتخاب تاریخ شروع' : 'انتخاب تاریخ پایان',
-      confirmText: 'تأیید',
-      cancelText: 'انصراف',
+      initialDate: Jalali.fromDateTime(now),
+      firstDate: Jalali.fromDateTime(now.subtract(const Duration(days: 30))),
+      lastDate: Jalali.fromDateTime(now),
     );
 
     if (picked != null) {
@@ -114,7 +116,7 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
         _isStartKind
             ? CycleConfirmationAnswer.startedOnOtherDate
             : CycleConfirmationAnswer.endedOnOtherDate,
-        resolvedDate: picked,
+        resolvedDate: picked.toDateTime(),
       );
     }
   }
@@ -135,15 +137,10 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
               ? 'مدت خونریزی بیش از میانگین معمول طول کشیده است. آیا خونریزی شما پایان یافته است؟'
               : 'بر اساس میانگین روزهای خونریزی، احتمالاً دورهٔ شما به پایان رسیده است. آیا خونریزی متوقف شده است؟');
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border.all(color: colors.border),
-        ),
-        padding: const EdgeInsets.fromLTRB(14, 16, 14, 32),
+    return RitmoGlassSheet(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -151,21 +148,48 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
             // Handle bar
             Center(
               child: Container(
-                width: 40,
+                width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: colors.border,
+                  color: colors.border.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
             // Header Row
             Row(
               children: [
+                RitmoNeuButton(
+                  padding: const EdgeInsets.all(8),
+                  radius: 10,
+                  onTap: () => Navigator.pop(context),
+                  child: Icon(
+                    CupertinoIcons.xmark,
+                    size: 16,
+                    color: colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'موعد تخمینی: ${_formatJalali(widget.request.targetDate)}',
+                        style: RitmoTextStyles.caption(colors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: colors.primary.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
@@ -175,162 +199,165 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
                         ? CupertinoIcons.sparkles
                         : CupertinoIcons.check_mark_circled,
                     color: colors.primary,
-                    size: 22,
+                    size: 20,
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'موعد تخمینی: ${_formatJalali(widget.request.targetDate)}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary),
-                  onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
             const SizedBox(height: 14),
 
-            // Description
-            Text(
-              description,
-              style: TextStyle(
-                fontSize: 13,
-                color: colors.textSecondary,
-                height: 1.5,
+            // Description in sunken well
+            RitmoCard.neumorphicSunken(
+              padding: const EdgeInsets.all(RitmoSpacing.md),
+              child: Text(
+                description,
+                style: RitmoTextStyles.caption(colors.textPrimary).copyWith(height: 1.55),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Action Buttons
             if (_isStartKind) ...[
-              _buildActionButton(
+              RitmoPrimaryButton(
                 label: 'بله، امروز شروع شد',
                 icon: CupertinoIcons.check_mark,
-                isPrimary: true,
-                onTap: () =>
-                    _submitAnswer(CycleConfirmationAnswer.startedToday),
+                onPressed: _isSubmitting
+                    ? null
+                    : () => _submitAnswer(CycleConfirmationAnswer.startedToday),
               ),
               const SizedBox(height: 10),
-              _buildActionButton(
-                label: 'از تاریخ دیگری شروع شده',
-                icon: CupertinoIcons.calendar,
-                isPrimary: false,
-                onTap: _pickCustomDate,
+              RitmoCard.neumorphic(
+                onTap: _isSubmitting ? null : _pickCustomDate,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(CupertinoIcons.calendar, size: 18, color: colors.primary),
+                    const SizedBox(width: 10),
+                    Text(
+                      'از تاریخ دیگری شروع شده',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
-              _buildActionButton(
-                label: 'هنوز شروع نشده',
-                icon: CupertinoIcons.xmark_circle,
-                isPrimary: false,
-                onTap: () =>
-                    _submitAnswer(CycleConfirmationAnswer.notStartedYet),
+              RitmoCard.neumorphic(
+                onTap: _isSubmitting
+                    ? null
+                    : () => _submitAnswer(CycleConfirmationAnswer.notStartedYet),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(CupertinoIcons.xmark_circle, size: 18, color: colors.textSecondary),
+                    const SizedBox(width: 10),
+                    Text(
+                      'هنوز شروع نشده',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
-              _buildActionButton(
-                label: 'یادآوری فردا',
-                icon: CupertinoIcons.clock,
-                isPrimary: false,
-                onTap: () => _submitAnswer(CycleConfirmationAnswer.snoozed),
+              RitmoCard.neumorphic(
+                onTap: _isSubmitting
+                    ? null
+                    : () => _submitAnswer(CycleConfirmationAnswer.snoozed),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(CupertinoIcons.clock, size: 18, color: colors.textSecondary),
+                    const SizedBox(width: 10),
+                    Text(
+                      'یادآوری فردا',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ] else ...[
-              _buildActionButton(
+              RitmoPrimaryButton(
                 label: 'بله، امروز تمام شد',
                 icon: CupertinoIcons.check_mark,
-                isPrimary: true,
-                onTap: () => _submitAnswer(CycleConfirmationAnswer.endedToday),
+                onPressed: _isSubmitting
+                    ? null
+                    : () => _submitAnswer(CycleConfirmationAnswer.endedToday),
               ),
               const SizedBox(height: 10),
-              _buildActionButton(
-                label: 'در تاریخ دیگری تمام شده',
-                icon: CupertinoIcons.calendar,
-                isPrimary: false,
-                onTap: _pickCustomDate,
+              RitmoCard.neumorphic(
+                onTap: _isSubmitting ? null : _pickCustomDate,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(CupertinoIcons.calendar, size: 18, color: colors.primary),
+                    const SizedBox(width: 10),
+                    Text(
+                      'در تاریخ دیگری تمام شده',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
-              _buildActionButton(
-                label: 'هنوز ادامه دارد',
-                icon: CupertinoIcons.arrow_clockwise,
-                isPrimary: false,
-                onTap: () =>
-                    _submitAnswer(CycleConfirmationAnswer.stillOngoing),
+              RitmoCard.neumorphic(
+                onTap: _isSubmitting
+                    ? null
+                    : () => _submitAnswer(CycleConfirmationAnswer.stillOngoing),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(CupertinoIcons.arrow_clockwise, size: 18, color: colors.textSecondary),
+                    const SizedBox(width: 10),
+                    Text(
+                      'هنوز ادامه دارد',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
-              _buildActionButton(
-                label: 'یادآوری فردا',
-                icon: CupertinoIcons.clock,
-                isPrimary: false,
-                onTap: () => _submitAnswer(CycleConfirmationAnswer.snoozed),
+              RitmoCard.neumorphic(
+                onTap: _isSubmitting
+                    ? null
+                    : () => _submitAnswer(CycleConfirmationAnswer.snoozed),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(CupertinoIcons.clock, size: 18, color: colors.textSecondary),
+                    const SizedBox(width: 10),
+                    Text(
+                      'یادآوری فردا',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-    required bool isPrimary,
-    required VoidCallback onTap,
-  }) {
-    final colors = context.colors;
-
-    if (isPrimary) {
-      return ElevatedButton.icon(
-        onPressed: _isSubmitting ? null : onTap,
-        icon: Icon(icon, size: 18),
-        label: Text(
-          label,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: colors.primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-        ),
-      );
-    }
-
-    return OutlinedButton.icon(
-      onPressed: _isSubmitting ? null : onTap,
-      icon: Icon(icon, size: 18, color: colors.textPrimary),
-      label: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: colors.textPrimary,
-        ),
-      ),
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(color: colors.border),
-        padding: const EdgeInsets.symmetric(vertical: 13),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }

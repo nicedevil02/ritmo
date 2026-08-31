@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/cycle/logic/cycle_onboarding_controller.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/steps/step_1_privacy_lock.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/steps/step_2_cycle_status.dart';
@@ -98,38 +99,14 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
   Future<bool> _confirmExit() async {
     if (_currentStep == 1 && !widget.isEditMode) return true;
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: context.colors.surface,
-          title: const Text(
-            'خروج از راه‌اندازی',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          content: const Text(
-            'آیا از خروج از راه‌اندازی اطمینان دارید؟ اطلاعات واردشده تا قبل از ثبت نهایی ذخیره نخواهند شد.',
-            style: TextStyle(fontSize: 13, height: 1.5),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('ادامه راه‌اندازی', style: TextStyle()),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text(
-                'خروج',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    final confirm = await RitmoDialog.show(
+      context,
+      title: 'خروج از راه‌اندازی',
+      content:
+          'آیا از خروج از راه‌اندازی اطمینان دارید؟ اطلاعات واردشده تا قبل از ثبت نهایی ذخیره نخواهند شد.',
+      confirmLabel: 'خروج',
+      cancelLabel: 'ادامه راه‌اندازی',
+      isDestructive: true,
     );
 
     return confirm ?? false;
@@ -141,72 +118,44 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_isLoadingInitial) {
-      return Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(child: CircularProgressIndicator(color: colors.primary)),
-      );
+      return Center(child: CircularProgressIndicator(color: colors.primary));
     }
 
     // Dedicated Error State Screen (Bug چ-۲ resolution)
     if (_errorMessage != null) {
-      return Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: Padding(
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: RitmoGlassSheet(
+            borderRadius: BorderRadius.circular(28),
             padding: const EdgeInsets.all(24),
-            child: RitmoTheme.glassCardLight(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      CupertinoIcons.exclamationmark_triangle_fill,
-                      color: Colors.orange,
-                      size: 48,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'خطا در ذخیره‌سازی داده‌ها',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.textSecondary,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                      ),
-                      onPressed: _handleSave,
-                      icon: const Icon(CupertinoIcons.refresh, size: 18),
-                      label: const Text(
-                        'تلاش مجدد',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  CupertinoIcons.exclamationmark_triangle_fill,
+                  color: Colors.orange,
+                  size: 48,
                 ),
-              ),
+                const SizedBox(height: 16),
+                Text(
+                  'خطا در ذخیره‌سازی داده‌ها',
+                  style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: RitmoTextStyles.caption(colors.textSecondary).copyWith(height: 1.5),
+                ),
+                const SizedBox(height: 24),
+                RitmoPrimaryButton(
+                  label: 'تلاش مجدد',
+                  icon: CupertinoIcons.refresh,
+                  onPressed: _handleSave,
+                ),
+              ],
             ),
           ),
         ),
@@ -228,38 +177,56 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
           }
         }
       },
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              // Wizard Progress Header (§۵ & Bug چ-۱۲)
-              _buildProgressHeader(colors, isDark),
-              const SizedBox(height: 16),
-              // Step Card Body
-              RitmoTheme.glassCardLight(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    switchInCurve: Curves.easeInOut,
-                    switchOutCurve: Curves.easeInOut,
-                    transitionBuilder: (child, animation) {
-                      return SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(-0.2, 0.0),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: FadeTransition(opacity: animation, child: child),
-                      );
-                    },
-                    child: _buildCurrentStepWidget(colors, isDark),
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+          ),
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                // Wizard Progress Header (§۵ & Bug چ-۱۲)
+                _buildProgressHeader(colors, isDark),
+                const SizedBox(height: 12),
+                // Step Body
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      switchInCurve: Curves.easeInOut,
+                      switchOutCurve: Curves.easeInOut,
+                      transitionBuilder: (child, animation) {
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(-0.2, 0.0),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: FadeTransition(opacity: animation, child: child),
+                        );
+                      },
+                      child: _buildCurrentStepWidget(colors, isDark),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -272,48 +239,40 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
     return Column(
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            IconButton(
-              icon: Icon(
-                CupertinoIcons.xmark_circle_fill,
-                color: colors.textSecondary.withValues(alpha: 0.7),
-              ),
-              onPressed: () async {
+            RitmoNeuButton(
+              padding: const EdgeInsets.all(8),
+              radius: 10,
+              onTap: () async {
                 final confirm = await _confirmExit();
                 if (confirm && mounted) {
                   Navigator.pop(context);
                 }
               },
-            ),
-            Text(
-              widget.isEditMode
-                  ? 'بازبینی راه‌اندازی چرخه بدن'
-                  : 'راه‌اندازی چرخه بدن',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
+              child: Icon(
+                CupertinoIcons.xmark,
+                size: 16,
+                color: colors.textSecondary,
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
+            const SizedBox(width: 8),
+            Expanded(
               child: Text(
-                'گام ${_toPersianDigits(_currentStep.toString())} از ۵',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor,
-                ),
+                widget.isEditMode
+                    ? 'بازبینی راه‌اندازی چرخه بدن'
+                    : 'راه‌اندازی چرخه بدن',
+                style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                textAlign: TextAlign.center,
               ),
+            ),
+            const SizedBox(width: 8),
+            RitmoCardBadge(
+              label: 'گام ${RitmoNumber.faInt(_currentStep)} از ۵',
+              color: primaryColor,
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         // Segmented Progress Bar
         Row(
           children: List.generate(5, (index) {
@@ -322,15 +281,14 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
             final isCurrent = stepNum == _currentStep;
 
             return Expanded(
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
                 height: 4,
-                margin: const EdgeInsets.symmetric(horizontal: 2),
+                margin: const EdgeInsets.symmetric(horizontal: 2.5),
                 decoration: BoxDecoration(
                   color: isCurrent || isCompleted
                       ? primaryColor
-                      : (isDark
-                            ? Colors.white.withValues(alpha: 0.15)
-                            : Colors.black.withValues(alpha: 0.1)),
+                      : colors.borderSubtle,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -398,9 +356,5 @@ class _CycleOnboardingShellState extends State<CycleOnboardingShell> {
       default:
         return Container();
     }
-  }
-
-  String _toPersianDigits(String input) {
-    return RitmoNumber.fa(input);
   }
 }

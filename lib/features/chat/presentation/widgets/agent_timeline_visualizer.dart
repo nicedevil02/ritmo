@@ -13,6 +13,11 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart';
 ///
 /// [RitmoOrbAbsorbLip] فقط [lipHeight] پیکسل جا می‌گیرد و حلقه را پایین‌تر
 /// از خودش دورِ کادرِ تایپ می‌کشد — پس هیچ هاله‌ای به متنِ چت نمی‌زند.
+///
+/// پیش‌فرض‌های لیپ از خودِ کادرِ شناورِ `ai_chat_screen.dart` گرفته شده‌اند:
+///   • `EdgeInsets.fromLTRB(16, 8, 16, ...)` → inset = 16 ، gap = 8
+///   • `BorderRadius.circular(28)`           → cornerRadius = 28
+///   • دکمهٔ ۴۰ + پدینگِ ۵+۵              → frameHeight = 50
 class AgentTimelineVisualizer extends StatelessWidget {
   const AgentTimelineVisualizer({
     super.key,
@@ -26,10 +31,10 @@ class AgentTimelineVisualizer extends StatelessWidget {
     this.dormantPresence = false,
     this.absorbIntoInput = true,
     this.lipHeight = 8.0,
-    this.lipGap = 6.0,
-    this.lipFrameHeight = 52.0,
-    this.lipInset = 10.0,
-    this.lipCornerRadius = 24.0,
+    this.lipGap = 8.0,
+    this.lipFrameHeight = 50.0,
+    this.lipInset = 16.0,
+    this.lipCornerRadius = 28.0,
     this.lipThickness = 1.7,
     this.lipBleed = 1.6,
   });
@@ -57,22 +62,22 @@ class AgentTimelineVisualizer extends StatelessWidget {
   /// ارتفاعِ لی‌اوتیِ نوار — عمداً خیلی کم.
   final double lipHeight;
 
-  /// فاصلهٔ نوار تا لبهٔ بالاییِ کادرِ تایپ.
+  /// فاصلهٔ نوار تا لبهٔ بالاییِ کادرِ تایپ — پدینگِ بالای کادرِ شناور (۸).
   final double lipGap;
 
-  /// ارتفاعِ خودِ کادرِ تایپ پیام.
+  /// ارتفاعِ خودِ کادرِ تایپ پیام در حالت تک‌خطی (۵۰).
   final double lipFrameHeight;
 
-  /// همان padding افقیِ کادرِ تایپ پیام.
+  /// همان padding افقیِ کادرِ تایپ پیام (۱۶).
   final double lipInset;
 
-  /// همان شعاع گوشهٔ کادرِ تایپ پیام.
+  /// همان شعاع گوشهٔ کادرِ تایپ پیام (۲۸).
   final double lipCornerRadius;
 
   /// ضخامتِ خطِ حلقه (پیکسل).
   final double lipThickness;
 
-  /// چقدر حلقه بیرون‌تر از لبهٔ کادر بنشیند تا کامل دیده شود.
+  /// چقدر حلقه بیرون‌تر از لبهٔ کادر بنشیند تا پشتِ کادر پنهان نشود.
   final double lipBleed;
 
   static RitmoOrbLife _lifeFor({
@@ -147,6 +152,9 @@ class AgentTimelineVisualizer extends StatelessWidget {
 }
 
 /// یک خط متنِ زیرِ تیله که آرام جایگزین می‌شود (بدون پرش لایه‌بندی).
+///
+/// توجه: پدینگِ پایینِ این متن (۱۰) بالای نوارِ جذب می‌نشیند، پس در
+/// فاصلهٔ نوار تا کادرِ تایپ (`lipGap`) دخالتی ندارد.
 class _StatusWhisper extends StatelessWidget {
   const _StatusWhisper({required this.text, required this.visible});
 

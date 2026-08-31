@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_orb_absorb.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_presence.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart';
 
@@ -9,6 +10,9 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart';
 /// مهم: این ویجت دیگر هرگز `SizedBox.shrink()` برنمی‌گرداند. خودِ
 /// [RitmoLivingOrb] مسئول جمع کردن فضای خودش است؛ وگرنه ویجت بلافاصله
 /// unmount می‌شود و انیمیشن خروج هیچ‌وقت پخش نمی‌شود (باگ قبلی).
+///
+/// زیرِ همه یک [RitmoOrbAbsorbLip] نشسته: همان جایی که تیله موقع رفتن
+/// به کادرِ تایپ می‌خورد و رنگ‌هایش دورِ کادر جذب می‌شوند.
 class AgentTimelineVisualizer extends StatelessWidget {
   const AgentTimelineVisualizer({
     super.key,
@@ -19,6 +23,11 @@ class AgentTimelineVisualizer extends StatelessWidget {
     this.isListening = false,
     this.orbSize = 54.0,
     this.showStatusText = true,
+    this.dormantPresence = false,
+    this.absorbIntoInput = true,
+    this.lipHeight = 18.0,
+    this.lipInset = 10.0,
+    this.lipCornerRadius = 24.0,
   });
 
   final List<AgentStep> steps;
@@ -34,13 +43,32 @@ class AgentTimelineVisualizer extends StatelessWidget {
   final double orbSize;
   final bool showStatusText;
 
+  /// false ← بعد از پایان پاسخ، تیله کاملاً در کادرِ تایپ جذب می‌شود.
+  /// true ← یک تیلهٔ کوچکِ خواب‌رفته سرجایش می‌ماند و فقط نفس می‌کشد.
+  final bool dormantPresence;
+
+  /// رنگ‌ها موقع رفتنِ تیله دورِ کادرِ تایپ بدوند و ته‌رنگِ نفس‌کشنده بماند.
+  final bool absorbIntoInput;
+
+  final double lipHeight;
+
+  /// همان padding افقیِ کادرِ تایپ پیام.
+  final double lipInset;
+
+  /// همان شعاع گوشهٔ کادرِ تایپ پیام.
+  final double lipCornerRadius;
+
   static RitmoOrbLife _lifeFor({
     required bool isWorking,
     required bool isListening,
+    required bool dormantPresence,
     required RitmoOrbMode mode,
   }) {
     if (isListening) return RitmoOrbLife.listening;
-    if (!isWorking) return RitmoOrbLife.hidden;
+    if (!isWorking) {
+      // پایانِ کار: یا کامل جذب می‌شود، یا خوابِ سبک می‌ماند.
+      return dormantPresence ? RitmoOrbLife.dormant : RitmoOrbLife.hidden;
+    }
 
     switch (mode) {
       case RitmoOrbMode.streaming:
@@ -64,11 +92,13 @@ class AgentTimelineVisualizer extends StatelessWidget {
           final RitmoOrbLife life = _lifeFor(
             isWorking: isWorking,
             isListening: isListening,
+            dormantPresence: dormantPresence,
             mode: mode,
           );
 
           final bool showText = showStatusText &&
               life != RitmoOrbLife.hidden &&
+              life != RitmoOrbLife.dormant &&
               life != RitmoOrbLife.celebrating;
 
           return Column(
@@ -78,8 +108,15 @@ class AgentTimelineVisualizer extends StatelessWidget {
                 life: life,
                 size: orbSize,
                 writingPulse: writingPulse,
+                absorbIntoInput: absorbIntoInput,
               ),
               _StatusWhisper(text: statusText, visible: showText),
+              if (absorbIntoInput)
+                RitmoOrbAbsorbLip(
+                  height: lipHeight,
+                  inset: lipInset,
+                  cornerRadius: lipCornerRadius,
+                ),
             ],
           );
         },

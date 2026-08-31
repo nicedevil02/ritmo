@@ -185,6 +185,9 @@ void ritmoPaintPlumes({
     final List<Color> ramp = pIdx == 0
         ? coralCyanRamp
         : (pIdx == 1 ? cyanVioletRamp : silkPeachRamp);
+    final List<double> rampStops = pIdx == 0
+        ? const <double>[0.0, 0.25, 0.50, 0.75, 1.0]
+        : const <double>[0.0, 0.33, 0.67, 1.0];
 
     // ۱. محاسبه مسیر اسکلت و لبه‌های روبان
     const int segments = 22;
@@ -233,6 +236,7 @@ void ritmoPaintPlumes({
           lft.first,
           tip,
           ramp.map((c) => c.withValues(alpha: (0.50 * front * gain).clamp(0.0, 0.85))).toList(),
+          rampStops,
         )
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(1.0, radius * 0.08)),
     );
@@ -246,6 +250,7 @@ void ritmoPaintPlumes({
           lft.first,
           tip,
           ramp.map((c) => c.withValues(alpha: ((0.82 + 0.15 * e) * front * gain).clamp(0.0, 0.98))).toList(),
+          rampStops,
         ),
     );
 
@@ -319,6 +324,7 @@ void ritmoPaintPlumes({
           lft.first,
           tip,
           ramp.map((c) => c.withValues(alpha: 0.35 * front * gain)).toList(),
+          rampStops,
         )
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(0.5, radius * 0.018)),
     );

@@ -11,8 +11,8 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart';
 /// [RitmoLivingOrb] مسئول جمع کردن فضای خودش است؛ وگرنه ویجت بلافاصله
 /// unmount می‌شود و انیمیشن خروج هیچ‌وقت پخش نمی‌شود (باگ قبلی).
 ///
-/// زیرِ همه یک [RitmoOrbAbsorbLip] نشسته: همان جایی که تیله موقع رفتن
-/// به کادرِ تایپ می‌خورد و رنگ‌هایش دورِ کادر جذب می‌شوند.
+/// [RitmoOrbAbsorbLip] فقط [lipHeight] پیکسل جا می‌گیرد و حلقه را پایین‌تر
+/// از خودش دورِ کادرِ تایپ می‌کشد — پس هیچ هاله‌ای به متنِ چت نمی‌زند.
 class AgentTimelineVisualizer extends StatelessWidget {
   const AgentTimelineVisualizer({
     super.key,
@@ -25,9 +25,13 @@ class AgentTimelineVisualizer extends StatelessWidget {
     this.showStatusText = true,
     this.dormantPresence = false,
     this.absorbIntoInput = true,
-    this.lipHeight = 18.0,
+    this.lipHeight = 8.0,
+    this.lipGap = 6.0,
+    this.lipFrameHeight = 52.0,
     this.lipInset = 10.0,
     this.lipCornerRadius = 24.0,
+    this.lipThickness = 1.7,
+    this.lipBleed = 1.6,
   });
 
   final List<AgentStep> steps;
@@ -47,16 +51,29 @@ class AgentTimelineVisualizer extends StatelessWidget {
   /// true ← یک تیلهٔ کوچکِ خواب‌رفته سرجایش می‌ماند و فقط نفس می‌کشد.
   final bool dormantPresence;
 
-  /// رنگ‌ها موقع رفتنِ تیله دورِ کادرِ تایپ بدوند و ته‌رنگِ نفس‌کشنده بماند.
+  /// رنگ‌ها موقع رفتنِ تیله دورِ کادرِ تایپ بدونند و حلقهٔ رنگین بماند.
   final bool absorbIntoInput;
 
+  /// ارتفاعِ لی‌اوتیِ نوار — عمداً خیلی کم.
   final double lipHeight;
+
+  /// فاصلهٔ نوار تا لبهٔ بالاییِ کادرِ تایپ.
+  final double lipGap;
+
+  /// ارتفاعِ خودِ کادرِ تایپ پیام.
+  final double lipFrameHeight;
 
   /// همان padding افقیِ کادرِ تایپ پیام.
   final double lipInset;
 
   /// همان شعاع گوشهٔ کادرِ تایپ پیام.
   final double lipCornerRadius;
+
+  /// ضخامتِ خطِ حلقه (پیکسل).
+  final double lipThickness;
+
+  /// چقدر حلقه بیرون‌تر از لبهٔ کادر بنشیند تا کامل دیده شود.
+  final double lipBleed;
 
   static RitmoOrbLife _lifeFor({
     required bool isWorking,
@@ -114,8 +131,12 @@ class AgentTimelineVisualizer extends StatelessWidget {
               if (absorbIntoInput)
                 RitmoOrbAbsorbLip(
                   height: lipHeight,
+                  gap: lipGap,
+                  frameHeight: lipFrameHeight,
                   inset: lipInset,
                   cornerRadius: lipCornerRadius,
+                  thickness: lipThickness,
+                  bleed: lipBleed,
                 ),
             ],
           );

@@ -1,13 +1,22 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:persian_datetime_picker/persian_datetime_picker.dart';
+import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
+import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
+import 'package:ritmo/features/health/models/health_models.dart';
+import 'package:ritmo/features/health/presentation/widgets/doctor_visit_form_sheet.dart';
 import 'package:ritmo/features/health/presentation/widgets/doctor_visit_summary_sheet.dart';
-import 'package:ritmo/features/health/presentation/widgets/doctor_visits_section.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
-
-import 'package:ritmo/features/health/presentation/pages/doctor_visit_form_page.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class VisitsPage extends StatefulWidget {
   const VisitsPage({super.key});
@@ -17,7 +26,267 @@ class VisitsPage extends StatefulWidget {
 }
 
 class _VisitsPageState extends State<VisitsPage> {
-  final GlobalKey<DoctorVisitsSectionState> _sectionKey = GlobalKey<DoctorVisitsSectionState>();
+  int _activeTabIndex = 0;
+  List<DoctorVisit> _upcomingVisits = [];
+  List<DoctorVisit> _pastVisits = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  String _toPersianDigits(String input) {
+    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    var result = input;
+    for (var i = 0; i < english.length; i++) {
+      result = result.replaceAll(english[i], persian[i]);
+    }
+    return result;
+  }
+
+  String _formatJalaliDateTime(int epochMs) {
+    final dt = DateTime.fromMillisecondsSinceEpoch(epochMs);
+    final j = Jalali.fromDateTime(dt);
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return _toPersianDigits('${j.year}/${j.month}/${j.day} ساعت $hour:$minute');
+  }
+
+  Future<void> _loadData() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final results = await db.query('doctor_visits', orderBy: 'visitDateTime ASC');
+
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final upcoming = <DoctorVisit>[];
+      final past = <DoctorVisit>[];
+
+      for (final map in results) {
+        final visit = DoctorVisit.fromMap(map);
+        if (visit.visitDateTime > nowMs && visit.status == 'UPCOMING') {
+          upcoming.add(visit);
+        } else {
+          past.add(visit);
+        }
+      }
+
+      past.sort((a, b) => b.visitDateTime.compareTo(a.visitDateTime));
+
+      if (mounted) {
+        setState(() {
+          _upcomingVisits = upcoming;
+          _pastVisits = past;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading doctor visits: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveVisit(DoctorVisit visit) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      await db.insert(
+        'doctor_visits',
+        visit.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      final alarmId = 'visit_${visit.id}';
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+      if (visit.status == 'UPCOMING') {
+        final reminderTime = visit.visitDateTime - (visit.reminderBefore * 60 * 1000);
+        if (reminderTime > nowMs) {
+          await db.insert(
+            'pending_reminders',
+            {
+              'id': alarmId,
+              'routineId': null,
+              'scheduleId': null,
+              'originalTime': reminderTime,
+              'scheduledTime': reminderTime,
+              'state': 'unknown',
+              'deferCount': 0,
+              'createdAt': nowMs,
+              'updatedAt': nowMs,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+          await NotificationGateway.schedule(
+            NotificationRequest(
+              id: alarmId,
+              channel: NotificationChannelId.critical,
+              scheduledAt: DateTime.fromMillisecondsSinceEpoch(reminderTime),
+              title: 'نوبت پزشک: ${visit.doctorName}',
+              privacy: NotificationPrivacy.redacted,
+              redactedTitle: 'ریتمو: یادآوری نوبت پزشک',
+              sourceSystem: 'health',
+              entityId: visit.id,
+            ),
+          );
+          await SnapshotSyncService.syncAll();
+        } else {
+          await NotificationGateway.cancel(alarmId);
+          await db.delete('pending_reminders', where: 'id = ?', whereArgs: [alarmId]);
+        }
+      } else {
+        await NotificationGateway.cancel(alarmId);
+        await db.delete('pending_reminders', where: 'id = ?', whereArgs: [alarmId]);
+      }
+
+      await _loadData();
+    } catch (e) {
+      debugPrint('Error saving visit: $e');
+    }
+  }
+
+  Future<void> _deleteVisit(String id) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      await db.delete('doctor_visits', where: 'id = ?', whereArgs: [id]);
+      await NotificationGateway.cancel('visit_$id');
+      await db.delete('pending_reminders', where: 'id = ?', whereArgs: ['visit_$id']);
+      await SnapshotSyncService.syncAll();
+      await _loadData();
+    } catch (e) {
+      debugPrint('Error deleting visit: $e');
+    }
+  }
+
+  Future<void> _updateVisitStatus(DoctorVisit visit, String newStatus) async {
+    final updated = DoctorVisit(
+      id: visit.id,
+      doctorName: visit.doctorName,
+      specialty: visit.specialty,
+      clinicName: visit.clinicName,
+      clinicAddress: visit.clinicAddress,
+      clinicPhone: visit.clinicPhone,
+      visitDateTime: visit.visitDateTime,
+      visitType: visit.visitType,
+      status: newStatus,
+      reason: visit.reason,
+      doctorNotes: visit.doctorNotes,
+      userNotes: visit.userNotes,
+      followUpDate: visit.followUpDate,
+      reminderBefore: visit.reminderBefore,
+      attachmentPath: visit.attachmentPath,
+      createdAt: visit.createdAt,
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    await _saveVisit(updated);
+  }
+
+  Future<void> _callPhone(String? phone) async {
+    if (phone == null || phone.trim().isEmpty) return;
+    final cleanPhone = phone.replaceAll(RegExp(r'\s+'), '');
+    final uri = Uri.parse('tel:$cleanPhone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('امکان برقراری تماس با شماره $phone وجود ندارد.'),
+            backgroundColor: context.colors.medicalRed,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _openMap(String? address) async {
+    if (address == null || address.trim().isEmpty) return;
+    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('امکان باز کردن نقشه وجود ندارد.')),
+        );
+      }
+    }
+  }
+
+  void _showAttachmentViewer(String path) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.file(
+                  File(path),
+                  cacheWidth: 1080,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    padding: const EdgeInsets.all(32),
+                    color: context.colors.card,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.error_outline, color: context.colors.medicalRed, size: 48),
+                        const SizedBox(height: 16),
+                        Text(
+                          'خطا در بارگذاری تصویر نسخه',
+                          style: TextStyle(color: context.colors.textPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: FloatingActionButton.small(
+                onPressed: () => Navigator.pop(context),
+                backgroundColor: Colors.black.withValues(alpha: 0.5),
+                foregroundColor: Colors.white,
+                child: const Icon(Icons.close),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openAddEditPage({DoctorVisit? visit}) async {
+    final res = await DoctorVisitFormSheet.show(
+      context,
+      visit: visit,
+      onSave: (saved) async {
+        await _saveVisit(saved);
+      },
+    );
+    if (res == true && mounted) {
+      await _loadData();
+    }
+  }
 
   void _openDoctorVisitSummarySheet() {
     showModalBottomSheet(
@@ -31,22 +300,28 @@ class _VisitsPageState extends State<VisitsPage> {
     );
   }
 
-  void _openAddVisitPage() {
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (_) => DoctorVisitFormPage(
-          onSave: (visit) {
-            _sectionKey.currentState?.saveVisit(visit);
-          },
-        ),
-      ),
+  Future<void> _confirmDelete(String id) async {
+    final l10n = AppLocalizations.of(context)!;
+    final res = await RitmoGlassDialog.show(
+      context,
+      title: l10n.doctorVisitsDelete,
+      content: l10n.doctorVisitsDeleteConfirm,
+      confirmLabel: l10n.doctorVisitsConfirm,
+      cancelLabel: l10n.doctorVisitsCancel,
+      isDestructive: true,
+      icon: CupertinoIcons.trash_fill,
     );
+    if (res == true) {
+      await _deleteVisit(id);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
+
+    final currentVisits = _activeTabIndex == 0 ? _upcomingVisits : _pastVisits;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -79,29 +354,351 @@ class _VisitsPageState extends State<VisitsPage> {
             ),
           ],
         ),
-        body: DoctorVisitsSection(key: _sectionKey),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: RitmoNeuButton(
-              onTap: _openAddVisitPage,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(CupertinoIcons.add_circled_solid, color: colors.primary, size: 19),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.doctorVisitsAddTitle,
-                    style: TextStyle(
-                      color: colors.primary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                    ),
+        body: Column(
+          children: [
+            // ۱. نوار تب‌های شیشه‌ای تفکیک نوبت‌ها
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: RitmoGlassSegmentedControl<int>(
+                selectedIndex: _activeTabIndex,
+                accentColor: colors.primary,
+                onTabChanged: (index) {
+                  setState(() {
+                    _activeTabIndex = index;
+                  });
+                },
+                items: [
+                  RitmoTabItem<int>(
+                    title: l10n.doctorVisitsTabUpcoming,
+                    icon: CupertinoIcons.calendar_today,
+                    value: 0,
+                  ),
+                  RitmoTabItem<int>(
+                    title: l10n.doctorVisitsTabPast,
+                    icon: CupertinoIcons.clock_fill,
+                    value: 1,
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 6),
+
+            // ۲. لیست نوبت‌ها یا وضعیت خالی شکیل
+            Expanded(
+              child: _isLoading
+                  ? Center(child: CircularProgressIndicator(color: colors.primary))
+                  : currentVisits.isEmpty
+                      ? _buildEmptyState(_activeTabIndex == 1)
+                      : _buildVisitsList(currentVisits, isPast: _activeTabIndex == 1),
+            ),
+          ],
+        ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: SizedBox(
+              height: 50,
+              child: RitmoNeuButton(
+                onTap: () => _openAddEditPage(),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.add_circled_solid, color: colors.primary, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.doctorVisitsAddTitle,
+                      style: TextStyle(
+                        color: colors.primary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(bool isPast) {
+    final colors = context.colors;
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: RitmoCard.neumorphic(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: 0.25),
+                  width: 1.5,
+                ),
+              ),
+              child: Icon(
+                isPast ? CupertinoIcons.clock_fill : CupertinoIcons.calendar_badge_plus,
+                size: 34,
+                color: colors.primary,
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              isPast ? 'سابقه‌ای از نوبت‌های گذشته ثبت نشده است' : 'نوبت پزشکی پیش‌رویی ندارید',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15.5,
+                fontWeight: FontWeight.w900,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isPast
+                  ? 'سوابق نوبت‌های گذشته و توصیه‌های پزشک پس از اتمام زمان نوبت در این بخش آرشیو می‌شوند.'
+                  : 'با ثبت نوبت‌های ویزیت، مشاوره یا آزمایش‌های پزشکی، ریتمو زمان مراجعه، مکان و نکات لازم را به شما یادآوری می‌کند.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: colors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            if (!isPast) ...[
+              const SizedBox(height: 24),
+              RitmoNeuButton(
+                onTap: () => _openAddEditPage(),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(CupertinoIcons.plus_circle_fill, color: colors.primary, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      'ثبت اولین نوبت پزشک',
+                      style: TextStyle(
+                        color: colors.primary,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVisitsList(List<DoctorVisit> visits, {required bool isPast}) {
+    final colors = context.colors;
+
+    return ListView.builder(
+      itemCount: visits.length,
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemBuilder: (context, index) {
+        final visit = visits[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: RitmoCard.neumorphic(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RitmoCardHeader(
+                  title: visit.doctorName,
+                  subtitle: (visit.specialty != null && visit.specialty!.isNotEmpty) ? visit.specialty! : null,
+                  icon: CupertinoIcons.person_crop_circle_badge_checkmark,
+                  iconColor: colors.primary,
+                  trailing: _buildVisitTypeBadge(visit.visitType),
+                ),
+                const RitmoCardDivider(),
+                Row(
+                  children: [
+                    Icon(CupertinoIcons.calendar, size: 15, color: colors.primary),
+                    const SizedBox(width: 6),
+                    Text(
+                      _formatJalaliDateTime(visit.visitDateTime),
+                      style: TextStyle(fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+                if (visit.clinicName != null && visit.clinicName!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(CupertinoIcons.building_2_fill, size: 15, color: colors.textSecondary),
+                      const SizedBox(width: 6),
+                      Text(
+                        visit.clinicName!,
+                        style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ],
+                if (visit.clinicAddress != null && visit.clinicAddress!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () => _openMap(visit.clinicAddress),
+                    child: Row(
+                      children: [
+                        Icon(CupertinoIcons.location_solid, size: 15, color: colors.primary),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            visit.clinicAddress!,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: colors.primary,
+                              decoration: TextDecoration.underline,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (visit.clinicPhone != null && visit.clinicPhone!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () => _callPhone(visit.clinicPhone),
+                    child: Row(
+                      children: [
+                        Icon(CupertinoIcons.phone_fill, size: 15, color: colors.success),
+                        const SizedBox(width: 6),
+                        Text(
+                          _toPersianDigits(visit.clinicPhone!),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: colors.success,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (visit.reason != null && visit.reason!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'علت مراجعه: ${visit.reason}',
+                    style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
+                  ),
+                ],
+                if (visit.doctorNotes != null && visit.doctorNotes!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'توصیه پزشک: ${visit.doctorNotes}',
+                    style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
+                  ),
+                ],
+                if (visit.attachmentPath != null && visit.attachmentPath!.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  InkWell(
+                    onTap: () => _showAttachmentViewer(visit.attachmentPath!),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(CupertinoIcons.photo_fill, size: 16, color: colors.primary),
+                          const SizedBox(width: 6),
+                          Text(
+                            'مشاهده نسخه / مدرک ثبت شده',
+                            style: TextStyle(fontSize: 12, color: colors.primary, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: Icon(CupertinoIcons.pencil, size: 18, color: colors.primary),
+                      tooltip: 'ویرایش نوبت',
+                      onPressed: () => _openAddEditPage(visit: visit),
+                    ),
+                    IconButton(
+                      icon: Icon(CupertinoIcons.trash, size: 18, color: colors.medicalRed),
+                      tooltip: 'حذف نوبت',
+                      onPressed: () => _confirmDelete(visit.id),
+                    ),
+                    if (!isPast) ...[
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        onPressed: () => _updateVisitStatus(visit, 'COMPLETED'),
+                        icon: const Icon(CupertinoIcons.checkmark, size: 14),
+                        label: const Text('انجام شد', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colors.success,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildVisitTypeBadge(String type) {
+    final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
+    var label = '';
+    var color = colors.primary;
+
+    switch (type) {
+      case 'ONLINE':
+        label = l10n.doctorVisitsTypeOnline;
+        color = colors.warning;
+      case 'TELEPHONE':
+        label = l10n.doctorVisitsTypeTelephone;
+        color = colors.success;
+      case 'IN_PERSON':
+      default:
+        label = l10n.doctorVisitsTypeInPerson;
+        color = colors.primary;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );

@@ -10,7 +10,7 @@ import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
-import 'package:ritmo/features/health/presentation/pages/doctor_visit_form_page.dart';
+import 'package:ritmo/features/health/presentation/widgets/doctor_visit_form_sheet.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -297,15 +297,17 @@ class DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTic
     );
   }
 
-  void _openAddEditPage({DoctorVisit? visit}) {
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (_) => DoctorVisitFormPage(
-          visit: visit,
-          onSave: _saveVisit,
-        ),
-      ),
+  void _openAddEditPage({DoctorVisit? visit}) async {
+    final res = await DoctorVisitFormSheet.show(
+      context,
+      visit: visit,
+      onSave: (saved) async {
+        await _saveVisit(saved);
+      },
     );
+    if (res == true && mounted) {
+      await _loadData();
+    }
   }
 
   @override
@@ -313,12 +315,12 @@ class DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTic
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: AnimatedBuilder(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AnimatedBuilder(
             animation: _tabController,
             builder: (context, _) {
               return RitmoGlassSegmentedControl<int>(
@@ -344,20 +346,21 @@ class DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTic
               );
             },
           ),
-        ),
-        Expanded(
-          child: _isLoading
-              ? Center(child: CircularProgressIndicator(color: colors.primary))
-              : TabBarView(
-                  controller: _tabController,
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    _buildVisitsList(_upcomingVisits, isPast: false),
-                    _buildVisitsList(_pastVisits, isPast: true),
-                  ],
-                ),
-        ),
-      ],
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 480,
+            child: _isLoading
+                ? Center(child: CircularProgressIndicator(color: colors.primary))
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildVisitsList(_upcomingVisits, isPast: false),
+                      _buildVisitsList(_pastVisits, isPast: true),
+                    ],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -367,28 +370,9 @@ class DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTic
 
     if (visits.isEmpty) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                isPast ? CupertinoIcons.clock : CupertinoIcons.calendar_badge_plus,
-                size: 48,
-                color: colors.textSecondary.withValues(alpha: 0.35),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                isPast ? l10n.doctorVisitsNoPast : l10n.doctorVisitsNoUpcoming,
-                style: TextStyle(
-                  color: colors.textSecondary,
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+        child: Text(
+          isPast ? l10n.doctorVisitsNoPast : l10n.doctorVisitsNoUpcoming,
+          style: TextStyle(color: colors.textSecondary),
         ),
       );
     }

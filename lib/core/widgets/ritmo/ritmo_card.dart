@@ -835,7 +835,6 @@ class _RitmoNeuButtonState extends State<RitmoNeuButton> {
         curve: Curves.easeOut,
         height: widget.height,
         padding: widget.padding,
-        alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(widget.radius),
           gradient: _pressed
@@ -851,9 +850,7 @@ class _RitmoNeuButtonState extends State<RitmoNeuButton> {
               ? RitmoNeu.sunkenShadows(isDark, blur: 6, distance: 2.0)
               : RitmoNeu.raisedShadows(isDark, blur: 10, distance: 3.5),
         ),
-        child: Center(
-          child: widget.child,
-        ),
+        child: widget.child,
       ),
     );
   }

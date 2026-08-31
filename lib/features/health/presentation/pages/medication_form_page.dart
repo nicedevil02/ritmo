@@ -706,22 +706,25 @@ class _MedicationFormPageState extends State<MedicationFormPage> {
         bottomNavigationBar: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: RitmoNeuButton(
-              onTap: _onSave,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(CupertinoIcons.checkmark_seal_fill, color: colors.primary, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isEdit ? 'ذخیره تغییرات دارو' : 'ثبت داروی جدید',
-                    style: TextStyle(
-                      color: colors.primary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w900,
+            child: SizedBox(
+              height: 50,
+              child: RitmoNeuButton(
+                onTap: _onSave,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.checkmark_seal_fill, color: colors.primary, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      _isEdit ? 'ذخیره تغییرات دارو' : 'ثبت داروی جدید',
+                      style: TextStyle(
+                        color: colors.primary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

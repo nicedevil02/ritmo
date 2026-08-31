@@ -1,5 +1,6 @@
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/utils/persian_text.dart';
 import 'package:ritmo/features/notes/data/notes_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/logic/note_text_normalizer.dart';
@@ -17,16 +18,11 @@ class NoteFtsEngine {
     if (_cachedFtsAvailable != null) return _cachedFtsAvailable!;
     try {
       final db = await _db;
-      final rows = await db.query(
-        'app_settings',
-        where: 'key = ?',
-        whereArgs: ['notes_fts_available'],
-        limit: 1,
+      final rows = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'notes_fts'",
       );
-      if (rows.isNotEmpty) {
-        _cachedFtsAvailable = rows.first['value'] == 'true';
-        return _cachedFtsAvailable!;
-      }
+      _cachedFtsAvailable = rows.isNotEmpty;
+      return _cachedFtsAvailable!;
     } catch (e, st) {
       RitmoLog.warning('NoteFtsEngine', 'Failed to check FTS availability', e, st);
     }
@@ -114,7 +110,8 @@ class NoteFtsEngine {
     }
 
     final queryN = NoteTextNormalizer.forQuery(trimmed);
-    if (queryN.isEmpty) {
+    final normFaQuery = normalizeFa(trimmed);
+    if (queryN.isEmpty && normFaQuery.isEmpty) {
       return NotesRepository.instance.listRecent(limit: limit, offset: offset);
     }
 
@@ -123,7 +120,12 @@ class NoteFtsEngine {
 
     if (available) {
       try {
-        final ftsQuery = '$queryN*';
+        final ftsTokens = queryN
+            .split(' ')
+            .where((t) => t.isNotEmpty)
+            .map((t) => '$t*')
+            .join(' ');
+        final ftsQuery = ftsTokens.isNotEmpty ? ftsTokens : '$queryN*';
         String sql = '''
           SELECT n.* FROM notes n
           INNER JOIN notes_fts f ON n.id = f.noteId
@@ -151,28 +153,45 @@ class NoteFtsEngine {
           return rows.map((r) => Note.fromMap(r)).toList();
         }
       } catch (e, st) {
-        // Fallback to LIKE query if FTS expression fails
         RitmoLog.warning('NoteFtsEngine', 'FTS search query failed for "$queryN", falling back to LIKE', e, st);
       }
     }
 
-    // Fallback LIKE search
-    final likePattern = '%$queryN%';
+    // Fallback LIKE search with both stemmed and normalized variations
+    final likePatternN = '%$queryN%';
+    final likePatternFa = '%$normFaQuery%';
+    final likePatternRaw = '%$trimmed%';
+
     String sql = '''
       SELECT DISTINCT n.* FROM notes n
       LEFT JOIN note_tags t ON n.id = t.noteId
       WHERE n.status = 'ACTIVE'
-        AND (n.titleNormalized LIKE ? OR n.bodyNormalized LIKE ? OR t.tagNormalized LIKE ?)
+        AND (
+          n.titleNormalized LIKE ? OR n.bodyNormalized LIKE ?
+          OR n.titleNormalized LIKE ? OR n.bodyNormalized LIKE ?
+          OR n.title LIKE ? OR n.body LIKE ?
+          OR t.tagNormalized LIKE ? OR t.tag LIKE ?
+        )
     ''';
-    final params = <dynamic>[likePattern, likePattern, likePattern];
+    final params = <dynamic>[
+      likePatternN,
+      likePatternN,
+      likePatternFa,
+      likePatternFa,
+      likePatternRaw,
+      likePatternRaw,
+      likePatternFa,
+      likePatternRaw,
+    ];
 
     if (kind != null) {
       sql += ' AND n.kind = ?';
       params.add(kind.value);
     }
     if (tag != null && tag.isNotEmpty) {
-      sql += ' AND t.tagNormalized = ?';
+      sql += ' AND (t.tagNormalized = ? OR t.tag = ?)';
       params.add(tag.toLowerCase());
+      params.add(tag);
     }
 
     sql += ' ORDER BY n.isPinned DESC, n.updatedAt DESC LIMIT ? OFFSET ?';
@@ -183,3 +202,4 @@ class NoteFtsEngine {
     return rows.map((r) => Note.fromMap(r)).toList();
   }
 }
+

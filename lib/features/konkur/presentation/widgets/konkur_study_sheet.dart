@@ -95,9 +95,13 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
   @override
   void dispose() {
     _timer?.cancel();
+    _correctController.removeListener(_calculateLivePercent);
+    _wrongController.removeListener(_calculateLivePercent);
+    _blankController.removeListener(_calculateLivePercent);
     _correctController.dispose();
     _wrongController.dispose();
     _blankController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 

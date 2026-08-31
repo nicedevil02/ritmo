@@ -98,49 +98,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
   }
 
   Future<void> _quickComplete(KonkurPlanItem item) async {
-    final minutesController = TextEditingController(text: '0');
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) {
-        final colors = ctx.colors;
-        return AlertDialog(
-          title: const Text('ثبت سریع', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('چند دقیقه واقعاً مطالعه کردی؟', style: TextStyle()),
-              const SizedBox(height: 12),
-              TextField(
-                controller: minutesController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'زمان واقعی مطالعه (دقیقه)',
-                  hintText: '0',
-                  border: OutlineInputBorder(),
-                ),
-                style: const TextStyle(),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, 'JUST_CHECK'),
-              child: const Text('فقط تیک بزن (بدون ثبت زمان)', style: TextStyle()),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: colors.onPrimary,
-              ),
-              onPressed: () => Navigator.pop(ctx, minutesController.text.trim()),
-              child: const Text('ثبت زمان و تیک', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
-        );
-      },
-    );
-
+    final result = await _QuickCompleteDialog.show(context);
     if (result == null) return;
 
     try {
@@ -569,11 +527,15 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        subject.name,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.textSecondary,
+                      Flexible(
+                        child: Text(
+                          subject.name,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -613,6 +575,8 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                       fontWeight: FontWeight.bold,
                       color: colors.textPrimary,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -681,6 +645,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
+                backgroundColor: Colors.transparent,
                 shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
                 builder: (ctx) => KonkurStudySheet(
                   subjects: widget.subjects,
@@ -708,6 +673,7 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
+                backgroundColor: Colors.transparent,
                 shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
                 builder: (ctx) => KonkurStudySheet(
                   subjects: widget.subjects,
@@ -739,3 +705,76 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
     );
   }
 }
+
+class _QuickCompleteDialog extends StatefulWidget {
+  const _QuickCompleteDialog();
+
+  static Future<String?> show(BuildContext context) {
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => const _QuickCompleteDialog(),
+    );
+  }
+
+  @override
+  State<_QuickCompleteDialog> createState() => _QuickCompleteDialogState();
+}
+
+class _QuickCompleteDialogState extends State<_QuickCompleteDialog> {
+  late final TextEditingController _minutesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _minutesController = TextEditingController(text: '0');
+  }
+
+  @override
+  void dispose() {
+    _minutesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return AlertDialog(
+      title: const Text('ثبت سریع', style: TextStyle(fontWeight: FontWeight.bold)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('چند دقیقه واقعاً مطالعه کردی؟', style: TextStyle()),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _minutesController,
+            keyboardType: TextInputType.number,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'زمان واقعی مطالعه (دقیقه)',
+              hintText: '0',
+              border: OutlineInputBorder(),
+            ),
+            style: const TextStyle(),
+            onSubmitted: (val) => Navigator.pop(context, val.trim()),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, 'JUST_CHECK'),
+          child: const Text('فقط تیک بزن (بدون ثبت زمان)', style: TextStyle()),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: colors.primary,
+            foregroundColor: colors.onPrimary,
+          ),
+          onPressed: () => Navigator.pop(context, _minutesController.text.trim()),
+          child: const Text('ثبت زمان و تیک', style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+      ],
+    );
+  }
+}
+

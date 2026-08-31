@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:ritmo/core/timer/ritmo_timer_hub.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
+import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/features/study/data/study_active_session_dao.dart';
 import 'package:ritmo/features/study/data/study_repository.dart';
 import 'package:ritmo/features/study/domain/study_models.dart';
@@ -32,7 +34,7 @@ class StudyTimerService {
     if (_currentSession != null && !_currentSession!.isPaused) {
       _startTicker();
     }
-    _controller.add(_currentSession);
+    _broadcast(_currentSession);
   }
 
   Future<void> startSession({
@@ -65,7 +67,7 @@ class StudyTimerService {
     await _dao.saveActiveSession(state);
     _currentSession = state;
     _startTicker();
-    _controller.add(_currentSession);
+    _broadcast(_currentSession);
   }
 
   Future<void> switchPomodoroPhase({
@@ -90,7 +92,7 @@ class StudyTimerService {
     await _dao.saveActiveSession(updated);
     _currentSession = updated;
     _startTicker();
-    _controller.add(_currentSession);
+    _broadcast(_currentSession);
   }
 
   Future<void> pauseSession() async {
@@ -110,7 +112,7 @@ class StudyTimerService {
     await _dao.saveActiveSession(updated);
     _currentSession = updated;
     _ticker?.cancel();
-    _controller.add(_currentSession);
+    _broadcast(_currentSession);
   }
 
   Future<void> resumeSession() async {
@@ -125,7 +127,7 @@ class StudyTimerService {
     await _dao.saveActiveSession(updated);
     _currentSession = updated;
     _startTicker();
-    _controller.add(_currentSession);
+    _broadcast(_currentSession);
   }
 
   Future<void> stopAndSaveSession({
@@ -192,7 +194,53 @@ class StudyTimerService {
     await _dao.clearActiveSession();
     _currentSession = null;
     _ticker?.cancel();
-    _controller.add(null);
+    _broadcast(null);
+  }
+
+  void _broadcast(ActiveStudySessionState? session) {
+    _controller.add(session);
+    if (session == null) {
+      RitmoTimerHub.instance.stopActiveSession();
+      return;
+    }
+
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final elapsedSec = session.phaseElapsedSeconds(nowMs);
+    final isPomodoro = session.isPomodoro;
+    final isBreak = session.isBreak;
+
+    final hubSession = ActiveLiveTimerSession(
+      id: 'study_${session.subjectId}',
+      domain: RitmoTimerDomain.study,
+      title: 'مطالعه و یادگیری',
+      subtitle: isPomodoro
+          ? (isBreak
+              ? '☕ استراحت (دور ${RitmoNumber.faInt(session.pomodoroCycle)} از ۴)'
+              : '🎯 تمرکز (دور ${RitmoNumber.faInt(session.pomodoroCycle)} از ۴)')
+          : 'کرونومتر زمان مطالعه',
+      mode: isPomodoro
+          ? (isBreak ? RitmoTimerMode.pomodoroBreak : RitmoTimerMode.pomodoroFocus)
+          : RitmoTimerMode.stopwatch,
+      isRunning: !session.isPaused,
+      elapsedSeconds: elapsedSec,
+      targetSeconds: session.targetSeconds,
+      pomodoroCycle: session.pomodoroCycle,
+      onPause: pauseSession,
+      onResume: resumeSession,
+      onStop: cancelSession,
+      onSkipPhase: () {
+        if (isPomodoro) {
+          switchPomodoroPhase(
+            phase: isBreak ? 'FOCUS' : 'BREAK',
+            nextCycle: isBreak
+                ? (session.pomodoroCycle < 4 ? session.pomodoroCycle + 1 : 1)
+                : session.pomodoroCycle,
+          );
+        }
+      },
+    );
+
+    RitmoTimerHub.instance.registerOrUpdateSession(hubSession);
   }
 
   void _startTicker() {
@@ -208,7 +256,7 @@ class StudyTimerService {
   void reset() {
     _ticker?.cancel();
     _currentSession = null;
-    _controller.add(null);
+    _broadcast(null);
   }
 
   void dispose() {

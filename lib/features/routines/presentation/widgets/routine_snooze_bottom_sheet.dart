@@ -112,209 +112,199 @@ class _RoutineSnoozeBottomSheetState extends State<RoutineSnoozeBottomSheet> {
       );
     }
 
-    return Container(
-      margin: const EdgeInsets.all(16),
-      child: SingleChildScrollView(
-        child: RitmoTheme.glassCardLight(
-          blurSigma: 20,
-          color: colors.card.withValues(alpha: isDarkMode ? 0.85 : 0.9),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    height: 5,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      color: colors.textPrimary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: RitmoGlassSheet(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        padding: EdgeInsets.only(
+          left: 18,
+          right: 18,
+          top: 12,
+          bottom: MediaQuery.of(context).padding.bottom + 16,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4.5,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: colors.textSecondary.withValues(alpha: isDarkMode ? 0.30 : 0.22),
+                    borderRadius: BorderRadius.circular(3),
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  '⏳ تعویق روتین: ${widget.routine.title}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                    ),
+              ),
+              Text(
+                '⏳ تعویق روتین: ${widget.routine.title}',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'زمان یادآوری مجدد این روتین را مشخص کنید:',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: colors.textSecondary,
-                    ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'زمان یادآوری مجدد این روتین را مشخص کنید:',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: colors.textSecondary,
                 ),
-                const SizedBox(height: 16),
+              ),
+              const SizedBox(height: 16),
 
-                // Presets Adaptive Grid Layout (2 columns)
-                RitmoAdaptiveGrid(
-                  minTileWidth: RitmoBreakpoints.tileMinWidthRegular,
-                  spacing: 8,
-                  maxColumns: 2,
+              // Presets Adaptive Grid Layout (2 columns)
+              RitmoAdaptiveGrid(
+                minTileWidth: RitmoBreakpoints.tileMinWidthRegular,
+                spacing: 8,
+                maxColumns: 2,
+                children: [
+                  buildOptionCard(
+                    label: '۵ دقیقه دیگر',
+                    subtitle: 'زمان کوتاه و فوری',
+                    icon: CupertinoIcons.timer,
+                    color: colors.success,
+                    minutes: 5,
+                  ),
+                  buildOptionCard(
+                    label: '۱۵ دقیقه دیگر',
+                    subtitle: 'تغییر وضعیت سریع',
+                    icon: CupertinoIcons.clock,
+                    color: colors.primary,
+                    minutes: 15,
+                  ),
+                  buildOptionCard(
+                    label: '۳۰ دقیقه دیگر',
+                    subtitle: 'تعویق نیم ساعته',
+                    icon: CupertinoIcons.hourglass,
+                    color: colors.warning,
+                    minutes: 30,
+                  ),
+                  buildOptionCard(
+                    label: '۱ ساعت دیگر',
+                    subtitle: 'تعویق طولانی',
+                    icon: CupertinoIcons.sun_max,
+                    color: colors.primary,
+                    minutes: 60,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Custom Slider Picker
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: colors.card.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: colors.border.withValues(alpha: 0.25)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    buildOptionCard(
-                      label: '۵ دقیقه دیگر',
-                      subtitle: 'زمان کوتاه و فوری',
-                      icon: CupertinoIcons.timer,
-                      color: colors.success,
-                      minutes: 5,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'زمان دلخواه:',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
+                          ),
+                          child: Text(
+                            _toPersianDigits('$_customMinutes دقیقه'),
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                              color: colors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    buildOptionCard(
-                      label: '۱۵ دقیقه دیگر',
-                      subtitle: 'تغییر وضعیت سریع',
-                      icon: CupertinoIcons.clock,
-                      color: colors.primary,
-                      minutes: 15,
-                    ),
-                    buildOptionCard(
-                      label: '۳۰ دقیقه دیگر',
-                      subtitle: 'تعویق نیم ساعته',
-                      icon: CupertinoIcons.alarm,
-                      color: colors.warning,
-                      minutes: 30,
-                    ),
-                    buildOptionCard(
-                      label: '۱ ساعت دیگر',
-                      subtitle: 'فاصله یک ساعته',
-                      icon: CupertinoIcons.hourglass,
-                      color: const Color(0xff8B5CF6),
-                      minutes: 60,
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(CupertinoIcons.minus, color: colors.textSecondary, size: 14),
+                        Expanded(
+                          child: SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              activeTrackColor: colors.primary,
+                              inactiveTrackColor: colors.border.withValues(alpha: 0.3),
+                              thumbColor: colors.primary,
+                              overlayColor: colors.primary.withValues(alpha: 0.12),
+                              trackHeight: 4,
+                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                            ),
+                            child: Slider(
+                              value: _customMinutes.toDouble(),
+                              min: 5,
+                              max: 120,
+                              divisions: 23, // 5 min increments from 5 to 120
+                              label: _toPersianDigits('$_customMinutes دقیقه'),
+                              onChanged: (val) {
+                                final intVal = val.toInt();
+                                if (intVal != _customMinutes) {
+                                  HapticFeedback.selectionClick();
+                                  setState(() {
+                                    _customMinutes = intVal;
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                        Icon(CupertinoIcons.plus, color: colors.textSecondary, size: 14),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                buildOptionCard(
-                  label: 'فردا (۲۴ ساعت دیگر)',
-                  subtitle: 'انتقال یادآوری به روز بعد',
-                  icon: CupertinoIcons.sunrise,
-                  color: colors.medicalRed,
-                  minutes: 1440,
-                  isFullWidth: true,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-
-                const SizedBox(height: 16),
-                const Divider(height: 1),
-                const SizedBox(height: 16),
-
-                // Custom offset selection card
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colors.card.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: colors.border.withValues(alpha: 0.2)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'زمان دلخواه:',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
-                              ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: colors.primary.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
-                            ),
-                            child: Text(
-                              _toPersianDigits('$_customMinutes دقیقه'),
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.bold,
-                                color: colors.primary,
-                                ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(CupertinoIcons.minus, color: colors.textSecondary, size: 14),
-                          Expanded(
-                            child: SliderTheme(
-                              data: SliderTheme.of(context).copyWith(
-                                activeTrackColor: colors.primary,
-                                inactiveTrackColor: colors.border.withValues(alpha: 0.3),
-                                thumbColor: colors.primary,
-                                overlayColor: colors.primary.withValues(alpha: 0.12),
-                                trackHeight: 4,
-                                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                              ),
-                              child: Slider(
-                                value: _customMinutes.toDouble(),
-                                min: 5,
-                                max: 120,
-                                divisions: 23, // 5 min increments from 5 to 120
-                                label: _toPersianDigits('$_customMinutes دقیقه'),
-                                onChanged: (val) {
-                                  final intVal = val.toInt();
-                                  if (intVal != _customMinutes) {
-                                    HapticFeedback.selectionClick();
-                                    setState(() {
-                                      _customMinutes = intVal;
-                                    });
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                          Icon(CupertinoIcons.plus, color: colors.textSecondary, size: 14),
-                        ],
-                      ),
-                    ],
-                  ),
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  Navigator.pop(context);
+                  widget.onSnoozeSelected(_customMinutes);
+                },
+                child: const Text(
+                  'تایید زمان دلخواه',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () {
-                    HapticFeedback.mediumImpact();
-                    Navigator.pop(context);
-                    widget.onSnoozeSelected(_customMinutes);
-                  },
-                  child: const Text(
-                    'تایید زمان دلخواه',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+              ),
+              const SizedBox(height: 6),
+              TextButton(
+                style: TextButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                const SizedBox(height: 6),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'انصراف',
-                    style: TextStyle(color: colors.textSecondary, fontWeight: FontWeight.bold),
-                  ),
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'انصراف',
+                  style: TextStyle(color: colors.textSecondary, fontWeight: FontWeight.bold),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

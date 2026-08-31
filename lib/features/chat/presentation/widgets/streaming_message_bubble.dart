@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -417,15 +416,16 @@ class _BlinkingCursorState extends State<_BlinkingCursor>
     final colors = context.colors;
     final cursorColor = widget.color ?? colors.primary;
 
-    return AnimatedOpacity(
-      opacity: _controller.value > 0.5 ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 100),
-      child: Container(
-        width: 7,
-        height: 15,
-        decoration: BoxDecoration(
-          color: cursorColor,
-          borderRadius: BorderRadius.circular(2),
+    return RepaintBoundary(
+      child: FadeTransition(
+        opacity: _controller,
+        child: Container(
+          width: 7,
+          height: 15,
+          decoration: BoxDecoration(
+            color: cursorColor,
+            borderRadius: BorderRadius.circular(2),
+          ),
         ),
       ),
     );
@@ -465,31 +465,34 @@ class _TypingIndicatorState extends State<_TypingIndicator>
     final colors = context.colors;
     final dotColor = widget.color ?? colors.primary;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(3, (index) {
-        return AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            final delay = index * (2 * math.pi / 3);
-            final value = math.sin((_controller.value * 2 * math.pi) - delay);
-            final offsetY = ((value + 1) / 2) * -6;
+    return RepaintBoundary(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(3, (index) {
+          return AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              final value = (index == 0)
+                  ? _controller.value
+                  : ((_controller.value - (index * 0.2)) % 1.0);
+              final double offsetY = -4.0 * (1.0 - (2.0 * value - 1.0).abs());
 
-            return Transform.translate(
-              offset: Offset(0, offsetY),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 2.5),
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: dotColor.withValues(alpha: 0.6 + (index * 0.15)),
-                  shape: BoxShape.circle,
+              return Transform.translate(
+                offset: Offset(0, offsetY.clamp(-4.0, 0.0)),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: dotColor.withValues(alpha: 0.6 + (index * 0.15)),
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-            );
-          },
-        );
-      }),
+              );
+            },
+          );
+        }),
+      ),
     );
   }
 }

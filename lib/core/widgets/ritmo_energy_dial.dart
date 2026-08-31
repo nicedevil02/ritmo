@@ -60,13 +60,15 @@ class RitmoEnergyDial extends StatelessWidget {
             ),
 
           // 2. Sweeping Top Arc, Speedometer Ticks & Floating Thumb Pin (Custom Painted)
-          CustomPaint(
-            size: Size(size, size),
-            painter: _EnergyDialArcPainter(
-              percentage: percent ?? 0,
-              isDarkMode: isDarkMode,
-              hasValue: percent != null,
-              activeColor: resolvedColor,
+          RepaintBoundary(
+            child: CustomPaint(
+              size: Size(size, size),
+              painter: _EnergyDialArcPainter(
+                percentage: percent ?? 0,
+                isDarkMode: isDarkMode,
+                hasValue: percent != null,
+                activeColor: resolvedColor,
+              ),
             ),
           ),
 

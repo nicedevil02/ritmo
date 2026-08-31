@@ -33,7 +33,14 @@ class RitmoPageScaffold extends StatelessWidget {
       bottomNavigationBar: bottomNavigationBar,
       floatingActionButton: floatingActionButton,
       body: SafeArea(
-        child: Padding(padding: padding, child: body),
+        child: Column(
+          children: [
+            const RitmoSubHeaderTimerBanner(),
+            Expanded(
+              child: Padding(padding: padding, child: body),
+            ),
+          ],
+        ),
       ),
     );
   }

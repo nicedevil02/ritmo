@@ -343,10 +343,9 @@ class AssistantCard extends StatelessWidget {
 
   Widget _buildSuggestion(BuildContext context, BriefingSuggestion suggestion) {
     final colors = context.colors;
-    final hasAction =
-        suggestion.actionType != null && suggestion.actionType!.isNotEmpty;
+    final actionType = AssistantActionType.tryFromString(suggestion.actionType);
 
-    if (!hasAction) {
+    if (actionType == null) {
       return RitmoCard.neumorphicSunken(
         borderRadius: BorderRadius.circular(14),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -363,8 +362,6 @@ class AssistantCard extends StatelessWidget {
         ),
       );
     }
-
-    final actionType = AssistantActionType.fromString(suggestion.actionType!);
 
     return RitmoCard.neumorphicSunken(
       onTap: () {

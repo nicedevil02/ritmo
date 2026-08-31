@@ -11,7 +11,6 @@ import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/utils/ios26_page_route.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/profile/presentation/crash_reports_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/appearance_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/groups/assistant_privacy_group_screen.dart';

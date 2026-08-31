@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -9,12 +10,15 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/assistant/models/day_plan_models.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/ai_day_planner_preview_sheet.dart';
+import 'package:ritmo/features/goals/logic/goals_repository.dart';
 import 'package:ritmo/features/goals/logic/planning_controller.dart';
 import 'package:ritmo/features/goals/logic/planning_repository.dart';
 import 'package:ritmo/features/goals/logic/planning_week.dart';
+import 'package:ritmo/features/goals/models/goal_models.dart';
 import 'package:ritmo/features/goals/models/planning_models.dart';
 import 'package:ritmo/features/goals/presentation/widgets/create_commitment_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/month_plan_section.dart';
+import 'package:ritmo/features/goals/presentation/widgets/visual_week_board.dart';
 import 'package:ritmo/features/goals/presentation/widgets/week_planner_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/week_review_sheet.dart';
 
@@ -24,11 +28,13 @@ class PlanningScreen extends StatefulWidget {
     this.upcomingTimeline = const [],
     this.embedded = false,
     this.topPadding,
+    this.controller,
   });
 
   final List<dynamic> upcomingTimeline;
   final bool embedded;
   final double? topPadding;
+  final PlanningController? controller;
 
   @override
   State<PlanningScreen> createState() => _PlanningScreenState();
@@ -37,13 +43,43 @@ class PlanningScreen extends StatefulWidget {
 class _PlanningScreenState extends State<PlanningScreen> {
   late final PlanningController _controller;
   final Set<String> _expandedDayKeys = {};
+  List<GoalStep> _backlogSteps = [];
+  Map<String, String> _goalTitlesMap = {};
 
   @override
   void initState() {
     super.initState();
-    _controller = PlanningController();
+    _controller = widget.controller ?? PlanningController();
+    _controller.initListener();
     _controller.addListener(_onControllerChanged);
-    _controller.loadHorizon(PlanningHorizon.week);
+    if (widget.controller == null) {
+      _controller.loadHorizon(PlanningHorizon.week);
+      _loadBacklog();
+    }
+  }
+
+  Future<void> _loadBacklog() async {
+    try {
+      final goals = await GoalsRepository.instance.getGoals();
+      final stepsMap = await GoalsRepository.instance.getGoalSteps();
+      final activeGoalIds = goals.where((g) => g.status == 'ACTIVE').map((g) => g.id).toSet();
+      final goalTitles = {for (final g in goals) g.id: g.title};
+      final backlog = <GoalStep>[];
+      for (final gId in activeGoalIds) {
+        final steps = stepsMap[gId] ?? [];
+        for (final s in steps) {
+          if (!s.isCompleted && (s.scheduledDate == null || s.scheduledDate!.isEmpty)) {
+            backlog.add(s);
+          }
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _goalTitlesMap = goalTitles;
+          _backlogSteps = backlog;
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -54,7 +90,16 @@ class _PlanningScreenState extends State<PlanningScreen> {
   }
 
   void _onControllerChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.persistentCallbacks ||
+        phase == SchedulerPhase.midFrameMicrotasks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() {});
+      });
+    } else {
+      setState(() {});
+    }
   }
 
   Widget _buildSegmentedControl(RitmoColors colors) {
@@ -537,6 +582,35 @@ class _PlanningScreenState extends State<PlanningScreen> {
   }
 
   Widget _buildWeekView(BuildContext context, {Widget? header}) {
+    final colors = context.colors;
+    final effectiveTop = widget.topPadding ?? 16.0;
+
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            padding: EdgeInsets.fromLTRB(10, effectiveTop, 10, 80),
+            child: VisualWeekBoard(
+              controller: _controller,
+              colors: colors,
+              isDark: Theme.of(context).brightness == Brightness.dark,
+              header: header,
+              backlogSteps: _backlogSteps,
+              goalTitlesMap: _goalTitlesMap,
+              onRefresh: () {
+                _controller.loadHorizon(PlanningHorizon.week);
+                _loadBacklog();
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @visibleForTesting
+  Widget buildLegacyWeekView(BuildContext context, {Widget? header}) {
     final colors = context.colors;
     final active = _controller.activeCycle;
     final totalCommittable = _controller.capacities.fold<int>(

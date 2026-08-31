@@ -143,22 +143,15 @@ class RegistryRow extends StatelessWidget {
       cardChild = Opacity(opacity: 0.50, child: cardChild);
     }
 
-    // Wrap with dismissible if archivable
     if (!entry.caps.canArchive) {
       return Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: RitmoSpacing.lg,
-          vertical: 3.5,
-        ),
+        padding: const EdgeInsets.fromLTRB(10, 0, 10, 16),
         child: cardChild,
       );
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: RitmoSpacing.lg,
-        vertical: 3.5,
-      ),
+      padding: const EdgeInsets.fromLTRB(10, 0, 10, 16),
       child: Dismissible(
         key: ValueKey('entry_${entry.id}'),
         direction: DismissDirection.endToStart,

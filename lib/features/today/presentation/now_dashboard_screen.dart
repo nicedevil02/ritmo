@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
@@ -60,8 +61,6 @@ import 'package:ritmo/features/today/presentation/widgets/dashboard/ai_day_plann
 import 'package:ritmo/features/today/presentation/widgets/dashboard/assistant_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_header.dart';
 import 'package:ritmo/core/utils/shamsi_week.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/search/presentation/global_search_screen.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
@@ -166,13 +165,17 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
     _inboxSubscription = RitmoEventBus().onEvents
         .where((e) => e.type == 'inbox_updated')
         .listen((_) {
-          _updateUnreadCount();
+          _safeSetState(() {
+            _updateUnreadCount();
+          });
         });
     // P1-1: وقتی از کارت «مسیر امروز» یا تقویم آیتمی تیک میخورد، خانه تازه شود.
     _agendaSubscription = RitmoEventBus().onEvents
         .where((e) => e.type == 'AgendaItemToggled')
         .listen((_) {
-          _loadDashboardData();
+          _safeSetState(() {
+            _loadDashboardData();
+          });
         });
   }
 
@@ -272,13 +275,24 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
     }
   }
 
+  void _safeSetState(VoidCallback fn) {
+    if (!mounted) return;
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.persistentCallbacks ||
+        phase == SchedulerPhase.midFrameMicrotasks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(fn);
+      });
+    } else {
+      setState(fn);
+    }
+  }
+
   Future<void> _updateUnreadCount() async {
     final count = await CentralInboxService.unreadCount();
-    if (mounted) {
-      setState(() {
-        _unreadInboxCount = count;
-      });
-    }
+    _safeSetState(() {
+      _unreadInboxCount = count;
+    });
   }
 
   bool _dashboardLoadInFlight = false;
@@ -290,7 +304,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
         const Duration(seconds: 2)) {
       return;
     }
-    _loadDashboardData();
+    _safeSetState(() {
+      _loadDashboardData();
+    });
   }
 
   Future<void> _checkActiveTimerOnStart() async {
@@ -374,9 +390,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
         _isFirstLoad = false;
         _isLoading = false;
         _timelineItems = controller.timelineItems;
-        _completionsToday = controller.completionsToday;
-        _rhythmScore = controller.rhythmScore;
-        _rhythmScoreHasData = controller.rhythmScoreHasData;
         _settingsMap = controller.settingsMap;
         _activeZone = controller.activeZone;
         _realmState = controller.realmState;
@@ -1064,8 +1077,10 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
                       const SizedBox(height: 16),
                     ],
 
-                    // ۰.۲ بنر کپسولی هوشمند ارزیابی انرژی صبحگاهی
+                    // ۰.۲ بنر کپسولی هوشمند ارزیابی انرژی صبحگاهی (فقط در بازه ۵:۰۰ صبح تا ۱۲:۰۰ ظهر)
                     if (_needCheckin &&
+                        DateTime.now().hour >= 5 &&
+                        DateTime.now().hour < 12 &&
                         heroData.type != HeroPriorityType.morningCheckIn) ...[
                       _enter(
                         0,
@@ -1840,7 +1855,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
     final dateStr =
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-    if (_needCheckin) {
+    final isMorningWindow = now.hour >= 5 && now.hour < 12;
+    if (_needCheckin && isMorningWindow) {
       final dedupeKey = 'checkin_$dateStr';
       await CentralInboxService.push(
         category: InboxCategory.REMINDER,

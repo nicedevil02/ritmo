@@ -570,10 +570,10 @@ class PersonaContextProvider {
   }
 
   static Future<StudyBrief> _buildStudyBrief(dynamic db) async {
-    // PSN-30: explicit sort by priority DESC, name ASC
+    // PSN-30: explicit sort by importanceFactor DESC, name ASC
     List<Map<String, dynamic>> subjects;
     try {
-      subjects = await db.query('konkur_subjects', orderBy: 'priority DESC, name ASC');
+      subjects = await db.query('konkur_subjects', orderBy: 'importanceFactor DESC, name ASC');
     } catch (_) {
       subjects = await db.query('konkur_subjects', orderBy: 'name ASC');
     }

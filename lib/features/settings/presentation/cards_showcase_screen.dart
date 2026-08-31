@@ -516,6 +516,20 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
           const SizedBox(height: 10),
 
           _buildLuminousBadgeShowcase(colors, isDark),
+          const SizedBox(height: 24),
+
+          // ── ۱۵. هاب و بنر زنده تایمر، کرونومتر و پومودورو (Live Timer & Stopwatch Hub) ──
+          _buildSectionTitle(
+            number: '۱۵',
+            widgetClass: 'RitmoTimerHub & RitmoSubHeaderTimerBanner',
+            title: 'هاب مرکزی و بنر شیشه‌ای زنده تایمرها (Live Timer Hub)',
+            usage: 'یکپارچه‌سازی تمام تایمرها، کرونومترها، پومودوروها و فعالیت‌های فعال در سراسر ریتمو و نمایش شناور زیر هدر.',
+            features: 'پخش زنده ثانیه‌شمار با کمترین مصرف پردازنده، هماهنگی کامل با تنظیمات بلور و شفافیت شیشه‌ای «ظاهر و زبان»، دکمه‌های کنترل سریع (Pause/Play/Stop)، سوییچ خودکار چرخه‌های پومودورو و قابلیت Reopen.',
+            rule: 'تمام تایمرهای جدید در ماژول‌ها باید با ثبت نشست در RitmoTimerHub.instance آغاز شوند تا از حالت هاردکد خارج شده و بنر زیر هدر خودکار فعال شود.',
+          ),
+          const SizedBox(height: 10),
+
+          _buildTimerHubShowcase(colors, isDark),
           const SizedBox(height: 36),
         ],
       ),
@@ -1939,6 +1953,197 @@ class _CardsShowcaseScreenState extends State<CardsShowcaseScreen> {
       ),
     );
   }
+
+  Widget _buildTimerHubShowcase(RitmoColors colors, bool isDark) {
+    return Column(
+      children: [
+        RitmoCard.neumorphic(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xff6366F1).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.timer_outlined,
+                        color: Color(0xff6366F1),
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'دموی تعاملی هاب مرکزی تایمر و کرونومتر',
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            'یکی از دکمه‌های زیر را لمس کنید تا بنر شیشه‌ای زنده زیر هدر فعال شود',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // کنترل‌های شروع دمو
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xff6366F1),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      onPressed: () {
+                        RitmoHaptics.selection();
+                        RitmoTimerHub.instance.registerOrUpdateSession(
+                          ActiveLiveTimerSession(
+                            id: 'showcase_pomodoro',
+                            domain: RitmoTimerDomain.study,
+                            title: 'مطالعه هوش مصنوعی و معماری',
+                            subtitle: '🎯 تمرکز (دور ۱ از ۴)',
+                            mode: RitmoTimerMode.pomodoroFocus,
+                            targetSeconds: 1500, // 25 mins
+                            elapsedSeconds: 0,
+                            pomodoroCycle: 1,
+                            onStop: () => RitmoTimerHub.instance.stopActiveSession(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.play_arrow_rounded, size: 16),
+                      label: const Text('استارت پومودورو ۲۵/۵', style: TextStyle(fontSize: 11.5)),
+                    ),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xff10B981),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      onPressed: () {
+                        RitmoHaptics.selection();
+                        RitmoTimerHub.instance.registerOrUpdateSession(
+                          ActiveLiveTimerSession(
+                            id: 'showcase_stopwatch',
+                            domain: RitmoTimerDomain.sport,
+                            title: 'تمرین هوازی و دویدن',
+                            subtitle: 'کرونومتر زنده ورزشی',
+                            mode: RitmoTimerMode.stopwatch,
+                            targetSeconds: 0,
+                            elapsedSeconds: 0,
+                            onStop: () => RitmoTimerHub.instance.stopActiveSession(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.timer_rounded, size: 16),
+                      label: const Text('استارت کرونومتر', style: TextStyle(fontSize: 11.5)),
+                    ),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: colors.error,
+                        side: BorderSide(color: colors.error.withValues(alpha: 0.4)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      onPressed: () {
+                        RitmoHaptics.warning();
+                        RitmoTimerHub.instance.stopActiveSession();
+                      },
+                      icon: const Icon(Icons.stop_circle_outlined, size: 16),
+                      label: const Text('توقف نشست', style: TextStyle(fontSize: 11.5)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // وضعیت زنده نشست فعال
+                ValueListenableBuilder<ActiveLiveTimerSession?>(
+                  valueListenable: RitmoTimerHub.instance.activeSessionNotifier,
+                  builder: (context, session, _) {
+                    if (session == null) {
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colors.surfaceElevated.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: colors.border.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, size: 16, color: colors.textSecondary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'در حال حاضر هیچ تایمر یا کرونومتری در هاب فعال نیست.',
+                              style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: (session.accentColor ?? colors.primary).withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: (session.accentColor ?? colors.primary).withValues(alpha: 0.30),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            session.isRunning ? Icons.circle : Icons.pause_circle_filled,
+                            size: 14,
+                            color: session.isRunning ? const Color(0xff10B981) : Colors.amber,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'نشست فعال: ${session.title} (${session.subtitle ?? ''})',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// صفحه دمو و سندباکس تعاملی برای تست زنده RitmoTabbedMorphingScaffold
@@ -2111,6 +2316,7 @@ class _SingleMorphingHeaderDemoScreen extends StatelessWidget {
     );
   }
 }
+
 
 
 

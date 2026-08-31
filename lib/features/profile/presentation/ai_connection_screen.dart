@@ -51,7 +51,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
   late final TextEditingController _featuresModelController;
 
   AiMode _mode = AiMode.ritmoServer;
-  String _selectedPresetId = 'zhipu';
+  String _selectedPresetId = 'chatgpt_web';
   int _timeoutMs = 60000;
   bool _separateFeaturesConfig = false;
 
@@ -123,7 +123,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
       if (!mounted) return;
       setState(() {
         _mode = mode;
-        _selectedPresetId = config.providerPresetId.isNotEmpty ? config.providerPresetId : 'zhipu';
+        _selectedPresetId = config.providerPresetId.isNotEmpty ? config.providerPresetId : 'chatgpt_web';
         _urlController.text = config.baseUrl;
         _keyController.text = config.apiKey;
         _modelController.text = config.model;
@@ -154,6 +154,9 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
 
   String get _statusSubtitle {
     if (_mode == AiMode.ritmoServer) {
+      if (_selectedPresetId == 'chatgpt_web') {
+        return 'متصل · وب چت‌جی‌پی‌تی';
+      }
       return 'متصل · سرور ریتمو';
     }
     final preset = kAiProviderPresets.firstWhere(
@@ -184,7 +187,12 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
   }
 
   String get _currentProviderName {
-    if (_mode == AiMode.ritmoServer) return 'سرور ریتمو';
+    if (_mode == AiMode.ritmoServer) {
+      if (_selectedPresetId == 'chatgpt_web') {
+        return 'وب چت‌جی‌پی‌تی (ChatGPT Web)';
+      }
+      return 'سرور ابری ریتمو';
+    }
     final preset = kAiProviderPresets.firstWhere(
       (p) => p.id == _selectedPresetId,
       orElse: () => kAiProviderPresets.first,
@@ -193,7 +201,12 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
   }
 
   String get _effectiveModelPreview {
-    if (_mode == AiMode.ritmoServer) return 'hy3-free (اوپن‌کد · سرور ریتمو)';
+    if (_mode == AiMode.ritmoServer) {
+      if (_selectedPresetId == 'chatgpt_web') {
+        return 'ChatGPT Web Session (اتصال وب)';
+      }
+      return 'hy3-free (اوپن‌کد · سرور ریتمو)';
+    }
     final normalized = AiEndpointNormalizer.normalize(_urlController.text);
     return AIGateway.instance.previewEffectiveModel(
       baseUrl: normalized,
@@ -258,6 +271,34 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
     await _saveConfig();
 
     if (_mode == AiMode.ritmoServer) {
+      if (_selectedPresetId == 'chatgpt_web') {
+        final booted = await ChatGptWebBridgeManager.instance.ensureBooted();
+        if (mounted) {
+          setState(() {
+            _isTesting = false;
+          });
+          if (booted) {
+            RitmoHaptics.tap();
+            RitmoToast.show(
+              context,
+              'پل وب چت‌جی‌پی‌تی با موفقیت آماده به کار شد ✨',
+              icon: Icons.check_circle_rounded,
+              iconColor: context.colors.success,
+            );
+          } else if (ChatGptWebBridgeManager.instance.cloudflareNotifier.value) {
+            unawaited(CloudflareChallengeModal.show(context));
+          } else {
+            RitmoToast.show(
+              context,
+              'خطا در برقراری ارتباط با وب‌سایت ChatGPT. اتصال اینترنت را بررسی کنید.',
+              icon: Icons.error_outline_rounded,
+              iconColor: context.colors.warning,
+            );
+          }
+        }
+        return;
+      }
+
       // Priority 1: OpenCode (hy3-free, 30s)
       var result = await AIGateway.instance.testConnection(
         baseUrl: AIGateway.defaultBaseUrl,
@@ -294,34 +335,6 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
           RitmoToast.show(
             context,
             result.messageFa,
-            icon: Icons.error_outline_rounded,
-            iconColor: context.colors.warning,
-          );
-        }
-      }
-      return;
-    }
-
-    if (_selectedPresetId == 'chatgpt_web') {
-      final booted = await ChatGptWebBridgeManager.instance.ensureBooted();
-      if (mounted) {
-        setState(() {
-          _isTesting = false;
-        });
-        if (booted) {
-          RitmoHaptics.tap();
-          RitmoToast.show(
-            context,
-            'پل وب چت‌جی‌پی‌تی با موفقیت آماده به کار شد ✨',
-            icon: Icons.check_circle_rounded,
-            iconColor: context.colors.success,
-          );
-        } else if (ChatGptWebBridgeManager.instance.cloudflareNotifier.value) {
-          unawaited(CloudflareChallengeModal.show(context));
-        } else {
-          RitmoToast.show(
-            context,
-            'خطا در برقراری ارتباط با وب‌سایت ChatGPT. اتصال اینترنت را بررسی کنید.',
             icon: Icons.error_outline_rounded,
             iconColor: context.colors.warning,
           );
@@ -619,68 +632,78 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
 
                   // 3. Primary Mode Views
                   if (_mode == AiMode.ritmoServer) ...[
-                    // Ritmo Server Informational Card
-                    RitmoCard(
-                      padding: const EdgeInsets.all(RitmoSpacing.md),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.shield_outlined, color: colors.primary, size: 20),
-                              const SizedBox(width: RitmoSpacing.xs),
-                              Text(
-                                'اتصال ابری امن ریتمو (۲ لایه خودکار)',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: colors.textPrimary,
+                    // Sub-selector between Ritmo Cloud Server and ChatGPT Web
+                    Row(
+                      children: [
+                        Expanded(
+                          child: RitmoCard(
+                            isSelected: _selectedPresetId != 'chatgpt_web',
+                            onTap: () async {
+                              setState(() {
+                                _selectedPresetId = 'opencode';
+                              });
+                              await _saveConfig();
+                            },
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.cloud_done_outlined,
+                                  color: _selectedPresetId != 'chatgpt_web' ? colors.primary : colors.textSecondary,
+                                  size: 20,
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: RitmoSpacing.sm),
-                          Text(
-                            'ریتمو سریع‌ترین و پایدارترین مسیر هوش مصنوعی را به شکل هوشمند انتخاب می‌کند:\n'
-                            '• لایه ۱: اوپن‌کد (OpenCode) با مدل پرسرعت و رایگان hy3-free\n'
-                            '• لایه ۲: ژیپو (Zhipu AI) با مدل بدون فیلترشکن glm-4-flash\n\n'
-                            'نیازی به ثبت هیچ کلید یا تنظیمی توسط شما نیست و همه چیز آماده کار است.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colors.textSecondary,
-                              height: 1.6,
+                                const SizedBox(height: 4),
+                                Text(
+                                  'سرور ابری ریتمو',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: _selectedPresetId != 'chatgpt_web' ? colors.primary : colors.textPrimary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: RitmoSpacing.md),
-                          RitmoPrimaryButton(
-                            label: 'آزمایش اتصال سرور ریتمو',
-                            icon: Icons.bolt_rounded,
-                            isLoading: _isTesting,
-                            onPressed: _testPrimaryConnection,
+                        ),
+                        const SizedBox(width: RitmoSpacing.sm),
+                        Expanded(
+                          child: RitmoCard(
+                            isSelected: _selectedPresetId == 'chatgpt_web',
+                            onTap: () async {
+                              setState(() {
+                                _selectedPresetId = 'chatgpt_web';
+                              });
+                              await _saveConfig();
+                            },
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.public_rounded,
+                                  color: _selectedPresetId == 'chatgpt_web' ? colors.primary : colors.textSecondary,
+                                  size: 20,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'وب چت‌جی‌پی‌تی',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: _selectedPresetId == 'chatgpt_web' ? colors.primary : colors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ] else ...[
-                    // Personal Key Mode: Provider Selector Grid
-                    Text(
-                      'انتخاب سرویس‌دهنده هوش مصنوعی',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: RitmoSpacing.sm),
-                    AiProviderGrid(
-                      presets: kAiProviderPresets,
-                      selectedPresetId: _selectedPresetId,
-                      onSelect: _onPresetSelected,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: RitmoSpacing.md),
 
-                    // Contextual Provider Action & Link
                     if (_selectedPresetId == 'chatgpt_web') ...[
+                      // ChatGPT Web Card
                       RitmoCard(
                         padding: const EdgeInsets.all(RitmoSpacing.md),
                         child: Column(
@@ -702,7 +725,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                             ),
                             const SizedBox(height: RitmoSpacing.xs),
                             Text(
-                              'اتصال بدون کلید API و مستقیماً از طریق وب‌سایت chatgpt.com برقرار می‌شود.',
+                              'اتصال مستقیم و رایگان بدون نیاز به کلید API از طریق مرورگر وب chatgpt.com. مناسب برای پاسخ‌های هوشمند و طولانی بدون هزینه.',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: colors.textSecondary,
@@ -710,6 +733,13 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                               ),
                             ),
                             const SizedBox(height: RitmoSpacing.md),
+                            RitmoPrimaryButton(
+                              label: 'آزمایش اتصال پل وب',
+                              icon: Icons.bolt_rounded,
+                              isLoading: _isTesting,
+                              onPressed: _testPrimaryConnection,
+                            ),
+                            const SizedBox(height: RitmoSpacing.sm),
                             RitmoSecondaryButton(
                               label: 'مشاهدهٔ وضعیت و تشخیص پل وب',
                               icon: Icons.monitor_heart_outlined,
@@ -724,12 +754,72 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: RitmoSpacing.md),
                     ] else ...[
-                      // API Key & Model Card
+                      // Ritmo Cloud 2-Layer Card
                       RitmoCard(
                         padding: const EdgeInsets.all(RitmoSpacing.md),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.shield_outlined, color: colors.primary, size: 20),
+                                const SizedBox(width: RitmoSpacing.xs),
+                                Text(
+                                  'اتصال ابری امن ریتمو (۲ لایه خودکار)',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: RitmoSpacing.sm),
+                            Text(
+                              'ریتمو سریع‌ترین و پایدارترین مسیر هوش مصنوعی را به شکل هوشمند انتخاب می‌کند:\n'
+                              '• لایه ۱: اوپن‌کد (OpenCode) با مدل پرسرعت و رایگان hy3-free\n'
+                              '• لایه ۲: ژیپو (Zhipu AI) با مدل بدون فیلترشکن glm-4-flash\n\n'
+                              'نیازی به ثبت هیچ کلید یا تنظیمی توسط شما نیست و همه چیز آماده کار است.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colors.textSecondary,
+                                height: 1.6,
+                              ),
+                            ),
+                            const SizedBox(height: RitmoSpacing.md),
+                            RitmoPrimaryButton(
+                              label: 'آزمایش اتصال سرور ریتمو',
+                              icon: Icons.bolt_rounded,
+                              isLoading: _isTesting,
+                              onPressed: _testPrimaryConnection,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ] else ...[
+                    // Personal Key Mode: Provider Selector Grid
+                    Text(
+                      'انتخاب سرویس‌دهنده هوش مصنوعی',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: RitmoSpacing.sm),
+                    AiProviderGrid(
+                      presets: kAiProviderPresets.where((p) => p.id != 'chatgpt_web').toList(),
+                      selectedPresetId: _selectedPresetId,
+                      onSelect: _onPresetSelected,
+                    ),
+                    const SizedBox(height: RitmoSpacing.md),
+
+                    // API Key & Model Card
+                    RitmoCard(
+                      padding: const EdgeInsets.all(RitmoSpacing.md),
+                      child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
@@ -923,10 +1013,8 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                         ),
                       ),
                       const SizedBox(height: RitmoSpacing.md),
-                    ],
-                  ],
 
-                  // 4. Progressive Disclosure: Advanced Settings Expansion
+                  // 4. Progressive Disclosure: Advanced Settings Expansion (فقط در حالت کلید شخصی)
                   RitmoCard(
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     child: Theme(
@@ -1113,8 +1201,9 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                     ),
                   ),
                   const SizedBox(height: RitmoSpacing.md),
+                ],
 
-                  // 5. Connection Chain Table
+                // 5. Connection Chain Table
                   if (_chainEntries.isNotEmpty) ...[
                     RitmoCard(
                       padding: const EdgeInsets.all(RitmoSpacing.md),

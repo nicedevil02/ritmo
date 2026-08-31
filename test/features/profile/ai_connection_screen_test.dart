@@ -124,14 +124,32 @@ void main() {
   });
 
   group('AiConnectionScreen Redesign Tests', () {
-    testWidgets('renders initial hero status and dual mode cards', (tester) async {
+    testWidgets('renders initial hero status and dual mode cards with ChatGPT Web as default', (tester) async {
       await pumpLoaded(tester);
 
       expect(find.byType(RitmoSkeletonCard), findsNothing);
-      expect(find.text('اتصال هوش مصنوعی'), findsOneWidget);
+      expect(find.text('اتصال و سرور هوش مصنوعی'), findsOneWidget);
       expect(find.text('سرور ریتمو'), findsWidgets);
       expect(find.text('کلید شخصی'), findsWidgets);
-      expect(find.text('اتصال ابری امن ریتمو (۳ لایه خودکار)'), findsOneWidget);
+      expect(find.text('وب چت‌جی‌پی‌تی'), findsOneWidget);
+      expect(find.text('پل وب چت‌جی‌پی‌تی (ChatGPT Web)'), findsOneWidget);
+      expect(find.text('مشاهدهٔ وضعیت و تشخیص پل وب'), findsOneWidget);
+      expect(find.text('آزمایش اتصال پل وب'), findsOneWidget);
+    });
+
+    testWidgets('switches to Ritmo Cloud Server under Ritmo Server and reveals cloud card', (tester) async {
+      await pumpLoaded(tester);
+
+      expect(find.text('پل وب چت‌جی‌پی‌تی (ChatGPT Web)'), findsOneWidget);
+
+      await tester.runAsync(() async {
+        await tester.tap(find.text('سرور ابری ریتمو'));
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      });
+      await tester.pump();
+
+      expect(find.text('اتصال ابری امن ریتمو (۲ لایه خودکار)'), findsOneWidget);
+      expect(find.text('آزمایش اتصال سرور ریتمو'), findsOneWidget);
     });
 
     testWidgets('switches to Personal Key mode and reveals Provider Grid and Credentials', (tester) async {
@@ -146,11 +164,25 @@ void main() {
       expect(find.text('انتخاب سرویس‌دهنده هوش مصنوعی'), findsOneWidget);
       expect(find.byType(AiProviderGrid), findsOneWidget);
       expect(find.text('کلید دسترسی (API Key)'), findsOneWidget);
+      // Ensure ChatGPT Web is not in the personal key grid
+      final grid = tester.widget<AiProviderGrid>(find.byType(AiProviderGrid));
+      expect(grid.presets.any((p) => p.id == 'chatgpt_web'), isFalse);
     });
 
-    testWidgets('expands advanced settings accordion to reveal endpoint and timeout', (tester) async {
+    testWidgets('hides advanced settings in Ritmo Server mode, but reveals them in Personal Key mode', (tester) async {
       await pumpLoaded(tester);
 
+      // Advanced settings should NOT be visible for Ritmo Server / ChatGPT Web
+      expect(find.text('تنظیمات پیشرفته و سفارشی‌سازی'), findsNothing);
+
+      // Switch to Personal Key mode
+      await tester.runAsync(() async {
+        await tester.tap(find.text('کلید شخصی').first);
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      });
+      await tester.pump();
+
+      // Now Advanced Settings should be available for Personal Key mode
       expect(find.text('تنظیمات پیشرفته و سفارشی‌سازی'), findsOneWidget);
 
       await tester.runAsync(() async {

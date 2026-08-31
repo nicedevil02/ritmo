@@ -162,5 +162,54 @@ void main() {
       const explicitOptions = AgendaQueryOptions(includeWorshipDebt: true);
       expect(explicitOptions.wants(AgendaDomain.worshipDebt), isTrue);
     });
+
+    test('7. DayAgendaSnapshotBuilder counts user events in remaining and completed', () {
+      const builder = DayAgendaSnapshotBuilder();
+
+      final pendingEvent = AgendaItem(
+        id: 'routine:ev1',
+        domain: AgendaDomain.routine,
+        kind: AgendaItemKind.event,
+        sourceId: 'ev1',
+        title: 'تست ایونت',
+        dateStr: '2026-07-24',
+        category: Category.custom,
+        completion: AgendaCompletion.pending,
+        deepLink: const AgendaDeepLink(domain: AgendaDomain.routine, targetId: 'ev1'),
+      );
+
+      final completedEvent = AgendaItem(
+        id: 'routine:ev2',
+        domain: AgendaDomain.routine,
+        kind: AgendaItemKind.event,
+        sourceId: 'ev2',
+        title: 'تست ایونت انجام شده',
+        dateStr: '2026-07-24',
+        category: Category.custom,
+        completion: AgendaCompletion.done,
+        deepLink: const AgendaDeepLink(domain: AgendaDomain.routine, targetId: 'ev2'),
+      );
+
+      final informationalHoliday = AgendaItem(
+        id: 'event:hol1',
+        domain: AgendaDomain.event,
+        kind: AgendaItemKind.event,
+        sourceId: 'hol1',
+        title: 'مناسبت تقویم',
+        dateStr: '2026-07-24',
+        category: Category.custom,
+        completion: AgendaCompletion.none,
+        deepLink: const AgendaDeepLink(domain: AgendaDomain.event, targetId: 'hol1'),
+      );
+
+      final dayAgenda = DayAgenda(
+        dateStr: '2026-07-24',
+        items: [pendingEvent, completedEvent, informationalHoliday],
+      );
+
+      final snapshot = builder.buildSnapshot(dayAgenda);
+      expect(snapshot.remainingCount, equals(1)); // only pendingEvent
+      expect(snapshot.completedCount, equals(1)); // only completedEvent
+    });
   });
 }

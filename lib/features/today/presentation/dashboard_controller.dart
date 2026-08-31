@@ -180,14 +180,16 @@ class DashboardController {
         for (final s in settings) s['key']! as String: s['value']! as String,
       };
 
-      // Load today's check-in status
-      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      // Load today's check-in status (فقط در بازه صبحگاهی: ۵:۰۰ صبح تا ۱۲:۰۰ ظهر)
+      final now = DateTime.now();
+      final isMorningWindow = now.hour >= 5 && now.hour < 12;
+      final todayStr = now.toIso8601String().substring(0, 10);
       final checkins = await db.query(
         'daily_checkins',
         where: 'date = ?',
         whereArgs: [todayStr],
       );
-      needCheckin = checkins.isEmpty;
+      needCheckin = isMorningWindow && checkins.isEmpty;
 
       // Load today's reflection status
       final reflections = await db.query(
@@ -1035,6 +1037,8 @@ class DashboardController {
     AgendaDomain.task,
     AgendaDomain.medicine,
     AgendaDomain.event,
+    AgendaDomain.goalStep,
+    AgendaDomain.commitment,
   };
 
   static String _domainLabel(AgendaDomain domain) {
@@ -1049,6 +1053,10 @@ class DashboardController {
         return 'رویداد';
       case AgendaDomain.routine:
         return 'روتین';
+      case AgendaDomain.goalStep:
+        return 'گام هدف';
+      case AgendaDomain.commitment:
+        return 'برنامهٔ هفته';
       default:
         return 'برنامه';
     }
@@ -1105,9 +1113,27 @@ class DashboardController {
   /// بازسازی «کارهای امروز» از Agenda. ساختار Map عمداً مثل قبل است تا صفحه و
   /// ویجت بدون تغییر کار کنند؛ فقط کلیدهای تازه (agendaItem/domainLabel/…) اضافه شده.
   void _buildTodayTaskCards(List<Map<String, Object?>> tempEvents) {
-    final actionable = agenda
+    final allActionable = agenda
         .where((i) => _taskListDomains.contains(i.domain))
         .toList(growable: false);
+
+    // گارد عدم تکرار: اگر گام هدف از قبل در لیست باشد، تعهد متناظر با آن حذف می‌شود
+    final goalStepSourceIds = allActionable
+        .where((i) => i.domain == AgendaDomain.goalStep)
+        .map((i) => i.sourceId)
+        .toSet();
+
+    final actionable = allActionable.where((item) {
+      if (item.domain == AgendaDomain.commitment) {
+        final alloc = item.meta['allocation'] as Map<String, dynamic>?;
+        final sType = alloc?['sourceType']?.toString().toUpperCase();
+        final sId = alloc?['sourceId']?.toString();
+        if (sType == 'GOAL_STEP' && sId != null && goalStepSourceIds.contains(sId)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList(growable: false);
 
     final conflicts = _detectConflicts(actionable, tempEvents);
     todayConflictCount = conflicts.length;

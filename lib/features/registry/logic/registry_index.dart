@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/utils/persian_text.dart';
 import 'package:ritmo/features/registry/domain/registry_entry.dart';
 import 'package:ritmo/features/registry/domain/registry_query.dart';
@@ -89,7 +90,8 @@ class RegistryIndex {
 
     for (final src in _sources) {
       final key = src.moduleSettingsKey;
-      if (key.isNotEmpty && settingsMap[key] == 'false') {
+      if (key.isNotEmpty &&
+          !ModuleGate.instance.isEnabledFrom(settingsMap, key)) {
         _counts[src.domain] = 0;
         continue;
       }
@@ -103,7 +105,7 @@ class RegistryIndex {
       if (items == null) {
         try {
           items = await src.fetch(
-            limit: 50,
+            limit: 500,
             offset: 0,
             includeArchived: query.showArchived,
           );
@@ -180,10 +182,9 @@ class RegistryIndex {
       return false;
     }
     if (query.searchText.trim().isNotEmpty) {
-      final q = normalizeFa(query.searchText);
-      final titleNorm = normalizeFa(entry.title);
-      final subNorm = normalizeFa(entry.subtitle ?? '');
-      if (!titleNorm.contains(q) && !subNorm.contains(q)) {
+      final matchesTitle = searchMatchFa(entry.title, query.searchText);
+      final matchesSub = searchMatchFa(entry.subtitle ?? '', query.searchText);
+      if (!matchesTitle && !matchesSub) {
         return false;
       }
     }

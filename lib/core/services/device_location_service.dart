@@ -49,29 +49,73 @@ class DeviceLocationService {
         return null;
       }
 
-      // 3. Location settings configured for direct hardware GPS without Google Play Services
-      final LocationSettings locationSettings;
+      // 3. Multi-stage location retrieval strategy:
+      // Stage A: High accuracy GPS with resilient 20-second timeout
+      final LocationSettings highSettings;
       if (Platform.isAndroid) {
-        locationSettings = AndroidSettings(
+        highSettings = AndroidSettings(
           accuracy: LocationAccuracy.high,
           forceLocationManager: true, // Independent of Google Play Services (HMS, AOSP, all Androids)
-          timeLimit: const Duration(seconds: 12),
+          timeLimit: const Duration(seconds: 20),
           intervalDuration: const Duration(seconds: 1),
         );
       } else {
-        locationSettings = const LocationSettings(
+        highSettings = const LocationSettings(
           accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 12),
+          timeLimit: Duration(seconds: 20),
         );
       }
 
-      // Try fetching current GPS position directly
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: locationSettings,
-      );
-      return position;
+      try {
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: highSettings,
+        );
+        return position;
+      } catch (innerError) {
+        debugPrint('High accuracy GPS timed out or failed, falling back to network/last-known: $innerError');
+      }
+
+      // Stage B: Fallback to Network Provider / Balanced accuracy (fast indoor & Wi-Fi fix)
+      try {
+        final LocationSettings fallbackSettings;
+        if (Platform.isAndroid) {
+          fallbackSettings = AndroidSettings(
+            accuracy: LocationAccuracy.medium,
+            forceLocationManager: true,
+            timeLimit: const Duration(seconds: 8),
+          );
+        } else {
+          fallbackSettings = const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+            timeLimit: Duration(seconds: 8),
+          );
+        }
+
+        final networkPosition = await Geolocator.getCurrentPosition(
+          locationSettings: fallbackSettings,
+        );
+        return networkPosition;
+      } catch (_) {}
+
+      // Stage C: Fallback to last known position
+      try {
+        final lastKnown = await Geolocator.getLastKnownPosition(
+          forceAndroidLocationManager: true,
+        );
+        if (lastKnown != null) {
+          return lastKnown;
+        }
+      } catch (_) {}
+
+      if (context.mounted) {
+        RitmoSnackbar.error(
+          context,
+          'دریافت موقعیت مکانی زمان‌بر شد. لطفاً از روشن بودن اینترنت یا GPS اطمینان حاصل فرمایید.',
+        );
+      }
+      return null;
     } on TimeoutException {
-      // Fast fallback to last known GPS position
+      // Stage D: Fast fallback to last known GPS position
       try {
         final lastKnown = await Geolocator.getLastKnownPosition(
           forceAndroidLocationManager: true,

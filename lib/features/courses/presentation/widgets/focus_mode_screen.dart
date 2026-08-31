@@ -148,8 +148,9 @@ class _FocusModeScreenState extends State<FocusModeScreen> with SingleTickerProv
             const Spacer(),
 
             // Breathing Visual Ring & Big Display
-            ScaleTransition(
-              scale: _breathingAnimation,
+            RepaintBoundary(
+              child: ScaleTransition(
+                scale: _breathingAnimation,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -187,6 +188,7 @@ class _FocusModeScreenState extends State<FocusModeScreen> with SingleTickerProv
                 ],
               ),
             ),
+          ),
 
             const Spacer(),
 

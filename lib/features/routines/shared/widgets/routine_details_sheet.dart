@@ -111,13 +111,15 @@ class RoutineDetailsSheet extends StatelessWidget {
       future: _loadCompletions(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            margin: const EdgeInsets.all(16),
-            height: 200,
-            child: RitmoTheme.glassCardLight(
-              blurSigma: 20,
-              color: colors.card.withValues(alpha: isDarkMode ? 0.85 : 0.9),
-              child: const Center(child: CupertinoActivityIndicator()),
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: RitmoGlassSheet(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              padding: const EdgeInsets.all(32),
+              child: const SizedBox(
+                height: 180,
+                child: Center(child: CupertinoActivityIndicator()),
+              ),
             ),
           );
         }
@@ -130,132 +132,138 @@ class RoutineDetailsSheet extends StatelessWidget {
         final textColor = colors.textPrimary;
         final subtitleColor = colors.textSecondary;
 
-        return Container(
-          margin: const EdgeInsets.all(16),
-          child: RitmoTheme.glassCardLight(
-            blurSigma: 20,
-            color: colors.card.withValues(alpha: isDarkMode ? 0.85 : 0.9),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      height: 5,
-                      width: 40,
-                      decoration: BoxDecoration(
-                        color: colors.textPrimary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 12,
+              bottom: MediaQuery.of(context).padding.bottom + 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4.5,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: colors.textSecondary.withValues(alpha: isDarkMode ? 0.30 : 0.22),
+                      borderRadius: BorderRadius.circular(3),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'جزئیات روتین: ${routine.title}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Column(
-                        children: [
-                          Text('$totalCompletions', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor)),
-                          Text('کل انجام‌ها', style: TextStyle(fontSize: 12, color: subtitleColor)),
-                        ],
-                      ),
-                      Column(
-                        children: [
-                          Text('🔥 $currentStreak', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: colors.warning)),
-                          Text('تداوم فعلی', style: TextStyle(fontSize: 12, color: subtitleColor)),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  if (completions.isEmpty)
-                    const Center(child: Text('تاکنون هیچ انجام شدنی ثبت نشده است.', style: TextStyle(fontSize: 12, color: Colors.grey)))
-                  else ...[
-                    const Text('آخرین انجام‌ها:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 180),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: completions.length > 5 ? 5 : completions.length,
-                        itemBuilder: (context, index) {
-                          final c = completions[index];
-                          final date = c['completionDate'] as String;
-                          final time = DateTime.fromMillisecondsSinceEpoch(c['completionTime'] as int);
-                          final timeStr = PersianDigits.convert('${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}');
-                          final type = c['resultType'] as String == 'LIGHT' ? 'نسخه سبک' : 'نسخه کامل';
-                          final noteText = (c['note'] as String?)?.trim();
+                ),
+                Text(
+                  'جزئیات روتین: ${routine.title}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      children: [
+                        Text('$totalCompletions', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor)),
+                        Text('کل انجام‌ها', style: TextStyle(fontSize: 12, color: subtitleColor)),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Text('🔥 $currentStreak', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: colors.warning)),
+                        Text('تداوم فعلی', style: TextStyle(fontSize: 12, color: subtitleColor)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                if (completions.isEmpty)
+                  const Center(child: Text('تاکنون هیچ انجام شدنی ثبت نشده است.', style: TextStyle(fontSize: 12, color: Colors.grey)))
+                else ...[
+                  const Text('آخرین انجام‌ها:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 180),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: completions.length > 5 ? 5 : completions.length,
+                      itemBuilder: (context, index) {
+                        final c = completions[index];
+                        final date = c['completionDate'] as String;
+                        final time = DateTime.fromMillisecondsSinceEpoch(c['completionTime'] as int);
+                        final timeStr = PersianDigits.convert('${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}');
+                        final type = c['resultType'] as String == 'LIGHT' ? 'نسخه سبک' : 'نسخه کامل';
+                        final noteText = (c['note'] as String?)?.trim();
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(_formatJalaliDateWithWeekday(date), style: TextStyle(fontSize: 12, color: textColor)),
-                                    Text('$timeStr ($type)', style: TextStyle(fontSize: 12, color: subtitleColor)),
-                                  ],
-                                ),
-                                if (noteText != null && noteText.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 2, right: 8),
-                                    child: Text(
-                                      '📝 $noteText',
-                                      textDirection: TextDirection.rtl,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: subtitleColor.withValues(alpha: 0.9),
-                                      ),
-                                    ),
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    _formatJalaliDateWithWeekday(date),
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textColor),
                                   ),
+                                  Text(
+                                    '$timeStr ($type)',
+                                    style: TextStyle(fontSize: 11, color: subtitleColor),
+                                  ),
+                                ],
+                              ),
+                              if (noteText != null && noteText.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  noteText,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: subtitleColor.withValues(alpha: 0.9),
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ],
-                            ),
-                          );
-                        },
-                      ),
+                              const Divider(height: 8, thickness: 0.5),
+                            ],
+                          ),
+                        );
+                      },
                     ),
-                  ],
-
-                  if (hasCompletionOnTargetDate) ...[
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: () => _confirmAndUndo(context, colors),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: colors.medicalRed,
-                        side: BorderSide(color: colors.medicalRed, width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      icon: const Icon(CupertinoIcons.clear, size: 16),
-                      label: const Text(
-                        'لغو ثبت انجام این روتین',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                if (hasCompletionOnTargetDate) ...[
+                  ElevatedButton.icon(
+                    onPressed: () => _confirmAndUndo(context, colors),
+                    icon: const Icon(Icons.undo_rounded, size: 16, color: Colors.white),
+                    label: const Text('لغو ثبت انجام این تاریخ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primary,
+                      backgroundColor: colors.medicalRed,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: const Text('بستن', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
+                  const SizedBox(height: 10),
                 ],
-              ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('بستن', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
           ),
         );

@@ -244,8 +244,10 @@ class _PrayerArcHeroState extends State<PrayerArcHero>
             // Stars Overlay for Night Sky
             if (sky.isNight)
               Positioned.fill(
-                child: CustomPaint(
-                  painter: _StarsPainter(starCount: 52, opacity: 0.75),
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: _StarsPainter(starCount: 52, opacity: 0.75),
+                  ),
                 ),
               ),
 
@@ -398,8 +400,9 @@ class _PrayerArcHeroState extends State<PrayerArcHero>
                             showAsrIsha: _showAsrIsha,
                           );
 
-                          return AnimatedBuilder(
-                            animation: _pulseController,
+                          return RepaintBoundary(
+                            child: AnimatedBuilder(
+                              animation: _pulseController,
                             builder: (context, child) {
                               final resolvedNodes =
                                   _animateAndResolveCollisions(
@@ -550,8 +553,9 @@ class _PrayerArcHeroState extends State<PrayerArcHero>
                                 ],
                               );
                             },
-                          );
-                        },
+                          ),
+                        );
+                      },
                       ),
                     ),
                   ),

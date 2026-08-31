@@ -201,55 +201,86 @@ class CycleAgendaSource implements AgendaSource {
       }
     }
 
-    // 2. Future prediction reminder items (یادآوری‌های قبل از موعد تنظیمی کاربر به جای پر کردن کل روزهای آینده)
+    // 2. Future prediction items & reminders
     final out = cycleOutput;
-    if (consentReminders &&
-        out != null &&
+    if (out != null &&
         out.hasData &&
         out.currentPhase != CyclePhase.pregnancy) {
       final targetPeriod =
           out.nextPeriodPrediction ?? out.nextPeriodWindowStart;
 
+      final todayClean = CycleDateContract.cleanDate(DateTime.now());
+      final isDayArrived = ctx.isToday || !day.isAfter(todayClean);
+
       // Period prediction reminders based on lead days (e.g. 1 to 3 days before)
       if (targetPeriod != null) {
         final cleanPeriodDate = CycleDateContract.cleanDate(targetPeriod);
-        for (final lead in reminderLeadDays) {
-          final reminderDate = cleanPeriodDate.subtract(Duration(days: lead));
-          if (reminderDate == day) {
-            final leadText =
-                lead == 1 ? '۱ روز' : '${toPersianDigits(lead)} روز';
-            final sourceId = '${ctx.dateStr}_lead_period_$lead';
-            final isAck = acknowledgedIds.contains(sourceId);
 
-            items.add(
-              AgendaItem(
-                id: buildAgendaItemId(
-                  AgendaDomain.cycle,
-                  sourceId,
-                  ctx.dateStr,
-                ),
-                domain: AgendaDomain.cycle,
-                kind: AgendaItemKind.reminder,
-                completion:
-                    isAck ? AgendaCompletion.done : AgendaCompletion.none,
-                sourceId: sourceId,
-                title: 'یادآوری: $leadText تا شروع احتمالی قاعدگی',
-                dateStr: ctx.dateStr,
-                category: Category.personal,
-                priority: 0.8,
-                deepLink: AgendaDeepLink(
-                  domain: AgendaDomain.cycle,
-                  targetId: ctx.dateStr,
-                ),
+        // A. Calendar event marker on the predicted period start day (نشانگر تقویمی در روز اصلی شروع)
+        if (cleanPeriodDate == day) {
+          items.add(
+            AgendaItem(
+              id: buildAgendaItemId(
+                AgendaDomain.cycle,
+                '${ctx.dateStr}_predicted_period_start',
+                ctx.dateStr,
               ),
-            );
+              domain: AgendaDomain.cycle,
+              kind: AgendaItemKind.event,
+              itemType: AgendaItemType.optional,
+              sourceId: '${ctx.dateStr}_predicted_period_start',
+              title: 'شروع احتمالی قاعدگی',
+              dateStr: ctx.dateStr,
+              category: Category.personal,
+              priority: 0.3,
+              deepLink: AgendaDeepLink(
+                domain: AgendaDomain.cycle,
+                targetId: ctx.dateStr,
+              ),
+            ),
+          );
+        }
+
+        // B. Point-in-time lead reminders (یادآوری‌های قبل از موعد تنظیمی کاربر — فقط وقتی آن روز فرا می‌رسد)
+        if (consentReminders && isDayArrived) {
+          for (final lead in reminderLeadDays) {
+            final reminderDate = cleanPeriodDate.subtract(Duration(days: lead));
+            if (reminderDate == day) {
+              final leadText =
+                  lead == 1 ? '۱ روز' : '${toPersianDigits(lead)} روز';
+              final sourceId = '${ctx.dateStr}_lead_period_$lead';
+              final isAck = acknowledgedIds.contains(sourceId);
+
+              items.add(
+                AgendaItem(
+                  id: buildAgendaItemId(
+                    AgendaDomain.cycle,
+                    sourceId,
+                    ctx.dateStr,
+                  ),
+                  domain: AgendaDomain.cycle,
+                  kind: AgendaItemKind.reminder,
+                  completion:
+                      isAck ? AgendaCompletion.done : AgendaCompletion.none,
+                  sourceId: sourceId,
+                  title: 'یادآوری: $leadText تا شروع احتمالی قاعدگی',
+                  dateStr: ctx.dateStr,
+                  category: Category.personal,
+                  priority: 0.8,
+                  deepLink: AgendaDeepLink(
+                    domain: AgendaDomain.cycle,
+                    targetId: ctx.dateStr,
+                  ),
+                ),
+              );
+            }
           }
         }
       }
 
-      // PMS reminder (1 day before estimated PMS start or on PMS start day)
+      // PMS reminder (1 day before estimated PMS start — فقط وقتی آن روز فرا می‌رسد)
       final pmsStart = out.pmsWindowStart;
-      if (pmsStart != null) {
+      if (consentReminders && isDayArrived && pmsStart != null) {
         final cleanPmsDate = CycleDateContract.cleanDate(pmsStart);
         final pmsReminderDate = cleanPmsDate.subtract(const Duration(days: 1));
         if (pmsReminderDate == day) {

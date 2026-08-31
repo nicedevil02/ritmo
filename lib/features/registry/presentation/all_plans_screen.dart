@@ -598,7 +598,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
 
   Widget _buildLensSwitcher(ThemeData theme, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Container(
         height: 38.0 * context.metrics.densityFactor,
         padding: const EdgeInsets.all(3.5),
@@ -766,7 +766,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
       height: 36,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         children: [
           _buildFilterChip(
             theme,

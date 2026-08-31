@@ -1206,48 +1206,7 @@ class RitmoNeuMasterCard extends StatefulWidget {
   State<RitmoNeuMasterCard> createState() => _RitmoNeuMasterCardState();
 }
 
-class _RitmoNeuMasterCardState extends State<RitmoNeuMasterCard>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _breathingController;
-  late final Animation<double> _breathingAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _breathingController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3200),
-    );
-    _breathingAnim = Tween<double>(begin: 0.25, end: 0.90).animate(
-      CurvedAnimation(
-        parent: _breathingController,
-        curve: Curves.easeInOutSine,
-      ),
-    );
-
-    if (widget.enableBreathing) {
-      _breathingController.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void didUpdateWidget(covariant RitmoNeuMasterCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.enableBreathing != oldWidget.enableBreathing) {
-      if (widget.enableBreathing) {
-        _breathingController.repeat(reverse: true);
-      } else {
-        _breathingController.stop();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _breathingController.dispose();
-    super.dispose();
-  }
-
+class _RitmoNeuMasterCardState extends State<RitmoNeuMasterCard> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -1424,40 +1383,27 @@ class _RitmoNeuMasterCardState extends State<RitmoNeuMasterCard>
             return mainCard;
           }
 
-          // ── انیمیشن تنفسی سخت‌افزاری شیدر GPU با مصرف 0.0% توان CPU ──
+          // ── هاله نوری استاتیک سخت‌افزاری با 0% بار اضافه بر پردازنده گرافیکی ──
           return Stack(
             clipBehavior: Clip.none,
             children: [
-              // لایه ۱: هاله نوری کش‌شده روی GPU (تغییر فقط در لایه کامپوزیتور سخت‌افزاری)
               Positioned.fill(
-                child: RepaintBoundary(
-                  child: FadeTransition(
-                    opacity: _breathingAnim,
-                    child: Container(
-                      margin: widget.margin,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: effectiveColor.withValues(alpha: isDark ? 0.38 : 0.24),
-                            blurRadius: 36,
-                            spreadRadius: 3.5,
-                            offset: const Offset(0, 4),
-                          ),
-                          BoxShadow(
-                            color: effectiveColor.withValues(alpha: isDark ? 0.48 : 0.34),
-                            blurRadius: 16,
-                            spreadRadius: 1.0,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                child: Container(
+                  margin: widget.margin,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: effectiveColor.withValues(alpha: isDark ? 0.32 : 0.18),
+                        blurRadius: 22,
+                        spreadRadius: 1.5,
+                        offset: const Offset(0, 3),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
-              // لایه ۲: کارت نئومورفیک استاتیک (ایزوله‌شده در لایه رندر GPU بدون ریبیلد)
-              RepaintBoundary(child: mainCard),
+              mainCard,
             ],
           );
         },

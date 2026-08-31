@@ -6,7 +6,6 @@ import 'package:ritmo/core/settings/ai_settings_guard.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class AiWriteHistorySheet extends StatefulWidget {

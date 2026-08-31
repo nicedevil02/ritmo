@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/routines/presentation/planner_controller.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_advanced_section.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_timeline_picker.dart';
@@ -210,18 +209,24 @@ class GenericStep2Form extends StatelessWidget {
                   color: colors.textPrimary,
                 ),
                 decoration: InputDecoration(
-                  labelText: 'عنوان فعالیت *',
+                  labelText: controller.itemType == 'EVENT' ? 'عنوان رویداد *' : 'عنوان فعالیت *',
                   labelStyle: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: colors.primary,
                   ),
-                  hintText: 'مثلاً: نوشیدن آب، تمرین یوگا، مطالعه کتاب...',
+                  hintText: controller.itemType == 'EVENT'
+                      ? 'مثلاً: جلسه کاری، قرار ملاقات، سالگرد، آزمون...'
+                      : 'مثلاً: نوشیدن آب، تمرین یوگا، مطالعه کتاب...',
                   hintStyle: TextStyle(
                     fontSize: 11.5,
                     color: colors.textSecondary.withValues(alpha: 0.4),
                   ),
-                  prefixIcon: Icon(Icons.edit_note_rounded, size: 19, color: colors.primary),
+                  prefixIcon: Icon(
+                    controller.itemType == 'EVENT' ? Icons.event_note_rounded : Icons.edit_note_rounded,
+                    size: 19,
+                    color: colors.primary,
+                  ),
                   filled: true,
                   fillColor: isDark ? const Color(0xFF16192E).withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.85),
                   border: OutlineInputBorder(
@@ -245,19 +250,21 @@ class GenericStep2Form extends StatelessWidget {
               ),
               const SizedBox(height: 14),
 
-              // 1. Routine Type Selector (مدل اجرای روتین)
-              RoutineTypePicker(
-                selectedType: controller.routineType,
-                itemType: controller.itemType,
-                onTypeSelected: (type) {
-                  controller.setRoutineType(type);
-                },
-                onItemTypeSelected: (type) {
-                  controller.itemType = type;
-                  controller.notifyListeners();
-                },
-              ),
-              const SizedBox(height: 18),
+              // 1. Routine Type Selector (مدل اجرای روتین - فقط برای غیر رویداد)
+              if (controller.itemType != 'EVENT') ...[
+                RoutineTypePicker(
+                  selectedType: controller.routineType,
+                  itemType: controller.itemType,
+                  onTypeSelected: (type) {
+                    controller.setRoutineType(type);
+                  },
+                  onItemTypeSelected: (type) {
+                    controller.itemType = type;
+                    controller.notifyListeners();
+                  },
+                ),
+                const SizedBox(height: 18),
+              ],
 
               // 2. Dynamic Type-Specific Configuration Sections
               ..._buildTypeSpecificSections(context, colors, isDark),

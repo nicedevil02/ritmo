@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/persian_text.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
@@ -83,12 +84,12 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
   }
 
   List<MvExercise> get _filteredExercises {
-    final query = _searchController.text.trim().toLowerCase();
+    final query = _searchController.text.trim();
 
     return widget.allExercises.where((ex) {
       if (query.isNotEmpty) {
-        final matchesName = ex.name.toLowerCase().contains(query);
-        final matchesCat = ex.category.toLowerCase().contains(query);
+        final matchesName = searchMatchFa(ex.name, query);
+        final matchesCat = searchMatchFa(ex.category, query);
         if (!matchesName && !matchesCat) return false;
       }
       if (_selectedCategory != 'ALL') {
@@ -109,13 +110,13 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
   }
 
   List<MvMovementKind> get _filteredKinds {
-    final query = _kindsSearchController.text.trim().toLowerCase();
+    final query = _kindsSearchController.text.trim();
     if (query.isEmpty) return _allKinds;
     return _allKinds.where((k) {
-      final matchesTitle = k.titleFa.toLowerCase().contains(query);
-      final matchesCode = k.code.toLowerCase().contains(query);
+      final matchesTitle = searchMatchFa(k.titleFa, query);
+      final matchesCode = k.code.toLowerCase().contains(query.toLowerCase());
       final matchesAliases = k.aliasList.any(
-        (a) => a.toLowerCase().contains(query),
+        (a) => searchMatchFa(a, query),
       );
       return matchesTitle || matchesCode || matchesAliases;
     }).toList();

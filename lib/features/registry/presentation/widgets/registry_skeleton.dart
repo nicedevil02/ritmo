@@ -36,23 +36,25 @@ class _RegistrySkeletonState extends State<RegistrySkeleton>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _shimmerController,
-      builder: (context, _) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
-          child: Column(
-            children: List.generate(widget.itemCount, (index) {
-              return Padding(
-                padding: EdgeInsets.only(
-                  bottom: index < widget.itemCount - 1 ? 10.0 : 0,
-                ),
-                child: _buildSkeletonCard(context),
-              );
-            }),
-          ),
-        );
-      },
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _shimmerController,
+        builder: (context, _) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+            child: Column(
+              children: List.generate(widget.itemCount, (index) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index < widget.itemCount - 1 ? 10.0 : 0,
+                  ),
+                  child: _buildSkeletonCard(context),
+                );
+              }),
+            ),
+          );
+        },
+      ),
     );
   }
 

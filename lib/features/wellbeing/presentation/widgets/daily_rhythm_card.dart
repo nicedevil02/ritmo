@@ -96,11 +96,13 @@ class DailyRhythmCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: colors.border.withValues(alpha: 0.5)),
             ),
-            child: CustomPaint(
-              painter: _CircadianWavePainter(
-                goldenRange: goldenRange,
-                fatiguedRange: fatiguedRange,
-                colors: colors,
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: _CircadianWavePainter(
+                  goldenRange: goldenRange,
+                  fatiguedRange: fatiguedRange,
+                  colors: colors,
+                ),
               ),
             ),
           ),

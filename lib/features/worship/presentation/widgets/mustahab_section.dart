@@ -1102,7 +1102,6 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet>
         child: AppleCardDeckHost(
           animation: _childSheetAnimController,
           topCornerRadius: 28.0,
-          fullCoverageScrim: true,
           child: RitmoGlassSheet(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             padding: EdgeInsets.zero,

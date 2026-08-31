@@ -139,16 +139,13 @@ class _RoutineAsNeededSheetState extends State<RoutineAsNeededSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E222B) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        ),
+      child: RitmoGlassSheet(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         padding: EdgeInsets.only(
           left: 20,
           right: 20,
-          top: 16,
-          bottom: MediaQuery.of(context).padding.bottom + 20,
+          top: 12,
+          bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 16,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -157,15 +154,15 @@ class _RoutineAsNeededSheetState extends State<RoutineAsNeededSheet> {
             // Handle
             Center(
               child: Container(
-                width: 40,
-                height: 4,
+                width: 38,
+                height: 4.5,
+                margin: const EdgeInsets.only(bottom: 14),
                 decoration: BoxDecoration(
-                  color: colors.textSecondary.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+                  color: colors.textSecondary.withValues(alpha: isDark ? 0.30 : 0.22),
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
 
             // Header
             Text(
@@ -192,17 +189,27 @@ class _RoutineAsNeededSheetState extends State<RoutineAsNeededSheet> {
                 hintText: 'یادداشت یا علت ثبت (اختیاری)...',
                 hintStyle: TextStyle(fontSize: 12, color: colors.textTertiary),
                 filled: true,
-                fillColor: isDark ? const Color(0xFF262B36) : const Color(0xFFF4F6F9),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colors.border.withValues(alpha: 0.2)),
-                ),
+                fillColor: colors.card.withValues(alpha: 0.35),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: colors.border.withValues(alpha: 0.3)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: colors.border.withValues(alpha: 0.3)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: colors.primary),
+                ),
               ),
+              style: TextStyle(fontSize: 13, color: colors.textPrimary),
+              maxLines: 2,
             ),
             const SizedBox(height: 20),
 
-            // Actions
+            // Action Buttons
             Row(
               children: [
                 if (duration > 0) ...[

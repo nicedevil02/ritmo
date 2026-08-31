@@ -132,17 +132,103 @@ enum AssistantActionType {
     }
   }
 
-  static AssistantActionType fromString(String val) {
-    return AssistantActionType.values.firstWhere(
-      (e) => e.name == val,
-      orElse: () => throw ArgumentError('اکشن ناشناخته است: "$val"'),
-    );
+  static AssistantActionType fromString(String val, {AssistantActionType fallback = AssistantActionType.openPage}) {
+    return tryFromString(val) ?? fallback;
   }
 
-  static AssistantActionType? tryFromString(String val) {
+  static AssistantActionType? tryFromString(String? val) {
+    if (val == null) return null;
+    final clean = val.trim();
+    if (clean.isEmpty) return null;
+
+    // 1. تطابق مستقیم نام Enum
     for (final e in AssistantActionType.values) {
-      if (e.name == val) return e;
+      if (e.name.toLowerCase() == clean.toLowerCase()) return e;
     }
+
+    // 2. نرمال‌سازی بدون خط فاصله و آندرلاین
+    final normalized = clean.toLowerCase().replaceAll('_', '').replaceAll('-', '');
+    for (final e in AssistantActionType.values) {
+      if (e.name.toLowerCase().replaceAll('_', '') == normalized) return e;
+    }
+
+    // 3. نگاشت مترادف‌ها و واژگان احتمالی تولیدشده توسط مدل‌های زبانی (LLM)
+    switch (normalized) {
+      case 'sleep':
+      case 'sleeplog':
+      case 'logsleep':
+      case 'خواب':
+        return AssistantActionType.logSleep;
+
+      case 'mood':
+      case 'energy':
+      case 'energymood':
+      case 'logenergy':
+      case 'logmood':
+      case 'انرژی':
+      case 'مود':
+        return AssistantActionType.logEnergyMood;
+
+      case 'routine':
+      case 'newroutine':
+      case 'addroutine':
+      case 'روتین':
+        return AssistantActionType.createRoutine;
+
+      case 'goal':
+      case 'newgoal':
+      case 'addgoal':
+      case 'هدف':
+        return AssistantActionType.createGoal;
+
+      case 'worship':
+      case 'prayer':
+      case 'عبادت':
+      case 'نماز':
+        return AssistantActionType.createWorshipItem;
+
+      case 'reflection':
+      case 'dailyreflection':
+      case 'بازتاب':
+        return AssistantActionType.logReflection;
+
+      case 'course':
+      case 'دوره':
+        return AssistantActionType.createCourse;
+
+      case 'konkur':
+      case 'study':
+      case 'کنکور':
+      case 'مطالعه':
+        return AssistantActionType.addKonkurItem;
+
+      case 'workout':
+      case 'exercise':
+      case 'intensity':
+      case 'ورزش':
+      case 'تمرین':
+        return AssistantActionType.adjustWorkoutIntensity;
+
+      case 'setting':
+      case 'settings':
+      case 'تنظیمات':
+        return AssistantActionType.updateSetting;
+
+      case 'page':
+      case 'navigate':
+      case 'صفحه':
+        return AssistantActionType.openPage;
+
+      case 'dayplan':
+      case 'plan':
+      case 'برنامه':
+        return AssistantActionType.applyDayPlan;
+
+      case 'reminder':
+      case 'یادآوری':
+        return AssistantActionType.rescheduleReminder;
+    }
+
     return null;
   }
 }

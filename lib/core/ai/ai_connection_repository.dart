@@ -49,9 +49,9 @@ class AiConnectionRepository {
     final modeStr = settingsMap['ai_mode'] ?? 'ritmo_server';
     final mode = modeStr == 'personal_key' ? AiMode.personalKey : AiMode.ritmoServer;
 
-    final presetId = settingsMap['ai_provider_preset'] ?? 'zhipu';
-    final baseUrl = settingsMap[baseUrlKey] ?? '';
-    final model = settingsMap[modelKey] ?? '';
+    final presetId = settingsMap['ai_provider_preset'] ?? 'chatgpt_web';
+    final baseUrl = settingsMap[baseUrlKey] ?? (presetId == 'chatgpt_web' ? 'https://chatgpt.com/' : '');
+    final model = settingsMap[modelKey] ?? (presetId == 'chatgpt_web' ? 'ChatGPT Web Session (Auto)' : '');
     final timeoutMs = int.tryParse(settingsMap['ai_timeout'] ?? '') ?? 60000;
     final backupBaseUrl = settingsMap['ai_base_url_2'] ?? '';
     final cloudflareAccountId = settingsMap['ai_cloudflare_account_id'] ?? '';
@@ -204,7 +204,22 @@ class AiConnectionRepository {
   /// فقط برای نمایش. هرگز کلید برنمی‌گرداند.
   Future<List<AiChainEntry>> describeChain({AiSlot slot = AiSlot.assistant}) async {
     final mode = await loadMode();
+    final config = await load(slot: slot);
     if (mode == AiMode.ritmoServer) {
+      if (config.providerPresetId == 'chatgpt_web') {
+        return const [
+          AiChainEntry(
+            labelFa: 'پل وب چت‌جی‌پی‌تی (ChatGPT Web)',
+            host: 'chatgpt.com',
+            model: 'Web Session (Auto)',
+          ),
+          AiChainEntry(
+            labelFa: 'پشتیبان خودکار (اوپن‌کد)',
+            host: 'opencode.ai',
+            model: 'hy3-free',
+          ),
+        ];
+      }
       return const [
         AiChainEntry(
           labelFa: 'اولویت ۱ (اوپن‌کد HY3-Free)',
@@ -219,7 +234,6 @@ class AiConnectionRepository {
       ];
     }
 
-    final config = await load(slot: slot);
     final chain = <AiChainEntry>[];
 
     String extractHost(String url) {

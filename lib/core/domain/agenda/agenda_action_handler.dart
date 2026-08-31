@@ -8,6 +8,7 @@ import 'package:ritmo/core/domain/completion/snooze_policy.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
+import 'package:ritmo/features/goals/logic/goals_repository.dart';
 import 'package:ritmo/features/worship/logic/prayer_timeline.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
@@ -336,6 +337,38 @@ class AgendaActionHandler {
       return;
     }
 
+    if (item.domain == AgendaDomain.goalStep) {
+      final db = await DatabaseHelper.instance.database;
+      final stepRows = await db.query(
+        'goal_steps',
+        columns: ['goalId', 'isCompleted'],
+        where: 'id = ?',
+        whereArgs: [item.sourceId],
+      );
+      if (stepRows.isNotEmpty) {
+        final goalId = stepRows.first['goalId'] as String;
+        final currentVal = (stepRows.first['isCompleted'] as int? ?? 0) == 1;
+        await GoalsRepository.instance.toggleStep(item.sourceId, currentVal, goalId);
+
+        final nowMs = DateTime.now().millisecondsSinceEpoch;
+        final auditId = '${DateTime.now().microsecondsSinceEpoch}';
+        await db.insert('assistant_audit_log', {
+          'id': auditId,
+          'actionType': 'completeGoalStep',
+          'targetKey': item.sourceId,
+          'newValue': isDone ? 'COMPLETED' : 'PENDING',
+          'appliedAt': nowMs,
+        });
+
+        _invalidateAndNotify(item.dateStr, 'AgendaItemToggled', {
+          'domain': item.domain.name,
+          'isDone': isDone,
+          'date': item.dateStr,
+        });
+        return;
+      }
+    }
+
     final db = await DatabaseHelper.instance.database;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
@@ -351,22 +384,6 @@ class AgendaActionHandler {
           where: 'id = ?',
           whereArgs: [item.sourceId],
         );
-      } else if (item.domain == AgendaDomain.goalStep) {
-        await txn.update(
-          'goal_steps',
-          {'isCompleted': isDone ? 1 : 0, 'updatedAt': nowMs},
-          where: 'id = ?',
-          whereArgs: [item.sourceId],
-        );
-
-        final auditId = '${DateTime.now().microsecondsSinceEpoch}';
-        await txn.insert('assistant_audit_log', {
-          'id': auditId,
-          'actionType': 'completeGoalStep',
-          'targetKey': item.sourceId,
-          'newValue': isDone ? 'COMPLETED' : 'PENDING',
-          'appliedAt': nowMs,
-        });
       } else if (item.domain == AgendaDomain.worshipDebt) {
         final List<Map<String, dynamic>> debts = await txn.query(
           'worship_debts',

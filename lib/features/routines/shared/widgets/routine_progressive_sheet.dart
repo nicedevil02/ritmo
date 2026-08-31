@@ -154,16 +154,13 @@ class _RoutineProgressiveSheetState extends State<RoutineProgressiveSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E222B) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        ),
+      child: RitmoGlassSheet(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         padding: EdgeInsets.only(
           left: 20,
           right: 20,
-          top: 16,
-          bottom: MediaQuery.of(context).padding.bottom + 20,
+          top: 12,
+          bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 16,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -172,15 +169,15 @@ class _RoutineProgressiveSheetState extends State<RoutineProgressiveSheet> {
             // Handle
             Center(
               child: Container(
-                width: 40,
-                height: 4,
+                width: 38,
+                height: 4.5,
+                margin: const EdgeInsets.only(bottom: 14),
                 decoration: BoxDecoration(
-                  color: colors.textSecondary.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+                  color: colors.textSecondary.withValues(alpha: isDark ? 0.30 : 0.22),
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
 
             // Header
             Text(

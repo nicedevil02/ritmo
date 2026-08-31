@@ -12,7 +12,7 @@ import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart';
 
 // ── Neumorphic & Tactile Design Constants ─────────────────────────
 const double _kHMargin = 16.0; // horizontal margin of the pill
@@ -208,10 +208,11 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
     final pillH = navH - _kBottomGap;
     final double effectiveBlur = materialSpec.sigma.clamp(0.0, 50.0);
 
-    return SizedBox(
-      height: navH + bottomInset,
-      width: double.infinity,
-      child: LayoutBuilder(
+    return RepaintBoundary(
+      child: SizedBox(
+        height: navH + bottomInset,
+        width: double.infinity,
+        child: LayoutBuilder(
         builder: (context, constraints) {
           final totalWidth = constraints.maxWidth;
           final barWidth = totalWidth - 2 * _kHMargin;
@@ -302,6 +303,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                         centerY: -2.0 + _kCenterBtnSize / 2,
                         radius: 28.0,
                         isDark: isDark,
+                        isAssistantActive: activeItem.label == 'دستیار',
                       ),
                     ),
                   ),
@@ -386,8 +388,9 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -474,6 +477,13 @@ class _NeumorphicSlotItem extends StatelessWidget {
                                   );
                                 }
                               }
+                              if (item.label == 'دستیار') {
+                                return const RitmoSiriOrb(
+                                  size: 19,
+                                  isAnimated: false,
+                                  glowEnabled: false,
+                                );
+                              }
                               return Icon(
                                 item.inactiveIcon,
                                 size: _kIconSize,
@@ -539,12 +549,14 @@ class _SunkenCraterPainter extends CustomPainter {
     required this.centerY,
     required this.radius,
     required this.isDark,
+    this.isAssistantActive = false,
   });
 
   final double centerX;
   final double centerY;
   final double radius;
   final bool isDark;
+  final bool isAssistantActive;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -573,7 +585,25 @@ class _SunkenCraterPainter extends CustomPainter {
       );
     canvas.drawCircle(center, radius, dishFillPaint);
 
-    // ۲. سایه عمقی داخلی لبه بالایی کاسه (Upper Crescent Inset Shadow)
+    // ۲. هاله نوری بازتابی تیله روی کاسه فرورفته نوار (Ambient Under-Glow Projection)
+    if (isAssistantActive) {
+      final glowPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..shader = ui.Gradient.radial(
+          center,
+          radius * 1.35,
+          [
+            const Color(0xFFFF4757).withValues(alpha: isDark ? 0.35 : 0.20),
+            const Color(0xFF7209B7).withValues(alpha: isDark ? 0.22 : 0.12),
+            Colors.transparent,
+          ],
+          [0.0, 0.65, 1.0],
+        )
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
+      canvas.drawCircle(center, radius * 1.25, glowPaint);
+    }
+
+    // ۳. سایه عمقی داخلی لبه بالایی کاسه (Upper Crescent Inset Shadow)
     final innerShadowPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4.2
@@ -599,7 +629,7 @@ class _SunkenCraterPainter extends CustomPainter {
       innerShadowPaint,
     );
 
-    // ۳. هایلایت مات و مخملی لبه پایینی کاسه فرورفته (Lower Specular Rim Catch)
+    // ۴. هایلایت مات و مخملی لبه پایینی کاسه فرورفته (Lower Specular Rim Catch)
     final rimHighlightPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0
@@ -629,7 +659,8 @@ class _SunkenCraterPainter extends CustomPainter {
       oldDelegate.centerX != centerX ||
       oldDelegate.centerY != centerY ||
       oldDelegate.radius != radius ||
-      oldDelegate.isDark != isDark;
+      oldDelegate.isDark != isDark ||
+      oldDelegate.isAssistantActive != isAssistantActive;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -665,6 +696,7 @@ class _AnimatedFloatingButton extends StatefulWidget {
 class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
   bool _isPressed = false;
   bool _showPlusOnHome = false;
+  Offset _dragTilt = Offset.zero;
   Timer? _homeMorphTimer;
   Timer? _subMorphTimer;
   Timer? _initialMorphTimer;
@@ -684,6 +716,7 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
     if (oldWidget.activeItem.index != widget.activeItem.index ||
         oldWidget.activeItem.label != widget.activeItem.label) {
       _setupHomeMorphing();
+      _dragTilt = Offset.zero;
     }
   }
 
@@ -756,9 +789,43 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _isPressed = true),
-        onTapUp: (_) => setState(() => _isPressed = false),
-        onTapCancel: () => setState(() => _isPressed = false),
+        onTapDown: (details) {
+          final box = context.findRenderObject() as RenderBox?;
+          final size = box?.size ?? const Size(48, 48);
+          final offset = Offset(
+            ((details.localPosition.dx - (size.width / 2)) / (size.width / 2)).clamp(-1.0, 1.0),
+            ((details.localPosition.dy - (size.height / 2)) / (size.height / 2)).clamp(-1.0, 1.0),
+          );
+          setState(() {
+            _isPressed = true;
+            _dragTilt = offset;
+          });
+        },
+        onPanUpdate: (details) {
+          final box = context.findRenderObject() as RenderBox?;
+          final size = box?.size ?? const Size(48, 48);
+          final offset = Offset(
+            ((details.localPosition.dx - (size.width / 2)) / (size.width / 2)).clamp(-1.0, 1.0),
+            ((details.localPosition.dy - (size.height / 2)) / (size.height / 2)).clamp(-1.0, 1.0),
+          );
+          setState(() => _dragTilt = offset);
+        },
+        onPanEnd: (_) => setState(() {
+          _isPressed = false;
+          _dragTilt = Offset.zero;
+        }),
+        onPanCancel: () => setState(() {
+          _isPressed = false;
+          _dragTilt = Offset.zero;
+        }),
+        onTapUp: (_) => setState(() {
+          _isPressed = false;
+          _dragTilt = Offset.zero;
+        }),
+        onTapCancel: () => setState(() {
+          _isPressed = false;
+          _dragTilt = Offset.zero;
+        }),
         onTap: widget.onTap,
         onLongPress: widget.onLongPress,
         child: AnimatedScale(
@@ -851,12 +918,28 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
                     final avatarPath = SettingsService.instance
                         .get<String>('user_avatar_path');
                     final isProfile = widget.activeItem.label == 'پروفایل';
+                    final isAssistant = widget.activeItem.label == 'دستیار';
                     final bool hasAvatar = isProfile &&
                         avatarPath.isNotEmpty &&
                         File(avatarPath).existsSync();
 
                     final Widget currentChild;
-                    if (hasAvatar) {
+                    if (isAssistant) {
+                      currentChild = ValueListenableBuilder<RitmoOrbMode>(
+                        valueListenable: RitmoAiStateService.instance.orbMode,
+                        builder: (context, currentMode, _) {
+                          return RitmoSiriOrb(
+                            key: const ValueKey<String>('assistant_active_floating_orb'),
+                            size: 33,
+                            mode: currentMode,
+                            glowEnabled: true,
+                            isAnimated: true,
+                            tiltOffset: _dragTilt,
+                            squeezeFactor: _isPressed ? 0.88 : 1.0,
+                          );
+                        },
+                      );
+                    } else if (hasAvatar) {
                       currentChild = Container(
                         key: ValueKey<String>('avatar_${widget.activeItem.index}_$avatarPath'),
                         width: 32,

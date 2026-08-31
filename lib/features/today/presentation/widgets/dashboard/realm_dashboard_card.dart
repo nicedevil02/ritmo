@@ -69,8 +69,8 @@ class _RealmDashboardCardState extends State<RealmDashboardCard> {
   @override
   void initState() {
     super.initState();
-    // تیکر زنده هر ثانیه ایزوله شده روی ValueNotifier بدون فراخوانی setState
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+    // تیکر کم‌مصرف هر ۳۰ ثانیه ایزوله شده روی ValueNotifier بدون بار پردازشی
+    _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
       _nowNotifier.value = DateTime.now();
     });
   }

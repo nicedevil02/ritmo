@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_text.dart';
 import 'package:ritmo/core/ux/ritmo_sheet_scaffold.dart';
 
 class PickerOption<T> {
@@ -78,7 +79,7 @@ class _RitmoPickerSheetState<T> extends State<RitmoPickerSheet<T>> {
   }
 
   void _onSearchChanged() {
-    final query = _searchController.text.trim().toLowerCase();
+    final query = _searchController.text.trim();
     setState(() {
       if (query.isEmpty) {
         _filteredOptions = widget.options;
@@ -86,9 +87,9 @@ class _RitmoPickerSheetState<T> extends State<RitmoPickerSheet<T>> {
         _filteredOptions = widget.options
             .where(
               (opt) =>
-                  opt.label.toLowerCase().contains(query) ||
+                  searchMatchFa(opt.label, query) ||
                   (opt.subtitle != null &&
-                      opt.subtitle!.toLowerCase().contains(query)),
+                      searchMatchFa(opt.subtitle!, query)),
             )
             .toList();
       }

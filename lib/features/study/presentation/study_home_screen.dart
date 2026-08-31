@@ -109,31 +109,13 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
   }
 
   Future<void> _addSubject() async {
-    final controller = TextEditingController();
-    String? name;
-    try {
-      name = await showDialog<String>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('افزودن درس جدید', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(hintText: 'نام درس (مثلاً: زبان انگلیسی)'),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle())),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              style: ElevatedButton.styleFrom(backgroundColor: ctx.colors.primary),
-              child: const Text('افزودن', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      );
-    } finally {
-      controller.dispose();
-    }
+    final name = await RitmoInputDialog.show(
+      context,
+      title: 'افزودن درس جدید',
+      hintText: 'نام درس (مثلاً: زبان انگلیسی)',
+      confirmLabel: 'افزودن',
+      icon: Icons.school_rounded,
+    );
 
     if (name != null && name.isNotEmpty) {
       try {

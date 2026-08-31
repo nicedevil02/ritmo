@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/features/goals/logic/capacity_models.dart';
@@ -38,8 +40,10 @@ class PlanningController extends ChangeNotifier {
 
   ReserveProfile reserveProfile = ReserveProfile.balanced;
   double executionFactorValue = 1.0;
+  bool _isDisposed = false;
 
   Future<void> loadHorizon(PlanningHorizon horizon) async {
+    if (_isDisposed) return;
     selectedHorizon = horizon;
     status = PlanningStateStatus.loading;
     errorMessage = null;
@@ -254,12 +258,73 @@ class PlanningController extends ChangeNotifier {
       allocationResult = null;
     }
 
-    notifyListeners();
+    if (!_isDisposed) {
+      notifyListeners();
+    }
+  }
+
+  StreamSubscription<RitmoEvent>? _busSub;
+  Timer? _debounceTimer;
+
+  void initListener() {
+    _busSub?.cancel();
+    _busSub = RitmoEventBus().onEvents.listen((event) {
+      if (event.type == 'GoalStepToggled' ||
+          event.type == 'commitmentChanged' ||
+          event.type == 'AgendaItemToggled') {
+        _scheduleReload();
+      }
+    });
+  }
+
+  void _scheduleReload() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 350), () {
+      loadHorizon(selectedHorizon);
+    });
+  }
+
+  Future<void> moveAllocationToDay(String allocationId, String newDayKey) async {
+    try {
+      await _repo.moveAllocation(allocationId, newDayKey);
+      await loadHorizon(selectedHorizon);
+    } catch (e, st) {
+      RitmoLogger.error('Failed to move allocation: $e', error: e, stack: st);
+    }
+  }
+
+  Future<void> scheduleStepToDay(String stepId, String dayKey) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      await db.update(
+        'goal_steps',
+        {'scheduledDate': dayKey, 'updatedAt': nowMs},
+        where: 'id = ?',
+        whereArgs: [stepId],
+      );
+      RitmoEventBus().fire(RitmoEvent(
+        type: 'GoalStepToggled',
+        timestamp: DateTime.now(),
+        payload: {'stepId': stepId, 'date': dayKey},
+      ));
+      await loadHorizon(selectedHorizon);
+    } catch (e, st) {
+      RitmoLogger.error('Failed to schedule step to day: $e', error: e, stack: st);
+    }
   }
 
   void changeHorizon(PlanningHorizon horizon) {
     if (selectedHorizon != horizon) {
       loadHorizon(horizon);
     }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _debounceTimer?.cancel();
+    _busSub?.cancel();
+    super.dispose();
   }
 }

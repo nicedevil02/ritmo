@@ -333,7 +333,7 @@ class PlanningRepository {
           whereArgs: [allocationId],
         );
 
-        final newAllocId = 'alloc_${ms}_${allocationId.hashCode}';
+        final newAllocId = 'alloc_${ms}_${DateTime.now().microsecondsSinceEpoch}_${allocationId.hashCode}';
         await txn.insert('planning_allocations', {
           'id': newAllocId,
           'commitmentId': old['commitmentId'],
@@ -345,7 +345,7 @@ class PlanningRepository {
           'status': 'PLANNED',
           'materializedEntityType': old['materializedEntityType'],
           'materializedEntityId': old['materializedEntityId'],
-          'idempotencyKey': '$allocationId|moved|$newDayKey',
+          'idempotencyKey': '$allocationId|moved|$newDayKey|$ms',
           'createdAt': ms,
           'updatedAt': ms,
         });
@@ -417,9 +417,9 @@ class PlanningRepository {
           .map((r) => r['date'] as String?)
           .whereType<String>()
           .toSet();
-    } catch (e, st) {
-      RitmoLogger.error('PlanningRepository.getLightDays error: $e', error: e, stack: st);
-      rethrow;
+    } catch (e) {
+      RitmoLogger.warning('PlanningRepository.getLightDays warning: $e');
+      return const {};
     }
   }
 }

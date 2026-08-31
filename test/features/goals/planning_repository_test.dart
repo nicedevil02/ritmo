@@ -185,6 +185,13 @@ void main() {
     final newAlloc = await db.query('planning_allocations', where: 'status = ?', whereArgs: ['PLANNED']);
     expect(newAlloc.length, equals(1));
     expect(newAlloc.first['dayKey'], equals('2026-08-10'));
+
+    // Move back to 2026-08-09 (original day) to verify no duplicate idempotencyKey crash
+    final secondAllocId = newAlloc.first['id'] as String;
+    await repo.moveAllocation(secondAllocId, '2026-08-09', nowMs: nowMs + 100);
+    final movedBack = await db.query('planning_allocations', where: 'status = ?', whereArgs: ['PLANNED']);
+    expect(movedBack.length, equals(1));
+    expect(movedBack.first['dayKey'], equals('2026-08-09'));
   });
 
   test('D-08 Test 4: dropCommitment sets status to DROPPED without physical delete', () async {

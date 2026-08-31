@@ -3,7 +3,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
 class RitmoPrimaryButton extends StatelessWidget {
   const RitmoPrimaryButton({

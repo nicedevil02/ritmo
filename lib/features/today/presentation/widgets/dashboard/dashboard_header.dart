@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/shamsi_week.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/search/presentation/global_search_screen.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -200,110 +199,111 @@ class DashboardHeader extends StatelessWidget {
         avatarFileExists && avatarPath != null && avatarPath!.isNotEmpty;
 
     return RitmoGlassHeader(
-      height: 54,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: 58,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
-              children: [
-                // آواتار با هالهٔ گرادیان انرژی
-                Semantics(
-                  button: true,
-                  label: 'پروفایل و تنظیمات',
-                  child: GestureDetector(
-                    onTap: () {
-                      RitmoHaptics.tap();
-                      onAvatarTap();
-                    },
-                    child: Container(
-                      height: 38,
-                      width: 38,
-                      padding: const EdgeInsets.all(1.8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(colors: colors.energyGradient),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colors.energyGradient.first.withValues(alpha: 0.28),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: colors.bg,
-                          image: hasAvatarFile
-                              ? DecorationImage(
-                                  image: ResizeImage(
-                                    FileImage(File(avatarPath!)),
-                                    width: 120,
-                                    height: 120,
-                                  ),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        child: hasAvatarFile
-                            ? null
-                            : Center(
-                                child: Text(
-                                  userName.isNotEmpty ? userName[0] : '؟',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: colors.primary,
-                                  ),
-                                ),
-                              ),
-                      ),
+        children: [
+          // آواتار با هالهٔ گرادیان انرژی
+          Semantics(
+            button: true,
+            label: 'پروفایل و تنظیمات',
+            child: GestureDetector(
+              onTap: () {
+                RitmoHaptics.tap();
+                onAvatarTap();
+              },
+              child: Container(
+                height: 38,
+                width: 38,
+                padding: const EdgeInsets.all(1.8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(colors: colors.energyGradient),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.energyGradient.first.withValues(alpha: 0.28),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-
-                // سلام و تاریخ
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              greetingLine,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w900,
-                                height: 1.2,
-                                letterSpacing: -0.3,
-                                color: isDark ? Colors.white : const Color(0xFF1D2129),
-                              ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: colors.bg,
+                    image: hasAvatarFile
+                        ? DecorationImage(
+                            image: ResizeImage(
+                              FileImage(File(avatarPath!)),
+                              width: 120,
+                              height: 120,
+                            ),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: hasAvatarFile
+                      ? null
+                      : Center(
+                          child: Text(
+                            userName.isNotEmpty ? userName[0] : '؟',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: colors.primary,
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          Text(tg.emoji, style: const TextStyle(fontSize: 13)),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        toPersianDigits(dateStr),
+                        ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+
+          // سلام و تاریخ
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        greetingLine,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
                           height: 1.1,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                          letterSpacing: -0.3,
+                          color: isDark ? Colors.white : const Color(0xFF1D2129),
                         ),
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 4),
+                    Text(tg.emoji, style: const TextStyle(fontSize: 12)),
+                  ],
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  toPersianDigits(dateStr),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.05,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
                   ),
                 ),
-                const SizedBox(width: 6),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
 
                 // دکمه‌های اکشن دایره‌ای سبک ماژول‌ها (جستجو و زنگوله)
                 _buildHeaderActionButton(

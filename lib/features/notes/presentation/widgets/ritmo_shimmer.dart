@@ -43,27 +43,29 @@ class _RitmoShimmerState extends State<RitmoShimmer>
         ? Colors.white.withValues(alpha: 0.12)
         : Colors.black.withValues(alpha: 0.09);
 
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return ShaderMask(
-          blendMode: BlendMode.srcATop,
-          shaderCallback: (bounds) {
-            return LinearGradient(
-              begin: const Alignment(-1.0, -0.3),
-              end: const Alignment(1.0, 0.3),
-              stops: [
-                (_controller.value - 0.3).clamp(0.0, 1.0),
-                _controller.value.clamp(0.0, 1.0),
-                (_controller.value + 0.3).clamp(0.0, 1.0),
-              ],
-              colors: [baseColor, highlightColor, baseColor],
-            ).createShader(bounds);
-          },
-          child: child,
-        );
-      },
-      child: widget.child,
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return ShaderMask(
+            blendMode: BlendMode.srcATop,
+            shaderCallback: (bounds) {
+              return LinearGradient(
+                begin: const Alignment(-1.0, -0.3),
+                end: const Alignment(1.0, 0.3),
+                stops: [
+                  (_controller.value - 0.3).clamp(0.0, 1.0),
+                  _controller.value.clamp(0.0, 1.0),
+                  (_controller.value + 0.3).clamp(0.0, 1.0),
+                ],
+                colors: [baseColor, highlightColor, baseColor],
+              ).createShader(bounds);
+            },
+            child: child,
+          );
+        },
+        child: widget.child,
+      ),
     );
   }
 }

@@ -4,7 +4,6 @@ import 'package:ritmo/core/settings/settings_transfer_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
 class SettingsImportDiffDialog extends StatefulWidget {
   const SettingsImportDiffDialog({

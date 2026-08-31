@@ -309,4 +309,28 @@ void main() {
       expect(recentHistory[3], 'دستیار: Message 9');
     });
   });
+
+  group('AssistantActionType Robustness Tests', () {
+    test('parses exact enum name', () {
+      expect(AssistantActionType.tryFromString('logSleep'), AssistantActionType.logSleep);
+      expect(AssistantActionType.tryFromString('createRoutine'), AssistantActionType.createRoutine);
+    });
+
+    test('parses common LLM aliases like "sleep" or "mood"', () {
+      expect(AssistantActionType.tryFromString('sleep'), AssistantActionType.logSleep);
+      expect(AssistantActionType.tryFromString('sleeplog'), AssistantActionType.logSleep);
+      expect(AssistantActionType.tryFromString('log_sleep'), AssistantActionType.logSleep);
+      expect(AssistantActionType.tryFromString('خواب'), AssistantActionType.logSleep);
+      expect(AssistantActionType.tryFromString('mood'), AssistantActionType.logEnergyMood);
+      expect(AssistantActionType.tryFromString('energy'), AssistantActionType.logEnergyMood);
+      expect(AssistantActionType.tryFromString('routine'), AssistantActionType.createRoutine);
+      expect(AssistantActionType.tryFromString('goal'), AssistantActionType.createGoal);
+    });
+
+    test('fromString safely returns fallback without throwing ArgumentError', () {
+      expect(AssistantActionType.fromString('sleep'), AssistantActionType.logSleep);
+      expect(AssistantActionType.fromString('some_completely_unknown_action'), AssistantActionType.openPage);
+      expect(AssistantActionType.tryFromString('some_completely_unknown_action'), isNull);
+    });
+  });
 }

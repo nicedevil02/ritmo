@@ -62,31 +62,13 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> with SingleTi
   }
 
   Future<void> _addTopicSingle() async {
-    final controller = TextEditingController();
-    String? name;
-    try {
-      name = await showDialog<String>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('افزودن سرفصل جدید', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(hintText: 'نام سرفصل'),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف')),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              style: ElevatedButton.styleFrom(backgroundColor: ctx.colors.primary),
-              child: const Text('افزودن', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      );
-    } finally {
-      controller.dispose();
-    }
+    final name = await RitmoInputDialog.show(
+      context,
+      title: 'افزودن سرفصل جدید',
+      hintText: 'نام سرفصل (مثلاً: گرامر زمان‌ها)',
+      confirmLabel: 'افزودن',
+      icon: Icons.bookmark_add_rounded,
+    );
 
     if (name != null && name.isNotEmpty) {
       try {

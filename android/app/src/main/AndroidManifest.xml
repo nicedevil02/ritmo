@@ -21,6 +21,11 @@
         android:allowBackup="false"
         android:fullBackupContent="false"
         android:dataExtractionRules="@xml/data_extraction_rules">
+
+        <!-- غیرفعال‌سازی Impeller Vulkan برای جلوگیری از کرش گرافیکی روی پردازنده‌های هواوی و اسنپ‌دراگون -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

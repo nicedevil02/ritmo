@@ -23,8 +23,7 @@ class SkipReasonSheet extends StatelessWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: context.colors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      backgroundColor: Colors.transparent,
       builder: (_) => SkipReasonSheet(
         routineId: routineId,
         completionId: completionId,
@@ -61,6 +60,7 @@ class SkipReasonSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final options = [
       {'label': 'خسته بودم', 'reason': SkipReasonType.tired, 'icon': Icons.battery_charging_full_rounded},
@@ -71,39 +71,64 @@ class SkipReasonSheet extends StatelessWidget {
       {'label': 'بیرونی بود (مهمان، سفر، کار)', 'reason': SkipReasonType.external, 'icon': Icons.flight_takeoff_rounded},
     ];
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20, right: 20, top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('علت انجام نشدن؟', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('فعلاً نه', style: TextStyle(color: colors.textSecondary)),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: RitmoGlassSheet(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        padding: EdgeInsets.only(
+          left: 18,
+          right: 18,
+          top: 12,
+          bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 38,
+                height: 4.5,
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: colors.textSecondary.withValues(alpha: isDark ? 0.30 : 0.22),
+                  borderRadius: BorderRadius.circular(3),
+                ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...options.map((opt) {
-            final reason = opt['reason'] as SkipReasonType;
-            final label = opt['label'] as String;
-            final icon = opt['icon'] as IconData;
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('علت انجام نشدن؟', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('فعلاً نه', style: TextStyle(color: colors.textSecondary, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...options.map((opt) {
+              final reason = opt['reason'] as SkipReasonType;
+              final label = opt['label'] as String;
+              final icon = opt['icon'] as IconData;
 
-            return ListTile(
-              leading: Icon(icon, color: colors.primary),
-              title: Text(label, style: TextStyle(fontSize: 14, color: colors.textPrimary)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              onTap: () => _selectReason(context, reason),
-            );
-          }),
-        ],
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: colors.card.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: colors.border.withValues(alpha: 0.25)),
+                ),
+                child: ListTile(
+                  leading: Icon(icon, color: colors.primary, size: 22),
+                  title: Text(label, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: colors.textPrimary)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  onTap: () => _selectReason(context, reason),
+                ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

@@ -131,14 +131,22 @@ class AIGateway {
       if (apiKey != null && apiKey.trim().isEmpty) apiKey = null;
       if (model != null && model.trim().isEmpty) model = null;
 
+      final presetStr = settingsMap['ai_provider_preset'] ?? 'chatgpt_web';
+
       if (isFeaturesConfig) {
         baseUrl ??= defaultFeaturesBaseUrl.isNotEmpty ? defaultFeaturesBaseUrl : 'https://opencode.ai/zen/v1/chat/completions';
         apiKey ??= defaultFeaturesApiKey;
         model ??= defaultFeaturesModel;
       } else {
-        baseUrl ??= defaultBaseUrl.isNotEmpty ? defaultBaseUrl : defaultFeaturesBaseUrl;
-        apiKey ??= defaultApiKey.isNotEmpty ? defaultApiKey : defaultFeaturesApiKey;
-        model ??= defaultModel.isNotEmpty ? defaultModel : defaultFeaturesModel;
+        if (presetStr == 'chatgpt_web') {
+          baseUrl ??= 'https://chatgpt.com/';
+          apiKey ??= '';
+          model ??= 'ChatGPT Web Session (Auto)';
+        } else {
+          baseUrl ??= defaultBaseUrl.isNotEmpty ? defaultBaseUrl : defaultFeaturesBaseUrl;
+          apiKey ??= defaultApiKey.isNotEmpty ? defaultApiKey : defaultFeaturesApiKey;
+          model ??= defaultModel.isNotEmpty ? defaultModel : defaultFeaturesModel;
+        }
       }
 
       if (baseUrl.isEmpty) {
@@ -923,6 +931,15 @@ class AIGateway {
     final systemPrompt = AIPromptEngine.buildSystemPrompt(PromptType.copilot);
     final userPrompt = AIPromptEngine.buildCopilotUserPrompt(query: query, context: context);
 
+    final primary = await _loadConfig(slot: slot);
+    if (primary.baseUrl.contains('chatgpt.com')) {
+      yield* ChatGptWebBridgeManager.instance.sendPrompt(
+        prompt: userPrompt,
+        personaSystemPrompt: systemPrompt,
+      );
+      return;
+    }
+
     final open = await _openStream(
       messages: [
         {'role': 'system', 'content': systemPrompt},
@@ -937,8 +954,6 @@ class AIGateway {
     }
 
     final client = open.client!;
-    var totalYieldedChars = 0;
-    const maxCharsLimit = 2000;
 
     try {
       final stream = open.response!.stream
@@ -946,11 +961,6 @@ class AIGateway {
           .transform(const LineSplitter());
 
       await for (final line in stream) {
-        if (totalYieldedChars >= maxCharsLimit) {
-          yield r' ...\n\n⚠️ [پاسخ به دلیل طولانی شدن بیش از حد مجاز (بیش از ۲۰۰۰ کاراکتر) متوقف شد]';
-          break;
-        }
-
         final cleanLine = line.trim();
         if (cleanLine.isEmpty) continue;
         if (cleanLine == 'data: [DONE]') break;
@@ -961,7 +971,6 @@ class AIGateway {
             final parsed = jsonDecode(jsonString);
             final delta = parsed['choices']?[0]?['delta']?['content']?.toString() ?? '';
             if (delta.isNotEmpty) {
-              totalYieldedChars += delta.length;
               yield delta;
             }
           } catch (_) {
@@ -1126,8 +1135,6 @@ class AIGateway {
     }
 
     final client = open.client!;
-    var totalYieldedChars = 0;
-    const maxCharsLimit = 2000;
 
     try {
       final stream = open.response!.stream
@@ -1135,11 +1142,6 @@ class AIGateway {
           .transform(const LineSplitter());
 
       await for (final line in stream) {
-        if (totalYieldedChars >= maxCharsLimit) {
-          yield '\n\n⚠️ [پاسخ به دلیل طولانی شدن بیش از حد مجاز (بیش از ۲۰۰۰ کاراکتر) متوقف شد]';
-          break;
-        }
-
         final cleanLine = line.trim();
         if (cleanLine.isEmpty) continue;
         if (cleanLine == 'data: [DONE]') break;
@@ -1158,7 +1160,6 @@ class AIGateway {
                       ? content
                       : (reasoning != null && reasoning.isNotEmpty ? reasoning : null);
                   if (text != null && text.isNotEmpty) {
-                    totalYieldedChars += text.length;
                     yield text;
                   }
                 }

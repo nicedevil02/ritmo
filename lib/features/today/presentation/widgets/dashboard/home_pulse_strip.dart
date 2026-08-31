@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_pressable.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 
 /// یک سنجهٔ کوتاه در کارت «نبض امروز».
 @immutable
@@ -60,7 +59,7 @@ class HomePulseStrip extends StatelessWidget {
       borderRadius: BorderRadius.circular(28),
       padding: const EdgeInsets.symmetric(
         horizontal: 14,
-        vertical: 12,
+        vertical: 10,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -71,27 +70,31 @@ class HomePulseStrip extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // هدر: عنوان + منو (۳ نقطه پشت نبض امروز)
+                // هدر: منو (۳ نقطه) + عنوان نبض امروز
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Vazirmatn',
-                        color: colors.textPrimary,
+                    _menuDots(colors, isDark),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Vazirmatn',
+                          color: colors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    _menuDots(colors, isDark),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 5),
                 // متریک‌ها
                 for (int i = 0; i < metrics.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 4.5),
+                  if (i > 0) const SizedBox(height: 3.5),
                   _neumorphicMetricRow(context, colors, isDark, metrics[i]),
                 ],
               ],
@@ -169,8 +172,8 @@ class HomePulseStrip extends StatelessWidget {
     bool isDark,
     double value,
   ) {
-    const ringSize = 108.0;
-    const innerSize = 68.0;
+    const ringSize = 104.0;
+    const innerSize = 66.0;
 
     final ringColors = <Color>[
       Color.lerp(colors.primary, const Color(0xFFCDBBF0), 0.35)!,
@@ -205,13 +208,15 @@ class HomePulseStrip extends StatelessWidget {
                 ),
               ),
               // ── آرک پیشرفت + نقطه درخشان ──
-              CustomPaint(
-                size: const Size(ringSize, ringSize),
-                painter: _NeumorphicPulseRingPainter(
-                  progress: animated,
-                  trackColor: colors.surfaceSunken,
-                  ringColors: ringColors,
-                  isDark: isDark,
+              RepaintBoundary(
+                child: CustomPaint(
+                  size: const Size(ringSize, ringSize),
+                  painter: _NeumorphicPulseRingPainter(
+                    progress: animated,
+                    trackColor: colors.surfaceSunken,
+                    ringColors: ringColors,
+                    isDark: isDark,
+                  ),
                 ),
               ),
               // ── دایره مرکزی برجسته ──
@@ -255,7 +260,7 @@ class HomePulseStrip extends StatelessWidget {
                       Text(
                         toPersianDigits('${(animated * 100).round()}٪'),
                         style: TextStyle(
-                          fontSize: 19,
+                          fontSize: 18,
                           fontWeight: FontWeight.w800,
                           fontFamily: 'Vazirmatn',
                           color: colors.textPrimary,
@@ -264,7 +269,7 @@ class HomePulseStrip extends StatelessWidget {
                       Text(
                         toPersianDigits('از ۱۰۰'),
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 9.5,
                           fontFamily: 'Vazirmatn',
                           color: colors.textTertiary,
                         ),
@@ -291,7 +296,7 @@ class HomePulseStrip extends StatelessWidget {
     HomePulseMetric metric,
   ) {
     final row = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         gradient: RitmoNeu.sunkenGradient(colors.surfaceSunken, isDark),
@@ -303,10 +308,10 @@ class HomePulseStrip extends StatelessWidget {
           children: [
             // آیکن نئومورفیک ۳ بعدی (اسکویرکل پیلو)
             Container(
-              height: 24,
-              width: 24,
+              height: 22,
+              width: 22,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(7.5),
+                borderRadius: BorderRadius.circular(7),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -321,20 +326,22 @@ class HomePulseStrip extends StatelessWidget {
                 ),
               ),
               child: Center(
-                child: Icon(metric.icon, size: 12, color: metric.color),
+                child: Icon(metric.icon, size: 11, color: metric.color),
               ),
             ),
-            const SizedBox(width: 7),
+            const SizedBox(width: 6),
             // لیبل
-            Text(
-              metric.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Vazirmatn',
-                color: colors.textSecondary,
+            Flexible(
+              child: Text(
+                metric.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Vazirmatn',
+                  color: colors.textSecondary,
+                ),
               ),
             ),
             const Spacer(),
@@ -344,7 +351,7 @@ class HomePulseStrip extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: 11,
                 fontWeight: FontWeight.w800,
                 fontFamily: 'Vazirmatn',
                 color: colors.textPrimary,

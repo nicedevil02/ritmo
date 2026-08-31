@@ -4,6 +4,7 @@ import 'package:ritmo/features/notes/data/note_attachment_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/domain/capture_context.dart';
 import 'package:ritmo/features/notes/logic/note_fts_engine.dart';
+import 'package:ritmo/features/notes/logic/note_text_normalizer.dart';
 import 'package:ritmo/core/database/schema/tables/note_tables.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
@@ -63,8 +64,8 @@ class NotesRepository {
       id: id,
       title: derivedTitle,
       body: trimmedBody,
-      titleNormalized: derivedTitle.toLowerCase(),
-      bodyNormalized: trimmedBody.toLowerCase(),
+      titleNormalized: NoteTextNormalizer.forIndex(derivedTitle),
+      bodyNormalized: NoteTextNormalizer.forIndex(trimmedBody),
       kind: kind,
       status: NoteStatus.active,
       isPrivate: isPrivate,
@@ -188,8 +189,8 @@ class NotesRepository {
       title: derivedTitle,
       body: trimmedBody,
       wordCount: wordCount,
-      titleNormalized: derivedTitle.toLowerCase(),
-      bodyNormalized: trimmedBody.toLowerCase(),
+      titleNormalized: NoteTextNormalizer.forIndex(derivedTitle),
+      bodyNormalized: NoteTextNormalizer.forIndex(trimmedBody),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(nowMs),
     );
 

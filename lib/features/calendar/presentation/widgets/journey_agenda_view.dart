@@ -1168,7 +1168,7 @@ class _AgendaRowState extends State<_AgendaRow> {
 
   /// Items that can be marked done/completed via swipe / quick-tap:
   bool get _canComplete =>
-      widget.item.kind != AgendaItemKind.event &&
+      widget.item.completion != AgendaCompletion.none &&
       (widget.item.domain != AgendaDomain.cycle ||
           widget.item.kind == AgendaItemKind.reminder);
 

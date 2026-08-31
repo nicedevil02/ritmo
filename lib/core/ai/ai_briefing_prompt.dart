@@ -14,7 +14,7 @@ SPECIFIC BRIEFING RULES:
 4. insights: 1-3 short observations (each max 80 characters), each with a text and a tone matching 'positive', 'neutral', or 'attention'.
 5. suggestions: 1-3 concrete next actions. Each suggestion should contain:
     - text: actionable message in Farsi (max 80 characters).
-    - actionType: optional string map to action (completeRoutine, skipRoutine, editRoutine, openPage, logEnergyMood, logReflection, createRoutine, or null).
+    - actionType: optional string map to action (createRoutine, editRoutine, completeRoutine, skipRoutine, logSleep, logEnergyMood, logReflection, createGoal, openPage, or null).
     - payload: optional JSON map with arguments (e.g. {"routineId": "..."}).
 
 FEW-SHOT EXAMPLE:

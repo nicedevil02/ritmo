@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
 class SettingsDegradedBanner extends StatefulWidget {
   const SettingsDegradedBanner({super.key});

@@ -12,12 +12,13 @@ import 'package:ritmo/core/ai/chat/chat_repository.dart';
 import 'package:ritmo/core/ai/chat/streaming_chat_service.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
 import 'package:ritmo/core/ai/memory/memory_models.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_mini_preview.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart';
 import 'package:ritmo/features/assistant/logic/assistant_action_registry.dart';
 import 'package:ritmo/features/assistant/logic/day_plan_composer.dart';
 import 'package:ritmo/features/assistant/logic/day_plan_template_service.dart';
@@ -74,6 +75,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final stt.SpeechToText _speech = stt.SpeechToText();
   bool _isSpeechAvailable = false;
   bool _isListening = false;
+
+  Timer? _auditHoldTimer;
+  bool _auditHoldTriggered = false;
+  Offset _auditPointerDownPos = Offset.zero;
 
   @override
   void initState() {
@@ -630,6 +635,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     ChatGptWebBridgeManager.instance.cloudflareNotifier.removeListener(
       _handleCloudflarePrompt,
     );
+    _auditHoldTimer?.cancel();
     _textController.dispose();
     _scrollController.dispose();
     _scrollOffset.dispose();
@@ -1077,6 +1083,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
       _isAgentWorking = true;
     });
 
+    RitmoAiStateService.instance.setMode(RitmoOrbMode.thinking);
+
     _sub = StreamingChatService()
         .send(
           sessionId: _sessionId!,
@@ -1087,9 +1095,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
         .listen(
           _onEvent,
           onError: (err) {
+            RitmoAiStateService.instance.setMode(RitmoOrbMode.idle);
             _onError(err.toString());
           },
           onDone: () {
+            RitmoAiStateService.instance.setMode(RitmoOrbMode.idle);
             setState(() {
               _sub = null;
               _streamingId = null;
@@ -1108,6 +1118,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       });
       _scrollToBottom();
     } else if (e is AssistantStarted) {
+      RitmoAiStateService.instance.setMode(RitmoOrbMode.streaming);
       setState(() {
         _streamingId = e.messageId;
         _messages.add(
@@ -1123,6 +1134,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       });
       _scrollToBottom();
     } else if (e is ChatChunk) {
+      RitmoAiStateService.instance.setMode(RitmoOrbMode.streaming);
       final idx = _messages.indexWhere((m) => m.id == _streamingId);
       if (idx != -1) {
         setState(() {
@@ -1154,6 +1166,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
         );
       }
     } else if (e is ChatComplete) {
+      RitmoAiStateService.instance.setMode(RitmoOrbMode.idle);
+      RitmoAiStateService.instance.triggerSuccessFlare();
       final idx = _messages.indexWhere((m) => m.id == e.messageId);
       if (idx != -1) {
         setState(() {
@@ -1172,6 +1186,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       });
       _scrollToBottom();
     } else if (e is ChatErrorEvent) {
+      RitmoAiStateService.instance.setMode(RitmoOrbMode.idle);
       setState(() {
         _isAgentWorking = false;
       });
@@ -1182,6 +1197,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 : 'خطایی در ارتباط با دستیار رخ داد.');
       _onError(errText);
     } else if (e is ChatCancelled) {
+      RitmoAiStateService.instance.setMode(RitmoOrbMode.idle);
       setState(() {
         _isAgentWorking = false;
       });
@@ -1910,12 +1926,7 @@ $suggestedSteps''';
                 actions: [
                   const BridgeStatusChip(),
                   const SizedBox(width: 6),
-                  RitmoVibrancyActionButton(
-                    icon: CupertinoIcons.clock,
-                    iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                    tooltip: 'تغییرات و ممیزی دستیار',
-                    onTap: () => _showAuditLogSheet(context),
-                  ),
+                  _buildAuditActionButton(context, isDark),
                   const SizedBox(width: 6),
                   RitmoVibrancyActionButton(
                     icon: CupertinoIcons.chat_bubble_2_fill,
@@ -2015,6 +2026,45 @@ $suggestedSteps''';
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAuditActionButton(BuildContext context, bool isDark) {
+    return Listener(
+      behavior: HitTestBehavior.opaque,
+      onPointerDown: (event) {
+        _auditHoldTriggered = false;
+        _auditPointerDownPos = event.position;
+        _auditHoldTimer?.cancel();
+        _auditHoldTimer = Timer(const Duration(seconds: 3), () {
+          if (!mounted) return;
+          _auditHoldTriggered = true;
+          HapticFeedback.heavyImpact();
+          ChatGptMiniPreview.show(context);
+        });
+      },
+      onPointerUp: (event) {
+        _auditHoldTimer?.cancel();
+        if (_auditHoldTriggered) {
+          _auditHoldTriggered = false;
+          return;
+        }
+        final distance = (event.position - _auditPointerDownPos).distance;
+        if (distance < 25 && mounted) {
+          HapticFeedback.lightImpact();
+          _showAuditLogSheet(context);
+        }
+      },
+      onPointerCancel: (_) {
+        _auditHoldTimer?.cancel();
+        _auditHoldTriggered = false;
+      },
+      child: RitmoVibrancyActionButton(
+        icon: CupertinoIcons.clock,
+        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+        tooltip: 'تغییرات و ممیزی دستیار',
+        onTap: () {},
       ),
     );
   }

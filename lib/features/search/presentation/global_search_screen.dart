@@ -1,13 +1,18 @@
 // lib/features/search/presentation/global_search_screen.dart
-// S26 — جستجوی سراسری: کارها · روتین‌ها · اهداف · سایر آیتم‌های registry
+// S26 — جستجوی سراسری: کارها · روتین‌ها · اهداف · یادداشت‌ها · سایر آیتم‌های registry
 
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/agenda/action_router.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/notes/domain/note_models.dart';
+import 'package:ritmo/features/notes/logic/note_fts_engine.dart';
+import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dart';
 import 'package:ritmo/features/registry/domain/registry_entry.dart';
 import 'package:ritmo/features/registry/domain/registry_query.dart';
 import 'package:ritmo/features/registry/logic/registry_index.dart';
@@ -15,7 +20,7 @@ import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_detail_sheet.dart';
 
-/// نتیجه‌ی جستجو — می‌تواند کار ساده یا آیتم registry باشد
+/// نتیجه‌ی جستجو — می‌تواند کار ساده، آیتم registry یا یادداشت باشد
 sealed class _SearchResult {}
 
 class _TaskResult extends _SearchResult {
@@ -26,6 +31,11 @@ class _TaskResult extends _SearchResult {
 class _RegistryResult extends _SearchResult {
   _RegistryResult(this.entry);
   final RegistryEntry entry;
+}
+
+class _NoteResult extends _SearchResult {
+  _NoteResult(this.note);
+  final Note note;
 }
 
 /// گروه نتایج جستجو
@@ -50,15 +60,33 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   List<_ResultGroup> _groups = [];
   bool _isSearching = false;
   Timer? _debounce;
+  Map<String, String> _settingsMap = {};
 
   @override
   void initState() {
     super.initState();
+    _loadSettings();
     _controller.addListener(_onQueryChanged);
     // فوکوس اتوماتیک
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
+  }
+
+  Future<void> _loadSettings() async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final rows = await db.query('app_settings');
+      if (mounted) {
+        setState(() {
+          _settingsMap = {
+            for (final r in rows) r['key'] as String: r['value'] as String? ?? '',
+          };
+        });
+      }
+    } catch (e, st) {
+      RitmoLog.warning('GlobalSearchScreen', 'Error loading settings', e, st);
+    }
   }
 
   @override
@@ -79,7 +107,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       });
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 250), () {
+    _debounce = Timer(const Duration(milliseconds: 200), () {
       _performSearch(q);
     });
   }
@@ -91,12 +119,14 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     final results = await Future.wait([
       _searchSimpleTasks(query),
       _searchRegistry(query),
+      _searchNotes(query),
     ]);
 
     if (!mounted) return;
 
     final taskRows = results[0] as List<SimpleTask>;
     final registryEntries = results[1] as List<RegistryEntry>;
+    final noteRows = results[2] as List<Note>;
 
     final groups = <_ResultGroup>[];
 
@@ -105,7 +135,16 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       groups.add(_ResultGroup(
         label: 'کارها',
         icon: CupertinoIcons.check_mark_circled,
-        items: taskRows.take(5).map((t) => _TaskResult(t) as _SearchResult).toList(),
+        items: taskRows.take(6).map((t) => _TaskResult(t) as _SearchResult).toList(),
+      ));
+    }
+
+    // --- یادداشت‌ها ---
+    if (noteRows.isNotEmpty) {
+      groups.add(_ResultGroup(
+        label: 'یادداشت‌ها',
+        icon: CupertinoIcons.doc_text,
+        items: noteRows.take(6).map((n) => _NoteResult(n) as _SearchResult).toList(),
       ));
     }
 
@@ -133,7 +172,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       groups.add(_ResultGroup(
         label: domain.faLabel,
         icon: domain.icon,
-        items: entries.take(5).map((e) => _RegistryResult(e) as _SearchResult).toList(),
+        items: entries.take(6).map((e) => _RegistryResult(e) as _SearchResult).toList(),
       ));
     }
 
@@ -143,7 +182,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       groups.add(_ResultGroup(
         label: kv.key.faLabel,
         icon: kv.key.icon,
-        items: kv.value.take(5).map((e) => _RegistryResult(e) as _SearchResult).toList(),
+        items: kv.value.take(6).map((e) => _RegistryResult(e) as _SearchResult).toList(),
       ));
     }
 
@@ -156,7 +195,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   Future<List<SimpleTask>> _searchSimpleTasks(String query) async {
     try {
       final results = await SimpleTaskRepository.instance.search(query);
-      return results.take(10).toList();
+      return results.take(15).toList();
     } catch (e, st) {
       RitmoLog.error('GlobalSearchScreen', 'Error searching simple tasks', e, st);
       return [];
@@ -171,11 +210,21 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           statusFilter: const {RegistryStatus.active, RegistryStatus.paused, RegistryStatus.completed},
           showArchived: false,
         ),
-        const {},
+        _settingsMap,
       );
       return results;
     } catch (e, st) {
       RitmoLog.error('GlobalSearchScreen', 'Error searching registry', e, st);
+      return [];
+    }
+  }
+
+  Future<List<Note>> _searchNotes(String query) async {
+    try {
+      final results = await NoteFtsEngine.instance.search(query, limit: 15);
+      return results;
+    } catch (e, st) {
+      RitmoLog.error('GlobalSearchScreen', 'Error searching notes', e, st);
       return [];
     }
   }
@@ -217,12 +266,12 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                                 style: TextStyle(
                                   fontSize: 15,
                                   color: colors.textPrimary,
-                                  ),
+                                ),
                                 decoration: InputDecoration(
-                                  hintText: 'جستجو در همه‌چیز…',
+                                  hintText: 'جستجو در کارها، برنامه‌ها، اهداف و یادداشت‌ها…',
                                   hintStyle: TextStyle(
                                     color: colors.textSecondary.withValues(alpha: 0.6),
-                                    fontSize: 14,
+                                    fontSize: 13,
                                   ),
                                   border: InputBorder.none,
                                   isDense: true,
@@ -259,7 +308,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                           style: TextStyle(
                             color: colors.primary,
                             fontSize: 14,
-                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -294,11 +343,11 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             Icon(CupertinoIcons.search, size: 52, color: colors.textSecondary.withValues(alpha: 0.3)),
             const SizedBox(height: 12),
             Text(
-              'چیزی بنویس تا جستجو شود.',
+              'عبارت مورد نظر را تایپ کنید تا جستجو شود.',
               style: TextStyle(
                 color: colors.textSecondary,
                 fontSize: 14,
-                ),
+              ),
             ),
           ],
         ),
@@ -318,7 +367,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               style: TextStyle(
                 color: colors.textSecondary,
                 fontSize: 14,
-                ),
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -363,7 +412,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   color: colors.textSecondary.withValues(alpha: 0.6),
-                  ),
+                ),
               ),
             ],
           ),
@@ -388,6 +437,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       return _buildTaskTile(result.task, colors);
     } else if (result is _RegistryResult) {
       return _buildRegistryTile(result.entry, colors);
+    } else if (result is _NoteResult) {
+      return _buildNoteTile(result.note, colors);
     }
     return const SizedBox.shrink();
   }
@@ -463,8 +514,74 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                     style: TextStyle(
                       fontSize: 11,
                       color: colors.primary,
-                      ),
+                    ),
                   ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoteTile(Note note, RitmoColors colors) {
+    final title = (note.title != null && note.title!.isNotEmpty) ? note.title! : note.body;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => NoteEditorScreen(note: note),
+            ),
+          ).then((_) => _performSearch(_controller.text));
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          child: Row(
+            children: [
+              Icon(
+                CupertinoIcons.doc_text_fill,
+                size: 20,
+                color: colors.primary.withValues(alpha: 0.8),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: colors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (note.body.isNotEmpty && note.title != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        note.body,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.textSecondary.withValues(alpha: 0.7),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (note.isPinned) ...[
+                const SizedBox(width: 6),
+                Icon(
+                  CupertinoIcons.pin_fill,
+                  size: 14,
+                  color: colors.primary,
                 ),
               ],
             ],
@@ -478,7 +595,9 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => Navigator.pop(context),
+        onTap: () {
+          ActionRouter.open(context, item: entry.agendaProxy);
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           child: Row(

@@ -223,7 +223,7 @@ class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer> {
     final MediaQueryData media = MediaQuery.of(context);
     _reduceMotion = media.disableAnimations;
     _typing = media.viewInsets.bottom > 40.0;
-    _tickerOn = TickerMode.of(context);
+    _tickerOn = TickerMode.valuesOf(context).enabled;
     _syncClock();
   }
 
@@ -359,7 +359,7 @@ class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer> {
               child: RepaintBoundary(
                 child: ValueListenableBuilder<double>(
                   valueListenable: _frame,
-                  builder: (context, _, __) {
+                  builder: (context, _, _) {
                     final RitmoOrbSignature sig =
                         _signature.withTruth(_truth);
                     RitmoOrbPalette palette = _palette;

@@ -125,11 +125,11 @@ class _RitmoThinkingBubbleState extends State<RitmoThinkingBubble> {
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTapDown: (TapDownDetails details) {
+      onTapDown: (details) {
         _setPress(1.0);
         _aim(details.localPosition);
       },
-      onTapUp: (TapUpDetails details) {
+      onTapUp: (details) {
         _setPress(0.0);
         _rest();
         RitmoOrbAttentionSignal.instance.nod();
@@ -139,8 +139,8 @@ class _RitmoThinkingBubbleState extends State<RitmoThinkingBubble> {
         _setPress(0.0);
         _rest();
       },
-      onPanUpdate: (DragUpdateDetails details) => _aim(details.localPosition),
-      onPanEnd: (DragEndDetails details) {
+      onPanUpdate: (details) => _aim(details.localPosition),
+      onPanEnd: (details) {
         _setPress(0.0);
         _rest();
       },

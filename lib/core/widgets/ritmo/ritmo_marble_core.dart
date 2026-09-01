@@ -81,7 +81,7 @@ class RitmoMarbleCore extends StatefulWidget {
   final RitmoEyeMode eyeMode;
 
   /// اگر false باشد، سوئیچِ خاموشیِ کاربر را نادیده می‌گیرد (مانند پیش‌نمایشِ
-  /// خودِ صفحهٔ تنطیمات، که باید حتی در حالتِ خاموش هم دیده شود).
+  /// خودِ صفحهٔ تنظیمات، که باید حتی در حالتِ خاموش هم دیده شود).
   final bool respectSettings;
 
   /// فقط در تست: شمارشِ فرمان‌های نقاشی.
@@ -157,7 +157,7 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    _tickerOn = TickerMode.of(context);
+    _tickerOn = TickerMode.valuesOf(context).enabled;
     _syncClock();
   }
 

@@ -4,7 +4,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 
 class RitmoDialog extends StatelessWidget {
   const RitmoDialog({

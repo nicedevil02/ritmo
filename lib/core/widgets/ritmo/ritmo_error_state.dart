@@ -3,7 +3,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 
 class RitmoErrorState extends StatelessWidget {
   const RitmoErrorState({

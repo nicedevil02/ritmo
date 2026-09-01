@@ -20,7 +20,6 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_orb_eyes.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_halo.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_motion.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_settings.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_orb_types.dart';
 
 export 'package:ritmo/core/widgets/ritmo/ritmo_orb_motion.dart'
     show RitmoOrbLife;
@@ -77,7 +76,7 @@ class RitmoLivingOrb extends StatefulWidget {
   final bool reactToSuccessFlare;
 
   /// وقتی true باشد، خروجِ تیله به کادرِ ورودی گزارش می‌شود (جذب شدن).
-  /// در هر لحطه فقط یک تیله مالکِ این کانال است.
+  /// در هر لحظه فقط یک تیله مالکِ این کانال است.
   final bool absorbIntoInput;
   final String semanticLabel;
   final RitmoOrbTruth? truth;
@@ -88,7 +87,7 @@ class RitmoLivingOrb extends StatefulWidget {
   /// اجازهٔ لنگر گرفتن دورِ کادرِ تایپ وقتی کیبرد باز است.
   final bool allowDock;
 
-  /// اگر null باشد، از تنطیماتِ کاربر پیروی می‌کند.
+  /// اگر null باشد، از تنظیماتِ کاربر پیروی می‌کند.
   final RitmoEyeMode? eyeMode;
 
   @override
@@ -393,9 +392,11 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
                 pose.scale * (1.0 + 0.06 * (raw - 1.0).clamp(0.0, 0.2));
             Widget body = Transform(
               alignment: Alignment.center,
-              transform: Matrix4.identity()
-                ..translate(0.0, pose.lift * widget.size)
-                ..scale(scale),
+              transform: Matrix4.translationValues(
+                0.0,
+                pose.lift * widget.size,
+                0.0,
+              )..scaleByDouble(scale, scale, 1.0, 1.0),
               child: child,
             );
             if (pose.opacity < 0.999) {

@@ -1,6 +1,6 @@
 // گاردِ چهرهٔ تیله: چشم، سوئیچِ خاموشی، و لنگرِ کادرِ تایپ.
 //
-// دو چیزی که این‌جا محافطت می‌شود، همانی است که اگر بشکند چشم‌ها دوباره
+// دو چیزی که این‌جا محافظت می‌شود، همانی است که اگر بشکند چشم‌ها دوباره
 // می‌شوند همان پلکِ عروسکیِ قبل:
 //  ۱) بستن باید تندتر از باز شدن باشد.
 //  ۲) خاموشی باید واقعاً خاموشی باشد: صفر فریم، صفر فضا.
@@ -209,7 +209,7 @@ void main() {
   });
 
   group('هزینهٔ چشم', () {
-    test('چشمِ باز: حداکطر چهار فرمان، صفر بلور', () {
+    test('چشمِ باز: حداکثر چهار فرمان، صفر بلور', () {
       final RitmoOrbPaintStats stats = _paintEyes(RitmoEyeFrame.calm);
       expect(stats.blurPasses, 0, reason: 'چشم بلور لازم ندارد');
       expect(stats.drawOps, lessThanOrEqualTo(4));
@@ -245,7 +245,7 @@ void main() {
 
   group('سوئیچِ خاموشی', () {
     testWidgets('خاموش = صفر فریم، صفر فضا',
-        (WidgetTester tester) async {
+        (tester) async {
       RitmoOrbSettings.instance.debugSet(on: false);
 
       await tester.pumpWidget(_harness(
@@ -266,7 +266,7 @@ void main() {
     });
 
     testWidgets('روشن کردن، حباب را برمی‌گرداند',
-        (WidgetTester tester) async {
+        (tester) async {
       RitmoOrbSettings.instance.debugSet(on: false);
 
       await tester.pumpWidget(_harness(
@@ -289,7 +289,7 @@ void main() {
 
   group('لنگرِ کادرِ تایپ', () {
     testWidgets('کیبرد بسته = لنگری نیست',
-        (WidgetTester tester) async {
+        (tester) async {
       final RitmoOrbPaintStats stats = RitmoOrbPaintStats();
       await tester.pumpWidget(_dockHarness(
         layer: RitmoOrbDockLayer(stats: stats),
@@ -304,7 +304,7 @@ void main() {
     });
 
     testWidgets('از سقفِ ردهٔ میانی رد نمی‌شود',
-        (WidgetTester tester) async {
+        (tester) async {
       final RitmoOrbPaintStats stats = RitmoOrbPaintStats();
 
       // reduceMotion تا ساعت وسط نیاید و شمارش دو بار نشود.
@@ -338,7 +338,7 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
-    testWidgets('لمس را نمی‌دزدد', (WidgetTester tester) async {
+    testWidgets('لمس را نمی‌دزدد', (tester) async {
       int taps = 0;
       await tester.pumpWidget(_dockHarness(
         reduceMotion: true,
@@ -381,7 +381,7 @@ void main() {
 
   group('تحویلِ کار', () {
     testWidgets('کیبردِ باز = تیله جایش را به لنگر می‌دهد',
-        (WidgetTester tester) async {
+        (tester) async {
       tester.view.viewInsets = const FakeViewPadding(bottom: 300.0);
       addTearDown(tester.view.reset);
 
@@ -403,8 +403,8 @@ void main() {
       expect(RitmoOrbClock.instance.subscriberCount, 0);
     });
 
-    testWidgets('خاموشیِ لنگر در تنطیمات محترم است',
-        (WidgetTester tester) async {
+    testWidgets('خاموشیِ لنگر در تنظیمات محترم است',
+        (tester) async {
       tester.view.viewInsets = const FakeViewPadding(bottom: 300.0);
       addTearDown(tester.view.reset);
       RitmoOrbSettings.instance.debugSet(dock: false);

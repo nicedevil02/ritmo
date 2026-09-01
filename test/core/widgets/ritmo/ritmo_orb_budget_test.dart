@@ -31,7 +31,7 @@ void main() {
   });
 
   group('بودجهٔ نقاشی', () {
-    testWidgets('ردهٔ S هیچ پاسِ بلوری ندارد', (WidgetTester tester) async {
+    testWidgets('ردهٔ S هیچ پاسِ بلوری ندارد', (tester) async {
       final RitmoOrbPaintStats stats = RitmoOrbPaintStats();
       await tester.pumpWidget(_harness(
         RitmoMarbleCore(size: 19.0, isAnimated: false, stats: stats),
@@ -53,7 +53,7 @@ void main() {
     });
 
     testWidgets('ردهٔ L از سقفِ بلور و سفید عبور نمی‌کند',
-        (WidgetTester tester) async {
+        (tester) async {
       final RitmoOrbPaintStats stats = RitmoOrbPaintStats();
       await tester.pumpWidget(_harness(
         RitmoMarbleCore(size: 96.0, isAnimated: false, stats: stats),
@@ -83,7 +83,7 @@ void main() {
     });
 
     testWidgets('حالتِ نوشتن هم از بودجه بیرون نمی‌زند',
-        (WidgetTester tester) async {
+        (tester) async {
       final RitmoOrbPaintStats stats = RitmoOrbPaintStats();
       await tester.pumpWidget(_harness(
         RitmoMarbleCore(
@@ -114,7 +114,7 @@ void main() {
 
   group('چرخهٔ عمرِ ساعت', () {
     testWidgets('تیلهٔ زنده مشترکِ ساعت می‌شود و بعد از dispose رها می‌کند',
-        (WidgetTester tester) async {
+        (tester) async {
       expect(RitmoOrbClock.instance.subscriberCount, 0);
 
       await tester.pumpWidget(_harness(
@@ -130,7 +130,7 @@ void main() {
           reason: 'با رفتنِ آخرین تیله باید بایستد');
     });
 
-    testWidgets('تیلهٔ پنهان هیچ فریمی نمی‌گیرد', (WidgetTester tester) async {
+    testWidgets('تیلهٔ پنهان هیچ فریمی نمی‌گیرد', (tester) async {
       await tester.pumpWidget(_harness(
         const RitmoLivingOrb(life: RitmoOrbLife.hidden, size: 96.0),
       ));
@@ -145,7 +145,7 @@ void main() {
     });
 
     testWidgets('احترام به کاهشِ حرکت: یک فریمِ ایستا',
-        (WidgetTester tester) async {
+        (tester) async {
       await tester.pumpWidget(_harness(
         const RitmoLivingOrb(life: RitmoOrbLife.writing, size: 96.0),
         reduceMotion: true,
@@ -158,7 +158,7 @@ void main() {
       await tester.pumpWidget(_harness(const SizedBox.shrink()));
     });
 
-    testWidgets('TickerMode خاموش = بدون مشترک', (WidgetTester tester) async {
+    testWidgets('TickerMode خاموش = بدون مشترک', (tester) async {
       await tester.pumpWidget(_harness(
         const TickerMode(
           enabled: false,
@@ -304,7 +304,7 @@ void main() {
 
   group('دسترسی‌پذیری', () {
     testWidgets('تیله حالتش را برای screen reader می‌گوید',
-        (WidgetTester tester) async {
+        (tester) async {
       final SemanticsHandle handle = tester.ensureSemantics();
       await tester.pumpWidget(_harness(
         const RitmoLivingOrb(life: RitmoOrbLife.thinking, size: 96.0),
@@ -318,7 +318,7 @@ void main() {
     });
 
     testWidgets('تیلهٔ قابلِ لمس حداقل ۴۸ پیکسل ناحیهٔ لمس دارد',
-        (WidgetTester tester) async {
+        (tester) async {
       await tester.pumpWidget(_harness(
         RitmoLivingOrb(
           life: RitmoOrbLife.breathing,

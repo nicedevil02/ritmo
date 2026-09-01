@@ -3,6 +3,14 @@
 //  هر فریم فقط برگِ CustomPaint عوض می‌شود؛ نه درختِ ویجت، نه setState.
 //  حرکت از [RitmoOrbClock] می‌آید (یک ticker برای کلِ اپ) و هزینهٔ نقاشی با
 //  [RitmoOrbBudget] سقف‌گذاری شده است.
+//
+//  دو فازِ جدا داریم، و این عمدی است:
+//
+//   • _phase — نفس، نوسانِ پوسته، لرزش. چیزهایی که باید حیاتی به نظر برسند.
+//   • _swirl — حرکتِ رنگِ درون و موج. حدودِ ۴۰٪ کندتر.
+//
+//  دلیل: مایعی که به اندازهٔ پوسته تند بچرخد، سبک و گازدار به نظر می‌رسد.
+//  رنگِ کند، جرم می‌سازد.
 // =============================================================================
 
 import 'dart:math' as math;
@@ -80,8 +88,8 @@ class RitmoMarbleCore extends StatefulWidget {
   /// چشم‌ها کجا و کی. در تیرِ S هرگز؛ در ۱۹ پیکسل چشم فقط لکه می‌شود.
   final RitmoEyeMode eyeMode;
 
-  /// اگر false باشد، سوئیچِ خاموشیِ کاربر را نادیده می‌گیرد (مانند پیش‌نمایشِ
-  /// خودِ صفحهٔ تنظیمات، که باید حتی در حالتِ خاموش هم دیده شود).
+  /// اگر false باشد، سوئیچِ خاموشیِ کاربر را نادیده می‌گیرد (مانندِ پیش‌نمایشِ
+  /// خودِ صفحهٔ تنطیمات، که باید حتی در حالتِ خاموش هم دیده شود).
   final bool respectSettings;
 
   /// فقط در تست: شمارشِ فرمان‌های نقاشی.
@@ -101,6 +109,7 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
   late final RitmoEyeLife _eyeLife = RitmoEyeLife(seed: widget.seed);
 
   double _phase = 0.0;
+  double _swirl = 0.0;
   double _breath = 0.0;
   double _clockLast = 0.0;
   double _flare = 0.0;
@@ -140,6 +149,7 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
     _from = _to;
     _blend.snap(1.0);
     _phase = widget.seed * 0.37;
+    _swirl = widget.seed * 0.29;
     _breath = (widget.seed % 7) / 7.0;
     RitmoAiStateService.instance.truth.addListener(_onExternal);
     RitmoOrbAttentionSignal.instance.addListener(_onExternal);
@@ -249,17 +259,22 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
 
   void _onNod() {
     _nod = 1.0;
-    // صدایش زدند: چشم باز کن و نگاه کن.
+    // صدایش زدند: رو بگردان، نگاه کن و لبخند بزن.
     if (_eyesWanted) {
       _eyeLife.wake(hold: 3.6);
       _eyeLife.blinkNow(twice: true);
+      _eyeLife.smile();
     }
     _onExternal();
   }
 
   void _onFlare() {
     _flare = 1.0;
-    if (_eyesWanted) _eyeLife.wake(hold: 2.6);
+    // کاری درست از آب درآمده: این جایِ بزرگ‌ترین لبخند است.
+    if (_eyesWanted) {
+      _eyeLife.wake(hold: 2.6);
+      _eyeLife.smile(amount: 0.9);
+    }
     _onExternal();
   }
 
@@ -278,6 +293,10 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
     _blend.step(dt);
     _phase += dt * (0.55 + 1.65 * sig.flow) * widget.speed;
     if (_phase > 6283.0) _phase -= 6283.0;
+    // جابه‌جاییِ رنگ عمداً کندتر از نفس و نوسانِ پوسته است: مایعی که
+    // تند بچرخد، سبک و گازدار به نظر می‌رسد.
+    _swirl += dt * (0.22 + 0.62 * sig.flow) * widget.speed;
+    if (_swirl > 6283.0) _swirl -= 6283.0;
     _breath = (_breath + dt * 1000.0 / sig.breathMs) % 1.0;
     if (_flare > 0.0) _flare = (_flare - dt / 0.62).clamp(0.0, 1.0);
     if (_token > 0.0) _token = (_token - dt / 0.34).clamp(0.0, 1.0);
@@ -367,6 +386,7 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
               ),
               shell: _shell,
               phase: _phase,
+              swirl: _swirl,
               breath: _breath,
               flare: _flare,
               token: _token,
@@ -398,6 +418,7 @@ class _MarblePainter extends CustomPainter {
     required this.rig,
     required this.shell,
     required this.phase,
+    required this.swirl,
     required this.breath,
     required this.flare,
     required this.token,
@@ -421,6 +442,9 @@ class _MarblePainter extends CustomPainter {
   final RitmoLightRig rig;
   final RitmoShellCache shell;
   final double phase;
+
+  /// فازِ کندِ رنگِ درون و موج.
+  final double swirl;
   final double breath;
   final double flare;
   final double token;
@@ -489,7 +513,7 @@ class _MarblePainter extends CustomPainter {
         plumes: ritmoBuildPlumes(
           center: center,
           radius: radius,
-          phase: phase,
+          phase: swirl,
           count: 1,
           density: signature.density,
           drift: drift * 0.4,
@@ -537,7 +561,8 @@ class _MarblePainter extends CustomPainter {
       center: center,
       radius: radius * 0.995,
       samples: budget.shellSamples,
-      phase: phase * 0.55,
+      // پوسته هم کمی آرام‌تر موج می‌خورد؛ تیله شیشه است، نه ژله.
+      phase: phase * 0.42,
       wobble: signature.wobble * shellWobble * 0.16,
       squashX: sx,
       squashY: sy,
@@ -557,7 +582,7 @@ class _MarblePainter extends CustomPainter {
         plumes: ritmoBuildPlumes(
           center: center,
           radius: radius * tremor,
-          phase: phase,
+          phase: swirl,
           count: plumeCount,
           density: signature.density,
           drift: drift,
@@ -566,11 +591,33 @@ class _MarblePainter extends CustomPainter {
         radius: radius,
         palette: palette,
         tier: tier,
-        intensity: intensity,
+        // جریان کمی عقب می‌نشیند تا موج قهرمانِ درون باشد.
+        intensity: intensity * 0.86,
         density: signature.density,
         rig: rig,
       );
     }
+
+    // موج: چینی از رنگ که درونِ شیشه تاب می‌خورد. بینِ جریان و بالشت
+    // می‌نشیند، و چون درونِ clipPath است، هرگز از لبهٔ تیله بیرون نمی‌زند.
+    ritmoPaintWave(
+      canvas,
+      center: center,
+      radius: radius,
+      palette: palette,
+      rig: rig,
+      // در لحظهٔ جشن، حلقهٔ فلر یک پاسِ بلور می‌خواهد؛ همان یک پاس را از
+      // هالهٔ موج قرض می‌گیریم تا سقفِ بلورِ رده در هیچ فریمی شکسته نشود.
+      tier: flare > 0.02 && tier == RitmoOrbTier.l ? RitmoOrbTier.m : tier,
+      purse: purse,
+      phase: swirl,
+      amplitude: 0.30 + 0.62 * signature.flow,
+      folds: 1.15 + 0.85 * signature.density,
+      thickness: 0.42 + 0.50 * signature.density,
+      intensity: intensity,
+      isDark: isDark,
+    );
+
     if (tier == RitmoOrbTier.l) {
       ritmoPaintPillow(
         canvas,
@@ -579,7 +626,7 @@ class _MarblePainter extends CustomPainter {
         palette: palette,
         rig: rig,
         purse: purse,
-        phase: phase,
+        phase: swirl,
       );
     }
     ritmoPaintCaustic(
@@ -594,6 +641,11 @@ class _MarblePainter extends CustomPainter {
     // چشم‌ها درونِ برشِ پوسته و قبل از برقِ شیشه کشیده می‌شوند: چشمِ زیرِ
     // شیشه، نه برچسبِ روی آن.
     if (eyeFrame.presence > 0.02) {
+      // چشم‌ها کیفِ کوچکِ خودشان را دارند، وگرنه درخشِ دو چشم همهٔ سفیدِ
+      // تیله را می‌خورد و هایلایت و لبهٔ یخ خاموش می‌مانند — دقیقاً در لحطه‌ای
+      // که تیله رو به کاربر می‌کند. این سهم از دلِ همان کیفِ اصلی برداشته
+      // می‌شود، پس حسابداری هم دروغ نمی‌شود.
+      final RitmoWhitePurse eyePurse = RitmoWhitePurse(purse.take(0.14));
       ritmoPaintEyes(
         canvas,
         center: Offset(center.dx, center.dy - radius * 0.08),
@@ -602,8 +654,10 @@ class _MarblePainter extends CustomPainter {
         frame: eyeFrame,
         palette: palette,
         isDark: isDark,
-        purse: purse,
+        purse: eyePurse,
         catchlight: tier == RitmoOrbTier.l,
+        // لپ فقط روی تیلهٔ بزرگ دیده می‌شود؛ در ۴۲ پیکسل فقط لکه است.
+        blush: tier == RitmoOrbTier.l ? 0.62 : 0.0,
       );
     }
     canvas.restore();
@@ -644,6 +698,7 @@ class _MarblePainter extends CustomPainter {
   @override
   bool shouldRepaint(_MarblePainter old) =>
       old.phase != phase ||
+      old.swirl != swirl ||
       old.breath != breath ||
       old.flare != flare ||
       old.token != token ||

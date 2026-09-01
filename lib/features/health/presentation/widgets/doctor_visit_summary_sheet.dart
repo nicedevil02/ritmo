@@ -1,3 +1,8 @@
+// =============================================================================
+//  doctor_visit_summary_sheet.dart
+//  پنجره شیشه‌ای مرجع خلاصه سلامت ریتمو مخصوص ارائه به پزشک معالج
+// =============================================================================
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,10 +11,20 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/health/data/medication_repository.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class DoctorVisitSummarySheet extends StatefulWidget {
   const DoctorVisitSummarySheet({super.key});
+
+  static Future<void> show(BuildContext context) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const DoctorVisitSummarySheet(),
+    );
+  }
 
   @override
   State<DoctorVisitSummarySheet> createState() => _DoctorVisitSummarySheetState();
@@ -119,16 +134,29 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
       if (engineOutput.adherence.missedPattern != null) {
         trendsList.add('  - الگوی فراموشی: ${engineOutput.adherence.missedPattern}');
       }
-      
+
       for (final trend in engineOutput.trends) {
         var label = '';
         var unit = '';
-        if (trend.metric == 'blood_sugar') { label = 'قند خون ناشتا'; unit = 'mg/dL'; }
-        else if (trend.metric == 'blood_pressure_systolic') { label = 'فشار خون سیستولیک'; unit = 'mmHg'; }
-        else if (trend.metric == 'blood_pressure_diastolic') { label = 'فشار خون دیاستولیک'; unit = 'mmHg'; }
-        else if (trend.metric == 'weight') { label = 'وزن بدن'; unit = 'kg'; }
-        else if (trend.metric == 'spo2') { label = 'اکسیژن خون'; unit = '٪'; }
-        else if (trend.metric == 'temperature') { label = 'دمای بدن'; unit = '°C'; }
+        if (trend.metric == 'blood_sugar') {
+          label = 'قند خون ناشتا';
+          unit = 'mg/dL';
+        } else if (trend.metric == 'blood_pressure_systolic') {
+          label = 'فشار خون سیستولیک';
+          unit = 'mmHg';
+        } else if (trend.metric == 'blood_pressure_diastolic') {
+          label = 'فشار خون دیاستولیک';
+          unit = 'mmHg';
+        } else if (trend.metric == 'weight') {
+          label = 'وزن بدن';
+          unit = 'kg';
+        } else if (trend.metric == 'spo2') {
+          label = 'اکسیژن خون';
+          unit = '٪';
+        } else if (trend.metric == 'temperature') {
+          label = 'دمای بدن';
+          unit = '°C';
+        }
 
         if (label.isNotEmpty) {
           final dirText = trend.direction == 'up' ? 'صعودی' : (trend.direction == 'down' ? 'نزولی' : 'پایدار');
@@ -146,7 +174,7 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
       // 6. Build Text Summary
       final nowJalali = Jalali.now();
       final dateStr = _toPersianDigits('${nowJalali.year}/${nowJalali.month}/${nowJalali.day}');
-      
+
       final buffer = StringBuffer();
       buffer.writeln('📋 گزارش خلاصه سلامت ریتمو (مخصوص پزشک معالج)');
       buffer.writeln('تاریخ تولید گزارش: $dateStr');
@@ -206,6 +234,7 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
   }
 
   void _copyToClipboard() {
+    RitmoHaptics.confirm();
     Clipboard.setData(ClipboardData(text: _summaryText));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -215,108 +244,125 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
     );
   }
 
+  void _shareSummary() async {
+    RitmoHaptics.selection();
+    if (_summaryText.isNotEmpty) {
+      try {
+        // ignore: deprecated_member_use
+        await Share.share(_summaryText, subject: 'خلاصه وضعیت سلامت ریتمو مخصوص پزشک');
+      } catch (e) {
+        debugPrint('Error sharing summary: $e');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      child: RitmoTheme.glassCardLight(
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+
+    return RitmoFormSheetScaffold(
+      title: 'خلاصه آماده برای پزشک',
+      icon: '📋',
+      iconBadgeColor: colors.primary,
+      cancelLabel: 'بستن',
+      initialChildSize: 0.85,
+      maxChildSize: 0.95,
+      snapSizes: const [0.60, 0.85],
+      builder: (context, scrollController) {
+        return SingleChildScrollView(
+          controller: scrollController,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            top: 8,
+            left: 16,
+            right: 16,
           ),
-          padding: const EdgeInsets.all(16),
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? Padding(
+                  padding: const EdgeInsets.all(48),
+                  child: Center(child: CircularProgressIndicator(color: colors.primary)),
+                )
               : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Drag handle
-                    Center(
-                      child: Container(
-                        width: 38,
-                        height: 4.5,
-                        decoration: BoxDecoration(
-                          color: colors.textPrimary.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.22),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
+                    // محفظه فرورفته متن خلاصه پزشکی
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: colors.textPrimary.withValues(alpha: 0.04),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: colors.textPrimary.withValues(alpha: 0.08)),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'خلاصه آماده برای ارائه به پزشک',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        child: RitmoCard.neumorphic(
-                          padding: const EdgeInsets.all(14),
-                          child: Text(
-                            _summaryText,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colors.textPrimary,
-                              height: 1.6,
-                            ),
-                          ),
+                      child: SelectableText(
+                        _summaryText,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          height: 1.7,
+                          color: colors.textPrimary,
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // دکمه‌های ۳ بعدی اقدام (کپی و اشتراک‌گذاری)
                     Row(
                       children: [
                         Expanded(
-                          child: RitmoNeuButton(
-                            onTap: _copyToClipboard,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(CupertinoIcons.doc_on_clipboard_fill, size: 17, color: colors.primary),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'کپی متن گزارش',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                    color: colors.primary,
+                          child: SizedBox(
+                            height: 48,
+                            child: RitmoNeuButton(
+                              onTap: _copyToClipboard,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(CupertinoIcons.doc_on_clipboard_fill, size: 16, color: colors.primary),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'کپی متن گزارش',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: colors.primary,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 12),
-                        RitmoNeuButton(
-                          onTap: () => Navigator.pop(context),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(CupertinoIcons.xmark, size: 15, color: colors.textSecondary),
-                              const SizedBox(width: 6),
-                              Text(
-                                'بستن',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: colors.textSecondary,
-                                ),
+                        Expanded(
+                          child: SizedBox(
+                            height: 48,
+                            child: RitmoNeuButton(
+                              onTap: _shareSummary,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(CupertinoIcons.share, size: 16, color: colors.accent),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'اشتراک‌گذاری',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: colors.accent,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 12),
                   ],
                 ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -330,3 +376,4 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
     return result;
   }
 }
+

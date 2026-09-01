@@ -139,7 +139,6 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
         maxChildSize: 0.94,
         expand: false,
         snap: true,
-        snapSizes: const [0.0, 0.94],
         builder: (context, scrollController) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final colors = context.colors;

@@ -150,7 +150,7 @@ class CycleSosSection extends StatelessWidget {
           minChildSize: 0.40,
           maxChildSize: 0.94,
           snap: true,
-          snapSizes: const [0.60, 0.94],
+          snapSizes: const [0.60],
           expand: false,
           builder: (context, scrollController) {
             return Directionality(

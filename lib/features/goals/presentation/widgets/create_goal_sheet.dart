@@ -541,7 +541,6 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
       maxChildSize: 0.94,
       expand: false,
       snap: true,
-      snapSizes: const [0.0, 0.94],
       builder: (context, scrollController) {
         final content = Column(
           children: [

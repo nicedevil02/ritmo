@@ -118,6 +118,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
   String? _nameError;
   String? _daysError;
   bool _isSubmitting = false;
+  late final DraggableScrollableController _sheetController;
 
   bool get isEditing => widget.initialRealm != null;
 
@@ -145,7 +146,19 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
         : null;
 
     _nameController = TextEditingController(text: r?.name ?? '');
+    _nameController.addListener(_onNameChanged);
     _nameFocusNode = FocusNode();
+    _sheetController = DraggableScrollableController();
+
+    _nameFocusNode.addListener(() {
+      if (_nameFocusNode.hasFocus && _sheetController.isAttached) {
+        _sheetController.animateTo(
+          0.94,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
 
     _selectedIcon = r?.icon ?? '🎯';
     _selectedColorHex = r?.colorHex ?? '#6366F1';
@@ -174,10 +187,18 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
     _initialEndTime = _endTime;
   }
 
+  void _onNameChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void dispose() {
+    _nameController.removeListener(_onNameChanged);
     _nameFocusNode.dispose();
     _nameController.dispose();
+    _sheetController.dispose();
     super.dispose();
   }
 
@@ -276,6 +297,7 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
     final effectiveColor = Color(int.parse(_selectedColorHex.replaceAll('#', '0xFF')));
 
     return RitmoFormSheetScaffold(
+      controller: _sheetController,
       title: isEditing ? 'ویرایش قلمرو' : 'ساخت قلمرو جدید',
       subtitle: isEditing ? 'تغییر تنظیمات و زمان‌بندی این قلمرو' : 'تعریف قلمرو زیستی و زمان‌بندی روزانه',
       icon: _selectedIcon,

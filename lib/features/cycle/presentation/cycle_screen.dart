@@ -425,7 +425,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         minChildSize: 0.40,
         maxChildSize: 0.94,
         snap: true,
-        snapSizes: const [0.60, 0.94],
+        snapSizes: const [0.60],
         expand: false,
         builder: (context, scrollController) => AddEditPeriodSheet(
           period:
@@ -713,7 +713,7 @@ Future<void> _openBaselineParameterPicker(
         minChildSize: 0.40,
         maxChildSize: 0.94,
         snap: true,
-        snapSizes: const [0.60, 0.94],
+        snapSizes: const [0.60],
         expand: false,
         builder: (context, scrollController) => RitmoGlassSheet(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),

@@ -42,7 +42,7 @@ class FocusBlockSheet extends StatefulWidget {
         minChildSize: 0.40,
         maxChildSize: 0.95,
         snap: true,
-        snapSizes: const [0.60, 0.95],
+        snapSizes: const [0.60],
         expand: false,
         builder: (context, scrollController) =>
             FocusBlockSheet(item: item, onComplete: onComplete),

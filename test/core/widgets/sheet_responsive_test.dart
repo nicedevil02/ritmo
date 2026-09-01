@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
@@ -44,7 +45,7 @@ void main() {
           await expectNoOverflow(tester, label: '${entry.key} @ $scale');
 
           // Ensure close icon is within screen bounds
-          final closeFinder = find.byIcon(Icons.close);
+          final closeFinder = find.byIcon(CupertinoIcons.xmark);
           expect(closeFinder, findsOneWidget);
           final closeRect = tester.getRect(closeFinder);
           expect(closeRect.top, greaterThanOrEqualTo(0));
@@ -95,7 +96,7 @@ void main() {
 
           await expectNoOverflow(tester, label: '${entry.key} @ $scale (KB)');
 
-          final closeFinder = find.byIcon(Icons.close);
+          final closeFinder = find.byIcon(CupertinoIcons.xmark);
           expect(closeFinder, findsOneWidget);
           final closeRect = tester.getRect(closeFinder);
           expect(closeRect.top, greaterThanOrEqualTo(0));

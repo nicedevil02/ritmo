@@ -286,7 +286,6 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> with Sing
           isSubmitting: _controller.isSaving,
           initialChildSize: 0.94,
           maxChildSize: 0.94,
-          snapSizes: const [0.0, 0.94],
           deckAnimation: _childSheetAnimController,
           saveLabel: _controller.isEditing ? 'ذخیره' : 'ثبت کار',
           onSave: () => _controller.save(context),

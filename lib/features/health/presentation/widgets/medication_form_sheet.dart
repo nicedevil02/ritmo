@@ -632,7 +632,7 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
           minChildSize: 0.40,
           expand: false,
           snap: true,
-          snapSizes: const [0.60, 0.95],
+          snapSizes: const [0.60],
           builder: (ctx, scrollController) => RitmoTheme.glassCardLight(
             child: _isLoading
                 ? Center(child: CircularProgressIndicator(color: colors.primary))

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/calendar/presentation/journey_controller.dart';
 import 'package:ritmo/features/calendar/presentation/logic/morning_brief.dart';
 
@@ -59,7 +58,7 @@ class CalendarManagementSheet extends StatefulWidget {
         minChildSize: 0.40,
         maxChildSize: 0.95,
         snap: true,
-        snapSizes: const [0.60, 0.95],
+        snapSizes: const [0.60],
         expand: false,
         builder: (context, scrollController) => CalendarManagementSheet(
           selectedDate: selectedDate,

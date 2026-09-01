@@ -54,31 +54,32 @@ class MvSheetScaffold extends StatelessWidget {
       enableDrag: enableDrag,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: RitmoBreakpoints.sheetMaxHeight(ctx, factor: maxChildSize),
-          ),
-          child: DraggableScrollableSheet(
-            controller: controller,
-            initialChildSize: initialChildSize.clamp(0.3, 0.96),
-            minChildSize: 0.35,
-            maxChildSize: maxChildSize.clamp(0.5, 0.96),
-            snap: true,
-            snapSizes: [
-              initialChildSize.clamp(0.3, 0.96),
-              maxChildSize.clamp(0.5, 0.96),
-            ],
-            expand: false,
-            builder: (context, scrollCtrl) => RitmoGlassSheet(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              padding: EdgeInsets.zero,
-              child: builder(context),
+      builder: (ctx) {
+        const minSize = 0.35;
+        final maxSize = maxChildSize.clamp(0.5, 0.96);
+        final initialSize = initialChildSize.clamp(minSize, maxSize);
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(ctx, factor: maxChildSize),
+            ),
+            child: DraggableScrollableSheet(
+              controller: controller,
+              initialChildSize: initialSize,
+              minChildSize: minSize,
+              maxChildSize: maxSize,
+              snap: true,
+              expand: false,
+              builder: (context, scrollCtrl) => RitmoGlassSheet(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                padding: EdgeInsets.zero,
+                child: builder(context),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     ).then((result) {
       RitmoHaptics.sheetClose();
       return result;

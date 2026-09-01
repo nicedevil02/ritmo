@@ -92,34 +92,35 @@ class RitmoSheetScaffold extends StatelessWidget {
       enableDrag: enableDrag,
       isDismissible: isDismissible,
       transitionAnimationController: transitionAnimationController,
-      builder: (ctx) => DraggableScrollableSheet(
-        controller: controller,
-        initialChildSize: initialHeightFactor.clamp(0.2, 1.0),
-        minChildSize: 0.0,
-        maxChildSize: maxHeightFactor.clamp(0.5, 0.96),
-        snap: true,
-        snapSizes: [
-          0.0,
-          maxHeightFactor.clamp(0.5, 0.96),
-        ],
-        expand: false,
-        builder: (sheetContext, scrollController) => Semantics(
-          label: effectiveSemantics,
-          container: true,
-          child: RitmoSheetScaffold(
-            title: title,
-            subtitle: subtitle,
-            semanticsLabel: effectiveSemantics,
-            isDismissible: isDismissible,
-            initialHeightFactor: initialHeightFactor,
-            maxHeightFactor: maxHeightFactor,
-            footer: footer,
-            childIsScrollable: childIsScrollable,
-            scrollController: scrollController,
-            child: builder(sheetContext),
+      builder: (ctx) {
+        const minSize = 0.0;
+        final maxSize = maxHeightFactor.clamp(0.5, 0.96);
+        final initialSize = initialHeightFactor.clamp(0.2, maxSize);
+        return DraggableScrollableSheet(
+          controller: controller,
+          initialChildSize: initialSize,
+          minChildSize: minSize,
+          maxChildSize: maxSize,
+          snap: true,
+          expand: false,
+          builder: (sheetContext, scrollController) => Semantics(
+            label: effectiveSemantics,
+            container: true,
+            child: RitmoSheetScaffold(
+              title: title,
+              subtitle: subtitle,
+              semanticsLabel: effectiveSemantics,
+              isDismissible: isDismissible,
+              initialHeightFactor: initialHeightFactor,
+              maxHeightFactor: maxHeightFactor,
+              footer: footer,
+              childIsScrollable: childIsScrollable,
+              scrollController: scrollController,
+              child: builder(sheetContext),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     ).then((result) {
       AppleCardDeckHost.activeForegroundSheetExtent.value = 0.60;
       RitmoHaptics.sheetClose();

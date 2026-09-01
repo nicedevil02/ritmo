@@ -38,7 +38,7 @@ class RitmoFormSheetScaffold extends StatefulWidget {
     this.initialChildSize = 0.60,
     this.minChildSize = 0.0,
     this.maxChildSize = 0.94,
-    this.snapSizes = const [0.60, 0.94],
+    this.snapSizes = const [0.60],
     this.borderRadius = const BorderRadius.vertical(top: Radius.circular(28)),
     this.controller,
     this.deckAnimation,
@@ -95,7 +95,7 @@ class RitmoFormSheetScaffold extends StatefulWidget {
     double initialChildSize = 0.60,
     double minChildSize = 0.0,
     double maxChildSize = 0.94,
-    List<double> snapSizes = const [0.60, 0.94],
+    List<double> snapSizes = const [0.60],
     BorderRadius? borderRadius = const BorderRadius.vertical(top: Radius.circular(28)),
     DraggableScrollableController? controller,
     Animation<double>? deckAnimation,
@@ -290,19 +290,25 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
               }
               return false;
             },
-            child: DraggableScrollableSheet(
-              controller: _sheetController,
-              initialChildSize: widget.initialChildSize,
-              minChildSize: safeMinChildSize,
-              maxChildSize: widget.maxChildSize,
-              snap: true,
-              snapSizes: [
-                safeMinChildSize,
-                ...widget.snapSizes.where((s) => s > safeMinChildSize),
-              ],
-              snapAnimationDuration: const Duration(milliseconds: 250),
-              expand: false,
-              builder: (context, scrollController) {
+            child: Builder(
+              builder: (context) {
+                final sanitizedSnapSizes = widget.snapSizes
+                    .where((s) => s > safeMinChildSize && s < widget.maxChildSize)
+                    .toSet()
+                    .toList()
+                  ..sort();
+                final initialSize = widget.initialChildSize.clamp(safeMinChildSize, widget.maxChildSize);
+
+                return DraggableScrollableSheet(
+                  controller: _sheetController,
+                  initialChildSize: initialSize,
+                  minChildSize: safeMinChildSize,
+                  maxChildSize: widget.maxChildSize,
+                  snap: true,
+                  snapSizes: sanitizedSnapSizes.isEmpty ? null : sanitizedSnapSizes,
+                  snapAnimationDuration: const Duration(milliseconds: 250),
+                  expand: false,
+                  builder: (context, scrollController) {
                 return AppleCardDeckHost(
                   animation: widget.deckAnimation,
                   topCornerRadius: widget.borderRadius?.topLeft.x ?? 28.0,
@@ -538,16 +544,18 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
                               ),
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
             );
           },
-        ),
-      ),
+        );
+      },
     ),
   ),
+),
+),
 );
 }
 }

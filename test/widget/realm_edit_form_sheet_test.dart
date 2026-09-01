@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,16 +15,12 @@ Widget _buildWrapper({required Widget child, double width = 320}) {
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
     ],
-    supportedLocales: const [
-      Locale('fa'),
-      Locale('en'),
-    ],
-    locale: const Locale('fa'),
+    supportedLocales: const [Locale('fa', 'IR'), Locale('en', 'US')],
+    locale: const Locale('fa', 'IR'),
     theme: RitmoTheme.build(palette: RitmoPalette.jadeNoir, brightness: Brightness.light),
     home: Scaffold(
       body: SizedBox(
         width: width,
-        height: 1200,
         child: child,
       ),
     ),
@@ -31,10 +28,8 @@ Widget _buildWrapper({required Widget child, double width = 320}) {
 }
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
   group('RealmEditFormSheet Responsive & Day Selection Tests', () {
-    testWidgets('Configures DraggableScrollableSheet with Apple HIG detents (0.60 medium, 0.95 large)', (tester) async {
+    testWidgets('Configures DraggableScrollableSheet with Apple HIG detents (0.60 medium, 0.94 large)', (tester) async {
       await tester.pumpWidget(
         _buildWrapper(
           width: 360,
@@ -50,10 +45,10 @@ void main() {
 
       final sheetWidget = tester.widget<DraggableScrollableSheet>(sheetFinder);
       expect(sheetWidget.initialChildSize, 0.60);
-      expect(sheetWidget.minChildSize, 0.35);
-      expect(sheetWidget.maxChildSize, 0.95);
+      expect(sheetWidget.minChildSize, 0.20);
+      expect(sheetWidget.maxChildSize, 0.94);
       expect(sheetWidget.snap, isTrue);
-      expect(sheetWidget.snapSizes, const [0.60, 0.95]);
+      expect(sheetWidget.snapSizes, const [0.60]);
     });
 
     testWidgets('Renders days row without 75px overflow on narrow 320dp screen', (tester) async {
@@ -139,8 +134,8 @@ void main() {
       await tester.tap(textFieldFinder);
       await tester.pumpAndSettle();
 
-      // Verify sheet animated to 0.95
-      expect(controller.size, closeTo(0.95, 0.01));
+      // Verify sheet animated to 0.94
+      expect(controller.size, closeTo(0.94, 0.01));
     });
 
     testWidgets('Renders iOS 26 RTL Header with Cancel and Save buttons', (tester) async {
@@ -157,21 +152,21 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Find 'انصراف' (Cancel on Leading/Right)
-      expect(find.text('انصراف'), findsOneWidget);
+      // Find Cancel button on Leading/Right
+      expect(find.byIcon(CupertinoIcons.xmark), findsOneWidget);
 
       // Find Title
       expect(find.text('ساخت قلمرو جدید'), findsOneWidget);
 
-      // Find 'ایجاد' in header and 'ایجاد قلمرو' in bottom CTA
-      expect(find.text('ایجاد'), findsOneWidget);
+      // Find Save button in header and 'ایجاد قلمرو' in bottom CTA
+      expect(find.byIcon(CupertinoIcons.checkmark), findsOneWidget);
       expect(find.text('ایجاد قلمرو'), findsOneWidget);
 
-      // Enter valid name and tap header 'ایجاد'
+      // Enter valid name and tap header save
       await tester.enterText(find.byType(TextField), 'تست قلمرو');
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('ایجاد'));
+      await tester.tap(find.byIcon(CupertinoIcons.checkmark));
       await tester.pumpAndSettle();
 
       expect(saved, isTrue);
@@ -214,8 +209,8 @@ void main() {
       await tester.enterText(find.byType(TextField), 'نام جدید قلمرو');
       await tester.pumpAndSettle();
 
-      // Tap 'انصراف'
-      await tester.tap(find.text('انصراف'));
+      // Tap Cancel button
+      await tester.tap(find.byIcon(CupertinoIcons.xmark));
       await tester.pumpAndSettle();
 
       // CupertinoActionSheet should appear

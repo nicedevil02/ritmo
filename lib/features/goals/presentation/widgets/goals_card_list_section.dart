@@ -4,8 +4,6 @@ import 'package:flutter/services.dart';
 
 import 'package:ritmo/core/analytics/goals_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
 import 'package:ritmo/features/courses/presentation/course_detail_screen.dart';
 import 'package:ritmo/features/goals/logic/goals_repository.dart';
@@ -457,7 +455,7 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
       maxChildSize: 0.95,
       expand: false,
       snap: true,
-      snapSizes: const [0.85, 0.95],
+      snapSizes: const [0.85],
       builder: (context, scrollController) {
         return Directionality(
           textDirection: TextDirection.rtl,

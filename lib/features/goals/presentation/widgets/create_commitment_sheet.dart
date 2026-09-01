@@ -160,7 +160,6 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
       isSubmitting: _isSaving,
       initialChildSize: 0.94,
       maxChildSize: 0.94,
-      snapSizes: const [0.0, 0.94],
       saveLabel: 'ثبت',
       onSave: _saveCommitment,
       builder: (context, scrollController) {

@@ -133,7 +133,6 @@ class _Showcase24hOverviewSheetState extends State<Showcase24hOverviewSheet>
           minChildSize: 0.20,
           maxChildSize: 0.94,
           snap: true,
-          snapSizes: const [0.20, 0.94],
           snapAnimationDuration: const Duration(milliseconds: 250),
           builder: (context, scrollController) {
             return AppleCardDeckHost(

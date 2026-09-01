@@ -41,7 +41,6 @@ class WeekReviewSheet extends StatefulWidget {
         minChildSize: 0.0,
         maxChildSize: 0.94,
         snap: true,
-        snapSizes: const [0.0, 0.94],
         expand: false,
         builder: (context, scrollController) => WeekReviewSheet(
           cycle: cycle,

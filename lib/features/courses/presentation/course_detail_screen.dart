@@ -378,35 +378,39 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.surface,
-          title: const Text('عبور از جلسه'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('آیا می‌خواهید از ${session.sessionTitle ?? "این جلسه"} عبور کنید؟', style: TextStyle(color: colors.textSecondary, fontSize: 13)),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  labelText: 'دلیل عبور (اختیاری)',
-                  hintText: 'مثلاً: قبلاً مسلط بودم / از منبع دیگر خواندم',
-                  labelStyle: TextStyle(color: colors.textSecondary, fontSize: 12),
-                ),
+      builder: (ctx) => RitmoCustomDialog(
+        title: 'عبور از جلسه',
+        icon: CupertinoIcons.forward,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'آیا می‌خواهید از ${session.sessionTitle ?? "این جلسه"} عبور کنید؟',
+              style: TextStyle(color: colors.textSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                labelText: 'دلیل عبور (اختیاری)',
+                hintText: 'مثلاً: قبلاً مسلط بودم / از منبع دیگر خواندم',
+                labelStyle: TextStyle(color: colors.textSecondary, fontSize: 12),
               ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: Text('انصراف', style: TextStyle(color: colors.textSecondary))),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(backgroundColor: colors.warning),
-              child: const Text('عبور از جلسه', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
+        actions: [
+          RitmoSecondaryButton(
+            label: 'انصراف',
+            onPressed: () => Navigator.pop(ctx, false),
+          ),
+          const SizedBox(width: 10),
+          RitmoPrimaryButton(
+            label: 'عبور از جلسه',
+            onPressed: () => Navigator.pop(ctx, true),
+          ),
+        ],
       ),
     );
 
@@ -481,53 +485,69 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: colors.bg,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: RitmoIcons.back(context, color: colors.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text(
-            _course.title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(
-                _isReordering ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.arrow_up_arrow_down,
-                color: _isReordering ? colors.primary : colors.textPrimary,
-              ),
-              tooltip: _isReordering ? 'اتمام جابجایی' : 'تغییر ترتیب جلسات',
-              onPressed: () => setState(() => _isReordering = !_isReordering),
-            ),
-            IconButton(
-              icon: Icon(
-                _course.status == CourseStatus.paused ? CupertinoIcons.play_fill : CupertinoIcons.pause_fill,
-                color: colors.textPrimary,
-              ),
-              onPressed: _togglePauseStatus,
-            ),
-            IconButton(
-              icon: Icon(CupertinoIcons.pencil, color: colors.textPrimary),
-              onPressed: _editCourse,
-            ),
-            IconButton(
-              icon: Icon(CupertinoIcons.trash, color: colors.textSecondary),
-              onPressed: _deleteCourse,
-            ),
-          ],
-        ),
         bottomNavigationBar: const FloatingTimerBar(),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        body: SafeArea(
+          bottom: false,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: RitmoGlassHeader(
+                  borderRadius: BorderRadius.circular(22),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: RitmoIcons.back(context, color: colors.textPrimary),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _course.title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          _isReordering ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.arrow_up_arrow_down,
+                          color: _isReordering ? colors.primary : colors.textPrimary,
+                          size: 20,
+                        ),
+                        tooltip: _isReordering ? 'اتمام جابجایی' : 'تغییر ترتیب جلسات',
+                        onPressed: () => setState(() => _isReordering = !_isReordering),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          _course.status == CourseStatus.paused ? CupertinoIcons.play_fill : CupertinoIcons.pause_fill,
+                          color: colors.textPrimary,
+                          size: 20,
+                        ),
+                        onPressed: _togglePauseStatus,
+                      ),
+                      IconButton(
+                        icon: Icon(CupertinoIcons.pencil, color: colors.textPrimary, size: 20),
+                        onPressed: _editCourse,
+                      ),
+                      IconButton(
+                        icon: Icon(CupertinoIcons.trash, color: colors.textSecondary, size: 20),
+                        onPressed: _deleteCourse,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
               // 1. Progress Header Card
               RitmoTheme.glassCardLight(
                 color: isDarkMode ? colors.card.withValues(alpha: 0.55) : colors.card.withValues(alpha: 0.8),
@@ -999,7 +1019,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           ),
         ),
       ),
-    );
+    ],
+  ),
+),
+),
+);
   }
 
   Widget _buildSessionCard(CourseSession session, RitmoColors colors, {required Key key, required bool isDragMode}) {

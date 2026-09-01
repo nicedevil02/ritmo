@@ -245,34 +245,13 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
           old.totalSessions != totalSessions;
 
       if (needsReschedule) {
-        final confirm = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: const Color(0xff1C1F2E),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Text(
-              'تغییر ریتم برنامه‌ریزی',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            content: const Text(
+        final confirm = await RitmoDialog.show(
+          context,
+          title: 'تغییر ریتم برنامه‌ریزی',
+          content:
               'تغییر هدف هفتگی، روزها یا تعداد جلسات باعث زمان‌بندی مجدد جلسات آینده می‌شود. آیا ادامه می‌دهید؟',
-              style: TextStyle(fontSize: 13, color: Colors.white70),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('انصراف', style: TextStyle(color: Colors.white54)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff5B8AF5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('تأیید و ذخیره', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
+          confirmLabel: 'تأیید و ذخیره',
+          cancelLabel: 'انصراف',
         );
         if (confirm != true) return;
       }

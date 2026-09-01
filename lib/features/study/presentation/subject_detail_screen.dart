@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
@@ -32,6 +33,11 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> with SingleTi
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging && mounted) {
+        setState(() {});
+      }
+    });
     _loadAll();
   }
 
@@ -157,70 +163,101 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> with SingleTi
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text('${widget.subject.emoji ?? '📚'} ${widget.subject.name}', style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary)),
-          backgroundColor: colors.surface,
-          elevation: 0,
-          bottom: TabBar(
-            controller: _tabController,
-            tabs: const [
-              Tab(text: 'سرفصل‌ها و مطالعه'),
-              Tab(text: 'امتحانات و ددلاین‌ها'),
-            ],
-          ),
-        ),
-        body: _isLoading
-            ? Center(child: CircularProgressIndicator(color: colors.primary))
-            : TabBarView(
-                controller: _tabController,
-                children: [
-                  // Tab 1: Topics & Stats
-                  CustomScrollView(
-                    slivers: [
-                      SliverPadding(
-                        padding: const EdgeInsets.all(16),
-                        sliver: SliverToBoxAdapter(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Stats Overview Card
-                              Container(
+        backgroundColor: colors.bg,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: RitmoGlassHeader(
+                  borderRadius: BorderRadius.circular(22),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            icon: const Icon(CupertinoIcons.back),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          Text(
+                            '${widget.subject.emoji ?? '📚'} ${widget.subject.name}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(width: 44),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      RitmoGlassSegmentedControl<int>(
+                        items: const [
+                          RitmoTabItem(title: 'سرفصل‌ها و مطالعه', icon: Icons.menu_book_rounded),
+                          RitmoTabItem(title: 'امتحانات و ددلاین‌ها', icon: Icons.event_note_rounded),
+                        ],
+                        selectedIndex: _tabController.index,
+                        onTabChanged: (idx) {
+                          setState(() {
+                            _tabController.animateTo(idx);
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: _isLoading
+                    ? Center(child: CircularProgressIndicator(color: colors.primary))
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          // Tab 1: Topics & Stats
+                          CustomScrollView(
+                            slivers: [
+                              SliverPadding(
                                 padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: colors.surface,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: colors.border.withValues(alpha: 0.5)),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  children: [
-                                    Column(
-                                      children: [
-                                        Text('${RitmoNumber.faInt(totalMinutes)} دقیقه', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.primary)),
-                                        const SizedBox(height: 2),
-                                        Text('مجموع مطالعه', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
-                                      ],
-                                    ),
-                                    Container(width: 1, height: 32, color: colors.border.withValues(alpha: 0.5)),
-                                    Column(
-                                      children: [
-                                        Text('${RitmoNumber.faInt(totalTests)} تست', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.primary)),
-                                        const SizedBox(height: 2),
-                                        Text('تست‌های حل‌شده', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
-                                      ],
-                                    ),
-                                    Container(width: 1, height: 32, color: colors.border.withValues(alpha: 0.5)),
-                                    Column(
-                                      children: [
-                                        Text(RitmoNumber.faPercent(accuracy), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.success)),
-                                        const SizedBox(height: 2),
-                                        Text('درصد دقت', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 16),
+                                sliver: SliverToBoxAdapter(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      // Stats Overview Card
+                                      RitmoCard.neumorphic(
+                                        padding: const EdgeInsets.all(16),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                          children: [
+                                            Column(
+                                              children: [
+                                                Text('${RitmoNumber.faInt(totalMinutes)} دقیقه', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.primary)),
+                                                const SizedBox(height: 2),
+                                                Text('مجموع مطالعه', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                                              ],
+                                            ),
+                                            Container(width: 1, height: 32, color: colors.border.withValues(alpha: 0.5)),
+                                            Column(
+                                              children: [
+                                                Text('${RitmoNumber.faInt(totalTests)} تست', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.primary)),
+                                                const SizedBox(height: 2),
+                                                Text('تست‌های حل‌شده', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                                              ],
+                                            ),
+                                            Container(width: 1, height: 32, color: colors.border.withValues(alpha: 0.5)),
+                                            Column(
+                                              children: [
+                                                Text(RitmoNumber.faPercent(accuracy), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.success)),
+                                                const SizedBox(height: 2),
+                                                Text('درصد دقت', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
                               Row(
                                 children: [
                                   Expanded(
@@ -316,7 +353,11 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> with SingleTi
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
       ),
+    ),
     );
   }
 
@@ -348,13 +389,9 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> with SingleTi
         ? StudyDate.formatRelative(RitmoDate.dayKey(DateTime.fromMillisecondsSinceEpoch(topic.lastStudiedAtMs!)))
         : 'هرگز';
 
-    return Container(
+    return RitmoCard.neumorphicSunken(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colors.surfaceSunken,
-        borderRadius: BorderRadius.circular(14),
-      ),
       child: Row(
         children: [
           Expanded(

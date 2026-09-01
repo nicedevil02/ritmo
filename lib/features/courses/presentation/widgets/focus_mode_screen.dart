@@ -88,25 +88,35 @@ class _FocusModeScreenState extends State<FocusModeScreen> with SingleTickerProv
 
     final bgColor = isDark ? const Color(0xff0F172A) : const Color(0xffF8FAFC);
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(CupertinoIcons.xmark, color: colors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'حالت تمرکز عمیق',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
-        ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const Spacer(),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: bgColor,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: RitmoGlassHeader(
+                  borderRadius: BorderRadius.circular(22),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: Icon(CupertinoIcons.xmark, color: colors.textPrimary, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Text(
+                        'حالت تمرکز عمیق',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                      ),
+                      const SizedBox(width: 44),
+                    ],
+                  ),
+                ),
+              ),
+              const Spacer(),
 
             // Course & Session Title
             Padding(
@@ -236,6 +246,7 @@ class _FocusModeScreenState extends State<FocusModeScreen> with SingleTickerProv
           ],
         ),
       ),
+    ),
     );
   }
 }

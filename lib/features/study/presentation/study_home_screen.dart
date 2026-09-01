@@ -534,62 +534,51 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
     final colors = context.colors;
     final totalHours = (stats?.totalMinutes ?? 0) / 60.0;
 
-    return Card(
+    return RitmoCard.neumorphic(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 0,
-      color: colors.surfaceSunken,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => SubjectDetailScreen(subject: subject)),
-          );
-          await _loadData();
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 44, height: 44,
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(child: Text(subject.emoji ?? '📚', style: const TextStyle(fontSize: 22))),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(subject.name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${RitmoNumber.fa(totalHours.toStringAsFixed(1))} ساعت مطالعه · ${StudyDate.formatRelative(stats?.lastStudiedDateIso)}',
-                      style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_left_rounded, color: colors.textSecondary),
-            ],
+      padding: const EdgeInsets.all(16),
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => SubjectDetailScreen(subject: subject)),
+        );
+        await _loadData();
+      },
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(child: Text(subject.emoji ?? '📚', style: const TextStyle(fontSize: 22))),
           ),
-        ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(subject.name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                const SizedBox(height: 4),
+                Text(
+                  '${RitmoNumber.fa(totalHours.toStringAsFixed(1))} ساعت مطالعه · ${StudyDate.formatRelative(stats?.lastStudiedDateIso)}',
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_left_rounded, color: colors.textSecondary),
+        ],
       ),
     );
   }
 
   Widget _buildEmptyState() {
     final colors = context.colors;
-    return Container(
+    return RitmoCard.neumorphic(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: colors.surfaceSunken,
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: Column(
         children: [
           Icon(Icons.auto_stories_outlined, size: 48, color: colors.textSecondary),

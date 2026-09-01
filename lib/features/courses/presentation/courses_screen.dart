@@ -169,61 +169,89 @@ class _CoursesScreenState extends State<CoursesScreen> {
         textDirection: TextDirection.rtl,
         child: Scaffold(
           backgroundColor: colors.bg,
-          appBar: AppBar(
-            title: const Text('دوره‌های آموزشی'),
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-          ),
-          body: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(CupertinoIcons.pause_circle_fill, size: 64, color: Colors.orange),
-                  const SizedBox(height: 16),
-                  Text(
-                    'سیستم غیرفعال است',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'ماژول دوره‌های آموزشی در تنظیمات سیستم‌ها غیرفعال شده است.',
-                    style: TextStyle(fontSize: 13, color: colors.textSecondary),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final result = await ModuleManagementService.instance.setModuleEnabled('module_courses_enabled', true);
-                      if (!mounted) return;
-                      if (result == ModuleToggleResult.limitReached) {
-                        final limit = FeatureLimits.current.maxActiveModules;
-                        RitmoToast.show(
-                          this.context,
-                          'سقف $limit ماژول فعال همزمان پر شده. ابتدا یک ماژول دیگر را غیرفعال کنید یا به ریتمو پلاس ارتقا دهید.',
-                          icon: Icons.lock_outline,
-                        );
-                        unawaited(PremiumUpgradeSheet.show(this.context));
-                        return;
-                      } else if (result == ModuleToggleResult.error) {
-                        RitmoToast.show(
-                          this.context,
-                          'خطا در فعال‌سازی سیستم. لطفاً دوباره تلاش کنید.',
-                          icon: Icons.error_outline,
-                        );
-                        return;
-                      }
-                      await _loadAllData();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primary,
-                      foregroundColor: Colors.white,
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: RitmoGlassHeader(
+                    borderRadius: BorderRadius.circular(22),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(CupertinoIcons.back),
+                          onPressed: () => Navigator.of(context).maybePop(),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'دوره‌های آموزشی',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
-                    child: const Text('فعال‌سازی سیستم دوره‌ها'),
                   ),
-                ],
-              ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(CupertinoIcons.pause_circle_fill, size: 64, color: Colors.orange),
+                          const SizedBox(height: 16),
+                          Text(
+                            'سیستم غیرفعال است',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'ماژول دوره‌های آموزشی در تنظیمات سیستم‌ها غیرفعال شده است.',
+                            style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: () async {
+                              final result = await ModuleManagementService.instance.setModuleEnabled('module_courses_enabled', true);
+                              if (!mounted) return;
+                              if (result == ModuleToggleResult.limitReached) {
+                                final limit = FeatureLimits.current.maxActiveModules;
+                                RitmoToast.show(
+                                  this.context,
+                                  'سقف $limit ماژول فعال همزمان پر شده. ابتدا یک ماژول دیگر را غیرفعال کنید یا به ریتمو پلاس ارتقا دهید.',
+                                  icon: Icons.lock_outline,
+                                );
+                                unawaited(PremiumUpgradeSheet.show(this.context));
+                                return;
+                              } else if (result == ModuleToggleResult.error) {
+                                RitmoToast.show(
+                                  this.context,
+                                  'خطا در فعال‌سازی سیستم. لطفاً دوباره تلاش کنید.',
+                                  icon: Icons.error_outline,
+                                );
+                                return;
+                              }
+                              await _loadAllData();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colors.primary,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('فعال‌سازی سیستم دوره‌ها'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

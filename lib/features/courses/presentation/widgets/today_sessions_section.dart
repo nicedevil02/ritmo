@@ -39,36 +39,15 @@ class TodaySessionsSection extends StatelessWidget {
 
   Future<void> _completeDirectly(BuildContext context, Course course, CourseSession session) async {
     final colors = context.colors;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     final duration = course.sessionDurationMinutes;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: isDarkMode ? const Color(0xff12141C) : Colors.white,
-          title: const Text(
-            'تکمیل مستقیم جلسه',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          content: Text(
-            'آیا می‌خواهید این جلسه را بدون اجرا کردن تایمر و با مدت پیش‌فرض ${toPersianDigits(duration)} دقیقه به عنوان تکمیل‌شده علامت بزنید؟',
-            style: const TextStyle(fontSize: 13),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-              child: const Text('بله، تکمیل کن', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+    final confirm = await RitmoDialog.show(
+      context,
+      title: 'تکمیل مستقیم جلسه',
+      content:
+          'آیا می‌خواهید این جلسه را بدون اجرا کردن تایمر و با مدت پیش‌فرض ${toPersianDigits(duration)} دقیقه به عنوان تکمیل‌شده علامت بزنید؟',
+      confirmLabel: 'بله، تکمیل کن',
+      cancelLabel: 'انصراف',
     );
 
     if (confirm ?? false) {

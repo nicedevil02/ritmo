@@ -1438,11 +1438,8 @@ $suggestedSteps''';
               ? (navH + bottomInset + 16.0)
               : 16.0);
 
-    final double inputBarTotalHeight = 60.0 + effectiveBottomPadding;
-    final double timelineHeight =
-        (_isAgentWorking || _agentStatusText.isNotEmpty) ? 80.0 : 0.0;
-    final double chatListBottomPadding =
-        inputBarTotalHeight + timelineHeight + 16.0;
+    // Height from bottom to top edge of input bar + subtle snug margin (8px)
+    final double chatListBottomPadding = effectiveBottomPadding + 56.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,

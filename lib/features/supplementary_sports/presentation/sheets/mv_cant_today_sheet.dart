@@ -13,6 +13,7 @@ class MvCantTodaySheet extends StatelessWidget {
   final VoidCallback onChangeToStretch;
   final VoidCallback onSkipEntirely;
   final VoidCallback? onCancelAnchorThisWeek;
+  final VoidCallback? onDeleteTodayPlan;
 
   const MvCantTodaySheet({
     super.key,
@@ -22,6 +23,7 @@ class MvCantTodaySheet extends StatelessWidget {
     required this.onChangeToStretch,
     required this.onSkipEntirely,
     this.onCancelAnchorThisWeek,
+    this.onDeleteTodayPlan,
   });
 
   static Future<void> show({
@@ -32,6 +34,7 @@ class MvCantTodaySheet extends StatelessWidget {
     required VoidCallback onChangeToStretch,
     required VoidCallback onSkipEntirely,
     VoidCallback? onCancelAnchorThisWeek,
+    VoidCallback? onDeleteTodayPlan,
   }) {
     return MvSheetScaffold.show(
       context: context,
@@ -57,6 +60,12 @@ class MvCantTodaySheet extends StatelessWidget {
             ? () {
                 Navigator.pop(ctx);
                 onCancelAnchorThisWeek();
+              }
+            : null,
+        onDeleteTodayPlan: onDeleteTodayPlan != null
+            ? () {
+                Navigator.pop(ctx);
+                onDeleteTodayPlan();
               }
             : null,
       ),
@@ -119,6 +128,18 @@ class MvCantTodaySheet extends StatelessWidget {
             onTap: onSkipEntirely,
             isDestructive: true,
           ),
+          if (onDeleteTodayPlan != null) ...[
+            const SizedBox(height: 8),
+            _buildOption(
+              key: const ValueKey('mv_cant_today_delete_plan'),
+              context: context,
+              icon: Icons.delete_outline_rounded,
+              title: l10n?.mv_cant_today_option_delete_title ?? 'حذف کامل برنامهٔ امروز',
+              description: l10n?.mv_cant_today_option_delete_desc ?? 'پاک کردن این ورزش از تقویم و برنامهٔ امروز',
+              onTap: onDeleteTodayPlan!,
+              isDestructive: true,
+            ),
+          ],
           const SizedBox(height: 16),
         ],
       ),

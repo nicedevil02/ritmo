@@ -14,6 +14,7 @@ class MvHeroCard extends StatelessWidget {
   final VoidCallback onStart;
   final VoidCallback onCantToday;
   final VoidCallback? onContinue;
+  final VoidCallback? onEditPlan;
   final bool isInProgress;
 
   const MvHeroCard({
@@ -24,6 +25,7 @@ class MvHeroCard extends StatelessWidget {
     required this.onStart,
     required this.onCantToday,
     this.onContinue,
+    this.onEditPlan,
     this.isInProgress = false,
   });
 
@@ -87,6 +89,21 @@ class MvHeroCard extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                    if (onEditPlan != null) ...[
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: onEditPlan,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Icon(
+                            Icons.tune_rounded,
+                            size: 18,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 12),

@@ -2825,4 +2825,54 @@ class AppLocalizationsFa extends AppLocalizations {
   String mv_at_time(String time) {
     return 'ساعت $time';
   }
+
+  @override
+  String get mv_plan_delete_action => 'حذف برنامهٔ این روز';
+
+  @override
+  String get mv_plan_delete_confirm_title => 'حذف برنامهٔ ورزشی';
+
+  @override
+  String get mv_plan_delete_confirm_desc =>
+      'آیا مایلید برنامهٔ ورزشی این روز حذف شود؟ این روز به عنوان استراحت ثبت خواهد شد.';
+
+  @override
+  String get mv_plan_delete_recurring_prompt =>
+      'این ورزش به صورت هفتگی تکرار می‌شود. مایلید چگونه حذف شود؟';
+
+  @override
+  String get mv_plan_delete_this_week_only => 'فقط برای این هفته لغو شود';
+
+  @override
+  String get mv_plan_delete_all_weeks => 'حذف دائمی از برنامهٔ هفتگی';
+
+  @override
+  String get mv_plan_deleted_snackbar => 'برنامهٔ ورزشی این روز حذف شد';
+
+  @override
+  String get mv_undo => 'بازگردانی';
+
+  @override
+  String get mv_action_convert_rest => 'تبدیل به روز استراحت';
+
+  @override
+  String get mv_action_move_tomorrow => 'انتقال به فردا';
+
+  @override
+  String get mv_plan_delete_confirm => 'حذف برنامه';
+
+  @override
+  String get mv_cant_today_option_delete_title => 'حذف کامل برنامهٔ امروز';
+
+  @override
+  String get mv_cant_today_option_delete_desc =>
+      'پاک کردن این ورزش از تقویم و برنامهٔ امروز';
+
+  @override
+  String get mv_day_detail_delete_tooltip => 'حذف برنامهٔ ورزشی این روز';
+
+  @override
+  String mv_exercise_removed_snackbar(String name) {
+    return 'حرکت $name حذف شد';
+  }
 }

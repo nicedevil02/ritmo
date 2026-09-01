@@ -106,4 +106,52 @@ class MvPrescriptionRepository {
       whereArgs: [slotId],
     );
   }
+
+  /// Deletes a prescription slot by its ID.
+  Future<void> deletePrescription(String slotId) async {
+    final db = await _db;
+    await db.delete(
+      'ss_session_prescription',
+      where: 'id = ?',
+      whereArgs: [slotId],
+    );
+  }
+
+  /// Deletes all prescription slots for a specific date (`YYYY-MM-DD`).
+  Future<void> deletePrescriptionForDate(String dateIso) async {
+    final db = await _db;
+    await db.delete(
+      'ss_session_prescription',
+      where: 'dateIso = ?',
+      whereArgs: [dateIso],
+    );
+  }
+
+  /// Resets a slot for the given date to Rest & Recovery, locked to prevent auto-overwriting.
+  Future<MvSlot> resetSlotToRest({
+    required String dateIso,
+    int cycleWeek = 1,
+    bool isLocked = true,
+  }) async {
+    await deletePrescriptionForDate(dateIso);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final restSlot = MvSlot(
+      id: 'slot_${dateIso}_rest',
+      dateIso: dateIso,
+      cycleWeek: cycleWeek,
+      slotType: MvSlotType.rest,
+      targetMinutes: 0,
+      intensityTier: MvIntensityTier.light,
+      headlineFa: 'روز استراحت و ریکاوری',
+      coachNoteFa: 'به عضلاتت فرصت بازسازی بده یا با پیاده‌روی سبک جریان خون را تقویت کن.',
+      source: 'MANUAL',
+      reasonKey: MvReasonKeys.restGuaranteed,
+      isLocked: isLocked,
+      status: MvSlotStatus.planned,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await savePrescription(restSlot);
+    return restSlot;
+  }
 }

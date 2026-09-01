@@ -3,6 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
+import 'package:ritmo/core/widgets/sheet/ritmo_picker_sheet.dart';
 import '../components/components.dart';
 import '../sheets/sheets.dart';
 import 'mv_commitments_screen.dart';
@@ -18,6 +19,9 @@ class MvWeekTab extends StatelessWidget {
   final ValueChanged<MvSlot> onSlotUpdated;
   final VoidCallback onRegenerateWeek;
   final VoidCallback? onOpenCommitments;
+  final Future<void> Function(MvSlot slot, {bool deleteRecurring})? onDeleteSlot;
+  final Future<void> Function(MvSlot slot)? onConvertToRest;
+  final Future<void> Function(MvSlot slot)? onMoveToTomorrow;
 
   const MvWeekTab({
     super.key,
@@ -29,6 +33,9 @@ class MvWeekTab extends StatelessWidget {
     required this.onSlotUpdated,
     required this.onRegenerateWeek,
     this.onOpenCommitments,
+    this.onDeleteSlot,
+    this.onConvertToRest,
+    this.onMoveToTomorrow,
     this.topPadding = 16.0,
   });
 
@@ -176,8 +183,56 @@ class MvWeekTab extends StatelessWidget {
                     slot: slot,
                     kindUseCase: kindUseCase,
                     onSave: onSlotUpdated,
+                    onDelete: (s, delRec) =>
+                        onDeleteSlot?.call(s, deleteRecurring: delRec),
                   );
                 },
+                onConvertToRest: onConvertToRest != null
+                    ? () => onConvertToRest!(slot)
+                    : null,
+                onMoveToTomorrow: onMoveToTomorrow != null
+                    ? () => onMoveToTomorrow!(slot)
+                    : null,
+                onDelete: onDeleteSlot != null
+                    ? () async {
+                        if (slot.isLocked) {
+                          final selected = await RitmoPickerSheet.show<bool>(
+                            context: context,
+                            title: l10n.mv_plan_delete_recurring_prompt,
+                            options: [
+                              PickerOption(
+                                label: l10n.mv_plan_delete_this_week_only,
+                                subtitle: 'تعهد هفتگی حفظ شده و این روز به استراحت تبدیل می‌شود.',
+                                icon: Icons.event_busy_rounded,
+                                value: false,
+                              ),
+                              PickerOption(
+                                label: l10n.mv_plan_delete_all_weeks,
+                                subtitle: 'کل تعهد هفتگی برای همیشه پاک می‌شود.',
+                                icon: Icons.delete_forever_rounded,
+                                value: true,
+                              ),
+                            ],
+                          );
+                          if (selected != null) {
+                            await onDeleteSlot!(slot, deleteRecurring: selected);
+                          }
+                        } else {
+                          final confirmed = await RitmoDialog.show(
+                            context,
+                            title: l10n.mv_plan_delete_confirm_title,
+                            content: l10n.mv_plan_delete_confirm_desc,
+                            confirmLabel: l10n.mv_plan_delete_confirm,
+                            cancelLabel: l10n.cancel,
+                            icon: Icons.delete_outline_rounded,
+                            isDestructive: true,
+                          );
+                          if (confirmed == true) {
+                            await onDeleteSlot!(slot, deleteRecurring: false);
+                          }
+                        }
+                      }
+                    : null,
               ),
             );
           }),

@@ -2827,4 +2827,56 @@ class AppLocalizationsEn extends AppLocalizations {
   String mv_at_time(String time) {
     return 'at $time';
   }
+
+  @override
+  String get mv_plan_delete_action => 'Delete Workout for this Day';
+
+  @override
+  String get mv_plan_delete_confirm_title => 'Delete Workout Plan';
+
+  @override
+  String get mv_plan_delete_confirm_desc =>
+      'Are you sure you want to delete this workout? This day will be set to rest.';
+
+  @override
+  String get mv_plan_delete_recurring_prompt =>
+      'This workout is a weekly repeating commitment. How would you like to delete it?';
+
+  @override
+  String get mv_plan_delete_this_week_only => 'Cancel for this week only';
+
+  @override
+  String get mv_plan_delete_all_weeks =>
+      'Delete permanently from weekly schedule';
+
+  @override
+  String get mv_plan_deleted_snackbar => 'Workout for this day deleted';
+
+  @override
+  String get mv_undo => 'Undo';
+
+  @override
+  String get mv_action_convert_rest => 'Convert to Rest Day';
+
+  @override
+  String get mv_action_move_tomorrow => 'Move to Tomorrow';
+
+  @override
+  String get mv_plan_delete_confirm => 'Delete Plan';
+
+  @override
+  String get mv_cant_today_option_delete_title =>
+      'Delete today\'s plan entirely';
+
+  @override
+  String get mv_cant_today_option_delete_desc =>
+      'Remove this scheduled workout from today\'s plan';
+
+  @override
+  String get mv_day_detail_delete_tooltip => 'Delete Workout Plan';
+
+  @override
+  String mv_exercise_removed_snackbar(String name) {
+    return 'Exercise $name removed';
+  }
 }

@@ -412,6 +412,120 @@ class MvHubController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Deletes or clears a scheduled workout for a day and resets it to Rest.
+  /// If [deleteRecurringCommitment] is true and a commitment is associated with this day,
+  /// that recurring commitment is deleted from the database.
+  /// Returns a record with previous state `(MvSlot, MvCommitment?)` to enable full Undo.
+  Future<({MvSlot previousSlot, MvCommitment? previousCommitment})> deleteWorkoutPlan({
+    required MvSlot slot,
+    bool deleteRecurringCommitment = false,
+  }) async {
+    final previousSlot = slot;
+    MvCommitment? previousCommitment;
+
+    // Find any commitment on this weekday
+    final dt = MvCalendar.parseDateIso(slot.dateIso);
+    final sat0 = MvCalendar.dateTimeToSat0(dt);
+    final matchingCommitment = _commitments
+        .where((c) => c.dayOfWeekSat0 == sat0 && c.isActive)
+        .firstOrNull;
+
+    if (deleteRecurringCommitment && matchingCommitment != null && matchingCommitment.id != null) {
+      previousCommitment = matchingCommitment;
+      await _commitmentRepo.delete(matchingCommitment.id!);
+      _commitments = await _commitmentRepo.getActive();
+    }
+
+    // Reset this day's slot to Rest and lock it so regeneration won't override it for this week
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final restSlot = MvSlot(
+      id: 'slot_${slot.dateIso}_rest',
+      dateIso: slot.dateIso,
+      cycleWeek: slot.cycleWeek,
+      slotType: MvSlotType.rest,
+      targetMinutes: 0,
+      intensityTier: MvIntensityTier.light,
+      headlineFa: 'روز استراحت و ریکاوری',
+      coachNoteFa: 'به عضلاتت فرصت بازسازی بده یا با پیاده‌روی سبک جریان خون را تقویت کن.',
+      source: 'MANUAL',
+      reasonKey: MvReasonKeys.restGuaranteed,
+      isLocked: true,
+      status: MvSlotStatus.planned,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    // Save to repository
+    await _prescriptionRepo.savePrescription(restSlot);
+
+    // Update in-memory weekSlots
+    final idx = _weekSlots.indexWhere(
+      (s) => s.id == slot.id || s.dateIso == slot.dateIso,
+    );
+    if (idx != -1) {
+      _weekSlots[idx] = restSlot;
+    } else {
+      _weekSlots.add(restSlot);
+    }
+
+    _bodyMapDistribution = _insightEngine
+        .calculateMuscleDistribution(
+          completedSlots: _weekSlots.where((s) => s.isCompleted).toList(),
+        )
+        .value;
+
+    notifyListeners();
+
+    return (previousSlot: previousSlot, previousCommitment: previousCommitment);
+  }
+
+  /// Restores a previously deleted workout plan and recurring commitment (Undo mechanism).
+  Future<void> restoreWorkoutPlan({
+    required MvSlot previousSlot,
+    MvCommitment? previousCommitment,
+  }) async {
+    if (previousCommitment != null) {
+      await _commitmentRepo.upsert(previousCommitment);
+      _commitments = await _commitmentRepo.getActive();
+    }
+
+    await _prescriptionRepo.deletePrescriptionForDate(previousSlot.dateIso);
+    await _prescriptionRepo.savePrescription(previousSlot);
+
+    final idx = _weekSlots.indexWhere(
+      (s) => s.id == previousSlot.id || s.dateIso == previousSlot.dateIso,
+    );
+    if (idx != -1) {
+      _weekSlots[idx] = previousSlot;
+    } else {
+      _weekSlots.add(previousSlot);
+    }
+
+    _bodyMapDistribution = _insightEngine
+        .calculateMuscleDistribution(
+          completedSlots: _weekSlots.where((s) => s.isCompleted).toList(),
+        )
+        .value;
+
+    notifyListeners();
+  }
+
+  /// Quick action: converts any day's scheduled slot directly into a Rest day.
+  Future<({MvSlot previousSlot, MvCommitment? previousCommitment})> convertSlotToRest(MvSlot slot) async {
+    return deleteWorkoutPlan(slot: slot, deleteRecurringCommitment: false);
+  }
+
+  /// Quick action: moves a day's slot to tomorrow.
+  Future<void> moveSlotToTomorrow(MvSlot slot) async {
+    final dt = MvCalendar.parseDateIso(slot.dateIso);
+    final tomorrowIso = MvCalendar.formatDateIso(dt.add(const Duration(days: 1)));
+    final moved = slot.copyWith(
+      status: MvSlotStatus.moved,
+      movedToDateIso: tomorrowIso,
+    );
+    await updateSlot(moved);
+  }
+
   Future<void> saveCheckin(MvDailyCheckin checkin) async {
     await readinessUseCase.saveCheckin(checkin);
     _readinessDecision = await readinessUseCase.execute(

@@ -1552,5 +1552,27 @@
         "type": "String"
       }
     }
+  },
+  "mv_plan_delete_action": "حذف برنامهٔ این روز",
+  "mv_plan_delete_confirm_title": "حذف برنامهٔ ورزشی",
+  "mv_plan_delete_confirm_desc": "آیا مایلید برنامهٔ ورزشی این روز حذف شود؟ این روز به عنوان استراحت ثبت خواهد شد.",
+  "mv_plan_delete_recurring_prompt": "این ورزش به صورت هفتگی تکرار می‌شود. مایلید چگونه حذف شود؟",
+  "mv_plan_delete_this_week_only": "فقط برای این هفته لغو شود",
+  "mv_plan_delete_all_weeks": "حذف دائمی از برنامهٔ هفتگی",
+  "mv_plan_deleted_snackbar": "برنامهٔ ورزشی این روز حذف شد",
+  "mv_undo": "بازگردانی",
+  "mv_action_convert_rest": "تبدیل به روز استراحت",
+  "mv_action_move_tomorrow": "انتقال به فردا",
+  "mv_plan_delete_confirm": "حذف برنامه",
+  "mv_cant_today_option_delete_title": "حذف کامل برنامهٔ امروز",
+  "mv_cant_today_option_delete_desc": "پاک کردن این ورزش از تقویم و برنامهٔ امروز",
+  "mv_day_detail_delete_tooltip": "حذف برنامهٔ ورزشی این روز",
+  "mv_exercise_removed_snackbar": "حرکت {name} حذف شد",
+  "@mv_exercise_removed_snackbar": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

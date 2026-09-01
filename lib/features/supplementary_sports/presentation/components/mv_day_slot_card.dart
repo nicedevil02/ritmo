@@ -9,8 +9,18 @@ import 'package:ritmo/l10n/app_localizations.dart';
 class MvDaySlotCard extends StatelessWidget {
   final MvSlot slot;
   final VoidCallback? onTap;
+  final VoidCallback? onConvertToRest;
+  final VoidCallback? onMoveToTomorrow;
+  final VoidCallback? onDelete;
 
-  const MvDaySlotCard({super.key, required this.slot, this.onTap});
+  const MvDaySlotCard({
+    super.key,
+    required this.slot,
+    this.onTap,
+    this.onConvertToRest,
+    this.onMoveToTomorrow,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -125,6 +135,118 @@ class MvDaySlotCard extends StatelessWidget {
             label: slot.status.titleFa,
             color: statusColor,
           ),
+          if (onDelete != null || onConvertToRest != null || onMoveToTomorrow != null) ...[
+            const SizedBox(width: 4),
+            PopupMenuButton<String>(
+              key: ValueKey('day_slot_menu_${slot.dateIso}'),
+              icon: Icon(
+                Icons.more_vert_rounded,
+                size: 20,
+                color: colors.textSecondary,
+              ),
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              color: colors.surfaceElevated,
+              itemBuilder: (ctx) => [
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit_rounded, size: 18, color: colors.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n?.mv_day_detail_edit_tooltip ?? 'ویرایش برنامه',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!slot.isRest) ...[
+                  PopupMenuItem(
+                    value: 'rest',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.spa_rounded,
+                          size: 18,
+                          color: colors.textSecondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l10n?.mv_action_convert_rest ?? 'تبدیل به روز استراحت',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'tomorrow',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.event_repeat_rounded,
+                          size: 18,
+                          color: colors.accent,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l10n?.mv_action_move_tomorrow ?? 'انتقال به فردا',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.delete_outline_rounded,
+                          size: 18,
+                          color: colors.error,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l10n?.mv_plan_delete_action ?? 'حذف برنامهٔ این روز',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: colors.error,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+              onSelected: (val) {
+                if (val == 'edit') {
+                  onTap?.call();
+                } else if (val == 'rest') {
+                  onConvertToRest?.call();
+                } else if (val == 'tomorrow') {
+                  onMoveToTomorrow?.call();
+                } else if (val == 'delete') {
+                  onDelete?.call();
+                }
+              },
+            ),
+          ],
         ],
       ),
     );

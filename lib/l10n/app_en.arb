@@ -1552,5 +1552,27 @@
         "type": "String"
       }
     }
+  },
+  "mv_plan_delete_action": "Delete Workout for this Day",
+  "mv_plan_delete_confirm_title": "Delete Workout Plan",
+  "mv_plan_delete_confirm_desc": "Are you sure you want to delete this workout? This day will be set to rest.",
+  "mv_plan_delete_recurring_prompt": "This workout is a weekly repeating commitment. How would you like to delete it?",
+  "mv_plan_delete_this_week_only": "Cancel for this week only",
+  "mv_plan_delete_all_weeks": "Delete permanently from weekly schedule",
+  "mv_plan_deleted_snackbar": "Workout for this day deleted",
+  "mv_undo": "Undo",
+  "mv_action_convert_rest": "Convert to Rest Day",
+  "mv_action_move_tomorrow": "Move to Tomorrow",
+  "mv_plan_delete_confirm": "Delete Plan",
+  "mv_cant_today_option_delete_title": "Delete today's plan entirely",
+  "mv_cant_today_option_delete_desc": "Remove this scheduled workout from today's plan",
+  "mv_day_detail_delete_tooltip": "Delete Workout Plan",
+  "mv_exercise_removed_snackbar": "Exercise {name} removed",
+  "@mv_exercise_removed_snackbar": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

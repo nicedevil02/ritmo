@@ -5,6 +5,7 @@ import 'package:ritmo/features/supplementary_sports/application/application.dart
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:shamsi_date/shamsi_date.dart';
+import 'package:ritmo/core/widgets/sheet/ritmo_picker_sheet.dart';
 import '../components/components.dart';
 import 'mv_kind_picker_sheet.dart';
 
@@ -14,6 +15,7 @@ class MvDayPlanSheet extends StatefulWidget {
   final MvKindUseCase? kindUseCase;
   final MvSaveCommitmentUseCase? saveCommitmentUseCase;
   final ValueChanged<MvSlot> onSave;
+  final void Function(MvSlot slot, bool deleteRecurring)? onDelete;
 
   const MvDayPlanSheet({
     super.key,
@@ -21,6 +23,7 @@ class MvDayPlanSheet extends StatefulWidget {
     this.kindUseCase,
     this.saveCommitmentUseCase,
     required this.onSave,
+    this.onDelete,
   });
 
   static Future<void> show({
@@ -29,6 +32,7 @@ class MvDayPlanSheet extends StatefulWidget {
     MvKindUseCase? kindUseCase,
     MvSaveCommitmentUseCase? saveCommitmentUseCase,
     required ValueChanged<MvSlot> onSave,
+    void Function(MvSlot slot, bool deleteRecurring)? onDelete,
   }) {
     return MvSheetScaffold.show(
       context: context,
@@ -40,6 +44,12 @@ class MvDayPlanSheet extends StatefulWidget {
           Navigator.pop(ctx);
           onSave(s);
         },
+        onDelete: onDelete != null
+            ? (s, delRec) {
+                Navigator.pop(ctx);
+                onDelete(s, delRec);
+              }
+            : null,
       ),
     );
   }
@@ -242,6 +252,79 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
       widget.onSave(result.savedSlot);
     } else {
       widget.onSave(updated.copyWith(isLocked: true));
+    }
+  }
+
+  Future<void> _handleDelete() async {
+    final l10n = AppLocalizations.of(context);
+    final isLocked = widget.slot.isLocked;
+
+    if (isLocked) {
+      final selected = await RitmoPickerSheet.show<bool>(
+        context: context,
+        title: l10n?.mv_plan_delete_recurring_prompt ?? 'نحوهٔ حذف ورزش تکرارشونده',
+        options: [
+          PickerOption(
+            label: l10n?.mv_plan_delete_this_week_only ?? 'فقط برای این هفته لغو شود',
+            subtitle: 'تعهد هفتگی حفظ شده و این روز به استراحت تبدیل می‌شود.',
+            icon: Icons.event_busy_rounded,
+            value: false,
+          ),
+          PickerOption(
+            label: l10n?.mv_plan_delete_all_weeks ?? 'حذف دائمی از برنامهٔ هفتگی',
+            subtitle: 'کل تعهد هفتگی برای همیشه پاک می‌شود.',
+            icon: Icons.delete_forever_rounded,
+            value: true,
+          ),
+        ],
+      );
+
+      if (selected == null || !mounted) return;
+
+      if (widget.onDelete != null) {
+        widget.onDelete!(widget.slot, selected);
+      } else {
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final restSlot = widget.slot.copyWith(
+          slotType: MvSlotType.rest,
+          kindCode: null,
+          targetMinutes: 0,
+          plannedTime: null,
+          headlineFa: 'روز استراحت و ریکاوری',
+          isLocked: true,
+          updatedAt: now,
+        );
+        widget.onSave(restSlot);
+      }
+    } else {
+      final confirmed = await RitmoDialog.show(
+        context,
+        title: l10n?.mv_plan_delete_confirm_title ?? 'حذف برنامهٔ ورزشی',
+        content: l10n?.mv_plan_delete_confirm_desc ??
+            'آیا از حذف برنامهٔ ورزشی این روز مطمئن هستید؟ این روز به عنوان استراحت ثبت خواهد شد.',
+        confirmLabel: l10n?.mv_plan_delete_confirm ?? 'حذف برنامه',
+        cancelLabel: l10n?.cancel ?? 'انصراف',
+        icon: Icons.delete_outline_rounded,
+        isDestructive: true,
+      );
+
+      if (confirmed != true || !mounted) return;
+
+      if (widget.onDelete != null) {
+        widget.onDelete!(widget.slot, false);
+      } else {
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final restSlot = widget.slot.copyWith(
+          slotType: MvSlotType.rest,
+          kindCode: null,
+          targetMinutes: 0,
+          plannedTime: null,
+          headlineFa: 'روز استراحت و ریکاوری',
+          isLocked: true,
+          updatedAt: now,
+        );
+        widget.onSave(restSlot);
+      }
     }
   }
 
@@ -597,11 +680,36 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
           ],
         ),
       ),
-      bottomAction: MvPrimaryAction(
-        key: const ValueKey('day_plan_save_action'),
-        label: l10n?.mv_day_plan_save ?? 'Save Day Plan',
-        icon: Icons.check_rounded,
-        onPressed: _handleSave,
+      bottomAction: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          MvPrimaryAction(
+            key: const ValueKey('day_plan_save_action'),
+            label: l10n?.mv_day_plan_save ?? 'Save Day Plan',
+            icon: Icons.check_rounded,
+            onPressed: _handleSave,
+          ),
+          if (!widget.slot.isRest) ...[
+            const SizedBox(height: 8),
+            TextButton.icon(
+              key: const ValueKey('day_plan_delete_action'),
+              onPressed: _handleDelete,
+              icon: Icon(
+                Icons.delete_outline_rounded,
+                size: 18,
+                color: colors.error,
+              ),
+              label: Text(
+                l10n?.mv_plan_delete_action ?? 'حذف برنامهٔ این روز',
+                style: textTheme.labelLarge?.copyWith(
+                  color: colors.error,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

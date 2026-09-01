@@ -5,6 +5,7 @@ import 'package:ritmo/features/supplementary_sports/application/application.dart
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
+import 'package:ritmo/core/widgets/sheet/ritmo_picker_sheet.dart';
 import '../components/components.dart';
 import '../sheets/sheets.dart';
 
@@ -31,6 +32,7 @@ class MvTodayTab extends StatelessWidget {
   )
   onQuickLogSaved;
   final ValueChanged<String> onDateSelected;
+  final Future<void> Function(MvSlot slot, {bool deleteRecurring})? onDeleteSlot;
   final double topPadding;
 
   const MvTodayTab({
@@ -49,6 +51,7 @@ class MvTodayTab extends StatelessWidget {
     this.kindUseCase,
     required this.onQuickLogSaved,
     required this.onDateSelected,
+    this.onDeleteSlot,
     this.topPadding = 16.0,
   });
 
@@ -149,6 +152,16 @@ class MvTodayTab extends StatelessWidget {
             ),
             onStart: onStartSession,
             onContinue: onContinueSession,
+            onEditPlan: () {
+              MvDayPlanSheet.show(
+                context: context,
+                slot: todaySlot,
+                kindUseCase: kindUseCase,
+                onSave: onSlotUpdated,
+                onDelete: (s, delRec) =>
+                    onDeleteSlot?.call(s, deleteRecurring: delRec),
+              );
+            },
             onCantToday: () {
               MvCantTodaySheet.show(
                 context: context,
@@ -186,6 +199,53 @@ class MvTodayTab extends StatelessWidget {
                   );
                   onSlotUpdated(skipped);
                 },
+                onDeleteTodayPlan: onDeleteSlot != null
+                    ? () async {
+                        if (todaySlot.isLocked) {
+                          final selected = await RitmoPickerSheet.show<bool>(
+                            context: context,
+                            title: l10n?.mv_plan_delete_recurring_prompt ??
+                                'نحوهٔ حذف ورزش تکرارشونده',
+                            options: [
+                              PickerOption(
+                                label: l10n?.mv_plan_delete_this_week_only ??
+                                    'فقط برای این هفته لغو شود',
+                                subtitle:
+                                    'تعهد هفتگی حفظ شده و این روز به استراحت تبدیل می‌شود.',
+                                icon: Icons.event_busy_rounded,
+                                value: false,
+                              ),
+                              PickerOption(
+                                label: l10n?.mv_plan_delete_all_weeks ??
+                                    'حذف دائمی از برنامهٔ هفتگی',
+                                subtitle: 'کل تعهد هفتگی برای همیشه پاک می‌شود.',
+                                icon: Icons.delete_forever_rounded,
+                                value: true,
+                              ),
+                            ],
+                          );
+                          if (selected != null) {
+                            await onDeleteSlot!(todaySlot, deleteRecurring: selected);
+                          }
+                        } else {
+                          final confirmed = await RitmoDialog.show(
+                            context,
+                            title: l10n?.mv_plan_delete_confirm_title ??
+                                'حذف برنامهٔ ورزشی',
+                            content: l10n?.mv_plan_delete_confirm_desc ??
+                                'آیا از حذف برنامهٔ ورزشی این روز مطمئن هستید؟ این روز به عنوان استراحت ثبت خواهد شد.',
+                            confirmLabel:
+                                l10n?.mv_plan_delete_confirm ?? 'حذف برنامه',
+                            cancelLabel: l10n?.cancel ?? 'انصراف',
+                            icon: Icons.delete_outline_rounded,
+                            isDestructive: true,
+                          );
+                          if (confirmed == true) {
+                            await onDeleteSlot!(todaySlot, deleteRecurring: false);
+                          }
+                        }
+                      }
+                    : null,
               );
             },
           ),

@@ -55,6 +55,31 @@ class _MvHubScreenState extends State<MvHubScreen> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _handleDeleteSlot(MvSlot slot, {bool deleteRecurring = false}) async {
+    final result = await _controller.deleteWorkoutPlan(
+      slot: slot,
+      deleteRecurringCommitment: deleteRecurring,
+    );
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.mv_plan_deleted_snackbar, textAlign: TextAlign.right),
+        action: SnackBarAction(
+          label: l10n.mv_undo,
+          onPressed: () async {
+            await _controller.restoreWorkoutPlan(
+              previousSlot: result.previousSlot,
+              previousCommitment: result.previousCommitment,
+            );
+          },
+        ),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
   Future<void> _handleStartOrResumeSession(MvSlot slot) async {
     final activeSession = _controller.activeSession;
     final MvSession session;
@@ -426,6 +451,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
           onCheckinSaved: _controller.saveCheckin,
           onQuickLogSaved: _controller.saveQuickLog,
           onDateSelected: _controller.selectDate,
+          onDeleteSlot: _handleDeleteSlot,
         ),
 
         // Tab 1: هفته
@@ -437,6 +463,9 @@ class _MvHubScreenState extends State<MvHubScreen> {
           topPadding: contentTopPadding,
           onSlotUpdated: _controller.updateSlot,
           onRegenerateWeek: _controller.regenerateWeek,
+          onDeleteSlot: _handleDeleteSlot,
+          onConvertToRest: _controller.convertSlotToRest,
+          onMoveToTomorrow: _controller.moveSlotToTomorrow,
           onOpenCommitments: () {
             Navigator.push(
               context,

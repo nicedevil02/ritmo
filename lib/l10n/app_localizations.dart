@@ -5139,6 +5139,96 @@ abstract class AppLocalizations {
   /// In fa, this message translates to:
   /// **'ساعت {time}'**
   String mv_at_time(String time);
+
+  /// No description provided for @mv_plan_delete_action.
+  ///
+  /// In fa, this message translates to:
+  /// **'حذف برنامهٔ این روز'**
+  String get mv_plan_delete_action;
+
+  /// No description provided for @mv_plan_delete_confirm_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'حذف برنامهٔ ورزشی'**
+  String get mv_plan_delete_confirm_title;
+
+  /// No description provided for @mv_plan_delete_confirm_desc.
+  ///
+  /// In fa, this message translates to:
+  /// **'آیا مایلید برنامهٔ ورزشی این روز حذف شود؟ این روز به عنوان استراحت ثبت خواهد شد.'**
+  String get mv_plan_delete_confirm_desc;
+
+  /// No description provided for @mv_plan_delete_recurring_prompt.
+  ///
+  /// In fa, this message translates to:
+  /// **'این ورزش به صورت هفتگی تکرار می‌شود. مایلید چگونه حذف شود؟'**
+  String get mv_plan_delete_recurring_prompt;
+
+  /// No description provided for @mv_plan_delete_this_week_only.
+  ///
+  /// In fa, this message translates to:
+  /// **'فقط برای این هفته لغو شود'**
+  String get mv_plan_delete_this_week_only;
+
+  /// No description provided for @mv_plan_delete_all_weeks.
+  ///
+  /// In fa, this message translates to:
+  /// **'حذف دائمی از برنامهٔ هفتگی'**
+  String get mv_plan_delete_all_weeks;
+
+  /// No description provided for @mv_plan_deleted_snackbar.
+  ///
+  /// In fa, this message translates to:
+  /// **'برنامهٔ ورزشی این روز حذف شد'**
+  String get mv_plan_deleted_snackbar;
+
+  /// No description provided for @mv_undo.
+  ///
+  /// In fa, this message translates to:
+  /// **'بازگردانی'**
+  String get mv_undo;
+
+  /// No description provided for @mv_action_convert_rest.
+  ///
+  /// In fa, this message translates to:
+  /// **'تبدیل به روز استراحت'**
+  String get mv_action_convert_rest;
+
+  /// No description provided for @mv_action_move_tomorrow.
+  ///
+  /// In fa, this message translates to:
+  /// **'انتقال به فردا'**
+  String get mv_action_move_tomorrow;
+
+  /// No description provided for @mv_plan_delete_confirm.
+  ///
+  /// In fa, this message translates to:
+  /// **'حذف برنامه'**
+  String get mv_plan_delete_confirm;
+
+  /// No description provided for @mv_cant_today_option_delete_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'حذف کامل برنامهٔ امروز'**
+  String get mv_cant_today_option_delete_title;
+
+  /// No description provided for @mv_cant_today_option_delete_desc.
+  ///
+  /// In fa, this message translates to:
+  /// **'پاک کردن این ورزش از تقویم و برنامهٔ امروز'**
+  String get mv_cant_today_option_delete_desc;
+
+  /// No description provided for @mv_day_detail_delete_tooltip.
+  ///
+  /// In fa, this message translates to:
+  /// **'حذف برنامهٔ ورزشی این روز'**
+  String get mv_day_detail_delete_tooltip;
+
+  /// No description provided for @mv_exercise_removed_snackbar.
+  ///
+  /// In fa, this message translates to:
+  /// **'حرکت {name} حذف شد'**
+  String mv_exercise_removed_snackbar(String name);
 }
 
 class _AppLocalizationsDelegate

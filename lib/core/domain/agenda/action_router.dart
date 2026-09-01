@@ -18,7 +18,6 @@ import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/utils/ritmo_date.dart';
 import 'package:ritmo/features/goals/presentation/goals_screen.dart';
 import 'package:ritmo/features/konkur/logic/konkur_repository.dart';
-import 'package:ritmo/features/konkur/models/konkur_models.dart';
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_study_sheet.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
 import 'package:ritmo/features/routines/shared/routine_actions.dart';
@@ -634,9 +633,6 @@ class ActionRouter {
     try {
       final subjects = await KonkurRepository.instance.getSubjects();
       final allTopics = await KonkurRepository.instance.getTopics();
-      final topics = subjects.isNotEmpty
-          ? allTopics.where((t) => t.subjectId == subjects.first.id).toList()
-          : <KonkurTopic>[];
 
       if (!context.mounted) return;
 
@@ -648,13 +644,19 @@ class ActionRouter {
         return;
       }
 
+      final planMap = item.meta['planItem'] as Map<String, dynamic>?;
+      final targetTopicId = item.meta['topicId'] as String? ?? planMap?['topicId'] as String?;
+      final targetMode = item.meta['plannedMode'] as String? ?? planMap?['plannedMode'] as String?;
+
       await showModalBottomSheet(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (_) => KonkurStudySheet(
           subjects: subjects,
-          topics: topics,
+          topics: allTopics,
+          preSelectedTopicId: targetTopicId,
+          initialMode: targetMode,
           onSaved: () {
             ActionFeedback.success(
               context,

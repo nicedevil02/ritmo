@@ -184,26 +184,42 @@ class CalendarSearchRepository {
       // 5. Search konkur_plan_items
       final konkurItems = await db.rawQuery(
         '''
-        SELECT kp.id, kp.dateIso, kp.plannedMinutes, ks.name as subjectName
+        SELECT kp.id, kp.dateIso, kp.plannedMinutes, ks.name as subjectName, kt.name as topicName
         FROM konkur_plan_items kp
         LEFT JOIN konkur_subjects ks ON kp.subjectId = ks.id
+        LEFT JOIN konkur_topics kt ON kp.topicId = kt.id
         LIMIT ?
       ''',
         [limit * 3],
       );
 
       for (final row in konkurItems) {
-        final subjectName = row['subjectName']?.toString() ?? 'برنامه کنکور';
-        if (searchMatchFa(subjectName, trimmed)) {
+        final topicName = row['topicName']?.toString();
+        final subjectName = row['subjectName']?.toString();
+        final matchesTopic = topicName != null && searchMatchFa(topicName, trimmed);
+        final matchesSubject = subjectName != null && searchMatchFa(subjectName, trimmed);
+
+        if (matchesTopic || matchesSubject) {
           final plannedMin = (row['plannedMinutes'] as int?) ?? 0;
           final dateStr = row['dateIso']?.toString();
+
+          final title = (topicName != null && topicName.trim().isNotEmpty)
+              ? topicName.trim()
+              : (subjectName ?? 'برنامه کنکور');
+          final subtitleParts = <String>[];
+          if (topicName != null && topicName.isNotEmpty && subjectName != null) {
+            subtitleParts.add(subjectName);
+          }
+          if (plannedMin > 0) {
+            subtitleParts.add('$plannedMin دقیقه');
+          }
 
           hits.add(
             CalendarSearchHit(
               id: 'konkur:${row['id']}:${dateStr ?? 'nodate'}',
               sourceId: row['id'].toString(),
-              title: subjectName,
-              subtitle: plannedMin > 0 ? '$plannedMin دقیقه' : null,
+              title: title,
+              subtitle: subtitleParts.isNotEmpty ? subtitleParts.join(' · ') : null,
               domain: AgendaDomain.konkur,
               dateStr: dateStr,
             ),

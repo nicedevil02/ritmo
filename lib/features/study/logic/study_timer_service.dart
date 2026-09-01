@@ -6,6 +6,7 @@ import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/features/study/data/study_active_session_dao.dart';
 import 'package:ritmo/features/study/data/study_repository.dart';
 import 'package:ritmo/features/study/domain/study_models.dart';
+import 'package:ritmo/features/study/presentation/widgets/session_timer_sheet.dart';
 import 'package:uuid/uuid.dart';
 
 class StudyTimerService {
@@ -200,7 +201,7 @@ class StudyTimerService {
   void _broadcast(ActiveStudySessionState? session) {
     _controller.add(session);
     if (session == null) {
-      RitmoTimerHub.instance.stopActiveSession();
+      RitmoTimerHub.instance.clearSession();
       return;
     }
 
@@ -238,6 +239,20 @@ class StudyTimerService {
           );
         }
       },
+      reopenBuilder: (ctx) async {
+        final subjectId = session.subjectId;
+        if (subjectId == null || subjectId.isEmpty) return;
+        final sub = await _repo.getSubjectById(subjectId);
+        if (sub != null && ctx.mounted) {
+          StudyTopic? topic;
+          if (session.topicId != null) {
+            topic = await _repo.getTopicById(session.topicId!);
+          }
+          if (ctx.mounted) {
+            await SessionTimerSheet.show(ctx, subject: sub, topic: topic);
+          }
+        }
+      },
     );
 
     RitmoTimerHub.instance.registerOrUpdateSession(hubSession);
@@ -248,6 +263,9 @@ class StudyTimerService {
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       final session = _currentSession;
       if (session != null && !session.isPaused) {
+        final nowMs = DateTime.now().millisecondsSinceEpoch;
+        final elapsedSec = session.phaseElapsedSeconds(nowMs);
+        RitmoTimerHub.instance.syncElapsedSeconds(elapsedSec, target: session.targetSeconds);
         _controller.add(session.copyWith());
       }
     });

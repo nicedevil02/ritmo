@@ -383,15 +383,7 @@ class _HealthScreenState extends State<HealthScreen> {
   }
 
   void _openDoctorVisitSummarySheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const Directionality(
-        textDirection: TextDirection.rtl,
-        child: DoctorVisitSummarySheet(),
-      ),
-    );
+    DoctorVisitSummarySheet.show(context);
   }
 
   void _navigateToPage(Widget page) {

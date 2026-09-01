@@ -111,15 +111,7 @@ class _HealthInsightsPageState extends State<HealthInsightsPage> {
   }
 
   void _openDoctorVisitSummarySheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const Directionality(
-        textDirection: TextDirection.rtl,
-        child: DoctorVisitSummarySheet(),
-      ),
-    );
+    DoctorVisitSummarySheet.show(context);
   }
 
   @override

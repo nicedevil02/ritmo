@@ -29,7 +29,7 @@ void main() {
         );
   });
 
-  group('AppearanceGroupScreen UI Scale & Density Tests', () {
+  group('AppearanceGroupScreen Redesigned Tests', () {
     late Database db;
 
     setUp(() async {
@@ -78,7 +78,7 @@ void main() {
     }
 
     testWidgets(
-      'Renders live preview, text scale slider, density control, and switches',
+      'Renders live preview, theme mode cards, palettes carousel, and text scale slider',
       (tester) async {
         final themeRepo = ThemeRepository();
         await themeRepo.init();
@@ -88,15 +88,27 @@ void main() {
         await tester.pumpWidget(
           buildTestableScreen(themeRepo: themeRepo, localeRepo: localeRepo),
         );
-        await tester.pump();
+        await tester.pumpAndSettle();
 
+        // 1. سربرگ و ماک‌آپ زنده
+        expect(find.text('ظاهر و زبان'), findsOneWidget);
+        expect(find.textContaining('پیش‌نمایش زنده'), findsOneWidget);
+        expect(find.text('مدیتیشن صبحگاهی و تنفس عمیق'), findsOneWidget);
+
+        // 2. حالت روشنایی (روز/شب/سیستم)
+        expect(find.text('حالت روشنایی'), findsOneWidget);
+        expect(find.text('روشن'), findsWidgets);
+        expect(find.text('تاریک'), findsWidgets);
+        expect(find.text('خودکار'), findsWidgets);
+
+        // 3. پالت‌های رنگی
+        expect(find.text('پالت‌های رنگی اختصاصی'), findsOneWidget);
+        expect(find.text('یشم شب'), findsWidgets);
+
+        // 4. اسلایدر مقیاس متن
         expect(find.text('اندازهٔ متن و المان‌ها'), findsOneWidget);
-        expect(find.text('پیش‌نمایش زنده'), findsOneWidget);
         expect(find.text('اندازهٔ متن'), findsWidgets);
-        expect(find.byType(Slider), findsOneWidget);
-        expect(find.text('پیروی از اندازه فونت سیستم'), findsOneWidget);
-        expect(find.text('چگالی و بزرگی المان‌ها'), findsOneWidget);
-        expect(find.text('بازگردانی به پیش‌فرض'), findsOneWidget);
+        expect(find.byType(Slider), findsWidgets);
 
         await tester.pumpWidget(const SizedBox());
         themeRepo.dispose();
@@ -114,14 +126,27 @@ void main() {
       await tester.pumpWidget(
         buildTestableScreen(themeRepo: themeRepo, localeRepo: localeRepo),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      final switchFinder = find.byType(CupertinoSwitch);
-      expect(switchFinder, findsWidgets);
+      final verticalScrollable = find.byType(Scrollable).first;
+      final followOsFinder = find.text('پیروی از اندازه فونت سیستم');
+      await tester.scrollUntilVisible(
+        followOsFinder,
+        200,
+        scrollable: verticalScrollable,
+      );
+      await tester.pumpAndSettle();
+
+      expect(followOsFinder, findsOneWidget);
 
       final initialVal = themeRepo.preferencesNotifier.value.followOsTextScale;
+
+      final switchFinder = find.byWidgetPredicate(
+        (widget) => widget is CupertinoSwitch && widget.value == initialVal,
+      );
+      expect(switchFinder, findsWidgets);
       await tester.tap(switchFinder.first);
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(
         themeRepo.preferencesNotifier.value.followOsTextScale,
@@ -132,7 +157,7 @@ void main() {
       themeRepo.dispose();
     });
 
-    testWidgets('Slider accurately tracks step indices and discrete scale states', (
+    testWidgets('Text scale slider accurately tracks step indices and discrete scale states', (
       tester,
     ) async {
       final themeRepo = ThemeRepository();
@@ -143,9 +168,18 @@ void main() {
       await tester.pumpWidget(
         buildTestableScreen(themeRepo: themeRepo, localeRepo: localeRepo),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      final sliderFinder = find.byType(Slider);
+      final verticalScrollable = find.byType(Scrollable).first;
+      final textScaleSection = find.text('اندازهٔ متن و المان‌ها');
+      await tester.scrollUntilVisible(
+        textScaleSection,
+        200,
+        scrollable: verticalScrollable,
+      );
+      await tester.pumpAndSettle();
+
+      final sliderFinder = find.byType(Slider).first;
       expect(sliderFinder, findsOneWidget);
 
       final slider = tester.widget<Slider>(sliderFinder);
@@ -153,6 +187,31 @@ void main() {
       expect(slider.max, 5.0);
       expect(slider.divisions, 5);
       expect(slider.value, 2.0); // 100% is index 2
+
+      await tester.pumpWidget(const SizedBox());
+      themeRepo.dispose();
+    });
+
+    testWidgets('Tapping theme mode tiles changes mode in repository', (
+      tester,
+    ) async {
+      final themeRepo = ThemeRepository();
+      await themeRepo.init();
+      final localeRepo = LocaleRepository();
+      await localeRepo.init();
+
+      await tester.pumpWidget(
+        buildTestableScreen(themeRepo: themeRepo, localeRepo: localeRepo),
+      );
+      await tester.pumpAndSettle();
+
+      final darkTileFinder = find.text('تاریک');
+      expect(darkTileFinder, findsWidgets);
+
+      await tester.tap(darkTileFinder.first);
+      await tester.pumpAndSettle();
+
+      expect(themeRepo.preferencesNotifier.value.mode, ThemeMode.dark);
 
       await tester.pumpWidget(const SizedBox());
       themeRepo.dispose();

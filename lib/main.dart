@@ -29,6 +29,7 @@ import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/widgets/restart_widget.dart';
 import 'package:ritmo/features/courses/logic/course_timer_service.dart';
+import 'package:ritmo/features/study/logic/study_timer_service.dart';
 import 'package:ritmo/features/onboarding/logic/onboarding_gate.dart';
 import 'package:ritmo/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:ritmo/features/onboarding/presentation/splash_screen.dart';
@@ -344,11 +345,12 @@ class _RitmoAppState extends State<RitmoApp> with WidgetsBindingObserver {
       // قدم صفر: همگام‌سازی یادآور پیش‌خواب با تنظیمات در هر شروع اپ
       unawaited(SleepWinddownReminderService.syncFromSettings());
 
-      // Restore any in-progress course study timer safely
+      // Restore any in-progress course or study timer safely
       try {
         unawaited(CourseTimerService.instance.initOnAppStart());
+        unawaited(StudyTimerService.instance.init());
       } catch (e, st) {
-        RitmoLog.warning('Init', 'Course timer init non-fatal error: $e', e, st);
+        RitmoLog.warning('Init', 'Timer init non-fatal error: $e', e, st);
       }
     } catch (e, st) {
       await PrivacyErrorSink.instance.logError(

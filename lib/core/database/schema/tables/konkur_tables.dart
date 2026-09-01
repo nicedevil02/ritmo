@@ -186,6 +186,25 @@ class KonkurTables {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_study_deadlines_subject ON study_deadlines(subjectId);',
     );
+
+    // study_active_session table (Persistent state for study timers & Pomodoro)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS study_active_session (
+          id TEXT PRIMARY KEY,
+          subjectId TEXT NOT NULL,
+          topicId TEXT,
+          mode TEXT NOT NULL DEFAULT 'LEARN',
+          startedAtMs INTEGER NOT NULL,
+          accumulatedSeconds INTEGER NOT NULL DEFAULT 0,
+          phaseAccumulatedSeconds INTEGER NOT NULL DEFAULT 0,
+          isPaused INTEGER NOT NULL DEFAULT 0,
+          plannedMinutes INTEGER,
+          pomodoroPhase TEXT NOT NULL DEFAULT 'FOCUS',
+          pomodoroCycle INTEGER NOT NULL DEFAULT 1,
+          targetSeconds INTEGER NOT NULL DEFAULT 1500,
+          createdAt INTEGER NOT NULL
+      );
+    ''');
   }
 
   /// Self-healing schema validation to ensure konkur plan tables and topic columns exist.
@@ -301,7 +320,26 @@ class KonkurTables {
       'CREATE INDEX IF NOT EXISTS idx_konkur_plans_status ON konkur_plans(status);',
     );
 
-    // 6. Data backfill: if origin is null or default, update preset subjects/topics
+    // 6. study_active_session table self-healing verification
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS study_active_session (
+          id TEXT PRIMARY KEY,
+          subjectId TEXT NOT NULL,
+          topicId TEXT,
+          mode TEXT NOT NULL DEFAULT 'LEARN',
+          startedAtMs INTEGER NOT NULL,
+          accumulatedSeconds INTEGER NOT NULL DEFAULT 0,
+          phaseAccumulatedSeconds INTEGER NOT NULL DEFAULT 0,
+          isPaused INTEGER NOT NULL DEFAULT 0,
+          plannedMinutes INTEGER,
+          pomodoroPhase TEXT NOT NULL DEFAULT 'FOCUS',
+          pomodoroCycle INTEGER NOT NULL DEFAULT 1,
+          targetSeconds INTEGER NOT NULL DEFAULT 1500,
+          createdAt INTEGER NOT NULL
+      );
+    ''');
+
+    // 7. Data backfill: if origin is null or default, update preset subjects/topics
     try {
       await db.execute(
         "UPDATE konkur_subjects SET origin = 'KONKUR_PRESET' WHERE isPreset = 1 AND (origin IS NULL OR origin = 'USER');",

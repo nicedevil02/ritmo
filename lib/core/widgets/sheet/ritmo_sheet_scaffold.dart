@@ -174,7 +174,10 @@ class RitmoSheetScaffold extends StatelessWidget {
                 GestureDetector(
                   onTap: () {
                     RitmoHapticsPolicy.tap();
-                    Navigator.of(context).pop();
+                    final route = ModalRoute.of(context);
+                    if (route != null && route.isCurrent) {
+                      Navigator.of(context).pop();
+                    }
                   },
                   child: Container(
                     width: 34,
@@ -314,6 +317,9 @@ class AppleCardDeckHost extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     Widget buildTransform(double progress, double extent, Widget staticChild) {
+      if (progress <= 0.0001) {
+        return staticChild;
+      }
       final clampedExtent = extent.clamp(0.0, 1.0);
 
       // Normalized progress between 60% and 95%

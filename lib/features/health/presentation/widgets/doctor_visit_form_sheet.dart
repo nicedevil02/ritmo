@@ -284,6 +284,176 @@ class _DoctorVisitFormSheetState extends State<DoctorVisitFormSheet> {
     }
   }
 
+  Widget _buildSectionLabel(String title, IconData icon, Color color) {
+    final colors = context.colors;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _sunkenInputDecoration(
+    BuildContext context, {
+    required String label,
+    String? hint,
+    IconData? icon,
+  }) {
+    final colors = context.colors;
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(fontSize: 13, color: colors.textSecondary),
+      hintText: hint,
+      hintStyle: TextStyle(fontSize: 12.5, color: colors.textTertiary),
+      prefixIcon: icon != null ? Icon(icon, size: 18, color: colors.primary) : null,
+      filled: true,
+      fillColor: colors.textPrimary.withValues(alpha: 0.04),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colors.textPrimary.withValues(alpha: 0.08)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colors.textPrimary.withValues(alpha: 0.08)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colors.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colors.medicalRed, width: 1.2),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colors.medicalRed, width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    );
+  }
+
+  Widget _buildVisitTypeChips(RitmoColors colors, AppLocalizations l10n) {
+    final options = [
+      ('IN_PERSON', l10n.doctorVisitsTypeInPerson, CupertinoIcons.person_2_fill),
+      ('ONLINE', l10n.doctorVisitsTypeOnline, CupertinoIcons.tv_fill),
+      ('TELEPHONE', l10n.doctorVisitsTypeTelephone, CupertinoIcons.phone_fill),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.textPrimary.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.textPrimary.withValues(alpha: 0.08)),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: options.map((opt) {
+          final isSelected = _visitType == opt.$1;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                RitmoHaptics.selection();
+                setState(() => _visitType = opt.$1);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                padding: const EdgeInsets.symmetric(vertical: 9),
+                decoration: BoxDecoration(
+                  color: isSelected ? colors.primary.withValues(alpha: 0.18) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  border: isSelected ? Border.all(color: colors.primary.withValues(alpha: 0.4)) : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      opt.$3,
+                      size: 14,
+                      color: isSelected ? colors.primary : colors.textSecondary,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      opt.$2,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? colors.primary : colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildDateTimeTile({
+    required IconData icon,
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+    required RitmoColors colors,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          RitmoHaptics.selection();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          decoration: BoxDecoration(
+            color: colors.textPrimary.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: colors.textPrimary.withValues(alpha: 0.08)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: colors.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -303,301 +473,225 @@ class _DoctorVisitFormSheetState extends State<DoctorVisitFormSheet> {
           controller: scrollController,
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            top: 12,
+            left: 16,
+            right: 16,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── ۱. مشخصات پزشک و تخصص ──
-                RitmoCard.neumorphic(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RitmoCardHeader(
-                        title: 'مشخصات پزشک',
-                        icon: CupertinoIcons.person_crop_circle_fill,
-                        iconColor: colors.primary,
-                      ),
-                      const RitmoCardDivider(),
-                      TextFormField(
-                        controller: _doctorNameController,
-                        style: TextStyle(color: colors.textPrimary),
-                        decoration: RitmoTheme.inputDecoration(
-                          context,
-                          label: l10n.doctorVisitsDoctorName,
-                          icon: CupertinoIcons.person,
-                        ),
-                        validator: (val) => val == null || val.trim().isEmpty ? 'لطفاً نام پزشک را وارد کنید' : null,
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _specialtyController,
-                        style: TextStyle(color: colors.textPrimary),
-                        decoration: RitmoTheme.inputDecoration(
-                          context,
-                          label: l10n.doctorVisitsSpecialty,
-                          icon: CupertinoIcons.star,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        initialValue: _visitType,
-                        style: TextStyle(color: colors.textPrimary),
-                        decoration: RitmoTheme.inputDecoration(
-                          context,
-                          label: l10n.doctorVisitsType,
-                          icon: CupertinoIcons.layers_alt,
-                        ),
-                        dropdownColor: colors.card,
-                        items: [
-                          DropdownMenuItem(value: 'IN_PERSON', child: Text(l10n.doctorVisitsTypeInPerson)),
-                          DropdownMenuItem(value: 'ONLINE', child: Text(l10n.doctorVisitsTypeOnline)),
-                          DropdownMenuItem(value: 'TELEPHONE', child: Text(l10n.doctorVisitsTypeTelephone)),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() {
-                              _visitType = val;
-                            });
-                          }
-                        },
-                      ),
-                    ],
+                // ── ۱. مشخصات پزشک ──
+                _buildSectionLabel('مشخصات پزشک', CupertinoIcons.person_crop_circle_fill, colors.primary),
+                TextFormField(
+                  controller: _doctorNameController,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13.5),
+                  decoration: _sunkenInputDecoration(
+                    context,
+                    label: l10n.doctorVisitsDoctorName,
+                    hint: 'مثلاً: دکتر علیرضا احمدی',
+                    icon: CupertinoIcons.person,
+                  ),
+                  validator: (val) => val == null || val.trim().isEmpty ? 'لطفاً نام پزشک را وارد کنید' : null,
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _specialtyController,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13.5),
+                  decoration: _sunkenInputDecoration(
+                    context,
+                    label: l10n.doctorVisitsSpecialty,
+                    hint: 'اختیاری: قلب و عروق، ارتوپدی و...',
+                    icon: CupertinoIcons.star,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
+                _buildVisitTypeChips(colors, l10n),
+                const SizedBox(height: 20),
 
-                // ── ۲. زمان نوبت و یادآور ──
-                RitmoCard.neumorphic(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RitmoCardHeader(
-                        title: 'زمان‌بندی و یادآوری',
-                        icon: CupertinoIcons.calendar_badge_plus,
-                        iconColor: colors.accent,
+                // ── ۲. زمان‌بندی و یادآوری ──
+                _buildSectionLabel('زمان‌بندی و یادآوری', CupertinoIcons.calendar_badge_plus, colors.accent),
+                Row(
+                  children: [
+                    _buildDateTimeTile(
+                      icon: CupertinoIcons.calendar,
+                      label: 'تاریخ نوبت',
+                      value: _toPersianDigits(
+                        '${Jalali.fromDateTime(_selectedDate).year}/${Jalali.fromDateTime(_selectedDate).month}/${Jalali.fromDateTime(_selectedDate).day}',
                       ),
-                      const RitmoCardDivider(),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 48,
-                              child: RitmoNeuButton(
-                                onTap: _pickDate,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(CupertinoIcons.calendar, color: colors.primary, size: 18),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      _toPersianDigits(
-                                        '${Jalali.fromDateTime(_selectedDate).year}/${Jalali.fromDateTime(_selectedDate).month}/${Jalali.fromDateTime(_selectedDate).day}',
-                                      ),
-                                      style: TextStyle(
-                                        color: colors.textPrimary,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: SizedBox(
-                              height: 48,
-                              child: RitmoNeuButton(
-                                onTap: _pickTime,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(CupertinoIcons.time, color: colors.primary, size: 18),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      _toPersianDigits(
-                                        '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
-                                      ),
-                                      style: TextStyle(
-                                        color: colors.textPrimary,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      onTap: _pickDate,
+                      colors: colors,
+                    ),
+                    const SizedBox(width: 10),
+                    _buildDateTimeTile(
+                      icon: CupertinoIcons.time,
+                      label: 'ساعت مراجعه',
+                      value: _toPersianDigits(
+                        '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
                       ),
-                      const SizedBox(height: 14),
-                      DropdownButtonFormField<int>(
-                        initialValue: _reminderBefore,
-                        style: TextStyle(color: colors.textPrimary),
-                        decoration: RitmoTheme.inputDecoration(
-                          context,
-                          label: l10n.doctorVisitsReminder,
-                          icon: CupertinoIcons.bell,
-                        ),
-                        dropdownColor: colors.card,
-                        items: [
-                          DropdownMenuItem(value: 0, child: Text(l10n.doctorVisitsReminderNone)),
-                          DropdownMenuItem(value: 15, child: Text(l10n.doctorVisitsReminder15m)),
-                          DropdownMenuItem(value: 30, child: Text(l10n.doctorVisitsReminder30m)),
-                          DropdownMenuItem(value: 60, child: Text(l10n.doctorVisitsReminder1h)),
-                          DropdownMenuItem(value: 120, child: Text(l10n.doctorVisitsReminder2h)),
-                          DropdownMenuItem(value: 1440, child: Text(l10n.doctorVisitsReminder1d)),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() {
-                              _reminderBefore = val;
-                            });
-                          }
-                        },
-                      ),
-                    ],
+                      onTap: _pickTime,
+                      colors: colors,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<int>(
+                  initialValue: _reminderBefore,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13.5),
+                  decoration: _sunkenInputDecoration(
+                    context,
+                    label: l10n.doctorVisitsReminder,
+                    icon: CupertinoIcons.bell,
+                  ),
+                  dropdownColor: colors.card,
+                  items: [
+                    DropdownMenuItem(value: 0, child: Text(l10n.doctorVisitsReminderNone)),
+                    DropdownMenuItem(value: 15, child: Text(l10n.doctorVisitsReminder15m)),
+                    DropdownMenuItem(value: 30, child: Text(l10n.doctorVisitsReminder30m)),
+                    DropdownMenuItem(value: 60, child: Text(l10n.doctorVisitsReminder1h)),
+                    DropdownMenuItem(value: 120, child: Text(l10n.doctorVisitsReminder2h)),
+                    DropdownMenuItem(value: 1440, child: Text(l10n.doctorVisitsReminder1d)),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        _reminderBefore = val;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // ── ۳. مرکز درمانی و تماس ──
+                _buildSectionLabel('مرکز درمانی و تماس', CupertinoIcons.building_2_fill, colors.warning),
+                TextFormField(
+                  controller: _clinicNameController,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13.5),
+                  decoration: _sunkenInputDecoration(
+                    context,
+                    label: l10n.doctorVisitsClinicName,
+                    hint: 'نام بیمارستان، درمانگاه یا مطب',
+                    icon: CupertinoIcons.building_2_fill,
                   ),
                 ),
-                const SizedBox(height: 16),
-
-                // ── ۳. اطلاعات مرکز درمانی ──
-                RitmoCard.neumorphic(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RitmoCardHeader(
-                        title: 'مرکز درمانی و تماس',
-                        icon: CupertinoIcons.building_2_fill,
-                        iconColor: colors.warning,
-                      ),
-                      const RitmoCardDivider(),
-                      TextFormField(
-                        controller: _clinicNameController,
-                        style: TextStyle(color: colors.textPrimary),
-                        decoration: RitmoTheme.inputDecoration(
-                          context,
-                          label: l10n.doctorVisitsClinicName,
-                          icon: CupertinoIcons.building_2_fill,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _clinicAddressController,
-                        style: TextStyle(color: colors.textPrimary),
-                        decoration: RitmoTheme.inputDecoration(
-                          context,
-                          label: l10n.doctorVisitsClinicAddress,
-                          icon: CupertinoIcons.location_solid,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _clinicPhoneController,
-                        keyboardType: TextInputType.phone,
-                        style: TextStyle(color: colors.textPrimary),
-                        decoration: RitmoTheme.inputDecoration(
-                          context,
-                          label: l10n.doctorVisitsClinicPhone,
-                          icon: CupertinoIcons.phone_fill,
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _clinicAddressController,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13.5),
+                  decoration: _sunkenInputDecoration(
+                    context,
+                    label: l10n.doctorVisitsClinicAddress,
+                    hint: 'خیابان، ساختمان، پلاک، طبقه',
+                    icon: CupertinoIcons.location_solid,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _clinicPhoneController,
+                  keyboardType: TextInputType.phone,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13.5),
+                  decoration: _sunkenInputDecoration(
+                    context,
+                    label: l10n.doctorVisitsClinicPhone,
+                    hint: '۰۲۱-xxxxxxxx',
+                    icon: CupertinoIcons.phone_fill,
+                  ),
+                ),
+                const SizedBox(height: 20),
 
-                // ── ۴. علت مراجعه، یادداشت و پیوست نسخه ──
-                RitmoCard.neumorphic(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RitmoCardHeader(
-                        title: 'علت مراجعه و پیوست مدارک',
-                        icon: CupertinoIcons.doc_text_fill,
-                        iconColor: colors.success,
+                // ── ۴. علت مراجعه و پیوست مدرک ──
+                _buildSectionLabel('علت مراجعه و نسخه', CupertinoIcons.doc_text_fill, colors.success),
+                TextFormField(
+                  controller: _reasonController,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13.5),
+                  decoration: _sunkenInputDecoration(
+                    context,
+                    label: l10n.doctorVisitsReason,
+                    hint: 'چکاپ دوره‌ای، درد زانو، معاینه چشم و...',
+                    icon: CupertinoIcons.question_circle,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _notesController,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13.5),
+                  decoration: _sunkenInputDecoration(
+                    context,
+                    label: l10n.doctorVisitsNotes,
+                    hint: 'توصیه‌ها، آزمایش‌های مورد نیاز و یادداشت شخصی',
+                    icon: CupertinoIcons.pencil_outline,
+                  ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: _pickImage,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: colors.textPrimary.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _attachmentPath != null
+                            ? colors.primary.withValues(alpha: 0.4)
+                            : colors.textPrimary.withValues(alpha: 0.08),
                       ),
-                      const RitmoCardDivider(),
-                      TextFormField(
-                        controller: _reasonController,
-                        style: TextStyle(color: colors.textPrimary),
-                        decoration: RitmoTheme.inputDecoration(
-                          context,
-                          label: l10n.doctorVisitsReason,
-                          icon: CupertinoIcons.question_circle,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _notesController,
-                        style: TextStyle(color: colors.textPrimary),
-                        decoration: RitmoTheme.inputDecoration(
-                          context,
-                          label: l10n.doctorVisitsNotes,
-                          icon: CupertinoIcons.pencil_outline,
-                        ),
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        height: 48,
-                        child: RitmoNeuButton(
-                          onTap: _pickImage,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(CupertinoIcons.camera_fill, color: colors.primary, size: 18),
-                              const SizedBox(width: 8),
-                              Text(
-                                _attachmentPath == null ? l10n.doctorVisitsAddAttachment : 'تغییر تصویر نسخه / مدرک',
-                                style: TextStyle(
-                                  color: colors.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(CupertinoIcons.camera_fill, color: colors.primary, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          _attachmentPath == null ? l10n.doctorVisitsAddAttachment : 'تغییر تصویر نسخه / مدرک ثبت شده',
+                          style: TextStyle(
+                            color: colors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
                           ),
-                        ),
-                      ),
-                      if (_attachmentPath != null) ...[
-                        const SizedBox(height: 12),
-                        Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(14),
-                              child: Image.file(
-                                File(_attachmentPath!),
-                                height: 160,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: GestureDetector(
-                                onTap: () => setState(() => _attachmentPath = null),
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: colors.medicalRed,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(CupertinoIcons.trash, color: Colors.white, size: 16),
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
                       ],
-                    ],
+                    ),
                   ),
                 ),
+                if (_attachmentPath != null) ...[
+                  const SizedBox(height: 10),
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          File(_attachmentPath!),
+                          height: 140,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: GestureDetector(
+                          onTap: () {
+                            RitmoHaptics.selection();
+                            setState(() => _attachmentPath = null);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: colors.medicalRed,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(CupertinoIcons.trash, color: Colors.white, size: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 24),
 
                 // ── دکمه نهایی ثبت ──
@@ -622,7 +716,7 @@ class _DoctorVisitFormSheetState extends State<DoctorVisitFormSheet> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
               ],
             ),
           ),

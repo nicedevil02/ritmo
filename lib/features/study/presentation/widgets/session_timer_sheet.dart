@@ -52,6 +52,7 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
     _testsCorrectController.addListener(_onTestInputChanged);
     _testsWrongController.addListener(_onTestInputChanged);
 
+    _state = StudyTimerService.instance.currentSession;
     _sub = StudyTimerService.instance.stream.listen((state) {
       if (mounted) {
         setState(() {
@@ -86,7 +87,9 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
         pomodoroPhase: 'FOCUS',
         pomodoroCycle: 1,
         targetSeconds: 0, // 0 = Stopwatch free mode by default
-      ).catchError((Object _) {});
+      ).catchError((Object e, StackTrace st) {
+        debugPrint('[SessionTimerSheet] Error starting study session: $e\n$st');
+      });
     }
   }
 

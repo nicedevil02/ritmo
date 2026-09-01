@@ -171,14 +171,21 @@ class RitmoTimerHub {
   }
 
   /// توقف و اتمام نشست تایمر
-  Future<void> stopActiveSession() async {
+  Future<void> stopActiveSession({bool notifyCallback = true}) async {
     final session = currentSession;
     _stopHeartbeat();
     activeSessionNotifier.value = null;
     secondsTickNotifier.value = 0;
-    if (session != null) {
+    if (session != null && notifyCallback) {
       await session.onStop?.call();
     }
+  }
+
+  /// پاک‌سازی نشست جاری بدون فراخوانی مجدد callback
+  void clearSession() {
+    _stopHeartbeat();
+    activeSessionNotifier.value = null;
+    secondsTickNotifier.value = 0;
   }
 
   /// تعویض فاز (مخصوص پومودورو و ست‌های ورزشی)

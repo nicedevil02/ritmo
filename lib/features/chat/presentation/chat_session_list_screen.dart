@@ -220,6 +220,7 @@ class _ChatSessionListScreenState extends State<ChatSessionListScreen> {
                               size: 16,
                             ),
                             onTap: () {
+                              RitmoHaptics.tap();
                               Navigator.pop(context, session.id);
                             },
                           ),

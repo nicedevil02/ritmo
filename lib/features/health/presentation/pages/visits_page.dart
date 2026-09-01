@@ -31,6 +31,69 @@ class _VisitsPageState extends State<VisitsPage> {
   List<DoctorVisit> _pastVisits = [];
   bool _isLoading = true;
 
+  static const _monthNamesFa = [
+    'فروردین',
+    'اردیبهشت',
+    'خرداد',
+    'تیر',
+    'مرداد',
+    'شهریور',
+    'مهر',
+    'آبان',
+    'آذر',
+    'دی',
+    'بهمن',
+    'اسفند',
+  ];
+
+  static const _weekdayNamesFa = [
+    'شنبه',
+    'یکشنبه',
+    'دوشنبه',
+    'سه‌شنبه',
+    'چهارشنبه',
+    'پنجشنبه',
+    'جمعه',
+  ];
+
+  static const _templates = [
+    (
+      title: 'چکاپ عمومی',
+      icon: '🩺',
+      doctorName: '',
+      specialty: 'پزشک عمومی',
+      reason: 'چکاپ دوره‌ای سالانه و پایش سلامت عمومی',
+    ),
+    (
+      title: 'دندان‌پزشکی',
+      icon: '🦷',
+      doctorName: '',
+      specialty: 'دندان‌پزشک',
+      reason: 'معاینه دوره‌ای دندان و جرم‌گیری',
+    ),
+    (
+      title: 'چشم‌پزشکی',
+      icon: '👁',
+      doctorName: '',
+      specialty: 'متخصص چشم',
+      reason: 'معاینه بینایی و سنجش نمره چشم',
+    ),
+    (
+      title: 'آزمایشگاه',
+      icon: '🧪',
+      doctorName: 'آزمایشگاه پاتوبیولوژی',
+      specialty: 'آزمایشگاه تشخیص طبی',
+      reason: 'آزمایش خون، چربی و قند خون ناشتا',
+    ),
+    (
+      title: 'متخصص قلب',
+      icon: '❤️',
+      doctorName: '',
+      specialty: 'متخصص قلب و عروق',
+      reason: 'کنترل فشار خون و اکوکاردیوگرافی',
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -47,12 +110,57 @@ class _VisitsPageState extends State<VisitsPage> {
     return result;
   }
 
-  String _formatJalaliDateTime(int epochMs) {
+  String _getRelativeTimeLabel(int epochMs) {
+    final now = DateTime.now();
+    final visitDate = DateTime.fromMillisecondsSinceEpoch(epochMs);
+    final diff = visitDate.difference(now);
+
+    if (diff.isNegative) {
+      return 'سپری شده';
+    }
+
+    if (diff.inMinutes < 60) {
+      final mins = diff.inMinutes.clamp(1, 60);
+      return '${_toPersianDigits(mins.toString())} دقیقه دیگر';
+    }
+
+    final isToday = now.year == visitDate.year && now.month == visitDate.month && now.day == visitDate.day;
+    final tomorrow = now.add(const Duration(days: 1));
+    final isTomorrow = tomorrow.year == visitDate.year && tomorrow.month == visitDate.month && tomorrow.day == visitDate.day;
+
+    final hourStr = visitDate.hour.toString().padLeft(2, '0');
+    final minStr = visitDate.minute.toString().padLeft(2, '0');
+    final timeStr = _toPersianDigits('$hourStr:$minStr');
+
+    if (isToday) {
+      return 'امروز ساعت $timeStr';
+    }
+    if (isTomorrow) {
+      return 'فردا ساعت $timeStr';
+    }
+
+    if (diff.inDays <= 7) {
+      return '${_toPersianDigits(diff.inDays.toString())} روز مانده';
+    }
+
+    final weeks = diff.inDays ~/ 7;
+    return '${_toPersianDigits(weeks.toString())} هفته مانده';
+  }
+
+  ({String monthName, String dayNumber, String weekdayName, String timeStr}) _getTicketDateData(int epochMs) {
     final dt = DateTime.fromMillisecondsSinceEpoch(epochMs);
     final j = Jalali.fromDateTime(dt);
+    final monthIdx = (j.month - 1).clamp(0, 11);
+    final monthName = _monthNamesFa[monthIdx];
+    final dayNumber = _toPersianDigits(j.day.toString());
+    final weekdayIdx = (j.weekDay - 1).clamp(0, 6);
+    final weekdayName = _weekdayNamesFa[weekdayIdx];
+
     final hour = dt.hour.toString().padLeft(2, '0');
     final minute = dt.minute.toString().padLeft(2, '0');
-    return _toPersianDigits('${j.year}/${j.month}/${j.day} ساعت $hour:$minute');
+    final timeStr = _toPersianDigits('$hour:$minute');
+
+    return (monthName: monthName, dayNumber: dayNumber, weekdayName: weekdayName, timeStr: timeStr);
   }
 
   Future<void> _loadData() async {
@@ -288,16 +396,36 @@ class _VisitsPageState extends State<VisitsPage> {
     }
   }
 
-  void _openDoctorVisitSummarySheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const Directionality(
-        textDirection: TextDirection.rtl,
-        child: DoctorVisitSummarySheet(),
-      ),
+  void _applyTemplate(
+    ({
+      String title,
+      String icon,
+      String doctorName,
+      String specialty,
+      String reason,
+    }) template,
+  ) {
+    RitmoHaptics.selection();
+    final now = DateTime.now();
+    final defaultDateTime = DateTime(now.year, now.month, now.day + 2, 10, 0).millisecondsSinceEpoch;
+
+    final templateVisit = DoctorVisit(
+      id: 'template_${DateTime.now().millisecondsSinceEpoch}',
+      doctorName: template.doctorName,
+      specialty: template.specialty,
+      visitDateTime: defaultDateTime,
+      visitType: 'IN_PERSON',
+      status: 'UPCOMING',
+      reason: template.reason,
+      createdAt: now.millisecondsSinceEpoch,
+      updatedAt: now.millisecondsSinceEpoch,
     );
+
+    _openAddEditPage(visit: templateVisit);
+  }
+
+  void _openDoctorVisitSummarySheet() {
+    DoctorVisitSummarySheet.show(context);
   }
 
   Future<void> _confirmDelete(String id) async {
@@ -363,6 +491,7 @@ class _VisitsPageState extends State<VisitsPage> {
                 selectedIndex: _activeTabIndex,
                 accentColor: colors.primary,
                 onTabChanged: (index) {
+                  RitmoHaptics.selection();
                   setState(() {
                     _activeTabIndex = index;
                   });
@@ -381,15 +510,35 @@ class _VisitsPageState extends State<VisitsPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
 
-            // ۲. لیست نوبت‌ها یا وضعیت خالی شکیل
+            // ۲. لیست نوبت‌ها همراه با ترنزیشن انیمیشنی روان (AnimatedSwitcher)
             Expanded(
               child: _isLoading
                   ? Center(child: CircularProgressIndicator(color: colors.primary))
-                  : currentVisits.isEmpty
-                      ? _buildEmptyState(_activeTabIndex == 1)
-                      : _buildVisitsList(currentVisits, isPast: _activeTabIndex == 1),
+                  : AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 280),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0.04, 0),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: KeyedSubtree(
+                        key: ValueKey<int>(_activeTabIndex),
+                        child: currentVisits.isEmpty
+                            ? _buildSmartEmptyState(_activeTabIndex == 1)
+                            : _buildVisitsList(currentVisits, isPast: _activeTabIndex == 1),
+                      ),
+                    ),
             ),
           ],
         ),
@@ -423,85 +572,182 @@ class _VisitsPageState extends State<VisitsPage> {
     );
   }
 
-  Widget _buildEmptyState(bool isPast) {
+  // ── وضعیت خالی هوشمند با الگوهای آماده (Smart Empty State) ──
+  Widget _buildSmartEmptyState(bool isPast) {
     final colors = context.colors;
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: RitmoCard.neumorphic(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: colors.primary.withValues(alpha: 0.25),
-                  width: 1.5,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      child: Column(
+        children: [
+          RitmoCard.neumorphic(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 68,
+                  height: 68,
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: 0.25),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Icon(
+                    isPast ? CupertinoIcons.clock_fill : CupertinoIcons.calendar_badge_plus,
+                    size: 32,
+                    color: colors.primary,
+                  ),
                 ),
-              ),
-              child: Icon(
-                isPast ? CupertinoIcons.clock_fill : CupertinoIcons.calendar_badge_plus,
-                size: 34,
-                color: colors.primary,
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              isPast ? 'سابقه‌ای از نوبت‌های گذشته ثبت نشده است' : 'نوبت پزشکی پیش‌رویی ندارید',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15.5,
-                fontWeight: FontWeight.w900,
-                color: colors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              isPast
-                  ? 'سوابق نوبت‌های گذشته و توصیه‌های پزشک پس از اتمام زمان نوبت در این بخش آرشیو می‌شوند.'
-                  : 'با ثبت نوبت‌های ویزیت، مشاوره یا آزمایش‌های پزشکی، ریتمو زمان مراجعه، مکان و نکات لازم را به شما یادآوری می‌کند.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: colors.textSecondary,
-                height: 1.5,
-              ),
-            ),
-            if (!isPast) ...[
-              const SizedBox(height: 24),
-              RitmoNeuButton(
-                onTap: () => _openAddEditPage(),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(CupertinoIcons.plus_circle_fill, color: colors.primary, size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      'ثبت اولین نوبت پزشک',
-                      style: TextStyle(
-                        color: colors.primary,
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.bold,
+                const SizedBox(height: 16),
+                Text(
+                  isPast ? 'سابقه‌ای از نوبت‌های گذشته ثبت نشده است' : 'نوبت پزشکی پیش‌رویی ندارید',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w900,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isPast
+                      ? 'سوابق نوبت‌های گذشته و توصیه‌های پزشک پس از اتمام زمان نوبت در این بخش آرشیو می‌شوند.'
+                      : 'با ثبت نوبت‌های ویزیت، مشاوره یا آزمایش‌های پزشکی، ریتمو زمان مراجعه، مکان و نکات لازم را به شما یادآوری می‌کند.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colors.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+                if (!isPast) ...[
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 46,
+                    child: RitmoNeuButton(
+                      onTap: () => _openAddEditPage(),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(CupertinoIcons.plus_circle_fill, color: colors.primary, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'ثبت نوبت دلخواه',
+                            style: TextStyle(
+                              color: colors.primary,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (!isPast) ...[
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Icon(CupertinoIcons.sparkles, size: 16, color: colors.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'الگوهای سریع ثبت نوبت:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _templates.map((tpl) {
+                return InkWell(
+                  onTap: () => _applyTemplate(tpl),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: colors.textPrimary.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: colors.textPrimary.withValues(alpha: 0.08)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(tpl.icon, style: const TextStyle(fontSize: 16)),
+                        const SizedBox(width: 8),
+                        Text(
+                          tpl.title,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
+  // ── ساخت لیست نوبت‌ها با تفکیک هیرو در تب نوبت‌های پیش‌رو ──
   Widget _buildVisitsList(List<DoctorVisit> visits, {required bool isPast}) {
     final colors = context.colors;
+
+    if (!isPast && visits.isNotEmpty) {
+      final heroVisit = visits.first;
+      final otherVisits = visits.length > 1 ? visits.sublist(1) : <DoctorVisit>[];
+
+      return ListView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        children: [
+          // کارت هیرو نوبت بعدی
+          _buildHeroNextVisitCard(heroVisit),
+          if (otherVisits.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Icon(CupertinoIcons.calendar, size: 16, color: colors.textSecondary),
+                const SizedBox(width: 6),
+                Text(
+                  'سایر نوبت‌های پیش‌رو (${_toPersianDigits(otherVisits.length.toString())})',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ...otherVisits.map((v) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildTicketVisitCard(v, isPast: false),
+                )),
+          ],
+          const SizedBox(height: 16),
+        ],
+      );
+    }
 
     return ListView.builder(
       itemCount: visits.length,
@@ -510,58 +756,156 @@ class _VisitsPageState extends State<VisitsPage> {
       itemBuilder: (context, index) {
         final visit = visits[index];
         return Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: RitmoCard.neumorphic(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                RitmoCardHeader(
-                  title: visit.doctorName,
-                  subtitle: (visit.specialty != null && visit.specialty!.isNotEmpty) ? visit.specialty! : null,
-                  icon: CupertinoIcons.person_crop_circle_badge_checkmark,
-                  iconColor: colors.primary,
-                  trailing: _buildVisitTypeBadge(visit.visitType),
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildTicketVisitCard(visit, isPast: isPast),
+        );
+      },
+    );
+  }
+
+  // ── کارت هیرو نوبت بعدی با شمارش معکوس و اکشن‌های سریع ──
+  Widget _buildHeroNextVisitCard(DoctorVisit visit) {
+    final colors = context.colors;
+    final relativeLabel = _getRelativeTimeLabel(visit.visitDateTime);
+    final ticketData = _getTicketDateData(visit.visitDateTime);
+
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // نوار بالایی هیرو با بج زمان معکوس و نوع ویزیت
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
                 ),
-                const RitmoCardDivider(),
-                Row(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(CupertinoIcons.calendar, size: 15, color: colors.primary),
-                    const SizedBox(width: 6),
+                    Icon(CupertinoIcons.bolt_fill, size: 13, color: colors.primary),
+                    const SizedBox(width: 5),
                     Text(
-                      _formatJalaliDateTime(visit.visitDateTime),
-                      style: TextStyle(fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.w600),
+                      'نوبت بعدی شما • $relativeLabel',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w900,
+                        color: colors.primary,
+                      ),
                     ),
                   ],
                 ),
-                if (visit.clinicName != null && visit.clinicName!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(CupertinoIcons.building_2_fill, size: 15, color: colors.textSecondary),
-                      const SizedBox(width: 6),
-                      Text(
-                        visit.clinicName!,
-                        style: TextStyle(fontSize: 13, color: colors.textSecondary),
+              ),
+              _buildVisitTypeBadge(visit.visitType),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // نام پزشک و استامپ تقویمی در هیرو
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // استامپ تقویمی هیرو
+              Container(
+                width: 68,
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colors.primary.withValues(alpha: 0.18)),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      ticketData.monthName,
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.primary),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      ticketData.dayNumber,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: colors.textPrimary,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      ticketData.timeStr,
+                      style: TextStyle(fontSize: 10.5, color: colors.textSecondary, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+
+              // مشخصات پزشک و تخصص
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      visit.doctorName,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    if (visit.specialty != null && visit.specialty!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: colors.textPrimary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          visit.specialty!,
+                          style: TextStyle(fontSize: 11.5, color: colors.textSecondary, fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ],
-                  ),
-                ],
-                if (visit.clinicAddress != null && visit.clinicAddress!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () => _openMap(visit.clinicAddress),
+                    if (visit.reason != null && visit.reason!.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        'علت: ${visit.reason}',
+                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // اطلاعات درمانگاه، تلفن و آدرس
+          if ((visit.clinicName != null && visit.clinicName!.isNotEmpty) ||
+              (visit.clinicPhone != null && visit.clinicPhone!.isNotEmpty) ||
+              (visit.clinicAddress != null && visit.clinicAddress!.isNotEmpty)) ...[
+            const SizedBox(height: 12),
+            const RitmoCardDivider(),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                if (visit.clinicName != null && visit.clinicName!.isNotEmpty)
+                  Expanded(
                     child: Row(
                       children: [
-                        Icon(CupertinoIcons.location_solid, size: 15, color: colors.primary),
-                        const SizedBox(width: 6),
+                        Icon(CupertinoIcons.building_2_fill, size: 14, color: colors.textSecondary),
+                        const SizedBox(width: 5),
                         Expanded(
                           child: Text(
-                            visit.clinicAddress!,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: colors.primary,
-                              decoration: TextDecoration.underline,
-                            ),
+                            visit.clinicName!,
+                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -569,101 +913,376 @@ class _VisitsPageState extends State<VisitsPage> {
                       ],
                     ),
                   ),
-                ],
                 if (visit.clinicPhone != null && visit.clinicPhone!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(width: 8),
                   InkWell(
                     onTap: () => _callPhone(visit.clinicPhone),
-                    child: Row(
-                      children: [
-                        Icon(CupertinoIcons.phone_fill, size: 15, color: colors.success),
-                        const SizedBox(width: 6),
-                        Text(
-                          _toPersianDigits(visit.clinicPhone!),
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: colors.success,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                if (visit.reason != null && visit.reason!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    'علت مراجعه: ${visit.reason}',
-                    style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
-                  ),
-                ],
-                if (visit.doctorNotes != null && visit.doctorNotes!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'توصیه پزشک: ${visit.doctorNotes}',
-                    style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
-                  ),
-                ],
-                if (visit.attachmentPath != null && visit.attachmentPath!.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  InkWell(
-                    onTap: () => _showAttachmentViewer(visit.attachmentPath!),
+                    borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.1),
+                        color: colors.success.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(CupertinoIcons.photo_fill, size: 16, color: colors.primary),
-                          const SizedBox(width: 6),
+                          Icon(CupertinoIcons.phone_fill, size: 13, color: colors.success),
+                          const SizedBox(width: 4),
                           Text(
-                            'مشاهده نسخه / مدرک ثبت شده',
-                            style: TextStyle(fontSize: 12, color: colors.primary, fontWeight: FontWeight.bold),
+                            _toPersianDigits(visit.clinicPhone!),
+                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: colors.success),
                           ),
                         ],
                       ),
                     ),
                   ),
                 ],
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+              ],
+            ),
+            if (visit.clinicAddress != null && visit.clinicAddress!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: () => _openMap(visit.clinicAddress),
+                child: Row(
                   children: [
-                    IconButton(
-                      icon: Icon(CupertinoIcons.pencil, size: 18, color: colors.primary),
-                      tooltip: 'ویرایش نوبت',
-                      onPressed: () => _openAddEditPage(visit: visit),
-                    ),
-                    IconButton(
-                      icon: Icon(CupertinoIcons.trash, size: 18, color: colors.medicalRed),
-                      tooltip: 'حذف نوبت',
-                      onPressed: () => _confirmDelete(visit.id),
-                    ),
-                    if (!isPast) ...[
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: () => _updateVisitStatus(visit, 'COMPLETED'),
-                        icon: const Icon(CupertinoIcons.checkmark, size: 14),
-                        label: const Text('انجام شد', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.success,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    Icon(CupertinoIcons.location_solid, size: 14, color: colors.primary),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        visit.clinicAddress!,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: colors.primary,
+                          decoration: TextDecoration.underline,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+
+          // مشاهده مدرک و نسخه
+          if (visit.attachmentPath != null && visit.attachmentPath!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            InkWell(
+              onTap: () => _showAttachmentViewer(visit.attachmentPath!),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(CupertinoIcons.photo_fill, size: 14, color: colors.primary),
+                    const SizedBox(width: 6),
+                    Text(
+                      'مشاهده نسخه و مدارک پیوست',
+                      style: TextStyle(fontSize: 11.5, color: colors.primary, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 14),
+          const RitmoCardDivider(),
+          const SizedBox(height: 6),
+
+          // نوار دکمه‌های اقدام هیرو
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 38,
+                  child: RitmoNeuButton(
+                    onTap: () {
+                      RitmoHaptics.confirm();
+                      _updateVisitStatus(visit, 'COMPLETED');
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(CupertinoIcons.checkmark_seal_fill, size: 15, color: colors.success),
+                        const SizedBox(width: 6),
+                        Text(
+                          'انجام شد',
+                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: colors.success),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                height: 38,
+                child: RitmoNeuButton(
+                  onTap: () => _openAddEditPage(visit: visit),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(CupertinoIcons.pencil, size: 15, color: colors.primary),
+                      const SizedBox(width: 4),
+                      Text('ویرایش', style: TextStyle(fontSize: 12, color: colors.primary)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                height: 38,
+                child: RitmoNeuButton(
+                  onTap: () => _confirmDelete(visit.id),
+                  child: Icon(CupertinoIcons.trash, size: 15, color: colors.medicalRed),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── کارت بلیت‌مانند نوبت با استامپ تقویمی مدرن ──
+  Widget _buildTicketVisitCard(DoctorVisit visit, {required bool isPast}) {
+    final colors = context.colors;
+    final ticketData = _getTicketDateData(visit.visitDateTime);
+
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // استامپ تقویمی (بلیت نوبت)
+              Container(
+                width: 62,
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                decoration: BoxDecoration(
+                  color: isPast ? colors.textPrimary.withValues(alpha: 0.04) : colors.primary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isPast ? colors.textPrimary.withValues(alpha: 0.08) : colors.primary.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      ticketData.monthName,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: isPast ? colors.textSecondary : colors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      ticketData.dayNumber,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: isPast ? colors.textSecondary : colors.textPrimary,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      ticketData.timeStr,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // مشخصات پزشک، تخصص و درمانگاه
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            visit.doctorName,
+                            style: TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.bold,
+                              color: isPast ? colors.textSecondary : colors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        _buildVisitTypeBadge(visit.visitType),
+                      ],
+                    ),
+                    if (visit.specialty != null && visit.specialty!.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        visit.specialty!,
+                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                      ),
+                    ],
+                    if (visit.clinicName != null && visit.clinicName!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(CupertinoIcons.building_2_fill, size: 13, color: colors.textTertiary),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              visit.clinicName!,
+                              style: TextStyle(fontSize: 11.5, color: colors.textTertiary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (visit.reason != null && visit.reason!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'علت: ${visit.reason}',
+                        style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
-      },
+
+          // بخش پایین کارت: اکشن‌های سریع و دکمه‌ها
+          const SizedBox(height: 10),
+          const RitmoCardDivider(),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // اکشن‌های ارتباطی (تماس / نسخه)
+              Row(
+                children: [
+                  if (visit.clinicPhone != null && visit.clinicPhone!.isNotEmpty)
+                    InkWell(
+                      onTap: () => _callPhone(visit.clinicPhone),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: colors.success.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(CupertinoIcons.phone_fill, size: 11, color: colors.success),
+                            const SizedBox(width: 3),
+                            Text(
+                              'تماس',
+                              style: TextStyle(fontSize: 10.5, color: colors.success, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (visit.attachmentPath != null && visit.attachmentPath!.isNotEmpty) ...[
+                    const SizedBox(width: 6),
+                    InkWell(
+                      onTap: () => _showAttachmentViewer(visit.attachmentPath!),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: colors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(CupertinoIcons.photo_fill, size: 11, color: colors.primary),
+                            const SizedBox(width: 3),
+                            Text(
+                              'نسخه',
+                              style: TextStyle(fontSize: 10.5, color: colors.primary, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+
+              // دکمه‌های کنترل
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(CupertinoIcons.pencil, size: 16, color: colors.primary),
+                    tooltip: 'ویرایش نوبت',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => _openAddEditPage(visit: visit),
+                  ),
+                  IconButton(
+                    icon: Icon(CupertinoIcons.trash, size: 16, color: colors.medicalRed),
+                    tooltip: 'حذف نوبت',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => _confirmDelete(visit.id),
+                  ),
+                  if (!isPast) ...[
+                    const SizedBox(width: 4),
+                    InkWell(
+                      onTap: () {
+                        RitmoHaptics.confirm();
+                        _updateVisitStatus(visit, 'COMPLETED');
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: colors.success,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(CupertinoIcons.checkmark, size: 12, color: Colors.white),
+                            SizedBox(width: 4),
+                            Text(
+                              'انجام شد',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -687,7 +1306,7 @@ class _VisitsPageState extends State<VisitsPage> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
@@ -697,7 +1316,7 @@ class _VisitsPageState extends State<VisitsPage> {
         label,
         style: TextStyle(
           color: color,
-          fontSize: 11,
+          fontSize: 10.5,
           fontWeight: FontWeight.bold,
         ),
       ),

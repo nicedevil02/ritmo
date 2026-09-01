@@ -223,27 +223,9 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ─── Diabetes Toggle Bar ───
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  l10n.bloodSugarDiabeticFlag,
-                  style: TextStyle(fontSize: 12, color: colors.textSecondary, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(width: 8),
-                Switch.adaptive(
-                  value: _isDiabetic,
-                  activeTrackColor: colors.primary,
-                  onChanged: _toggleDiabetic,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-
             // ─── Time Range Selector ───
             _buildTimeRangeSelector(),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
 
             // ─── Category Filter Chips ───
             _buildCategoryFilterChips(),
@@ -419,37 +401,102 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
     );
   }
 
+  Widget _buildDiabetesStatusChip(RitmoColors colors) {
+    return Tooltip(
+      message: 'تغییر وضعیت دیابت و محدوده‌های هدف بالینی',
+      child: InkWell(
+        onTap: () {
+          RitmoHaptics.selection();
+          _toggleDiabetic(!_isDiabetic);
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          decoration: BoxDecoration(
+            color: _isDiabetic ? colors.warning.withValues(alpha: 0.15) : colors.textPrimary.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: _isDiabetic ? colors.warning.withValues(alpha: 0.5) : colors.textPrimary.withValues(alpha: 0.1),
+              width: _isDiabetic ? 1.2 : 1.0,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _isDiabetic ? '🩸' : '🩺',
+                style: const TextStyle(fontSize: 12),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                _isDiabetic ? 'مبتلا به دیابت' : 'غیردیابتی',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: _isDiabetic ? FontWeight.bold : FontWeight.w600,
+                  color: _isDiabetic ? colors.warning : colors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildChartCard(List<BloodSugarLog> logs) {
     final colors = context.colors;
     final chartLogs = logs.reversed.toList(); // Chronological (oldest to newest)
 
     return RitmoCard.neumorphic(
-      padding: const EdgeInsets.all(10),
-      child: SizedBox(
-        height: 200,
-        width: double.infinity,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return GestureDetector(
-              onTapUp: (details) {
-                final touched = _findTouchedPoint(details.localPosition, constraints.biggest, chartLogs);
-                setState(() {
-                  _selectedLog = touched;
-                });
-              },
-              child: CustomPaint(
-                size: constraints.biggest,
-                painter: _BloodSugarMultiLineChartPainter(
-                  logs: chartLogs,
-                  isDiabetic: _isDiabetic,
-                  selectedCategory: _selectedCategoryFilter,
-                  selectedLogId: _selectedLog?.id,
-                  colors: colors,
-                ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(CupertinoIcons.chart_bar_alt_fill, size: 15, color: colors.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'روند نوسانات قند خون',
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
+              _buildDiabetesStatusChip(colors),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 190,
+            width: double.infinity,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return GestureDetector(
+                  onTapUp: (details) {
+                    final touched = _findTouchedPoint(details.localPosition, constraints.biggest, chartLogs);
+                    setState(() {
+                      _selectedLog = touched;
+                    });
+                  },
+                  child: CustomPaint(
+                    size: constraints.biggest,
+                    painter: _BloodSugarMultiLineChartPainter(
+                      logs: chartLogs,
+                      isDiabetic: _isDiabetic,
+                      selectedCategory: _selectedCategoryFilter,
+                      selectedLogId: _selectedLog?.id,
+                      colors: colors,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -505,22 +552,43 @@ class _BloodSugarSectionState extends State<BloodSugarSection> {
   Widget _buildEmptyChartCard() {
     final colors = context.colors;
     return RitmoCard.neumorphic(
-      padding: const EdgeInsets.all(16),
-      child: Center(
-        child: SizedBox(
-          height: 120,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(CupertinoIcons.chart_bar, size: 36, color: colors.textSecondary.withValues(alpha: 0.5)),
-              const SizedBox(height: 8),
-              Text(
-                'داده‌ای برای بازه یا دسته انتخابی یافت نشد',
-                style: TextStyle(color: colors.textSecondary, fontSize: 12),
+              Row(
+                children: [
+                  Icon(CupertinoIcons.chart_bar_alt_fill, size: 15, color: colors.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'روند نوسانات قند خون',
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                  ),
+                ],
               ),
+              _buildDiabetesStatusChip(colors),
             ],
           ),
-        ),
+          const SizedBox(height: 16),
+          Center(
+            child: SizedBox(
+              height: 100,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.chart_bar, size: 32, color: colors.textSecondary.withValues(alpha: 0.5)),
+                  const SizedBox(height: 8),
+                  Text(
+                    'داده‌ای برای بازه یا دسته انتخابی یافت نشد',
+                    style: TextStyle(color: colors.textSecondary, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -214,6 +214,16 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
     return shouldDiscard ?? false;
   }
 
+  void _safePop([dynamic result]) {
+    if (_isDismissing) return;
+    _isDismissing = true;
+    if (!mounted) return;
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent) {
+      Navigator.of(context).pop(result);
+    }
+  }
+
   void _onCancelPressed() async {
     if (_isDismissing) return;
     if (widget.onCancel != null) {
@@ -222,16 +232,14 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
     }
 
     if (!widget.isDirty) {
-      _isDismissing = true;
-      Navigator.of(context).pop();
+      _safePop();
       return;
     }
 
     final canDismiss = await _handleDiscardConfirmation();
     if (!mounted) return;
     if (canDismiss) {
-      _isDismissing = true;
-      Navigator.of(context).pop();
+      _safePop();
     }
   }
 
@@ -257,7 +265,7 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
           if (didPop) return;
           final canDismiss = await _handleDiscardConfirmation();
           if (canDismiss && mounted) {
-            Navigator.of(this.context).pop();
+            _safePop();
           }
         },
         child: NotificationListener<DraggableScrollableNotification>(
@@ -270,14 +278,12 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
               if (_isDismissing || !_sheetController.isAttached) return false;
               if (_sheetController.size <= safeMinChildSize + 0.02) {
                 if (!widget.isDirty) {
-                  _isDismissing = true;
-                  Navigator.of(this.context).pop();
+                  _safePop();
                 } else {
                   _handleDiscardConfirmation().then((canDismiss) {
                     if (!mounted) return;
                     if (canDismiss) {
-                      _isDismissing = true;
-                      Navigator.of(this.context).pop();
+                      _safePop();
                     } else if (_sheetController.isAttached) {
                       unawaited(_sheetController.animateTo(
                         widget.initialChildSize,
@@ -349,15 +355,13 @@ class _RitmoFormSheetScaffoldState extends State<RitmoFormSheetScaffold> {
 
                               if (velocity > 400 || currentSize < 0.45) {
                                 if (!widget.isDirty) {
-                                  _isDismissing = true;
-                                  Navigator.of(this.context).pop();
+                                  _safePop();
                                   return;
                                 }
                                 final canDismiss = await _handleDiscardConfirmation();
                                 if (!mounted) return;
                                 if (canDismiss) {
-                                  _isDismissing = true;
-                                  Navigator.of(this.context).pop();
+                                  _safePop();
                                 } else if (_sheetController.isAttached) {
                                   unawaited(_sheetController.animateTo(
                                     widget.initialChildSize,

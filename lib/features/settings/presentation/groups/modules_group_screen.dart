@@ -102,109 +102,26 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
   }
 
   Future<bool> _showDeactivationWarningDialog(String title) async {
-    final colors = context.colors;
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: colors.medicalRed, size: 24),
-            const SizedBox(width: 8),
-            Text(
-              'خاموش کردن ماژول',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text.rich(
-              TextSpan(
-                style: TextStyle(fontSize: 13, color: colors.textSecondary, height: 1.5),
-                children: [
-                  const TextSpan(text: 'با خاموش کردن ماژول '),
-                  TextSpan(
-                    text: '«$title»',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary),
-                  ),
-                  const TextSpan(
-                    text: '، تمامی سوابق محلی، یادآورها، روتین‌های متصل و گزارش‌های مرتبط با آن متوقف و حذف می‌شوند.\n\nآیا از انجام این عملیات اطمینان دارید؟',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('غیرفعال‌سازی و پاک‌سازی', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'خاموش کردن ماژول',
+      content: 'با خاموش کردن ماژول «$title»، تمامی سوابق محلی، یادآورها، روتین‌های متصل و گزارش‌های مرتبط با آن متوقف و حذف می‌شوند.\n\nآیا از انجام این عملیات اطمینان دارید؟',
+      confirmLabel: 'غیرفعال‌سازی و پاک‌سازی',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
 
-    return result ?? false;
+    return confirmed ?? false;
   }
 
   Future<void> _confirmAndResetModule(String key, String title) async {
-    final colors = context.colors;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.delete_forever_rounded, color: colors.medicalRed, size: 24),
-            const SizedBox(width: 8),
-            Text(
-              'بازنشانی داده‌های ماژول',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text.rich(
-              TextSpan(
-                style: TextStyle(fontSize: 13, color: colors.textSecondary, height: 1.5),
-                children: [
-                  const TextSpan(text: 'آیا از پاک کردن تمام داده‌ها، جدول‌ها و سوابق ماژول '),
-                  TextSpan(
-                    text: '«$title»',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary),
-                  ),
-                  const TextSpan(
-                    text: ' اطمینان دارید؟\n\nاین عمل دائمی و غیرقابل بازگشت است.',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('حذف و پاک‌سازی داده‌ها', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'بازنشانی داده‌های ماژول',
+      content: 'آیا از پاک کردن تمام داده‌ها، جدول‌ها و سوابق ماژول «$title» اطمینان دارید؟\n\nاین عمل دائمی و غیرقابل بازگشت است.',
+      confirmLabel: 'حذف و پاک‌سازی داده‌ها',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
 
     if (confirmed == true) {

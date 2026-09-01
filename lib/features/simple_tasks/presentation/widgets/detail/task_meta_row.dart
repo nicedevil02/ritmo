@@ -40,17 +40,9 @@ class TaskMetaRow extends StatelessWidget {
     final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: context.colors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'افزودن تگ',
-          style: TextStyle(
-            color: context.colors.textPrimary,
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+      builder: (ctx) => RitmoCustomDialog(
+        title: 'افزودن تگ',
+        icon: Icons.tag_rounded,
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -60,11 +52,13 @@ class TaskMetaRow extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(
+          RitmoSecondaryButton(
+            label: 'انصراف',
             onPressed: () => Navigator.pop(ctx),
-            child: Text('انصراف', style: TextStyle(color: context.colors.textSecondary)),
           ),
-          TextButton(
+          const SizedBox(width: 10),
+          RitmoPrimaryButton(
+            label: 'افزودن',
             onPressed: () async {
               final raw = controller.text.trim();
               if (raw.isNotEmpty) {
@@ -78,7 +72,6 @@ class TaskMetaRow extends StatelessWidget {
               }
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: Text('افزودن', style: TextStyle(color: context.colors.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

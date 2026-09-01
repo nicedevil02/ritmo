@@ -6,7 +6,6 @@ import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/features/simple_tasks/data/task_attachment_repository.dart';
 import 'package:ritmo/features/simple_tasks/data/task_preferences.dart';
@@ -119,18 +118,13 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
   }
 
   Future<void> _confirmAndDeleteTask() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: context.colors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('حذف کار؟', style: TextStyle(color: context.colors.medicalRed, fontSize: 16, fontWeight: FontWeight.bold)),
-        content: Text('کار «${_task.title}» حذف شود؟', style: TextStyle(color: context.colors.textSecondary, fontSize: 13, height: 1.5)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('انصراف', style: TextStyle(color: context.colors.textSecondary))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('حذف', style: TextStyle(color: context.colors.medicalRed, fontWeight: FontWeight.bold))),
-        ],
-      ),
+    final confirm = await RitmoDialog.show(
+      context,
+      title: 'حذف کار؟',
+      content: 'کار «${_task.title}» حذف شود؟',
+      confirmLabel: 'حذف',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
     if (confirm != true) return;
 

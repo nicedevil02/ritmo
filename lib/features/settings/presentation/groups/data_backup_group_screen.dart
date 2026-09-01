@@ -77,39 +77,22 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
   }
 
   Future<void> _clearNotificationHistory() async {
-    final colors = context.colors;
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'حذف تاریخچه اعلان‌ها',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
-        ),
-        content: Text(
-          'آیا از پاک کردن سوابق تحویل و رویدادهای اعلان‌های گذشته اطمینان دارید؟ داده‌های روتین‌ها دست‌نخورده باقی می‌مانند.',
-          style: TextStyle(fontSize: 13, color: colors.textSecondary, height: 1.4),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final db = await DatabaseHelper.instance.database;
-              await db.delete('alarm_delivery_log');
-              if (mounted) {
-                RitmoToast.show(context, 'تاریخچه اعلان‌ها با موفقیت پاک‌سازی شد.');
-              }
-            },
-            child: Text('پاک‌سازی', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'حذف تاریخچه اعلان‌ها',
+      content: 'آیا از پاک کردن سوابق تحویل و رویدادهای اعلان‌های گذشته اطمینان دارید؟ داده‌های روتین‌ها دست‌نخورده باقی می‌مانند.',
+      confirmLabel: 'پاک‌سازی',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
+
+    if (confirmed == true) {
+      final db = await DatabaseHelper.instance.database;
+      await db.delete('alarm_delivery_log');
+      if (mounted) {
+        RitmoToast.show(context, 'تاریخچه اعلان‌ها با موفقیت پاک‌سازی شد.');
+      }
+    }
   }
 
   Future<void> _exportSettings() async {
@@ -128,56 +111,45 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
     try {
       result = await showDialog<String>(
         context: context,
-        builder: (ctx) => Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.card,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text(
-              'ورود تنظیمات از JSON',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'متن JSON خروجی گرفته‌شده را در کادر زیر جای‌گذاری کنید:',
-                  style: TextStyle(fontSize: 13, color: colors.textSecondary),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: textController,
-                  maxLines: 6,
-                  style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
-                  decoration: InputDecoration(
-                    hintText: '{\n  "schemaVersion": 1,\n  "settings": { ... }\n}',
-                    hintStyle: TextStyle(color: colors.textTertiary, fontSize: 11),
-                    filled: true,
-                    fillColor: colors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colors.border),
-                    ),
+        builder: (ctx) => RitmoCustomDialog(
+          title: 'ورود تنظیمات از JSON',
+          icon: Icons.code_rounded,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'متن JSON خروجی گرفته‌شده را در کادر زیر جای‌گذاری کنید:',
+                style: TextStyle(fontSize: 13, color: colors.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: textController,
+                maxLines: 6,
+                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                decoration: InputDecoration(
+                  hintText: '{\n  "schemaVersion": 1,\n  "settings": { ... }\n}',
+                  hintStyle: TextStyle(color: colors.textTertiary, fontSize: 11),
+                  filled: true,
+                  fillColor: colors.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: colors.border),
                   ),
                 ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx, textController.text.trim()),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  foregroundColor: colors.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text('تحلیل و پیش‌نما'),
               ),
             ],
           ),
+          actions: [
+            RitmoSecondaryButton(
+              label: 'انصراف',
+              onPressed: () => Navigator.pop(ctx),
+            ),
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'تحلیل و پیش‌نما',
+              onPressed: () => Navigator.pop(ctx, textController.text.trim()),
+            ),
+          ],
         ),
       );
     } finally {

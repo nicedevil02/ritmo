@@ -887,19 +887,9 @@ class _SettingFieldState extends State<SettingField>
               try {
                 final updatedText = await showDialog<String>(
                   context: context,
-                  builder: (modalCtx) => AlertDialog(
-                    backgroundColor: colors.card,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    title: Text(
-                      desc.labelFa,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
+                  builder: (modalCtx) => RitmoCustomDialog(
+                    title: desc.labelFa,
+                    icon: Icons.edit_note_rounded,
                     content: CupertinoTextField(
                       controller: controller,
                       autofocus: true,
@@ -907,23 +897,15 @@ class _SettingFieldState extends State<SettingField>
                       style: TextStyle(color: colors.textPrimary),
                     ),
                     actions: [
-                      TextButton(
+                      RitmoSecondaryButton(
+                        label: 'انصراف',
                         onPressed: () => Navigator.pop(modalCtx),
-                        child: Text(
-                          'انصراف',
-                          style: TextStyle(color: colors.textSecondary),
-                        ),
                       ),
-                      TextButton(
+                      const SizedBox(width: 10),
+                      RitmoPrimaryButton(
+                        label: 'ذخیره',
                         onPressed: () =>
                             Navigator.pop(modalCtx, controller.text.trim()),
-                        child: Text(
-                          'ذخیره',
-                          style: TextStyle(
-                            color: colors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                       ),
                     ],
                   ),

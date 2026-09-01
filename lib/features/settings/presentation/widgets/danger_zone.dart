@@ -190,23 +190,9 @@ class _FactoryResetDialogState extends State<_FactoryResetDialog> {
     final isConfirmed = DangerZone._normalizePersian(_textController.text) ==
         DangerZone._normalizePersian('پاک کن');
 
-    return AlertDialog(
-      backgroundColor: colors.card,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Row(
-        children: [
-          Icon(CupertinoIcons.exclamationmark_triangle_fill, color: colors.medicalRed, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            'بازنشانی کارخانه‌ای داده‌ها',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: colors.medicalRed,
-            ),
-          ),
-        ],
-      ),
+    return RitmoCustomDialog(
+      title: 'بازنشانی کارخانه‌ای داده‌ها',
+      icon: CupertinoIcons.exclamationmark_triangle_fill,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,26 +256,22 @@ class _FactoryResetDialogState extends State<_FactoryResetDialog> {
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: _isLoading ? null : () => Navigator.pop(context),
-          child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+        RitmoSecondaryButton(
+          label: 'انصراف',
+          onPressed: _isLoading ? () {} : () => Navigator.pop(context),
         ),
-        TextButton(
+        const SizedBox(width: 10),
+        RitmoPrimaryButton(
+          label: 'حذف کامل داده‌ها',
+          isLoading: _isLoading,
+          isEnabled: isConfirmed,
+          fullWidth: false,
           onPressed: (isConfirmed && !_isLoading)
               ? () async {
                   setState(() => _isLoading = true);
                   await widget.onConfirmed();
                 }
               : null,
-          child: _isLoading
-              ? const CupertinoActivityIndicator()
-              : Text(
-                  'حذف کامل داده‌ها',
-                  style: TextStyle(
-                    color: isConfirmed ? colors.medicalRed : colors.textTertiary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
         ),
       ],
     );

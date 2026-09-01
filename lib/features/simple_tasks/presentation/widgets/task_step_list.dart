@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/simple_tasks/data/task_step_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_step.dart';
 

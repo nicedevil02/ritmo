@@ -85,10 +85,9 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
     try {
       await showDialog<void>(
         context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: colors.card,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+        builder: (ctx) => RitmoCustomDialog(
+          title: title,
+          icon: Icons.lock_outline_rounded,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -109,11 +108,13 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
             ],
           ),
           actions: [
-            TextButton(
+            RitmoSecondaryButton(
+              label: 'انصراف',
               onPressed: () => Navigator.pop(ctx),
-              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
             ),
-            TextButton(
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'ذخیره رمز',
               onPressed: () async {
                 final pin = pinController.text.trim();
                 if (pin.length < 4) {
@@ -132,7 +133,6 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
                   RitmoToast.show(context, 'رمز با موفقیت ذخیره شد.');
                 }
               },
-              child: Text('ذخیره رمز', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -144,41 +144,29 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
   }
 
   Future<void> _deletePin(String keyName, String title) async {
-    final colors = context.colors;
-
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('حذف $title', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-        content: const Text('آیا از حذف این رمز عبور اطمینان دارید؟ قفل برنامه غیرفعال خواهد شد.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              if (keyName == 'cycle_lock_password') {
-                await CycleLockService.instance.clearPin();
-                await SettingsService.instance.set('cycle_biometric_enabled', false);
-              } else {
-                await AppLockService.instance.setLockPassword(null);
-                await SettingsService.instance.set('app_lock_enabled', false);
-                await SettingsService.instance.set('app_biometric_enabled', false);
-              }
-              await _loadState();
-              if (mounted) {
-                RitmoToast.show(context, 'رمز با موفقیت حذف شد.');
-              }
-            },
-            child: Text('حذف رمز', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'حذف $title',
+      content: 'آیا از حذف این رمز عبور اطمینان دارید؟ قفل برنامه غیرفعال خواهد شد.',
+      confirmLabel: 'حذف رمز',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
+
+    if (confirmed == true) {
+      if (keyName == 'cycle_lock_password') {
+        await CycleLockService.instance.clearPin();
+        await SettingsService.instance.set('cycle_biometric_enabled', false);
+      } else {
+        await AppLockService.instance.setLockPassword(null);
+        await SettingsService.instance.set('app_lock_enabled', false);
+        await SettingsService.instance.set('app_biometric_enabled', false);
+      }
+      await _loadState();
+      if (mounted) {
+        RitmoToast.show(context, 'رمز عبور با موفقیت حذف شد.');
+      }
+    }
   }
 
   Future<void> _onAppLockToggled(bool val) async {
@@ -258,29 +246,14 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
   }
 
   void _showPrivacyPolicy() {
-    final colors = context.colors;
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('سیاست حریم خصوصی و امنیت'),
-        content: SingleChildScrollView(
-          child: Text(
-            'ریتمو یک نرم‌افزار متمرکز بر حریم خصوصی محلی (Local-First) است.\n\n'
-            '۱. کلیه اطلاعات شما اعم از روتین‌ها، یادآوری‌ها، داده‌های زیستی و یادداشت‌ها روی دستگاه شما ذخیره می‌شوند.\n'
-            '۲. رمزهای عبور و کلیدهای هوش مصنوعی در محیط امن سخت‌افزاری دستگاه (Keychain / KeyStore) نگهداری می‌شوند.\n'
-            '۳. هیچ‌گونه داده‌ای بدون رضایت صریح و فعال‌سازی پردازش ابری به خارج از دستگاه ارسال نخواهد شد.',
-            style: TextStyle(fontSize: 12, height: 1.5, color: colors.textSecondary),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('متوجه شدم', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+    RitmoDialog.show(
+      context,
+      title: 'سیاست حریم خصوصی و امنیت',
+      content: 'ریتمو یک نرم‌افزار متمرکز بر حریم خصوصی محلی (Local-First) است.\n\n'
+          '۱. کلیه اطلاعات شما اعم از روتین‌ها، یادآوری‌ها، داده‌های زیستی و یادداشت‌ها روی دستگاه شما ذخیره می‌شوند.\n'
+          '۲. رمزهای عبور و کلیدهای هوش مصنوعی در محیط امن سخت‌افزاری دستگاه (Keychain / KeyStore) نگهداری می‌شوند.\n'
+          '۳. هیچ‌گونه داده‌ای بدون رضایت صریح و فعال‌سازی پردازش ابری به خارج از دستگاه ارسال نخواهد شد.',
+      confirmLabel: 'متوجه شدم',
     );
   }
 

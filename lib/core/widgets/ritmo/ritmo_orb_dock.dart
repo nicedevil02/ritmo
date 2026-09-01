@@ -521,7 +521,7 @@ class _DockPainter extends CustomPainter {
       Radius.circular(anchor.radius + 2.0),
     );
     canvas.save();
-    canvas.clipRect(box.deflate(2.0), clipOp: ClipOp.difference);
+    canvas.clipRect(box.deflate(2.0), clipOp: ui.ClipOp.difference);
     canvas.drawRRect(
       shell,
       Paint()

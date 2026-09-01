@@ -546,16 +546,17 @@ void ritmoPaintEyes(
     if (blush > 0.02 && wide > 0.35) {
       final double tint = (0.26 * blush * fade).clamp(0.0, 1.0);
       if (tint > 0.02) {
+        final double cheekRadius = radius * 0.92 * wide;
         final Rect cheek = Rect.fromCircle(
           center: Offset(
             eye.dx + side * radius * 0.26 * wide,
             eye.dy + radius * 1.34,
           ),
-          radius: radius * 0.92 * wide,
+          radius: cheekRadius,
         );
         canvas.drawCircle(
           cheek.center,
-          cheek.radius,
+          cheekRadius,
           Paint()
             ..shader = RadialGradient(
               colors: <Color>[

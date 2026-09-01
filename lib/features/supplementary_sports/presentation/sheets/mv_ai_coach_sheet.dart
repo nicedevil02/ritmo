@@ -4,6 +4,7 @@ import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart'
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
+import '../widgets/ss_ai_coach_sheet.dart';
 
 /// Sheet 6: "مربی هوشمند" (Section 5.9 & 7.10).
 class MvAiCoachSheet extends StatefulWidget {
@@ -17,11 +18,7 @@ class MvAiCoachSheet extends StatefulWidget {
     required MvUserProfile profile,
     MvSlot? currentSlot,
   }) {
-    return MvSheetScaffold.show(
-      context: context,
-      builder: (ctx) =>
-          MvAiCoachSheet(profile: profile, currentSlot: currentSlot),
-    );
+    return SSAiCoachSheet.show(context);
   }
 
   @override

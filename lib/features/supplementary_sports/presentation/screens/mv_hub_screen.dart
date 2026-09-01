@@ -6,7 +6,7 @@ import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart'
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import '../player/player.dart';
-import '../sheets/sheets.dart';
+import '../widgets/ss_ai_coach_sheet.dart';
 import 'mv_library_screen.dart';
 import 'mv_onboarding_screen.dart';
 import 'mv_progress_tab.dart';
@@ -344,11 +344,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
           accentColor: accentColor,
           tooltip: l10n.mv_coach_tooltip,
           onTap: () {
-            MvAiCoachSheet.show(
-              context: context,
-              profile: _controller.profile,
-              currentSlot: currentSlot,
-            );
+            SSAiCoachSheet.show(context);
           },
         ),
         const SizedBox(width: 8),

@@ -5,6 +5,7 @@ export 'components/components.dart';
 export 'player/player.dart';
 export 'screens/screens.dart';
 export 'sheets/sheets.dart';
+export 'widgets/ss_ai_coach_sheet.dart';
 
 extension MvL10nExtension on BuildContext {
   AppLocalizations get l10n => AppLocalizations.of(this)!;

@@ -36,19 +36,9 @@ class GoToDateDialog {
       builder: (ctx) {
         final colors = ctx.colors;
 
-        return AlertDialog(
-          backgroundColor: colors.surfaceElevated,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(RitmoRadius.card),
-          ),
-          title: Text(
-            'برو به تاریخ',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-            ),
-          ),
+        return RitmoCustomDialog(
+          title: 'برو به تاریخ',
+          icon: Icons.calendar_today_rounded,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,13 +79,8 @@ class GoToDateDialog {
               // Standard date picker launcher button
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.calendar_month_rounded, size: 18),
-                  label: const Text(
-                    'انتخاب تقویمی…',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  onPressed: () async {
+                child: RitmoNeuButton(
+                  onTap: () async {
                     final picked = await showDatePicker(
                       context: ctx,
                       initialDate: initialDate,
@@ -106,14 +91,25 @@ class GoToDateDialog {
                       Navigator.pop(ctx, picked);
                     }
                   },
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.calendar_month_rounded, size: 18),
+                      SizedBox(width: 8),
+                      Text(
+                        'انتخاب تقویمی…',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
           actions: [
-            TextButton(
+            RitmoSecondaryButton(
+              label: 'انصراف',
               onPressed: () => Navigator.pop(ctx, null),
-              child: const Text('انصراف'),
             ),
           ],
         );

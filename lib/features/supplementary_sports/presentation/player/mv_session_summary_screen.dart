@@ -125,12 +125,28 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
     final emoji = widget.kind?.emoji ?? '🏃‍♂️';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n?.mv_summary_title ?? 'Session Summary'),
-        automaticallyImplyLeading: false,
-      ),
-      body: ListView(
-        padding: EdgeInsets.all(metrics.spaceLg),
+      backgroundColor: colors.bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg, vertical: metrics.spaceSm),
+              child: RitmoGlassHeader(
+                borderRadius: BorderRadius.circular(22),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Text(
+                    l10n?.mv_summary_title ?? 'Session Summary',
+                    style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.all(metrics.spaceLg),
         children: [
           // 1. Sport Title + Emoji + Duration
           Container(
@@ -379,10 +395,14 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
             isLoading: _isLoading,
             onPressed: _handleSave,
           ),
-          SizedBox(height: metrics.spaceXxl),
-        ],
-      ),
-    );
+              SizedBox(height: metrics.spaceXxl),
+            ],
+          ),
+        ),
+      ],
+    ),
+  ),
+);
   }
 
   Widget _buildModeMetricsCard(BuildContext context) {

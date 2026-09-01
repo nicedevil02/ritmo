@@ -337,33 +337,46 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
         MvExercise(id: '0', name: l10n?.mv_exercise_default_title ?? 'Exercise', category: l10n?.mv_exercise_default_title ?? 'Exercise');
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: _handleExitMidSession,
-        ),
-        title: Text(
-          _isResting ? (l10n?.mv_player_rest_time ?? 'Rest') : currentEx.name,
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.skip_next_rounded),
-            tooltip: l10n?.mv_player_skip_exercise_tooltip ?? 'Skip',
-            onPressed: _skipExercise,
-          ),
-          MvAudioToggle(
-            isAudioEnabled: _isAudioEnabled,
-            onToggle: _toggleAudio,
-          ),
-          SizedBox(width: metrics.spaceSm),
-        ],
-      ),
+      backgroundColor: colors.bg,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(metrics.spaceLg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg, vertical: metrics.spaceSm),
+              child: RitmoGlassHeader(
+                borderRadius: BorderRadius.circular(22),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: _handleExitMidSession,
+                    ),
+                    Expanded(
+                      child: Text(
+                        _isResting ? (l10n?.mv_player_rest_time ?? 'Rest') : currentEx.name,
+                        style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.skip_next_rounded),
+                      tooltip: l10n?.mv_player_skip_exercise_tooltip ?? 'Skip',
+                      onPressed: _skipExercise,
+                    ),
+                    MvAudioToggle(
+                      isAudioEnabled: _isAudioEnabled,
+                      onToggle: _toggleAudio,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(metrics.spaceLg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Animation Stage
               if (!_isResting)
@@ -526,6 +539,9 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
           ),
         ),
       ),
-    );
+    ],
+  ),
+),
+);
   }
 }

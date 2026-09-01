@@ -8,9 +8,7 @@ import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/calendar/presentation/logic/agenda_bucketing.dart';
 import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -235,32 +236,68 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n?.mv_library_title ?? 'Sports Library'),
-        centerTitle: false,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: colors.primary,
-          labelColor: colors.primary,
-          unselectedLabelColor: colors.textSecondary,
-          tabs: [
-            Tab(text: l10n?.mv_library_tab_exercises ?? 'Exercises'),
-            Tab(text: l10n?.mv_library_tab_programs ?? 'Programs'),
-            Tab(key: const ValueKey('library_tab_kinds'), text: l10n?.mv_library_tab_kinds ?? 'Activities'),
-          ],
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: colors.bg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg, vertical: metrics.spaceSm),
+                child: RitmoGlassHeader(
+                  borderRadius: BorderRadius.circular(22),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            icon: const Icon(CupertinoIcons.back),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          Text(
+                            l10n?.mv_library_title ?? 'کتابخانه ورزشی',
+                            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(width: 44),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      RitmoGlassSegmentedControl<int>(
+                        items: [
+                          RitmoTabItem(title: l10n?.mv_library_tab_exercises ?? 'تمرین‌ها', icon: Icons.fitness_center_rounded),
+                          RitmoTabItem(title: l10n?.mv_library_tab_programs ?? 'برنامه‌ها', icon: Icons.assignment_rounded),
+                          RitmoTabItem(title: l10n?.mv_library_tab_kinds ?? 'رشته‌ها', icon: Icons.sports_rounded),
+                        ],
+                        selectedIndex: _tabController.index,
+                        onTabChanged: (idx) {
+                          setState(() {
+                            _tabController.animateTo(idx);
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // تب ۱: تمرین‌ها
+                    _buildExercisesTab(colors, metrics, textTheme),
+                    // تب ۲: برنامه‌ها
+                    _buildProgramsTab(colors, metrics, textTheme),
+                    // تب ۳: انواع ورزش (S1-T8)
+                    _buildKindsTab(colors, metrics, textTheme),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          // تب ۱: تمرین‌ها
-          _buildExercisesTab(colors, metrics, textTheme),
-          // تب ۲: برنامه‌ها
-          _buildProgramsTab(colors, metrics, textTheme),
-          // تب ۳: انواع ورزش (S1-T8)
-          _buildKindsTab(colors, metrics, textTheme),
-        ],
       ),
     );
   }

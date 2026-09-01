@@ -114,45 +114,11 @@ class _CalendarManagementSheetState extends State<CalendarManagementSheet> {
     final text = await MorningBrief.generateText(date: widget.selectedDate);
     if (!mounted) return;
     unawaited(
-      showDialog<void>(
-        context: context,
-        builder: (ctx) {
-          final colors = ctx.colors;
-          return Directionality(
-            textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              backgroundColor: colors.sheetBackground,
-              title: Row(
-                children: [
-                  Icon(
-                    Icons.wb_sunny_outlined,
-                    color: colors.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: RitmoSpacing.sm),
-                  const Text(
-                    'خلاصه صبحگاهی',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              content: Text(
-                text,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  color: colors.textPrimary,
-                  height: 1.6,
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('متوجه شدم'),
-                ),
-              ],
-            ),
-          );
-        },
+      RitmoDialog.show(
+        context,
+        title: 'خلاصه صبحگاهی',
+        content: text,
+        confirmLabel: 'متوجه شدم',
       ),
     );
   }

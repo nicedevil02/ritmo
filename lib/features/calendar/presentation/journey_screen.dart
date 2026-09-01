@@ -17,7 +17,6 @@ import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/calendar/data/day_mark_repository.dart';
 import 'package:ritmo/features/calendar/data/day_template_repository.dart';
 import 'package:ritmo/features/calendar/data/occasions_calendar_source.dart';
@@ -358,8 +357,9 @@ class _JourneyScreenState extends State<JourneyScreen>
     );
     final name = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('ذخیره به‌عنوان قالب روز'),
+      builder: (ctx) => RitmoCustomDialog(
+        title: 'ذخیره به‌عنوان قالب روز',
+        icon: Icons.dashboard_customize_rounded,
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(
@@ -369,13 +369,14 @@ class _JourneyScreenState extends State<JourneyScreen>
           autofocus: true,
         ),
         actions: [
-          TextButton(
+          RitmoSecondaryButton(
+            label: 'انصراف',
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('انصراف'),
           ),
-          FilledButton(
+          const SizedBox(width: 10),
+          RitmoPrimaryButton(
+            label: 'ذخیره',
             onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('ذخیره'),
           ),
         ],
       ),
@@ -487,24 +488,12 @@ class _JourneyScreenState extends State<JourneyScreen>
 
     if (selectedTemplate == null || !mounted) return;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('اعمال قالب «${selectedTemplate.name}»'),
-        content: Text(
-          'آیا می‌خواهید زمان‌بندی ${toPersianDigits(selectedTemplate.slots.length.toString())} آیتم این روز مطابق این قالب تنظیم شود؟',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('انصراف'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('اعمال قالب'),
-          ),
-        ],
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'اعمال قالب «${selectedTemplate.name}»',
+      content: 'آیا می‌خواهید زمان‌بندی ${toPersianDigits(selectedTemplate.slots.length.toString())} آیتم این روز مطابق این قالب تنظیم شود؟',
+      confirmLabel: 'اعمال قالب',
+      cancelLabel: 'انصراف',
     );
 
     if (confirmed == true) {

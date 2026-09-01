@@ -6,8 +6,6 @@ import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_dialog.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';

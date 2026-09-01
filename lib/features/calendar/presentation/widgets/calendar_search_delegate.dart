@@ -7,7 +7,6 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/persian_text.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_empty_state.dart';
 import 'package:ritmo/features/calendar/data/calendar_search_repository.dart';
 import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';

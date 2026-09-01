@@ -4,7 +4,6 @@ import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/relative_time_formatter.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
 /// K24 — Day summary bar: tactile Neumorphic status bar above timeline with 3 key metrics.
 /// - remainingCount ("مانده")

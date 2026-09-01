@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/calendar/presentation/journey_controller.dart';
 
 /// Redesigned Apple HIG & Neumorphic Scale Switcher:

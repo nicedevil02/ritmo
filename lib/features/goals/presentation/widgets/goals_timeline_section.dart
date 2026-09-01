@@ -156,7 +156,6 @@ class GoalsTimelineSection extends StatelessWidget {
                       }).toList(),
                 ),
               ),
-            ),
             const SizedBox(height: 24),
           ],
 

@@ -5,8 +5,6 @@ import 'package:ritmo/core/services/ritmo_timer_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_date.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/features/goals/logic/capacity_models.dart';
 import 'package:ritmo/features/goals/logic/planning_controller.dart';
 import 'package:ritmo/features/goals/logic/planning_repository.dart';

@@ -5,7 +5,8 @@
 //  کاربر خاموش است، مشترکِ ساعت لغو می‌شود: صفر فریم، صفر باتری.
 //
 //  و وقتی کیبرد بالا می‌آید، تیله با همان انیمیشنِ خروج، در می‌رود داخلِ
-//  کادرِ تایپ و جایش را به [RitmoOrbDockLayer] می‌دهد. یک موجود، دو جایِ بودن.
+//  کادرِ تایپ و جایش را به [RitmoOrbDockLayer] می‌دهد. یک موجود، دو جایِ بودن —
+//  و هرگز همزمان.
 // =============================================================================
 
 import 'dart:async';
@@ -76,7 +77,7 @@ class RitmoLivingOrb extends StatefulWidget {
   final bool reactToSuccessFlare;
 
   /// وقتی true باشد، خروجِ تیله به کادرِ ورودی گزارش می‌شود (جذب شدن).
-  /// در هر لحظه فقط یک تیله مالکِ این کانال است.
+  /// در هر لحطه فقط یک تیله مالکِ این کانال است.
   final bool absorbIntoInput;
   final String semanticLabel;
   final RitmoOrbTruth? truth;
@@ -216,7 +217,18 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
         }
         _pose.forward();
       }
-    } else if (_pose.value > 0.0 && _pose.status != AnimationStatus.reverse) {
+      return;
+    }
+    if (_pose.status == AnimationStatus.forward && _pose.value <= 0.01) {
+      // هنوز چیزی دیده نشده — مانندِ وقتی که صفحه با کیبردِ از-قبل-باز سوار
+      // می‌شود. بی‌سروصدا منصرف می‌شویم؛ وگرنه تیله هم سرِ جایش بالا می‌آید و
+      // هم دورِ کادر پهن می‌شود.
+      _pose.stop();
+      _pose.value = 0.0;
+      _exiting = false;
+      return;
+    }
+    if (_pose.value > 0.0 && _pose.status != AnimationStatus.reverse) {
       _exiting = true;
       _pose.reverse();
     }

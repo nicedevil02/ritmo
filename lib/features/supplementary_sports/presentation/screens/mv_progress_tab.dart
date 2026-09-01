@@ -331,11 +331,14 @@ class MvProgressTab extends StatelessWidget {
           ),
           SizedBox(height: metrics.spaceSm),
           Text(
-            l10n?.mv_training_load_summary(
-                  toPersianDigits(load.ratio!.toStringAsFixed(2)),
-                  load.bandTitleFa,
-                ) ??
-                'Over the past 4 weeks, your acute-to-chronic workload ratio is ${load.ratio!.toStringAsFixed(2)} (${load.bandTitleFa}).',
+            load.ratio != null
+                ? (l10n?.mv_training_load_summary(
+                        toPersianDigits(load.ratio!.toStringAsFixed(2)),
+                        load.bandTitleFa,
+                      ) ??
+                      'Over the past 4 weeks, your acute-to-chronic workload ratio is ${load.ratio!.toStringAsFixed(2)} (${load.bandTitleFa}).')
+                : (l10n?.mv_training_load_insufficient ??
+                      'حداقل ۱۴ روز سابقه و ثبت چند جلسهٔ دیگر لازم است تا نسبت بار حاد به مزمن (ACWR) به درستی محاسبه شود.'),
             key: const ValueKey('mv_load_ratio_text'),
             style: textTheme.bodySmall?.copyWith(
               color: colors.textSecondary,

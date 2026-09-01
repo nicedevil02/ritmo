@@ -1144,15 +1144,21 @@ class AIGateway {
       await for (final line in stream) {
         final cleanLine = line.trim();
         if (cleanLine.isEmpty) continue;
-        if (cleanLine == 'data: [DONE]') break;
+        if (cleanLine == 'data: [DONE]' || cleanLine == '[DONE]' || cleanLine.startsWith('data:[DONE]')) {
+          break;
+        }
 
-        if (cleanLine.startsWith('data: ')) {
-          final jsonString = cleanLine.substring(6).trim();
+        if (cleanLine.startsWith('data:')) {
+          final jsonString = cleanLine.startsWith('data: ')
+              ? cleanLine.substring(6).trim()
+              : cleanLine.substring(5).trim();
+          if (jsonString == '[DONE]') break;
           try {
-            if (jsonString != '[DONE]') {
-              final jsonChunk = jsonDecode(jsonString);
-              if (jsonChunk is Map && jsonChunk['choices'] is List && (jsonChunk['choices'] as List).isNotEmpty) {
-                final delta = jsonChunk['choices'][0]['delta'];
+            final jsonChunk = jsonDecode(jsonString);
+            if (jsonChunk is Map && jsonChunk['choices'] is List && (jsonChunk['choices'] as List).isNotEmpty) {
+              final choice = jsonChunk['choices'][0];
+              if (choice is Map) {
+                final delta = choice['delta'];
                 if (delta is Map) {
                   final content = delta['content']?.toString();
                   final reasoning = delta['reasoning_content']?.toString();
@@ -1162,6 +1168,12 @@ class AIGateway {
                   if (text != null && text.isNotEmpty) {
                     yield text;
                   }
+                }
+                final finishReason = choice['finish_reason'];
+                if (finishReason != null &&
+                    finishReason.toString().isNotEmpty &&
+                    finishReason != 'null') {
+                  break;
                 }
               }
             }
@@ -1227,14 +1239,29 @@ class AIGateway {
       await for (final line in stream) {
         final c = line.trim();
         if (c.isEmpty) continue;
-        if (c == 'data: [DONE]') break;
-        if (c.startsWith('data: ')) {
-          final js = c.substring(6).trim();
+        if (c == 'data: [DONE]' || c == '[DONE]' || c.startsWith('data:[DONE]')) {
+          break;
+        }
+        if (c.startsWith('data:')) {
+          final js = c.startsWith('data: ')
+              ? c.substring(6).trim()
+              : c.substring(5).trim();
           if (js == '[DONE]') break;
           try {
             final parsed = jsonDecode(js);
-            final delta = parsed['choices']?[0]?['delta']?['content']?.toString() ?? '';
-            if (delta.isNotEmpty) yield delta;
+            if (parsed is Map && parsed['choices'] is List && (parsed['choices'] as List).isNotEmpty) {
+              final choice = parsed['choices'][0];
+              if (choice is Map) {
+                final delta = choice['delta']?['content']?.toString() ?? '';
+                if (delta.isNotEmpty) yield delta;
+                final finishReason = choice['finish_reason'];
+                if (finishReason != null &&
+                    finishReason.toString().isNotEmpty &&
+                    finishReason != 'null') {
+                  break;
+                }
+              }
+            }
           } catch (e, st) {
             debugPrint('Error parsing streaming completion line: $e\n$st');
           }

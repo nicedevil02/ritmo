@@ -13,6 +13,11 @@
 //   • در تمرکز (فکر کردن) کمتر و کشیده‌تر پلک می‌زند؛ در شادی تندتر.
 //   • آفلاین = چشمِ بسته. خواب، نه خاموشی.
 //
+//  و چشم‌ها محو نمی‌شوند: حباب می‌چرخد. چشم‌ها روی سطحِ کره‌اند، پس با
+//  چرخیدن، چشمِ دور به لبه سُر می‌خورد، باریک می‌شود و پشتِ کره می‌رود.
+//  «حضور» همان یک منهای اندازهٔ چرخش است؛ یعنی یک حرکت، دو کار: ظاهر شدن
+//  و پنهان شدن.
+//
 //  هزینه: دو تا چهار فرمانِ نقاشی، صفر بلور. درخشِ چشم از کیفِ سفید برداشته
 //  می‌شود تا سقفِ سفیدیِ تیله شکسته نشود.
 // =============================================================================
@@ -159,6 +164,7 @@ class RitmoEyeFrame {
     required this.gaze,
     required this.presence,
     required this.squint,
+    this.yaw = 0.0,
   });
 
   /// بازیِ پلک، ۰ (بسته) تا ۱ (کاملاً باز).
@@ -172,6 +178,9 @@ class RitmoEyeFrame {
 
   /// جمع شدنِ چشم از خنده.
   final double squint;
+
+  /// چرخشِ صورت حولِ محورِ عمودیِ کره: ۰ = رو به کاربر، ۱± = پشت به کاربر.
+  final double yaw;
 
   static const RitmoEyeFrame absent = RitmoEyeFrame(
     open: 1.0,
@@ -193,13 +202,15 @@ class RitmoEyeFrame {
       other.open == open &&
       other.gaze == gaze &&
       other.presence == presence &&
-      other.squint == squint;
+      other.squint == squint &&
+      other.yaw == yaw;
 
   @override
-  int get hashCode => Object.hash(open, gaze, presence, squint);
+  int get hashCode => Object.hash(open, gaze, presence, squint, yaw);
 }
 
-/// زندگیِ چشم‌ها: پلک، نگاه، آمدن و رفتن. با همان ساعتِ مشترک قدم می‌زند.
+/// زندگیِ چشم‌ها: پلک، نگاه، چرخیدن به سمتِ کاربر و پشت کردن. با همان ساعتِ
+/// مشترک قدم می‌زند.
 class RitmoEyeLife {
   RitmoEyeLife({
     int seed = 11,
@@ -211,6 +222,8 @@ class RitmoEyeLife {
     _blinkIn = 1.6 + _rnd.nextDouble() * 2.4;
     _wait = appearGapMin * 0.4 + _rnd.nextDouble() * 2.0;
     _saccadeIn = 0.6 + _rnd.nextDouble();
+    _yawSide = _rnd.nextBool() ? 1.0 : -1.0;
+    _yaw = _yawSide;
   }
 
   final math.Random _rnd;
@@ -234,17 +247,24 @@ class RitmoEyeLife {
   Offset _saccade = Offset.zero;
   Offset _gaze = Offset.zero;
   double _squint = 0.0;
+  double _smile = 0.0;
+  double _yaw = 1.0;
+  double _yawSide = 1.0;
 
   double get open => _open;
   double get presence => _presence;
   Offset get gaze => _gaze;
   bool get isBlinking => _blinkT >= 0.0;
 
+  /// چرخشِ فعلیِ صورت؛ ۰ یعنی مستقیم به کاربر نگاه می‌کند.
+  double get yaw => _yaw;
+
   RitmoEyeFrame get frame => RitmoEyeFrame(
         open: _open,
         gaze: _gaze,
         presence: _presence,
-        squint: _squint,
+        squint: math.max(_squint, _smile * 0.62),
+        yaw: _yaw,
       );
 
   /// «نگاه کن!» — لمس، اشاره، یا هر چیزی که کاربر واقعاً انجام داده.
@@ -253,9 +273,12 @@ class RitmoEyeLife {
     if (_hold < hold) _hold = hold;
   }
 
-  void hide() {
-    _target = 0.0;
-    _hold = 0.0;
+  void hide() => _turnAway();
+
+  /// یک ضربهٔ لبخند؛ چشم‌ها برای لحظه‌ای جمع می‌شوند.
+  void smile({double amount = 0.72}) {
+    final double next = amount.clamp(0.0, 1.0);
+    if (next > _smile) _smile = next;
   }
 
   void blinkNow({bool twice = false, double? ms}) {
@@ -263,6 +286,14 @@ class RitmoEyeLife {
     _blinkT = 0.0;
     _blinkMs = ms ?? _blinkMs;
     _twice = twice;
+  }
+
+  /// پشت کردن به کاربر. سمتِ چرخش هر بار عوض می‌شود تا حرکت حفظی نشود.
+  void _turnAway() {
+    if (_target == 0.0) return;
+    _target = 0.0;
+    _hold = 0.0;
+    _yawSide = _rnd.nextBool() ? 1.0 : -1.0;
   }
 
   double _range(double a, double b) => a + _rnd.nextDouble() * (b - a);
@@ -277,10 +308,9 @@ class RitmoEyeLife {
   }) {
     if (dt <= 0.0) return;
 
-    // ── آمدن و رفتن ──────────────────────────────────────────────────────
+    // ── چرخیدن به سمتِ کاربر و پشت کردن ─────────────────────────────────
     if (!wantVisible) {
-      _target = 0.0;
-      _hold = 0.0;
+      _turnAway();
     } else if (always) {
       _target = 1.0;
     } else {
@@ -288,7 +318,7 @@ class RitmoEyeLife {
       if (_hold > 0.0) {
         _hold -= dt;
         if (_hold <= 0.0) {
-          _target = 0.0;
+          _turnAway();
           _wait = _range(appearGapMin, appearGapMax);
         }
       } else {
@@ -296,14 +326,24 @@ class RitmoEyeLife {
         if (_wait <= 0.0) {
           _target = 1.0;
           _hold = _range(appearHoldMin, appearHoldMax);
-          // تازه که چشم باز می‌کند، یک پلکِ آرام می‌زند.
+          // تازه که رو برمی‌گرداند، یک پلکِ آرام می‌زند و بعضی وقت‌ها
+          // لبخندِ کوتاهی هم می‌کند.
           blinkNow(ms: tempo.blinkMs * 1.1);
+          if (_rnd.nextDouble() < 0.5) smile(amount: 0.5);
         }
       }
     }
-    final double ease = _target > _presence ? dt * 3.4 : dt * 2.2;
-    _presence += (_target - _presence) * math.min(1.0, ease);
-    _presence = _presence.clamp(0.0, 1.0);
+
+    // رو گرداندن به سمتِ کاربر کمی تندتر از پشت کردن است: کنجکاوی سریع
+    // است، رفتن تنبل.
+    final double yawTarget = _target >= 0.5 ? 0.0 : _yawSide;
+    final double spin = _target >= 0.5 ? dt * 3.2 : dt * 2.0;
+    _yaw += (yawTarget - _yaw) * math.min(1.0, spin);
+    if ((_yaw - yawTarget).abs() < 0.004) _yaw = yawTarget;
+    // حضور همان رو به کاربر بودن است؛ دیگر محو شدنِ جدایی لازم نیست.
+    _presence = (1.0 - _yaw.abs()).clamp(0.0, 1.0);
+
+    if (_smile > 0.0) _smile = (_smile - dt / 0.95).clamp(0.0, 1.0);
 
     // ── پلک ──────────────────────────────────────────────────────────────
     if (tempo.asleep) {
@@ -374,8 +414,10 @@ class RitmoEyeLife {
   void debugSnap({double? open, double? presence}) {
     if (open != null) _open = open;
     if (presence != null) {
-      _presence = presence;
-      _target = presence;
+      _presence = presence.clamp(0.0, 1.0);
+      _target = _presence >= 0.5 ? 1.0 : 0.0;
+      // حضور و چرخش دو رویِ یک سکه‌اند؛ جدا نگه داشتنشان یعنی دروغ.
+      _yaw = (1.0 - _presence) * _yawSide;
     }
   }
 }
@@ -384,6 +426,8 @@ class RitmoEyeLife {
 ///
 /// [flatten] برای وقتی است که سر پشتِ چیزی مانده و فقط لبه‌اش بیرون است:
 /// چشم‌ها پخ می‌شوند، اما پلک هنوز خوانا است.
+///
+/// [blush] لپِ گلی؛ فقط روی تیلهٔ بزرگ ارزشِ فرمانِ نقاشی را دارد.
 void ritmoPaintEyes(
   Canvas canvas, {
   required Offset center,
@@ -395,17 +439,29 @@ void ritmoPaintEyes(
   RitmoWhitePurse? purse,
   double flatten = 1.0,
   bool catchlight = true,
+  double blush = 0.0,
 }) {
   final double presence = frame.presence.clamp(0.0, 1.0);
   if (presence <= 0.02 || radius <= 0.4) return;
 
+  // چشم‌ها روی سطحِ کره‌اند. با چرخشِ کره، هر چشم روی کمانِ خودش حرکت
+  // می‌کند: به لبه سُر می‌خورد، باریک می‌شود، و آن‌طرف ناپدید. این تصویرِ
+  // کره است، نه محو شدنِ ساده.
+  const double lon = math.pi / 6.0;
+  final double norm = math.cos(lon);
+  final double turn = frame.yaw.clamp(-1.0, 1.0) * (math.pi / 2.0);
+  final double face = math.cos(turn).clamp(0.0, 1.0);
+  if (face <= 0.02) return;
+
   final double open = (frame.open.clamp(0.0, 1.0) * flatten).clamp(0.0, 1.0);
+  // رو که برمی‌گرداند، رنگ هم کم‌جان می‌شود؛ مثلِ هر چیزی که به لبهٔ کره برود.
+  final double fade = presence * (0.34 + 0.66 * face);
   final Color ink = Color.lerp(
     const Color(0xFF190E21),
     palette.violet,
     isDark ? 0.32 : 0.16,
   )!
-      .withValues(alpha: 0.86 * presence);
+      .withValues(alpha: 0.86 * fade);
 
   final Paint fill = Paint()
     ..color = ink
@@ -413,12 +469,20 @@ void ritmoPaintEyes(
 
   // پلک از بالا می‌آید، پس چشمِ نیم‌بسته کمی پایین‌تر می‌نشیند.
   final double lidDrop = radius * 0.20 * (1.0 - open);
-  final double ry = radius * (1.22 - 0.48 * frame.squint) * open;
+  final double ry = radius * (1.26 - 0.46 * frame.squint) * open;
+  // چشمِ جمع‌شده از خنده، بیضی نیست: یک قوسِ رو به بالا است.
+  final bool happy = frame.squint > 0.34 && open > 0.5;
 
   for (int i = 0; i < 2; i++) {
     final double side = i == 0 ? -1.0 : 1.0;
+    final double ang = side * lon + turn;
+    final double depth = math.cos(ang);
+    // این چشم رفته پشتِ کره.
+    if (depth <= 0.06) continue;
+    final double wide = (depth / norm).clamp(0.0, 1.0);
+    final double rx = radius * wide;
     final Offset eye = Offset(
-      center.dx + side * span * 0.5 + frame.gaze.dx * radius * 0.44,
+      center.dx + span * math.sin(ang) + frame.gaze.dx * radius * 0.44 * face,
       center.dy + frame.gaze.dy * radius * 0.34 + lidDrop,
     );
 
@@ -430,34 +494,77 @@ void ritmoPaintEyes(
         ..strokeCap = StrokeCap.round
         ..strokeWidth = math.max(0.9, radius * 0.34);
       canvas.drawLine(
-        Offset(eye.dx - radius * 0.82, eye.dy),
-        Offset(eye.dx + radius * 0.82, eye.dy),
+        Offset(eye.dx - rx * 0.82, eye.dy),
+        Offset(eye.dx + rx * 0.82, eye.dy),
         lid,
       );
       ritmoCountPaint(ops: 1);
-      continue;
+    } else if (happy) {
+      canvas.drawArc(
+        Rect.fromCenter(
+          center: eye,
+          width: rx * 2.0,
+          height: ry * 2.2,
+        ),
+        math.pi * 1.06,
+        math.pi * 0.88,
+        false,
+        Paint()
+          ..color = ink
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = math.max(1.0, radius * 0.30),
+      );
+      ritmoCountPaint(ops: 1);
+    } else {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: eye,
+          width: rx * 2.0,
+          height: ry * 2.0,
+        ),
+        fill,
+      );
+      ritmoCountPaint(ops: 1);
+
+      if (catchlight && open > 0.5) {
+        final double want = 0.5 * fade * open;
+        final double granted = purse?.take(want) ?? want;
+        if (granted > 0.02) {
+          canvas.drawCircle(
+            Offset(eye.dx - rx * 0.30, eye.dy - ry * 0.36),
+            math.max(0.6, radius * 0.26 * wide),
+            Paint()
+              ..color = const Color(0xFFFFFFFF).withValues(alpha: granted),
+          );
+          ritmoCountPaint(ops: 1, white: granted);
+        }
+      }
     }
 
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: eye,
-        width: radius * 2.0,
-        height: ry * 2.0,
-      ),
-      fill,
-    );
-    ritmoCountPaint(ops: 1);
-
-    if (catchlight && open > 0.5) {
-      final double want = 0.5 * presence * open;
-      final double granted = purse?.take(want) ?? want;
-      if (granted > 0.02) {
-        canvas.drawCircle(
-          Offset(eye.dx - radius * 0.30, eye.dy - ry * 0.36),
-          math.max(0.6, radius * 0.26),
-          Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: granted),
+    // ── لپ ───────────────────────────────────────────────────────────────
+    if (blush > 0.02 && wide > 0.35) {
+      final double tint = (0.26 * blush * fade).clamp(0.0, 1.0);
+      if (tint > 0.02) {
+        final Rect cheek = Rect.fromCircle(
+          center: Offset(
+            eye.dx + side * radius * 0.26 * wide,
+            eye.dy + radius * 1.34,
+          ),
+          radius: radius * 0.92 * wide,
         );
-        ritmoCountPaint(ops: 1, white: granted);
+        canvas.drawCircle(
+          cheek.center,
+          cheek.radius,
+          Paint()
+            ..shader = RadialGradient(
+              colors: <Color>[
+                palette.hot.withValues(alpha: tint),
+                palette.hot.withValues(alpha: 0.0),
+              ],
+            ).createShader(cheek),
+        );
+        ritmoCountPaint(ops: 1);
       }
     }
   }

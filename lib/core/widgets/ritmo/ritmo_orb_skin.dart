@@ -62,6 +62,114 @@ void ritmoPaintGlassBody(
   ritmoCountPaint();
 }
 
+/// موجِ درونِ تیله — چینی از رنگ که مثلِ پارچه‌ای در آب تاب می‌خورد.
+///
+/// دو لبهٔ سینوسی یک نوار می‌سازند: نوار با گرادیانِ عمودی پر می‌شود و یک
+/// تاجِ سفیدِ نازک روی لبهٔ بالایی می‌نشیند. همین تاج است که به چشم می‌گوید
+/// این یک حجم است، نه یک لکه.
+///
+/// شکلِ موج از امضای حرکت می‌آید: [amplitude] بلندیِ چین، [folds] تعدادِ
+/// چین‌ها، [thickness] قطرِ نوار. پس هر حالِ تیله موجِ خودش را دارد.
+void ritmoPaintWave(
+  Canvas canvas, {
+  required Offset center,
+  required double radius,
+  required RitmoOrbPalette palette,
+  required RitmoLightRig rig,
+  required RitmoOrbTier tier,
+  required RitmoWhitePurse purse,
+  required double phase,
+  required double amplitude,
+  required double folds,
+  required double thickness,
+  required double intensity,
+  required bool isDark,
+}) {
+  // در ۱۹ پیکسل، موج فقط یک خطِ لرزان است؛ نمی‌کشیمش.
+  if (tier == RitmoOrbTier.s || radius <= 1.0) return;
+
+  final int samples = tier == RitmoOrbTier.l ? 26 : 16;
+  final double amp = radius * (0.10 + 0.16 * amplitude.clamp(0.0, 1.4));
+  final double band = radius * (0.30 + 0.26 * thickness.clamp(0.0, 1.2));
+  final double fold = folds.clamp(0.6, 3.0);
+  final double tilt = -0.16 + 0.10 * math.sin(phase * 0.31);
+  final double mid = center.dy + radius * 0.05 * math.sin(phase * 0.23);
+
+  final List<Offset> upper = <Offset>[];
+  final List<Offset> lower = <Offset>[];
+  for (int i = 0; i <= samples; i++) {
+    final double t = i / samples;
+    final double x = center.dx + (t * 2.0 - 1.0) * radius * 1.18;
+    final double y = mid +
+        math.sin(t * math.pi * 2.0 * fold + phase) * amp +
+        math.sin(t * math.pi * 2.0 * fold * 0.5 - phase * 0.62) * amp * 0.42;
+    // نوار در میانه قطورتر است؛ دو سرش نازک می‌شود و در شیشه گم.
+    final double taper = 0.34 + 0.66 * math.sin(t * math.pi);
+    upper.add(Offset(x, y - band * 0.5 * taper));
+    lower.add(Offset(x, y + band * 0.5 * taper));
+  }
+
+  final Path crestPath = Path()..addPolygon(upper, false);
+  final Path shape = Path()..addPolygon(upper, false);
+  for (int i = lower.length - 1; i >= 0; i--) {
+    shape.lineTo(lower[i].dx, lower[i].dy);
+  }
+  shape.close();
+
+  final Rect sphere = Rect.fromCircle(center: center, radius: radius);
+  final double a =
+      ((isDark ? 0.68 : 0.60) + 0.30 * intensity).clamp(0.0, 1.0);
+
+  canvas.save();
+  canvas.translate(center.dx, center.dy);
+  canvas.rotate(tilt);
+  canvas.translate(-center.dx, -center.dy);
+
+  if (tier == RitmoOrbTier.l) {
+    // هالهٔ نرمِ زیرِ موج: رنگ از پشتِ شیشه در می‌آید، نه روی آن.
+    canvas.drawPath(
+      shape,
+      Paint()
+        ..color = palette.hot.withValues(alpha: 0.24 * a)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.16),
+    );
+    ritmoCountPaint(blurs: 1);
+  }
+
+  canvas.drawPath(
+    shape,
+    Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          palette.milk.withValues(alpha: 0.30 * a),
+          palette.hot.withValues(alpha: 0.92 * a),
+          palette.hot.withValues(alpha: 0.72 * a),
+          palette.violet.withValues(alpha: 0.34 * a),
+        ],
+        stops: const <double>[0.0, 0.34, 0.68, 1.0],
+      ).createShader(sphere),
+  );
+  ritmoCountPaint();
+
+  final double crest = purse.take(0.14 * (0.5 + 0.5 * rig.key));
+  if (crest > 0.02) {
+    canvas.drawPath(
+      crestPath,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeJoin = StrokeJoin.round
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = math.max(0.8, radius * 0.035)
+        ..color = const Color(0xFFFFFFFF).withValues(alpha: crest),
+    );
+    ritmoCountPaint(white: crest);
+  }
+
+  canvas.restore();
+}
+
 /// هایلایتِ اصلیِ شیشه + نقطهٔ نور. هر دو از کیفِ سفید خرج می‌کنند.
 void ritmoPaintSheen(
   Canvas canvas, {

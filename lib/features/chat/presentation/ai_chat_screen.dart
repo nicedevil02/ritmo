@@ -1424,6 +1424,26 @@ $suggestedSteps''';
     final topPadding = MediaQuery.paddingOf(context).top;
     final contentTopPadding = topPadding + 130.0;
 
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final rawViewInset = MediaQueryData.fromView(
+      View.of(context),
+    ).viewInsets.bottom;
+    final keyboardVisible =
+        isKeyboardOpen || keyboardInset > 0 || rawViewInset > 0;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final navH = context.metrics.navBarHeight;
+    final effectiveBottomPadding = keyboardVisible
+        ? 8.0
+        : (widget.isTab
+              ? (navH + bottomInset + 16.0)
+              : 16.0);
+
+    final double inputBarTotalHeight = 60.0 + effectiveBottomPadding;
+    final double timelineHeight =
+        (_isAgentWorking || _agentStatusText.isNotEmpty) ? 80.0 : 0.0;
+    final double chatListBottomPadding =
+        inputBarTotalHeight + timelineHeight + 16.0;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: RitmoTheme.buildBackgroundContainer(
@@ -1432,54 +1452,8 @@ $suggestedSteps''';
           backgroundColor: Colors.transparent,
           body: Stack(
             children: [
-              // Layer 1: Body Content
+              // Layer 1: Full-Screen Scrollable Chat Messages Stream (Edge-to-Edge)
               Positioned.fill(
-                child: Column(
-                  children: [
-                    if (_hasActiveDayPlanCommit)
-                      Container(
-                        width: double.infinity,
-                        color: colors.primary.withValues(alpha: 0.08),
-                        margin: EdgeInsets.only(top: contentTopPadding),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        CupertinoIcons.info_circle,
-                        size: 16,
-                        color: colors.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'برنامه جدید چیده شده است. مایلید تغییرات ۲۴ ساعت گذشته را بازگردانید؟',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          await AssistantActionRegistry.undoLastDayPlanCommit(
-                            context,
-                          );
-                          unawaited(_checkLastCommit());
-                        },
-                        child: Text(
-                          'بازگردانی (Undo)',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: colors.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              // Chat messages stream
-              Expanded(
                 child: _isLoading
                     ? _buildDayPlanningLoadingState(colors)
                     : _messages.isEmpty
@@ -1498,7 +1472,7 @@ $suggestedSteps''';
                                     32,
                                     compact ? 16 : (contentTopPadding + 16),
                                     32,
-                                    compact ? 16 : 32,
+                                    compact ? 16 : chatListBottomPadding,
                                   ),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1567,7 +1541,7 @@ $suggestedSteps''';
                             16,
                             contentTopPadding + 8,
                             16,
-                            8,
+                            chatListBottomPadding,
                           ),
                         itemCount: _messages.length,
                         itemBuilder: (context, index) {
@@ -1721,8 +1695,16 @@ $suggestedSteps''';
                   ),
                 ),
 
-              // Live Agent Activity Timeline Visualizer
-              AgentTimelineVisualizer(
+              // Layer 2: Floating Bottom Controls Overlay (Edge-to-Edge Floating Overlay)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Live Agent Activity Timeline Visualizer
+                    AgentTimelineVisualizer(
                 steps: _agentSteps,
                 statusText: _agentStatusText,
                 isWorking: _isAgentWorking,
@@ -1937,7 +1919,55 @@ $suggestedSteps''';
           ),
         ),
 
-        // Layer 2: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
+        // Optional: Day Plan Undo Banner
+        if (_hasActiveDayPlanCommit)
+          Positioned(
+            top: contentTopPadding,
+            left: 0,
+            right: 0,
+            child: Container(
+              width: double.infinity,
+              color: colors.primary.withValues(alpha: 0.08),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.info_circle,
+                    size: 16,
+                    color: colors.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'برنامه جدید چیده شده است. مایلید تغییرات ۲۴ ساعت گذشته را بازگردانید؟',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      await AssistantActionRegistry.undoLastDayPlanCommit(
+                        context,
+                      );
+                      unawaited(_checkLastCommit());
+                    },
+                    child: Text(
+                      'بازگردانی (Undo)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        // Layer 3: Apple Dynamic Large Title Morphing Glass Header (Unified Single Capsule)
         Positioned(
           top: 0,
           left: 0,

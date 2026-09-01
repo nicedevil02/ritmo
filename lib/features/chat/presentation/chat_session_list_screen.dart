@@ -6,7 +6,6 @@ import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/ai/chat/chat_repository.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
 class ChatSessionListScreen extends StatefulWidget {
   const ChatSessionListScreen({super.key});

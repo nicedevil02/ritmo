@@ -110,7 +110,7 @@ class AgentTimelineVisualizer extends StatelessWidget {
     return RepaintBoundary(
       child: ValueListenableBuilder<RitmoOrbMode>(
         valueListenable: RitmoAiStateService.instance.orbMode,
-        builder: (BuildContext context, RitmoOrbMode mode, Widget? _) {
+        builder: (context, mode, _) {
           final RitmoOrbLife life = _lifeFor(
             isWorking: isWorking,
             isListening: isListening,
@@ -178,13 +178,13 @@ class _StatusWhisper extends StatelessWidget {
                 duration: const Duration(milliseconds: 360),
                 switchInCurve: Curves.easeOutCubic,
                 switchOutCurve: Curves.easeInCubic,
-                layoutBuilder: (Widget? current, List<Widget> previous) {
+                layoutBuilder: (current, previous) {
                   return Stack(
                     alignment: Alignment.topCenter,
-                    children: <Widget>[...previous, if (current != null) current],
+                    children: <Widget>[...previous, ?current],
                   );
                 },
-                transitionBuilder: (Widget child, Animation<double> anim) {
+                transitionBuilder: (child, anim) {
                   return FadeTransition(
                     opacity: anim,
                     child: SlideTransition(

@@ -10,6 +10,7 @@ import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/core/domain/models/completion_result.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_orb_types.dart';
 import 'package:sqflite/sqflite.dart';
 
 class EnergyAnalyticsEngineInput {
@@ -150,6 +151,11 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
       }
       avgLevel = total / sampleCount;
     }
+
+    // گزارش سطح انرژی و بار روز به سیگنال حباب ریتمو
+    final vitality = (currentEnergy / 100.0).clamp(0.0, 1.0);
+    final load = (recentCompletions.length / 6.0).clamp(0.0, 1.0);
+    RitmoOrbEnergySignal.instance.report(load: load, vitality: vitality);
 
     return EnergyAnalyticsOutput(
       peakPerformanceWindow: peak,

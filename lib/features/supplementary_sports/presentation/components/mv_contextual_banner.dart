@@ -6,10 +6,12 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 /// (sleep debt, fasting window, or menstrual cycle) adapt the day's training.
 class MvContextualBanner extends StatelessWidget {
   final RitmoCrossModuleSnapshot snapshot;
+  final VoidCallback? onApplyFastingWindow;
 
   const MvContextualBanner({
     super.key,
     required this.snapshot,
+    this.onApplyFastingWindow,
   });
 
   @override
@@ -37,6 +39,36 @@ class MvContextualBanner extends StatelessWidget {
         title: 'پروتکل روزه‌داری و تمرین',
         subtitle:
             'ساعت بهینه برای تمرین ملایم: ۴۵ دقیقه مانده به افطار (${snapshot.goldenPreIftarWindow}).',
+        action: onApplyFastingWindow != null
+            ? GestureDetector(
+                onTap: () {
+                  RitmoHapticsPolicy.tap();
+                  onApplyFastingWindow!();
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.accent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: colors.accent.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    'تنظیم زمان به قبل از افطار 🌙',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: colors.accent,
+                    ),
+                  ),
+                ),
+              )
+            : null,
       );
     }
 
@@ -61,6 +93,7 @@ class MvContextualBanner extends StatelessWidget {
     required Color iconColor,
     required String title,
     required String subtitle,
+    Widget? action,
   }) {
     final colors = context.colors;
 
@@ -105,6 +138,7 @@ class MvContextualBanner extends StatelessWidget {
                       color: colors.textSecondary,
                     ),
                   ),
+                  ?action,
                 ],
               ),
             ),

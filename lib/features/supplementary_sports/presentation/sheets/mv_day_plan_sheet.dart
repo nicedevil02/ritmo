@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/domain/engines/ritmo_cross_module_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
@@ -80,6 +81,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
   TimeOfDay? _plannedTime;
   final List<String> _focusCodes = [];
   bool _repeatWeekly = false;
+  RitmoCrossModuleSnapshot? _crossModuleSnapshot;
 
   @override
   void initState() {
@@ -101,6 +103,20 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
       );
     }
     _loadKindDetails();
+    _loadCrossModuleContext();
+  }
+
+  Future<void> _loadCrossModuleContext() async {
+    try {
+      final dt = DateTime.tryParse(widget.slot.dateIso);
+      final snapshot =
+          await RitmoCrossModuleEngine.instance.getSnapshot(date: dt);
+      if (mounted) {
+        setState(() {
+          _crossModuleSnapshot = snapshot;
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -546,6 +562,67 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                   ],
                 ),
               ),
+
+              // Fasting Quick Preset Chips
+              if (_crossModuleSnapshot != null &&
+                  _crossModuleSnapshot!.isFasting &&
+                  _crossModuleSnapshot!.maghribTime != null) ...[
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (_crossModuleSnapshot!.goldenPreIftarWindow != null)
+                      MvChip(
+                        key: const ValueKey('fasting_chip_pre_iftar'),
+                        icon: const Text('🌙', style: TextStyle(fontSize: 13)),
+                        label:
+                            'پیش از افطار (${_crossModuleSnapshot!.goldenPreIftarWindow})',
+                        isSelected: _plannedTime != null &&
+                            _intensity == MvIntensityTier.light,
+                        onTap: () {
+                          final parts =
+                              _crossModuleSnapshot!.maghribTime!.split(':');
+                          final h = int.tryParse(parts[0]) ?? 19;
+                          final m = int.tryParse(parts[1]) ?? 0;
+                          final maghribDt = DateTime(2026, 1, 1, h, m)
+                              .subtract(const Duration(minutes: 45));
+                          setState(() {
+                            _plannedTime = TimeOfDay(
+                              hour: maghribDt.hour,
+                              minute: maghribDt.minute,
+                            );
+                            _intensity = MvIntensityTier.light;
+                          });
+                        },
+                      ),
+                    if (_crossModuleSnapshot!.goldenPostIftarWindow != null)
+                      MvChip(
+                        key: const ValueKey('fasting_chip_post_iftar'),
+                        icon: const Text('✨', style: TextStyle(fontSize: 13)),
+                        label:
+                            'بعد از افطار (${_crossModuleSnapshot!.goldenPostIftarWindow})',
+                        isSelected: _plannedTime != null &&
+                            _intensity == MvIntensityTier.moderate,
+                        onTap: () {
+                          final parts =
+                              _crossModuleSnapshot!.maghribTime!.split(':');
+                          final h = int.tryParse(parts[0]) ?? 19;
+                          final m = int.tryParse(parts[1]) ?? 0;
+                          final postDt = DateTime(2026, 1, 1, h, m)
+                              .add(const Duration(hours: 2));
+                          setState(() {
+                            _plannedTime = TimeOfDay(
+                              hour: postDt.hour,
+                              minute: postDt.minute,
+                            );
+                            _intensity = MvIntensityTier.moderate;
+                          });
+                        },
+                      ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 16),
 
               // ۴. مکان (venueNote) — فقط اگر kind.needsVenue == true

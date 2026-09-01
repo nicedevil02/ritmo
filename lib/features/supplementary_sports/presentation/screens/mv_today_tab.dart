@@ -128,7 +128,27 @@ class MvTodayTab extends StatelessWidget {
 
           // 2. Contextual Adaptation Banner (Sleep debt, Fasting, Cycle)
           if (crossModuleSnapshot != null)
-            MvContextualBanner(snapshot: crossModuleSnapshot!),
+            MvContextualBanner(
+              snapshot: crossModuleSnapshot!,
+              onApplyFastingWindow: () {
+                if (crossModuleSnapshot!.maghribTime != null) {
+                  final parts = crossModuleSnapshot!.maghribTime!.split(':');
+                  final h = int.tryParse(parts[0]) ?? 19;
+                  final m = int.tryParse(parts[1]) ?? 0;
+                  final maghribDt = DateTime(2026, 1, 1, h, m)
+                      .subtract(const Duration(minutes: 45));
+                  final timeStr =
+                      '${maghribDt.hour.toString().padLeft(2, '0')}:${maghribDt.minute.toString().padLeft(2, '0')}';
+                  final adapted = todaySlot.copyWith(
+                    plannedTime: timeStr,
+                    intensityTier: MvIntensityTier.light,
+                    reasonKey: MvReasonKeys.constraintRelaxed,
+                    updatedAt: DateTime.now().millisecondsSinceEpoch,
+                  );
+                  onSlotUpdated(adapted);
+                }
+              },
+            ),
 
           // 3. Readiness Bar (tap to open quick checkin)
           MvReadinessBar(

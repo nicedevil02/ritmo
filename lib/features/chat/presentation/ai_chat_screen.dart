@@ -19,6 +19,7 @@ import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_orb_dock.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_presence.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart';
 import 'package:ritmo/features/assistant/logic/assistant_action_registry.dart';
@@ -1854,8 +1855,10 @@ $suggestedSteps''';
                         16,
                         effectiveBottomPadding,
                       ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
+                      child: RitmoOrbDockAnchor(
+                        radius: 28,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
                           horizontal: 6,
                           vertical: 5,
                         ),
@@ -2026,6 +2029,7 @@ $suggestedSteps''';
                         ),
                       ),
                     ),
+                  ),
                   );
                 },
               ),

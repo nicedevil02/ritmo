@@ -18,6 +18,7 @@
 
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_clock.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_eyes.dart';

@@ -259,5 +259,97 @@ void main() {
         );
       },
     );
+
+    testWidgets(
+      'Opening sheet for rest slot renders Recovery Insight Card, Mode Selector, and saves Passive/Active Rest with weekly repeat',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(800, 1200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        const restSlot = MvSlot(
+          id: 'slot_rest_test',
+          dateIso: '2026-08-26',
+          slotType: MvSlotType.rest,
+          headlineFa: 'روز استراحت و ریکاوری',
+          createdAt: 1000,
+          updatedAt: 1000,
+        );
+
+        MvSlot? savedSlot;
+
+        await tester.pumpWidget(
+          createTestApp(
+            Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  MvDayPlanSheet.show(
+                    context: context,
+                    slot: restSlot,
+                    kindUseCase: kindUseCase,
+                    onSave: (slot) {
+                      savedSlot = slot;
+                    },
+                  );
+                },
+                child: const Text('Open Day Plan'),
+              ),
+            ),
+          ),
+        );
+
+        // Open sheet
+        await tester.tap(find.text('Open Day Plan'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pump(const Duration(milliseconds: 100));
+
+        // Verify Rest Insight Card is visible
+        expect(
+          find.byKey(const ValueKey('mv_rest_insight_card')),
+          findsOneWidget,
+        );
+        expect(find.text('سبک ریکاوری امروز'), findsOneWidget);
+        expect(find.text('استراحت کامل'), findsOneWidget);
+        expect(find.text('کشش و موبیلیتی'), findsOneWidget);
+
+        // Verify repeat rest weekly switch is present
+        expect(
+          find.byKey(const ValueKey('day_plan_repeat_rest_weekly_switch')),
+          findsOneWidget,
+        );
+
+        // Switch to Gentle Stretch & Mobility
+        await tester.ensureVisible(find.text('کشش و موبیلیتی'));
+        await tester.tap(find.text('کشش و موبیلیتی'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        // Toggle repeat weekly
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('day_plan_repeat_rest_weekly_switch')),
+        );
+        await tester.tap(
+          find.byKey(const ValueKey('day_plan_repeat_rest_weekly_switch')),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        // Save
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('day_plan_save_action')),
+        );
+        await tester.tap(find.byKey(const ValueKey('day_plan_save_action')), warnIfMissed: false);
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.pump();
+
+        // Verify saved rest slot
+        expect(savedSlot, isNotNull);
+        expect(savedSlot!.slotType, equals(MvSlotType.rest));
+        expect(savedSlot!.targetMinutes, equals(5));
+        expect(savedSlot!.isLocked, isTrue);
+        expect(savedSlot!.headlineFa, contains('کشش'));
+        expect(savedSlot!.coachNoteFa, contains('کشش'));
+      },
+    );
   });
 }

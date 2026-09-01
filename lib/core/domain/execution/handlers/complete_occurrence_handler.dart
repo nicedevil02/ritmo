@@ -7,6 +7,7 @@ import 'package:ritmo/core/domain/execution/command_context.dart';
 import 'package:ritmo/core/domain/execution/command_handler.dart';
 import 'package:ritmo/core/domain/execution/events/kernel_event_factory.dart';
 import 'package:ritmo/core/domain/execution/kernel_mutation_result.dart';
+import 'package:ritmo/core/domain/models/completion_result.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:sqflite/sqflite.dart';
@@ -102,9 +103,10 @@ class CompleteOccurrenceHandler
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
 
-    // 3. Update progression engine safely
+    // 3. Update progression engine safely (only FULL completions advance progression)
     try {
-      await ProgressionEngine().onCompletion(context.txn, command.routineId);
+      final resType = CompletionResult.fromDb(command.resultType);
+      await ProgressionEngine().onCompletion(context.txn, command.routineId, resType);
     } catch (e) {
       debugPrint('[CompleteOccurrenceHandler] ProgressionEngine onCompletion error: $e');
     }

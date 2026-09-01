@@ -80,21 +80,16 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
     final practice = item.meta['practice'] as Map<String, dynamic>? ?? {};
     final isDone = item.isCompleted;
     final isSkipped = item.completion == AgendaCompletion.skipped;
-    final isSnoozed = practice['lastDeferredUntil'] != null;
+    final latestSnooze = practice['lastDeferredUntil'] as int? ?? 0;
+    final isSnoozed = latestSnooze > DateTime.now().millisecondsSinceEpoch;
     final deferCount = practice['deferCount'] as int? ?? 0;
 
-    // Check if the setting module_religion_enabled is true
-    // Also check menstruation
-
     String? snoozeText;
-    if (isSnoozed) {
-      final latestSnooze = practice['lastDeferredUntil'] as int? ?? 0;
-      if (latestSnooze > 0) {
-        final time = DateTime.fromMillisecondsSinceEpoch(latestSnooze);
-        final hour = time.hour.toString().padLeft(2, '0');
-        final min = time.minute.toString().padLeft(2, '0');
-        snoozeText = 'تعویق تا ${toPersianDigits("$hour:$min")}';
-      }
+    if (isSnoozed && latestSnooze > 0) {
+      final time = DateTime.fromMillisecondsSinceEpoch(latestSnooze);
+      final hour = time.hour.toString().padLeft(2, '0');
+      final min = time.minute.toString().padLeft(2, '0');
+      snoozeText = 'تعویق تا ${toPersianDigits("$hour:$min")}';
     }
 
     // Expiration alerts
@@ -126,17 +121,22 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
       isExpired: isExpired,
       isExpiringSoon: isExpiringSoon,
       onToggle: (val) async {
-        var group = 'FAJR';
-        final combined = '${item.id}:${item.sourceId}'.toLowerCase();
-        if (combined.contains('dhuhr') || combined.contains('asr')) {
-          group = 'DHUHR_ASR';
-        } else if (combined.contains('maghrib') || combined.contains('isha')) {
-          group = 'MAGHRIB_ISHA';
-        } else if (combined.contains('fasting') ||
-            combined.contains('ramadan')) {
-          group = 'RAMADAN_FAST';
+        final explicitGroup = practice['groupKey'] as String?;
+        String group;
+        if (explicitGroup != null && explicitGroup.isNotEmpty) {
+          group = explicitGroup;
         } else {
-          group = 'FAJR';
+          final combined = '${item.id}:${item.sourceId}'.toLowerCase();
+          if (combined.contains('dhuhr') || combined.contains('asr')) {
+            group = 'DHUHR_ASR';
+          } else if (combined.contains('maghrib') || combined.contains('isha')) {
+            group = 'MAGHRIB_ISHA';
+          } else if (combined.contains('fasting') ||
+              combined.contains('ramadan')) {
+            group = 'RAMADAN_FAST';
+          } else {
+            group = 'FAJR';
+          }
         }
 
         if (val) {
@@ -185,7 +185,6 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
     Map<String, dynamic> practice,
     VoidCallback onChanged,
   ) async {
-    final colors = context.colors;
     var selectedMinutes = 15;
 
     await showDialog(
@@ -345,8 +344,10 @@ class RoutineAgendaRenderer extends AgendaTileRenderer {
     return RoutineCard(
       routine: routine,
       isCompleted: isDone,
-      displayStreak: 0,
-      customCategoriesMap: const {},
+      displayStreak: routineMap['streak'] as int? ?? (item.meta['streak'] as int? ?? 0),
+      customCategoriesMap: (item.meta['customCategoriesMap'] as Map<String, dynamic>?)?.map(
+        (k, v) => MapEntry(k, v as dynamic),
+      ) ?? const {},
       onTap: () {
         if (isDone) {
           RoutineDetailsSheet.show(

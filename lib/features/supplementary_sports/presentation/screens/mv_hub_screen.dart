@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
@@ -62,21 +63,18 @@ class _MvHubScreenState extends State<MvHubScreen> {
     );
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n.mv_plan_deleted_snackbar, textAlign: TextAlign.right),
-        action: SnackBarAction(
-          label: l10n.mv_undo,
-          onPressed: () async {
-            await _controller.restoreWorkoutPlan(
-              previousSlot: result.previousSlot,
-              previousCommitment: result.previousCommitment,
-            );
-          },
-        ),
-        duration: const Duration(seconds: 4),
-      ),
+    RitmoToast.show(
+      context,
+      l10n.mv_plan_deleted_snackbar,
+      icon: Icons.delete_outline_rounded,
+      iconColor: context.colors.error,
+      actionLabel: l10n.mv_undo,
+      onUndo: () async {
+        await _controller.restoreWorkoutPlan(
+          previousSlot: result.previousSlot,
+          previousCommitment: result.previousCommitment,
+        );
+      },
     );
   }
 

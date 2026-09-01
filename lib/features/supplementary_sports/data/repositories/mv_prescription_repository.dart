@@ -53,6 +53,13 @@ class MvPrescriptionRepository {
   /// Saves or updates a single prescription slot.
   Future<void> savePrescription(MvSlot slot) async {
     final db = await _db;
+    // Always clear any existing prescription for the same dateIso with a different id
+    // to prevent SQLite UNIQUE constraint violation on idx_ss_prescription_date.
+    await db.delete(
+      'ss_session_prescription',
+      where: 'dateIso = ? AND id != ?',
+      whereArgs: [slot.dateIso, slot.id],
+    );
     await UpsertHelper.upsert(
       db,
       'ss_session_prescription',

@@ -79,7 +79,10 @@ class MvDaySlotCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       weekdayName,
@@ -88,21 +91,22 @@ class MvDaySlotCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    if (slot.isLocked) ...[
-                      const SizedBox(width: 6),
+                    if (slot.isRest) ...[
                       RitmoCardBadge(
                         key: const ValueKey('mv_slot_anchor_badge'),
-                        label: l10n?.mv_slot_anchor_badge_label ?? 'Fixed',
+                        label: slot.isLocked
+                            ? (l10n?.mv_slot_anchor_badge_label ?? 'استراحت ثابت')
+                            : (l10n?.mv_slot_rest_badge_label ?? 'استراحت'),
+                        color: slot.isLocked ? colors.accent : colors.textSecondary,
+                        icon: slot.isLocked ? Icons.lock_rounded : null,
+                        isOutlined: !slot.isLocked,
+                      ),
+                    ] else if (slot.isLocked) ...[
+                      RitmoCardBadge(
+                        key: const ValueKey('mv_slot_anchor_badge'),
+                        label: l10n?.mv_slot_anchor_badge_label ?? 'ورزش ثابت',
                         color: colors.accent,
                         icon: Icons.lock_rounded,
-                      ),
-                    ],
-                    if (slot.isRest) ...[
-                      const SizedBox(width: 6),
-                      RitmoCardBadge(
-                        label: l10n?.mv_slot_rest_badge_label ?? 'Rest',
-                        color: colors.textSecondary,
-                        isOutlined: true,
                       ),
                     ],
                   ],

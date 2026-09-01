@@ -187,7 +187,12 @@ class _HomeNavigationShellState extends State<HomeNavigationShell> {
   }
 
   void _refreshCurrentScreen() {
-    setState(() {});
+    setState(() {
+      final maxTabs = RitmoShellMetrics.tabCountFor(_activeMode);
+      if (_currentIndex >= 0 && _currentIndex < maxTabs) {
+        _screens[_currentIndex] = _buildScreen(_currentIndex, _activeMode);
+      }
+    });
   }
 
   @override

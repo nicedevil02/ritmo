@@ -14,10 +14,10 @@ class MissedReminderRecovery {
       final now = nowOverride ?? DateTime.now();
       final nowMs = now.millisecondsSinceEpoch;
 
-      // RITF-001 & RITF-062: Only recover active pending reminders belonging to the tasks module with safe batch limit
+      // RITF-001 & RITF-062: Strictly recover active pending reminders belonging to the tasks module only
       final rows = await db.query(
         'pending_reminders',
-        where: "scheduledTime <= ? AND state IN ('SCHEDULED', 'pending') AND (ownerModule = 'tasks' OR ownerModule IS NULL)",
+        where: "scheduledTime <= ? AND state IN ('SCHEDULED', 'pending') AND ownerModule = 'tasks'",
         whereArgs: [nowMs],
         limit: 50,
       );

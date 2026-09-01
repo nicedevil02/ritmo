@@ -422,6 +422,10 @@ class MvHubController extends ChangeNotifier {
   /// If [deleteRecurringCommitment] is true and a commitment is associated with this day,
   /// that recurring commitment is deleted from the database.
   /// Returns a record with previous state `(MvSlot, MvCommitment?)` to enable full Undo.
+  /// Deletes or clears a scheduled workout for a day and resets it to Rest.
+  /// If [deleteRecurringCommitment] is true and a commitment is associated with this day,
+  /// that recurring commitment is deleted from the database.
+  /// Returns a record with previous state `(MvSlot, MvCommitment?)` to enable full Undo.
   Future<({MvSlot previousSlot, MvCommitment? previousCommitment})> deleteWorkoutPlan({
     required MvSlot slot,
     bool deleteRecurringCommitment = false,
@@ -442,10 +446,13 @@ class MvHubController extends ChangeNotifier {
       _commitments = await _commitmentRepo.getActive();
     }
 
+    // Delete existing prescription for this date before saving the new rest slot
+    await _prescriptionRepo.deletePrescriptionForDate(slot.dateIso);
+
     // Reset this day's slot to Rest and lock it so regeneration won't override it for this week
     final now = DateTime.now().millisecondsSinceEpoch;
     final restSlot = MvSlot(
-      id: 'slot_${slot.dateIso}_rest',
+      id: slot.id.isNotEmpty ? slot.id : 'slot_${slot.dateIso}_rest',
       dateIso: slot.dateIso,
       cycleWeek: slot.cycleWeek,
       slotType: MvSlotType.rest,
@@ -457,7 +464,7 @@ class MvHubController extends ChangeNotifier {
       reasonKey: MvReasonKeys.restGuaranteed,
       isLocked: true,
       status: MvSlotStatus.planned,
-      createdAt: now,
+      createdAt: slot.createdAt > 0 ? slot.createdAt : now,
       updatedAt: now,
     );
 

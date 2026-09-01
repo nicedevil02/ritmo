@@ -67,6 +67,21 @@ class CompletionGateway {
 
   Future<CompletionOutcome> _handleRoutineCompletion(RoutineCompletion req) async {
     try {
+      final db = await DatabaseHelper.instance.database;
+      final routineRows = await db.query(
+        'routines',
+        columns: ['progressionCurrent', 'progressionDoneSinceAdvance'],
+        where: 'id = ?',
+        whereArgs: [req.routineId],
+        limit: 1,
+      );
+      int prevCurr = 0;
+      int prevDone = 0;
+      if (routineRows.isNotEmpty) {
+        prevCurr = routineRows.first['progressionCurrent'] as int? ?? 0;
+        prevDone = routineRows.first['progressionDoneSinceAdvance'] as int? ?? 0;
+      }
+
       await RitmoExecutionKernel.instance.execute(
         CompleteOccurrenceCommand(
           routineId: req.routineId,
@@ -78,7 +93,7 @@ class CompletionGateway {
         ),
       );
       _notifySuccess(domain: 'routine', itemId: req.routineId, dateStr: req.dateStr, result: req.result.dbValue);
-      return CompletionOutcome.success(undoToken: 'routine:${req.routineId}|${req.dateStr}');
+      return CompletionOutcome.success(undoToken: 'routine:${req.routineId}|${req.dateStr}|${req.routineId}_${req.dateStr}|$prevCurr|$prevDone');
     } catch (e, st) {
       RitmoLog.error('CompletionGateway', 'Routine completion failed', e, st);
       return CompletionOutcome.failure('ثبت انجام روتین انجام نشد. دوباره تلاش کنید.');
@@ -478,6 +493,32 @@ class CompletionGateway {
                 SET status = 'pending'
                 WHERE routine_id = ? AND date = ?
               ''', [actualRoutineId, actualDateStr]);
+
+              // Restore medical routine stock count if applicable
+              final rRows = await txn.query(
+                'routines',
+                columns: ['category', 'medStockCount'],
+                where: 'id = ?',
+                whereArgs: [actualRoutineId],
+                limit: 1,
+              );
+              if (rRows.isNotEmpty && rRows.first['category'] == 'medical') {
+                final currentStock = rRows.first['medStockCount'] as int? ?? 0;
+                await txn.update(
+                  'routines',
+                  {
+                    'medStockCount': currentStock + 1,
+                    'updatedAt': DateTime.now().millisecondsSinceEpoch,
+                  },
+                  where: 'id = ?',
+                  whereArgs: [actualRoutineId],
+                );
+                await txn.rawUpdate('''
+                  UPDATE medication_profiles
+                     SET remainingAmount = remainingAmount + 1.0
+                   WHERE routineId = ?
+                ''', [actualRoutineId]);
+              }
 
               if (rParts.length >= 5) {
                 final prevCurr = int.tryParse(rParts[3]);

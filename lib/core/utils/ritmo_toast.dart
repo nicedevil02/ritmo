@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/util/ritmo_number.dart';
 
 class RitmoToast {
   static void show(
@@ -21,6 +22,7 @@ class RitmoToast {
         message: message,
         icon: icon,
         iconColor: iconColor,
+        actionLabel: actionLabel,
         onDismiss: () {
           overlayEntry.remove();
         },
@@ -38,12 +40,14 @@ class _RitmoTopToastWidget extends StatefulWidget {
     required this.iconColor,
     required this.onDismiss,
     this.onUndo,
+    this.actionLabel,
   });
   final String message;
   final IconData icon;
   final Color iconColor;
   final VoidCallback onDismiss;
   final VoidCallback? onUndo;
+  final String? actionLabel;
 
   @override
   State<_RitmoTopToastWidget> createState() => _RitmoTopToastWidgetState();
@@ -171,12 +175,12 @@ class _RitmoTopToastWidgetState extends State<_RitmoTopToastWidget>
                           GestureDetector(
                             onTap: _handleUndo,
                             child: Text(
-                              'لغو ($_secondsLeft)',
-                              style: const TextStyle(
+                              '${widget.actionLabel ?? 'بازگردانی'} (${RitmoNumber.faInt(_secondsLeft)})',
+                              style: TextStyle(
                                 fontFamily: 'Vazirmatn',
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xff60A5FA),
+                                color: widget.iconColor,
                               ),
                             ),
                           ),

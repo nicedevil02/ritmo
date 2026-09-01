@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/features/cycle/presentation/cycle_screen.dart';
 import 'package:ritmo/features/goals/presentation/goals_screen.dart';
 import 'package:ritmo/features/health/presentation/health_screen.dart';
@@ -73,12 +74,19 @@ class RitmoRouter {
     final r = route.trim().toLowerCase();
     if (r.isEmpty) return null;
 
-    // تب‌ها (حالت full: ۰ سیستم‌ها / ۱ بینش‌ها / ۲ امروز / ۳ دستیار / ۴ تقویم)
-    if (r == '/' || r == '/today') return RitmoRouteTarget.tab(2);
-    if (r == '/systems' || r == '/system') return RitmoRouteTarget.tab(0);
-    if (r == '/insights' || r == '/reports') return RitmoRouteTarget.tab(1);
-    if (r == '/routines' || r == '/routine') return RitmoRouteTarget.tab(3);
-    if (r == '/calendar') return RitmoRouteTarget.tab(4);
+    // تب‌ها بر اساس حالت فعال برنامه (AppMode.simple یا AppMode.full)
+    final mode = AppModeService.instance.current;
+    if (mode == AppMode.simple) {
+      if (r == '/' || r == '/today' || r == '/tasks') return RitmoRouteTarget.tab(0);
+      if (r == '/calendar') return RitmoRouteTarget.tab(1);
+      if (r == '/systems' || r == '/system' || r == '/insights' || r == '/reports' || r == '/routines') return RitmoRouteTarget.tab(2);
+    } else {
+      if (r == '/' || r == '/today') return RitmoRouteTarget.tab(2);
+      if (r == '/systems' || r == '/system') return RitmoRouteTarget.tab(0);
+      if (r == '/insights' || r == '/reports') return RitmoRouteTarget.tab(1);
+      if (r == '/routines' || r == '/routine' || r == '/assistant') return RitmoRouteTarget.tab(3);
+      if (r == '/calendar') return RitmoRouteTarget.tab(4);
+    }
 
     // صفحه‌ها
     if (r == '/goals' || r == '/goal') {

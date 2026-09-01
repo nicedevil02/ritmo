@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/engines/ritmo_cross_module_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
@@ -59,6 +60,11 @@ class MvDayPlanSheet extends StatefulWidget {
   State<MvDayPlanSheet> createState() => _MvDayPlanSheetState();
 }
 
+enum _RestMode {
+  passive,
+  gentleStretch,
+}
+
 class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
   static const List<MvSlotType> _allowedSlotTypes = [
     MvSlotType.strength,
@@ -72,6 +78,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
 
   late final MvKindUseCase _kindUseCase;
   late MvSlotType _slotType;
+  _RestMode _restMode = _RestMode.passive;
   MvMovementKind? _kind;
   String? _kindCode;
   late int _minutes;
@@ -94,6 +101,14 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
     _focusCodes.addAll(widget.slot.focusCodes);
     _titleController = TextEditingController(text: widget.slot.headlineFa);
     _venueController = TextEditingController();
+    if (widget.slot.isRest) {
+      _restMode = (widget.slot.targetMinutes > 0 ||
+              widget.slot.headlineFa.contains('کشش') ||
+              widget.slot.coachNoteFa?.contains('کشش') == true)
+          ? _RestMode.gentleStretch
+          : _RestMode.passive;
+      _repeatWeekly = widget.slot.isLocked;
+    }
     if (widget.slot.plannedTime != null &&
         widget.slot.plannedTime!.contains(':')) {
       final parts = widget.slot.plannedTime!.split(':');
@@ -193,7 +208,9 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
       if (type == MvSlotType.rest) {
         _kind = null;
         _kindCode = null;
-        _titleController.text = l10n?.mv_plan_rest ?? 'Rest';
+        _titleController.text = _restMode == _RestMode.passive
+            ? (l10n?.mv_plan_rest ?? 'روز استراحت و ریکاوری')
+            : 'روز استراحت و کشش ملایم';
       } else if (type == MvSlotType.strength) {
         if (_kindCode == null) {
           _titleController.text = l10n?.mv_plan_strength ?? 'Strength Workout';
@@ -229,22 +246,32 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
       }
     }
 
+    final isPassive = _restMode == _RestMode.passive;
     final headline = _titleController.text.trim().isNotEmpty
         ? _titleController.text.trim()
-        : (_kind?.titleFa ?? _slotType.titleFa);
+        : (isRest
+            ? (isPassive ? 'روز استراحت و ریکاوری' : 'روز استراحت و کشش ملایم')
+            : (_kind?.titleFa ?? _slotType.titleFa));
 
     final timeStr = _plannedTime != null
         ? '${_plannedTime!.hour.toString().padLeft(2, '0')}:${_plannedTime!.minute.toString().padLeft(2, '0')}'
         : null;
 
+    final targetMin = isRest ? (isPassive ? 0 : 5) : _minutes;
+    final coachNote = isRest
+        ? (isPassive ? 'استراحت کامل و بازسازی' : '۵ دقیقه کشش و موبیلیتی سبک')
+        : widget.slot.coachNoteFa;
+
     final updated = widget.slot.copyWith(
       slotType: _slotType,
       kindCode: isRest ? null : finalKindCode,
-      targetMinutes: isRest ? 0 : _minutes,
+      targetMinutes: targetMin,
       plannedTime: isRest ? null : timeStr,
       intensityTier: isRest ? MvIntensityTier.light : _intensity,
-      focusCodes: _focusCodes,
+      focusCodes: isRest ? const [] : _focusCodes,
       headlineFa: headline,
+      coachNoteFa: coachNote,
+      isLocked: _repeatWeekly ? true : widget.slot.isLocked,
       updatedAt: now,
     );
 
@@ -259,10 +286,11 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
             : null,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.userMessageFa, textAlign: TextAlign.right),
-          ),
+        RitmoToast.show(
+          context,
+          result.userMessageFa,
+          icon: Icons.check_circle_rounded,
+          iconColor: context.colors.primary,
         );
       }
       widget.onSave(result.savedSlot);
@@ -390,6 +418,98 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
               }).toList(),
             ),
             const SizedBox(height: 16),
+
+            // ۰. بخش اختصاصی روز استراحت و ریکاوری هوشمند
+            if (isRest) ...[
+              _buildRestInsightCard(context, colors, textTheme),
+              const SizedBox(height: 16),
+
+              Text(
+                'سبک ریکاوری امروز',
+                style: textTheme.labelLarge?.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildRestModeCard(
+                      context: context,
+                      mode: _RestMode.passive,
+                      title: 'استراحت کامل',
+                      subtitle: 'خواب، تغذیه و بازسازی',
+                      icon: Icons.bedtime_rounded,
+                      isSelected: _restMode == _RestMode.passive,
+                      colors: colors,
+                      textTheme: textTheme,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildRestModeCard(
+                      context: context,
+                      mode: _RestMode.gentleStretch,
+                      title: 'کشش و موبیلیتی',
+                      subtitle: '۵ دقیقه کشش و تن‌آرامی',
+                      icon: Icons.self_improvement_rounded,
+                      isSelected: _restMode == _RestMode.gentleStretch,
+                      colors: colors,
+                      textTheme: textTheme,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              Material(
+                type: MaterialType.transparency,
+                child: SwitchListTile.adaptive(
+                  key: const ValueKey('day_plan_repeat_rest_weekly_switch'),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    'تکرار هفتگی روز استراحت',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'این روز در برنامهٔ هفتگی به عنوان روز استراحت ثابت شما ثبت شود',
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                  value: _repeatWeekly,
+                  onChanged: (val) => setState(() => _repeatWeekly = val),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              Text(
+                'یادداشت وضعیت بدنی (اختیاری)',
+                style: textTheme.labelLarge?.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: metrics.spaceXs),
+              TextField(
+                controller: _titleController,
+                decoration: InputDecoration(
+                  hintText: _restMode == _RestMode.passive
+                      ? 'روز استراحت و ریکاوری'
+                      : 'روز استراحت و کشش ملایم',
+                  filled: true,
+                  fillColor: colors.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(metrics.radiusField),
+                    borderSide: BorderSide(color: colors.border),
+                  ),
+                ),
+              ),
+            ],
 
             // ۱. انتخاب نوع ورزش (برای تمام حالت‌های غیر استراحت)
             if (!isRest) ...[
@@ -710,24 +830,27 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
               ],
 
               // ۷. «هر هفته تکرار شود»
-              SwitchListTile.adaptive(
-                key: const ValueKey('day_plan_repeat_weekly_switch'),
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  l10n?.mv_day_plan_repeat_weekly ?? 'Repeat Every Week',
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w600,
+              Material(
+                type: MaterialType.transparency,
+                child: SwitchListTile.adaptive(
+                  key: const ValueKey('day_plan_repeat_weekly_switch'),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    l10n?.mv_day_plan_repeat_weekly ?? 'Repeat Every Week',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                subtitle: Text(
-                  l10n?.mv_day_plan_repeat_weekly_desc ?? 'Repeat on this day weekly',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colors.textSecondary,
+                  subtitle: Text(
+                    l10n?.mv_day_plan_repeat_weekly_desc ?? 'Repeat on this day weekly',
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
+                  value: _repeatWeekly,
+                  onChanged: (val) => setState(() => _repeatWeekly = val),
                 ),
-                value: _repeatWeekly,
-                onChanged: (val) => setState(() => _repeatWeekly = val),
               ),
               SizedBox(height: metrics.spaceMd),
 
@@ -787,6 +910,149 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildRestInsightCard(
+    BuildContext context,
+    RitmoColors colors,
+    TextTheme textTheme,
+  ) {
+    String title = 'روز بازیابی انرژی و بازسازی عضلات';
+    String desc = 'عضلات در زمان استراحت رشد و ترمیم می‌شوند. امروز به بدنتان فرصت بازیابی انرژی بدهید.';
+    IconData icon = Icons.spa_rounded;
+
+    if (_crossModuleSnapshot != null) {
+      if (_crossModuleSnapshot!.isSleepDebtHigh) {
+        title = 'جبران بدهی خواب و استراحت عمیق';
+        desc = 'سیستم بدهی خواب شما را ثبت کرده است. خواب باکیفیت و استراحت کامل امروز اولویت اول بدن شماست.';
+        icon = Icons.bedtime_rounded;
+      } else if (_crossModuleSnapshot!.isFasting) {
+        title = 'ریکاوری در شرایط روزه‌داری';
+        desc = 'در روزهای روزه‌داری، استراحت کامل به حفظ هیدراتاسیون و ذخایر گلیکوژن بدن کمک می‌کند.';
+        icon = Icons.nightlight_round;
+      } else if (_crossModuleSnapshot!.isHighStressOrFatigue) {
+        title = 'تسکین خستگی و تن‌آرامی عضلانی';
+        desc = 'سطح خستگی بالاست. آرامش ذهنی و استراحت فعال ملایم بهترین تصمیم برای بازیابی است.';
+        icon = Icons.self_improvement_rounded;
+      }
+    }
+
+    return RitmoCard.neumorphic(
+      key: const ValueKey('mv_rest_insight_card'),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colors.accent.withValues(alpha: 0.15),
+            ),
+            child: Icon(icon, color: colors.accent, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  desc,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRestModeCard({
+    required BuildContext context,
+    required _RestMode mode,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool isSelected,
+    required RitmoColors colors,
+    required TextTheme textTheme,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _restMode = mode;
+          _titleController.text = mode == _RestMode.passive
+              ? 'روز استراحت و ریکاوری'
+              : 'روز استراحت و کشش ملایم';
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? colors.accent.withValues(alpha: 0.12)
+              : colors.surface,
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
+          border: Border.all(
+            color: isSelected
+                ? colors.accent
+                : colors.border.withValues(alpha: 0.5),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 20,
+                  color: isSelected ? colors.accent : colors.textSecondary,
+                ),
+                const Spacer(),
+                if (isSelected)
+                  Icon(
+                    Icons.check_circle_rounded,
+                    size: 16,
+                    color: colors.accent,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: textTheme.bodyMedium?.copyWith(
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected ? colors.accent : colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: textTheme.labelSmall?.copyWith(
+                color: colors.textSecondary,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

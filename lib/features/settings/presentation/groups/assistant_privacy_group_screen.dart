@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_marble_core.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_orb_eyes.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_orb_settings.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/features/profile/presentation/ai_connection_screen.dart';
 import 'package:ritmo/features/profile/presentation/ai_memory_management_screen.dart';
@@ -37,6 +42,7 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
   void initState() {
     super.initState();
     _loadSettings();
+    unawaited(RitmoOrbSettings.instance.load());
   }
 
   void _loadSettings() {
@@ -121,6 +127,122 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
     );
   }
 
+  /// سوئیچ‌های حباب. عمداً بالای صفحه‌اند: چیزی که همیشه جلوی چشم است، باید
+  /// خاموش کردنش هم جلوی چشم باشد.
+  Widget _orbSection() {
+    final colors = context.colors;
+    return RitmoOrbSettingsBuilder(
+      builder: (context, orb) {
+        return SettingsSection(
+          title: 'حباب دستیار',
+          footer: 'حباب هیچ‌وقت روی متنِ شما نمی‌افتد و لمس را هم نمی‌دزدد؛ وقتی کیبرد باز است فقط پیشانی و چشم‌هایش از لبهٔ کادر بیرون می‌ماند.',
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 14, bottom: 6),
+              child: Center(
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 280),
+                  opacity: orb.enabled ? 1.0 : 0.24,
+                  child: RitmoMarbleCore(
+                    size: 76,
+                    // پیش‌نمایش باید حتی در حالتِ خاموش هم دیده شود، وگرنه کاربر
+                    // نمی‌فهمد دقیقاً چه چیزی را دارد خاموش می‌کند.
+                    respectSettings: false,
+                    eyeMode: orb.eyes ? RitmoEyeMode.always : RitmoEyeMode.off,
+                  ),
+                ),
+              ),
+            ),
+            _orbSwitch(
+              switchKey: 'orb_enabled_switch',
+              title: 'نمایش حباب دستیار',
+              subtitle: 'خاموش که باشد، هیچ‌جای اپ ظاهر نمی‌شود و هیچ فریمی هم نمی‌گیرد',
+              value: orb.enabled,
+              active: true,
+              onChanged: (val) {
+                unawaited(RitmoOrbSettings.instance.setEnabled(val));
+              },
+            ),
+            _orbSwitch(
+              switchKey: 'orb_dock_switch',
+              title: 'پناه گرفتن دور کادر تایپ',
+              subtitle: 'وقتی کیبرد باز است، مثل ژله دور کادر پیام پخش می‌شود و گاهی سرک می‌کشد',
+              value: orb.dockWhenTyping,
+              active: orb.enabled,
+              onChanged: (val) {
+                unawaited(RitmoOrbSettings.instance.setDockWhenTyping(val));
+              },
+            ),
+            _orbSwitch(
+              switchKey: 'orb_eyes_switch',
+              title: 'چشم‌ها و پلک زدن',
+              subtitle: 'بعضی وقت‌ها چشم باز می‌کند، نگاه می‌کند و طبیعی پلک می‌زند',
+              value: orb.eyes,
+              active: orb.enabled,
+              onChanged: (val) {
+                unawaited(RitmoOrbSettings.instance.setEyes(val));
+              },
+            ),
+            if (!orb.enabled)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                child: Text(
+                  'حباب خاموش است؛ دو تنظیم بالا تا روشن شدنش کاری نمی‌کنند.',
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _orbSwitch({
+    required String switchKey,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required bool active,
+    required ValueChanged<bool> onChanged,
+  }) {
+    final colors = context.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: active ? colors.textPrimary : colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          CupertinoSwitch(
+            key: ValueKey<String>(switchKey),
+            value: value,
+            activeTrackColor: colors.primary,
+            onChanged: active ? onChanged : null,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -135,6 +257,7 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
         child: Column(
           children: [
+            _orbSection(),
             SettingsSection(
               title: 'پیکربندی هوش مصنوعی',
               children: [

@@ -48,15 +48,18 @@ class AiChatScreen extends StatefulWidget {
   State<AiChatScreen> createState() => _AiChatScreenState();
 }
 
-class _AiChatScreenState extends State<AiChatScreen> {
+class _AiChatScreenState extends State<AiChatScreen> with WidgetsBindingObserver {
   final AgentStreamPresenter _presenter = AgentStreamPresenter();
   String? _sessionId;
   List<ChatMessage> _messages = [];
   bool _isLoading = false;
 
   final TextEditingController _textController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
   final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
+  bool _isAtBottom = true;
+  double _lastViewInset = 0.0;
 
   /// هر بار یک تکه از پاسخ میرسد یکی بالا میرود تا تیله ذوق کند.
   final ValueNotifier<int> _writingPulse = ValueNotifier<int>(0);
@@ -87,9 +90,12 @@ class _AiChatScreenState extends State<AiChatScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _sessionId = widget.sessionId;
     if (_sessionId != null) {
       _loadMessages();
+    } else {
+      _loadLatestSession();
     }
     _checkLastCommit();
     unawaited(_runLearningLoop());
@@ -97,6 +103,45 @@ class _AiChatScreenState extends State<AiChatScreen> {
     ChatGptWebBridgeManager.instance.cloudflareNotifier.addListener(
       _handleCloudflarePrompt,
     );
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    if (!mounted) return;
+    final currentInset = View.of(context).viewInsets.bottom;
+    if (currentInset > _lastViewInset && _isAtBottom) {
+      // کیبورد باز شد و کاربر در انتهای چت بود؛ آخرین پیام روان بالا می‌آید
+      _scrollToBottom();
+    }
+    _lastViewInset = currentInset;
+  }
+
+  @override
+  void didUpdateWidget(covariant AiChatScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.sessionId != oldWidget.sessionId) {
+      _sessionId = widget.sessionId;
+      if (_sessionId != null) {
+        _loadMessages();
+      } else {
+        _loadLatestSession();
+      }
+    }
+  }
+
+  Future<void> _loadLatestSession() async {
+    try {
+      final sessions = await ChatRepository.instance.listSessions();
+      if (sessions.isNotEmpty && mounted) {
+        setState(() {
+          _sessionId = sessions.first.id;
+        });
+        await _loadMessages();
+      }
+    } catch (e) {
+      debugPrint('[AiChatScreen] Error loading latest session: $e');
+    }
   }
 
   void _handleCloudflarePrompt() {
@@ -625,6 +670,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     for (final timer in _pendingDeleteTimers.values) {
       timer.cancel();
     }
@@ -641,6 +687,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     );
     _auditHoldTimer?.cancel();
     _textController.dispose();
+    _focusNode.dispose();
     _scrollController.dispose();
     _scrollOffset.dispose();
     _writingPulse.dispose();
@@ -1079,6 +1126,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     }
 
     _textController.clear();
+    _focusNode.requestFocus();
     final consent = await ConsentProfile.loadFromDb();
 
     _presenter.reset();
@@ -1371,6 +1419,7 @@ $suggestedSteps''';
   }
 
   void _scrollToBottom() {
+    _isAtBottom = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -1528,6 +1577,8 @@ $suggestedSteps''';
                         onNotification: (notification) {
                           if (notification.metrics.axis == Axis.vertical) {
                             _scrollOffset.value = notification.metrics.pixels;
+                            _isAtBottom = notification.metrics.pixels >=
+                                (notification.metrics.maxScrollExtent - 40.0);
                           }
                           return false;
                         },
@@ -1813,9 +1864,10 @@ $suggestedSteps''';
                                 ),
                                 child: TextField(
                                   controller: _textController,
+                                  focusNode: _focusNode,
                                   minLines: 1,
                                   maxLines: 4,
-                                  enabled: !_isStreaming,
+                                  readOnly: _isStreaming,
                                   style: TextStyle(
                                     fontSize: 13.5,
                                     color: colors.textPrimary,
@@ -1984,23 +2036,40 @@ $suggestedSteps''';
                   _buildAuditActionButton(context, isDark),
                   const SizedBox(width: 6),
                   RitmoVibrancyActionButton(
+                    icon: CupertinoIcons.plus_circle,
+                    iconColor: colors.primary,
+                    tooltip: 'گفتگوی جدید',
+                    onTap: () async {
+                      RitmoHaptics.tap();
+                      final s = await ChatRepository.instance.createSession();
+                      if (mounted) {
+                        setState(() {
+                          _sessionId = s.id;
+                          _messages = [];
+                          _currentQuickReplies = [];
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 6),
+                  RitmoVibrancyActionButton(
                     icon: CupertinoIcons.chat_bubble_2_fill,
                     iconColor: colors.primary,
                     tooltip: 'تاریخچه گفتگوها',
-                    onTap: () {
-                      Navigator.push<String>(
+                    onTap: () async {
+                      RitmoHaptics.tap();
+                      final selectedId = await Navigator.push<String>(
                         context,
                         MaterialPageRoute(
                           builder: (_) => const ChatSessionListScreen(),
                         ),
-                      ).then((selectedId) {
-                        if (selectedId != null) {
-                          setState(() {
-                            _sessionId = selectedId;
-                          });
-                          _loadMessages();
-                        }
-                      });
+                      );
+                      if (selectedId != null && mounted) {
+                        setState(() {
+                          _sessionId = selectedId;
+                        });
+                        await _loadMessages();
+                      }
                     },
                   ),
                 ],

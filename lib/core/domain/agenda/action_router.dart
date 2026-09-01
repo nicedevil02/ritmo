@@ -765,14 +765,14 @@ class ActionRouter {
         final colors = sheetCtx.colors;
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: Container(
-            margin: const EdgeInsets.all(16),
-            child: RitmoTheme.glassCardLight(
-              blurSigma: 20,
-              color: colors.card.withValues(alpha: 0.95),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(sheetCtx, factor: 0.94),
+            ),
+            child: RitmoGlassSheet(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              padding: const EdgeInsets.all(24),
+              child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -938,11 +938,10 @@ class ActionRouter {
                 ),
               ),
             ),
-          ),
-        );
-      },
-    );
-  }
+          );
+        },
+      );
+    }
 
   static Future<void> _showDomainConfirmationSheet(
     BuildContext context, {
@@ -959,98 +958,97 @@ class ActionRouter {
         final colors = sheetCtx.colors;
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: Container(
-            margin: const EdgeInsets.all(16),
-            child: RitmoTheme.glassCardLight(
-              blurSigma: 20,
-              color: colors.card.withValues(alpha: 0.95),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: Container(
-                        height: 5,
-                        width: 40,
-                        decoration: BoxDecoration(
-                          color: colors.textPrimary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(sheetCtx, factor: 0.94),
+            ),
+            child: RitmoGlassSheet(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      height: 4,
+                      width: 36,
+                      decoration: BoxDecoration(
+                        color: colors.border.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      title,
-                      textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'دسته‌بندی: $domainLabel | تاریخ: ${item.dateStr}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 12,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.success,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'ثبت انجام',
                       style: TextStyle(
                         fontFamily: 'Vazirmatn',
-                        fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
+                        fontSize: 15,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'دسته‌بندی: $domainLabel | تاریخ: ${item.dateStr}',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'Vazirmatn',
-                        fontSize: 12,
-                        color: colors.textSecondary,
-                      ),
+                    onPressed: () async {
+                      Navigator.pop(sheetCtx);
+                      final outcome = await onConfirm();
+                      if (!context.mounted) return;
+                      if (outcome.didWrite) {
+                        ActionFeedback.success(
+                          context,
+                          message: successMessage,
+                          dateStr: item.dateStr,
+                          undoToken: outcome.undoToken,
+                        );
+                      } else {
+                        ActionFeedback.failure(
+                          context,
+                          message: outcome.errorMessage ?? 'ثبت انجام نشد',
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: colors.textSecondary,
                     ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.success,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'ثبت انجام',
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                      onPressed: () async {
-                        Navigator.pop(sheetCtx);
-                        final outcome = await onConfirm();
-                        if (!context.mounted) return;
-                        if (outcome.didWrite) {
-                          ActionFeedback.success(
-                            context,
-                            message: successMessage,
-                            dateStr: item.dateStr,
-                            undoToken: outcome.undoToken,
-                          );
-                        } else {
-                          ActionFeedback.failure(
-                            context,
-                            message: outcome.errorMessage ?? 'ثبت انجام نشد',
-                          );
-                        }
-                      },
+                    child: const Text(
+                      'انصراف',
+                      style: TextStyle(fontFamily: 'Vazirmatn'),
                     ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: colors.textSecondary,
-                      ),
-                      child: const Text(
-                        'انصراف',
-                        style: TextStyle(fontFamily: 'Vazirmatn'),
-                      ),
-                      onPressed: () => Navigator.pop(sheetCtx),
-                    ),
-                  ],
-                ),
+                    onPressed: () => Navigator.pop(sheetCtx),
+                  ),
+                ],
               ),
             ),
           ),

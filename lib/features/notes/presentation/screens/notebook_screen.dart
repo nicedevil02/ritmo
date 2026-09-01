@@ -235,17 +235,10 @@ class _NotebookScreenState extends State<NotebookScreen> {
 
   void _openAiAssistantSheet() {
     RitmoHapticsPolicy.selection();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        final persona =
-            PersonaRegistry.instance.getPersona('notes') ??
-            PersonaRegistry.instance.getPersona('global')!;
-        return AssistantSheet(persona: persona);
-      },
-    );
+    final persona =
+        PersonaRegistry.instance.getPersona('notes') ??
+        PersonaRegistry.instance.getPersona('global')!;
+    AssistantSheet.show(context, persona: persona);
   }
 
   @override

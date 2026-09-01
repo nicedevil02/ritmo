@@ -37,9 +37,21 @@ class TemporaryEventCreateSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => TemporaryEventCreateSheet(
-        onSaved: onSaved,
-        initialDate: initialDate,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.94),
+          ),
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: EdgeInsets.zero,
+            child: TemporaryEventCreateSheet(
+              onSaved: onSaved,
+              initialDate: initialDate,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -425,27 +437,13 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xff141724) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: 24,
-              offset: const Offset(0, -6),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(18, 12, 18, MediaQuery.of(context).viewInsets.bottom + 18),
-            child: SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: Column(
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(18, 12, 18, MediaQuery.of(context).viewInsets.bottom + 18),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -1039,10 +1037,8 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
+        );
+      }
 
   Widget _buildDateQuickChip({required String label, required bool isSelected, required VoidCallback onTap}) {
     final colors = context.colors;

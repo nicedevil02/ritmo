@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
@@ -15,6 +14,7 @@ import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/widgets/sheet/ritmo_picker_sheet.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/features/calendar/data/day_mark_repository.dart';
@@ -326,12 +326,36 @@ class _JourneyScreenState extends State<JourneyScreen>
     final ds = DateKey.of(date);
     final existing = await DayMarkRepository.instance.getMark(ds);
     if (!ctx.mounted) return;
-    final kind = await showModalBottomSheet<DayMarkKind>(
+
+    final kind = await RitmoPickerSheet.show<DayMarkKind>(
       context: ctx,
-      backgroundColor: Colors.transparent,
-      builder: (_) =>
-          _DayMarkSheet(current: existing?.kind ?? DayMarkKind.normal),
+      title: 'وضعیت روز',
+      initialValue: existing?.kind ?? DayMarkKind.normal,
+      options: const [
+        PickerOption(
+          label: 'روز عادی',
+          value: DayMarkKind.normal,
+          icon: Icons.wb_sunny_outlined,
+        ),
+        PickerOption(
+          label: 'روز استراحت 🌴',
+          value: DayMarkKind.rest,
+          icon: Icons.beach_access_outlined,
+        ),
+        PickerOption(
+          label: 'روز سفر ✈️',
+          value: DayMarkKind.travel,
+          icon: Icons.flight_outlined,
+        ),
+        PickerOption(
+          label: 'روز خاص ⭐',
+          value: DayMarkKind.special,
+          icon: Icons.star_outline,
+        ),
+      ],
+      enableSearch: false,
     );
+
     if (kind == null || !mounted) return;
     _invalidateDayMarkCache();
     await _controller.setDayMark(kind);
@@ -413,73 +437,99 @@ class _JourneyScreenState extends State<JourneyScreen>
     final selectedTemplate = await showModalBottomSheet<DayTemplate>(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (ctx) {
         final colors = ctx.colors;
-        return Container(
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(RitmoRadius.card),
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(ctx, factor: 0.94),
             ),
-          ),
-          padding: const EdgeInsets.all(RitmoSpacing.lg),
-          child: Directionality(
-            textDirection: TextDirection.rtl,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'انتخاب قالب برای اعمال',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
+            child: RitmoGlassSheet(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              padding: const EdgeInsets.all(RitmoSpacing.lg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: colors.border.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: RitmoSpacing.md),
-                Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: templates.length,
-                    itemBuilder: (listCtx, i) {
-                      final t = templates[i];
-                      return ListTile(
-                        leading: Icon(
-                          Icons.dashboard_customize_outlined,
-                          color: colors.primary,
-                        ),
-                        title: Text(
-                          t.name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        subtitle: Text(
-                          '${toPersianDigits(t.slots.length.toString())} بلاک زمانی',
-                          style: TextStyle(color: colors.textSecondary),
-                        ),
-                        trailing: IconButton(
-                          icon: Icon(
-                            Icons.delete_outline,
-                            color: colors.error,
-                            size: 20,
-                          ),
-                          onPressed: () async {
-                            await repo.deleteTemplate(t.id);
-                            if (listCtx.mounted) {
-                              Navigator.of(listCtx).pop();
-                            }
-                            unawaited(_applyDayTemplate());
-                          },
-                        ),
-                        onTap: () => Navigator.of(listCtx).pop(t),
-                      );
-                    },
+                  Text(
+                    'انتخاب قالب برای اعمال',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: RitmoSpacing.md),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: templates.length,
+                      itemBuilder: (listCtx, i) {
+                        final t = templates[i];
+                        return RitmoCard.neumorphic(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          onTap: () => Navigator.of(listCtx).pop(t),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.dashboard_customize_outlined,
+                                color: colors.primary,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      t.name,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: colors.textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${toPersianDigits(t.slots.length.toString())} بلاک زمانی',
+                                      style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  color: colors.error,
+                                  size: 20,
+                                ),
+                                onPressed: () async {
+                                  await repo.deleteTemplate(t.id);
+                                  if (listCtx.mounted) {
+                                    Navigator.of(listCtx).pop();
+                                  }
+                                  unawaited(_applyDayTemplate());
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -1568,163 +1618,6 @@ class _JourneyScreenState extends State<JourneyScreen>
           },
         );
     }
-  }
-}
-
-// Day Mark picker bottom sheet
-class _DayMarkSheet extends StatelessWidget {
-  const _DayMarkSheet({required this.current});
-  final DayMarkKind current;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final isDark = context.isDark;
-    final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
-    const sheetRadius = BorderRadius.vertical(
-      top: Radius.circular(RitmoRadius.sheet),
-    );
-
-    final content = SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.md),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: RitmoSpacing.md),
-              decoration: BoxDecoration(
-                color: colors.textSecondary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Text(
-              'وضعیت روز',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: RitmoSpacing.sm),
-            _markTile(
-              context,
-              DayMarkKind.normal,
-              'روز عادی',
-              Icons.wb_sunny_outlined,
-              colors,
-            ),
-            _markTile(
-              context,
-              DayMarkKind.rest,
-              'روز استراحت 🌴',
-              Icons.beach_access_outlined,
-              colors,
-            ),
-            _markTile(
-              context,
-              DayMarkKind.travel,
-              'روز سفر ✈️',
-              Icons.flight_outlined,
-              colors,
-            ),
-            _markTile(
-              context,
-              DayMarkKind.special,
-              'روز خاص ⭐',
-              Icons.star_outline,
-              colors,
-            ),
-          ],
-        ),
-      ),
-    );
-
-    final sheetBody = Directionality(
-      textDirection: TextDirection.rtl,
-      child: Material(
-        type: MaterialType.transparency,
-        child: content,
-      ),
-    );
-
-    if (!isGlass) {
-      return Container(
-        decoration: BoxDecoration(
-          color: colors.surfaceElevated,
-          borderRadius: sheetRadius,
-          border: Border.all(
-            color: isDark ? colors.border : colors.divider,
-            width: 1.0,
-          ),
-        ),
-        child: sheetBody,
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: sheetRadius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.glassTint,
-            borderRadius: sheetRadius,
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.18)
-                  : Colors.white.withValues(alpha: 0.70),
-              width: 1.0,
-            ),
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: sheetRadius,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                  Colors.white.withValues(alpha: 0.0),
-                ],
-                stops: const [0.0, 0.45],
-              ),
-            ),
-            child: sheetBody,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _markTile(
-    BuildContext context,
-    DayMarkKind kind,
-    String label,
-    IconData icon,
-    RitmoColors colors,
-  ) {
-    final isSelected = kind == current;
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isSelected ? colors.primary : colors.textSecondary,
-      ),
-      title: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? colors.primary : colors.textPrimary,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        ),
-      ),
-      trailing: isSelected
-          ? Icon(Icons.check_rounded, color: colors.primary)
-          : null,
-      onTap: () => Navigator.of(context).pop(kind),
-    );
   }
 }
 

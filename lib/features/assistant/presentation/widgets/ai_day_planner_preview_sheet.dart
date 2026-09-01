@@ -213,7 +213,8 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
           _buildFooter(colors),
         ],
       ),
-    );
+    ),
+  );
 
     final wrappedContent = Container(
       constraints: BoxConstraints(

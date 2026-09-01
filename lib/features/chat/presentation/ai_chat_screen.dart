@@ -1867,7 +1867,6 @@ $suggestedSteps''';
                                   focusNode: _focusNode,
                                   minLines: 1,
                                   maxLines: 4,
-                                  readOnly: _isStreaming,
                                   style: TextStyle(
                                     fontSize: 13.5,
                                     color: colors.textPrimary,

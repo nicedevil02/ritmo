@@ -147,74 +147,66 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
   }
 
   Widget _buildTrendChartCard(List<double> trendScores, RitmoColors colors) {
-    return Card(
-      elevation: 0,
-      color: colors.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: colors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'روند درصدهای دروس در آزمون‌ها 📈',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-                DropdownButton<KonkurSubject>(
-                  value: _selectedTrendSubject,
-                  underline: const SizedBox.shrink(),
-                  icon: Icon(Icons.arrow_drop_down, color: colors.primary),
-                  items: widget.subjects.map((sub) {
-                    final trend = widget.perSubjectTrend[sub.id] ?? [];
-                    return DropdownMenuItem(
-                      value: sub,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(sub.name, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                          if (trend.length >= 2) ...[
-                            const SizedBox(width: 6),
-                            _buildTrendBadge(sub, trend),
-                          ],
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'روند درصدهای دروس در آزمون‌ها 📈',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+              DropdownButton<KonkurSubject>(
+                value: _selectedTrendSubject,
+                underline: const SizedBox.shrink(),
+                icon: Icon(Icons.arrow_drop_down, color: colors.primary),
+                items: widget.subjects.map((sub) {
+                  final trend = widget.perSubjectTrend[sub.id] ?? [];
+                  return DropdownMenuItem(
+                    value: sub,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(sub.name, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        if (trend.length >= 2) ...[
+                          const SizedBox(width: 6),
+                          _buildTrendBadge(sub, trend),
                         ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (sub) {
-                    setState(() {
-                      _selectedTrendSubject = sub;
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 150,
-              child: CustomPaint(
-                painter: TrendChartPainter(
-                  scores: trendScores,
-                  lineColor: colors.primary,
-                  gridColor: colors.border,
-                  textColor: colors.textSecondary,
-                ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (sub) {
+                  setState(() {
+                    _selectedTrendSubject = sub;
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 150,
+            child: CustomPaint(
+              painter: TrendChartPainter(
+                scores: trendScores,
+                lineColor: colors.primary,
+                gridColor: colors.border,
+                textColor: colors.textSecondary,
               ),
             ),
-            const SizedBox(height: 8),
-            Center(
-              child: Text(
-                'نمودار پیشرفت درصدهای خالص درس انتخاب شده از اولین تا آخرین آزمون',
-                style: TextStyle(fontSize: 10, color: colors.textSecondary),
-              ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: Text(
+              'نمودار پیشرفت درصدهای خالص درس انتخاب شده از اولین تا آخرین آزمون',
+              style: TextStyle(fontSize: 10, color: colors.textSecondary),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -238,14 +230,9 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
       dateStr = '${toPersianDigits(jalali.day)} ${jalali.formatter.mN} ${toPersianDigits(jalali.year)}';
     } catch (_) {}
 
-    return Card(
-      elevation: 0,
+    return RitmoCard.neumorphic(
       margin: const EdgeInsets.only(bottom: 12),
-      color: colors.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colors.border),
-      ),
+      padding: EdgeInsets.zero,
       child: ExpansionTile(
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -428,24 +415,18 @@ class _KonkurExamsSectionState extends State<KonkurExamsSection> {
   }
 
   Widget _buildEmptyState(RitmoColors colors) {
-    return Card(
-      elevation: 0,
-      color: colors.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colors.border),
-      ),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(vertical: 40),
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+      child: Center(
         child: Column(
           children: [
-            Icon(Icons.assignment_turned_in_outlined, size: 48, color: Colors.grey),
-            SizedBox(height: 16),
+            const Icon(Icons.assignment_turned_in_outlined, size: 44, color: Colors.grey),
+            const SizedBox(height: 14),
             Text(
               'هنوز کارنامه‌ای ثبت نکرده‌اید. با دکمه بالا اولین آزمون را ثبت کنید.',
               style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
+                fontSize: 13,
+                color: colors.textSecondary,
               ),
             ),
           ],

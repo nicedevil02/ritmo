@@ -24,6 +24,7 @@ export 'package:ritmo/core/theme/tokens/ritmo_metrics.dart';
 export 'package:ritmo/core/theme/tokens/ritmo_springs.dart';
 export 'package:ritmo/core/theme/ui_scale.dart';
 export 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
+export 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 export 'package:ritmo/core/widgets/ritmo/ritmo_dialog.dart';
 export 'package:ritmo/core/widgets/ritmo/ritmo_glass_header.dart';
 export 'package:ritmo/core/widgets/ritmo/ritmo_glass_segmented_control.dart';

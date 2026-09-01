@@ -93,9 +93,9 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
     showDialog(
       context: context,
       builder: (ctx) {
-        final colors = ctx.colors;
-        return AlertDialog(
-          title: const Text('افزودن درس جدید', style: TextStyle(fontWeight: FontWeight.bold)),
+        return RitmoCustomDialog(
+          title: 'افزودن درس جدید',
+          icon: Icons.book_outlined,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -118,15 +118,13 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
             ],
           ),
           actions: [
-            TextButton(
+            RitmoSecondaryButton(
+              label: 'انصراف',
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف', style: TextStyle()),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: colors.onPrimary,
-              ),
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'ذخیره درس',
               onPressed: () async {
                 if (_subjectNameController.text.isEmpty) return;
                 final factor = double.tryParse(_subjectFactorController.text) ?? 1.0;
@@ -146,7 +144,6 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                 widget.onRefresh();
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              child: const Text('✓ ذخیره', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -163,9 +160,9 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
     showDialog(
       context: context,
       builder: (ctx) {
-        final colors = ctx.colors;
-        return AlertDialog(
-          title: const Text('ویرایش درس', style: TextStyle(fontWeight: FontWeight.bold)),
+        return RitmoCustomDialog(
+          title: 'ویرایش درس',
+          icon: Icons.edit_note_rounded,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -189,7 +186,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
               onPressed: () async {
                 final confirm = await RitmoDialog.show(
                   context,
@@ -209,15 +206,13 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               },
             ),
             const Spacer(),
-            TextButton(
+            RitmoSecondaryButton(
+              label: 'انصراف',
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف', style: TextStyle()),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: colors.onPrimary,
-              ),
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'ذخیره',
               onPressed: () async {
                 if (_subjectNameController.text.isEmpty) return;
                 final factor = double.tryParse(_subjectFactorController.text) ?? 1.0;
@@ -241,7 +236,6 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                 widget.onRefresh();
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              child: const Text('✓ بروزرسانی', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -261,9 +255,9 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
     showDialog(
       context: context,
       builder: (ctx) {
-        final colors = ctx.colors;
-        return AlertDialog(
-          title: Text('افزودن مبحث جدید به ${sub.name}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+        return RitmoCustomDialog(
+          title: 'افزودن مبحث جدید به ${sub.name}',
+          icon: Icons.layers_outlined,
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -311,15 +305,13 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
             ),
           ),
           actions: [
-            TextButton(
+            RitmoSecondaryButton(
+              label: 'انصراف',
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف', style: TextStyle()),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: colors.onPrimary,
-              ),
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'ذخیره مبحث',
               onPressed: () async {
                 if (_topicNameController.text.isEmpty) return;
                 final qCount = int.tryParse(_topicQuestionsController.text) ?? 0;
@@ -345,7 +337,6 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                 widget.onRefresh();
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              child: const Text('✓ ذخیره', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -365,9 +356,9 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
     showDialog(
       context: context,
       builder: (ctx) {
-        final colors = ctx.colors;
-        return AlertDialog(
-          title: Text('ویرایش مبحث (${topic.name})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        return RitmoCustomDialog(
+          title: 'ویرایش مبحث (${topic.name})',
+          icon: Icons.edit_note_rounded,
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -416,7 +407,7 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
               onPressed: () async {
                 final confirm = await RitmoDialog.show(
                   context,
@@ -434,15 +425,13 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
               },
             ),
             const Spacer(),
-            TextButton(
+            RitmoSecondaryButton(
+              label: 'انصراف',
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف', style: TextStyle()),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: colors.onPrimary,
-              ),
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'بروزرسانی',
               onPressed: () async {
                 if (_topicNameController.text.isEmpty) return;
                 final qCount = int.tryParse(_topicQuestionsController.text) ?? 0;
@@ -480,7 +469,6 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
                 widget.onRefresh();
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              child: const Text('✓ بروزرسانی', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -1028,24 +1016,18 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
   }
 
   Widget _buildEmptyState(RitmoColors colors) {
-    return Card(
-      elevation: 0,
-      color: colors.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colors.border),
-      ),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(vertical: 40),
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+      child: Center(
         child: Column(
           children: [
-            Icon(Icons.book, size: 48, color: Colors.grey),
-            SizedBox(height: 16),
+            const Icon(Icons.book, size: 44, color: Colors.grey),
+            const SizedBox(height: 14),
             Text(
               'هیچ درسی ثبت نشده است. دکمه «افزودن درس» را لمس کنید.',
               style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
+                fontSize: 13,
+                color: colors.textSecondary,
               ),
             ),
           ],

@@ -414,36 +414,57 @@ class _KonkurScreenState extends State<KonkurScreen> {
     if (!_setupDone) {
       return Scaffold(
         backgroundColor: colors.bg,
-        appBar: AppBar(
-          title: const Text('کنکور', style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            icon: RitmoIcons.back(context, color: colors.textPrimary),
-            onPressed: () {
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              } else {
-                _switchToStudyMode();
-              }
-            },
-          ),
-          actions: [
-            TextButton.icon(
-              onPressed: _switchToStudyMode,
-              icon: const Icon(Icons.menu_book_outlined, size: 18),
-              label: const Text(
-                'حالت مطالعه',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
         body: Directionality(
           textDirection: TextDirection.rtl,
-          child: _startSetup
-              ? KonkurSetupFlow(
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: RitmoGlassHeader(
+                    borderRadius: BorderRadius.circular(22),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: RitmoIcons.back(context, color: colors.textPrimary),
+                          onPressed: () {
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            } else {
+                              _switchToStudyMode();
+                            }
+                          },
+                        ),
+                        Text(
+                          'کنکور سراسری',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: _switchToStudyMode,
+                          icon: Icon(Icons.menu_book_outlined, size: 16, color: colors.primary),
+                          label: Text(
+                            'حالت مطالعه',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: colors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: _startSetup
+                      ? KonkurSetupFlow(
                   onSetupCompleted: _loadAllData,
                   onCancel: () => setState(() => _startSetup = false),
                   onSwitchToStudyMode: _switchToStudyMode,
@@ -483,9 +504,13 @@ class _KonkurScreenState extends State<KonkurScreen> {
                     ],
                   ),
                 ),
+              ),
+            ],
+          ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.paddingOf(context).top;

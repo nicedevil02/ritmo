@@ -363,75 +363,67 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
   }
 
   Widget _buildSummaryCard(RitmoColors colors) {
-    return Card(
-      elevation: 0,
-      color: colors.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.todayPlanItems.isEmpty
+                      ? 'امروز برنامه مطالعاتی ندارید'
+                      : 'برنامه امروز شما شامل ${toPersianDigits(widget.todayPlanItems.length)} مبحث است',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                if (_daysBehindCount > 0)
                   Text(
-                    widget.todayPlanItems.isEmpty
-                        ? 'امروز برنامه مطالعاتی ندارید'
-                        : 'برنامه امروز شما شامل ${toPersianDigits(widget.todayPlanItems.length)} مبحث است',
+                    '${toPersianDigits(_daysBehindCount)} مبحث از برنامه‌ عقب هستید! ⚠️',
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
+                      fontSize: 11,
+                      color: colors.warning,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  )
+                else
+                  Text(
+                    'کاملاً طبق برنامه پیش می‌روید. عالیه! 🌟',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colors.success,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  if (_daysBehindCount > 0)
-                    Text(
-                      '${toPersianDigits(_daysBehindCount)} مبحث از برنامه‌ عقب هستید! ⚠️',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: colors.warning,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    )
-                  else
-                    Text(
-                      'کاملاً طبق برنامه پیش می‌روید. عالیه! 🌟',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: colors.success,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                ],
-              ),
+              ],
             ),
-            ElevatedButton.icon(
-              onPressed: _isReplanning ? null : _replanSchedule,
-              icon: const Icon(Icons.shuffle, size: 16, color: Colors.white),
-              label: _isReplanning
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 1.5),
-                    )
-                  : const Text(
-                      'بازچینش برنامه',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                    ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: colors.onPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
+          ),
+          ElevatedButton.icon(
+            onPressed: _isReplanning ? null : _replanSchedule,
+            icon: const Icon(Icons.shuffle, size: 16, color: Colors.white),
+            label: _isReplanning
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 1.5),
+                  )
+                : const Text(
+                    'بازچینش برنامه',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colors.primary,
+              foregroundColor: colors.onPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -464,25 +456,19 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
   }
 
   Widget _buildEmptyState(RitmoColors colors) {
-    return Card(
-      elevation: 0,
-      color: colors.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colors.border),
-      ),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(vertical: 40),
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+      child: Center(
         child: Column(
           children: [
-            Icon(Icons.eco, size: 48, color: Colors.green),
-            SizedBox(height: 16),
+            const Icon(Icons.eco, size: 44, color: Colors.green),
+            const SizedBox(height: 14),
             Text(
               'امروز برنامه‌ای نیست — یه مبحث انتخاب کن 🌿',
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+                color: colors.textSecondary,
               ),
             ),
           ],
@@ -497,16 +483,9 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
     KonkurTopic topic,
     RitmoColors colors,
   ) {
-    return Card(
-      elevation: 0,
+    return RitmoCard.neumorphic(
       margin: const EdgeInsets.only(bottom: 8),
-      color: colors.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: colors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
         child: Row(
           children: [
             Expanded(
@@ -625,7 +604,6 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -738,40 +716,46 @@ class _QuickCompleteDialogState extends State<_QuickCompleteDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return AlertDialog(
-      title: const Text('ثبت سریع', style: TextStyle(fontWeight: FontWeight.bold)),
+    return RitmoCustomDialog(
+      title: 'ثبت سریع',
+      icon: Icons.timer_outlined,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('چند دقیقه واقعاً مطالعه کردی؟', style: TextStyle()),
+          Text(
+            'چند دقیقه واقعاً مطالعه کردی؟',
+            style: TextStyle(
+              fontSize: 13.5,
+              color: colors.textSecondary,
+            ),
+          ),
           const SizedBox(height: 12),
           TextField(
             controller: _minutesController,
             keyboardType: TextInputType.number,
             autofocus: true,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'زمان واقعی مطالعه (دقیقه)',
               hintText: '0',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
-            style: const TextStyle(),
+            style: TextStyle(color: colors.textPrimary),
             onSubmitted: (val) => Navigator.pop(context, val.trim()),
           ),
         ],
       ),
       actions: [
-        TextButton(
+        RitmoSecondaryButton(
+          label: 'فقط تیک بزن',
           onPressed: () => Navigator.pop(context, 'JUST_CHECK'),
-          child: const Text('فقط تیک بزن (بدون ثبت زمان)', style: TextStyle()),
         ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: colors.primary,
-            foregroundColor: colors.onPrimary,
-          ),
+        const SizedBox(width: 10),
+        RitmoPrimaryButton(
+          label: 'ثبت زمان و تیک',
           onPressed: () => Navigator.pop(context, _minutesController.text.trim()),
-          child: const Text('ثبت زمان و تیک', style: TextStyle(fontWeight: FontWeight.bold)),
         ),
       ],
     );

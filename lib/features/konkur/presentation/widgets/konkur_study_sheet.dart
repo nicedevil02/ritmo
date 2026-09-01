@@ -180,26 +180,13 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
 
     final minutes = _secondsElapsed ~/ 60;
     if (minutes < 1) {
-      // Allow saving even short trials for demo/debug, but show warning
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('ثبت جلسه کوتاه؟', style: TextStyle()),
-          content: const Text(
+      final confirm = await RitmoDialog.show(
+        context,
+        title: 'ثبت جلسه کوتاه؟',
+        content:
             'زمان ثبت شده کمتر از یک دقیقه است. آیا می‌خواهید این زمان را گرد کرده و ثبت کنید؟',
-            style: TextStyle(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('انصراف', style: TextStyle()),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('ثبت', style: TextStyle()),
-            ),
-          ],
-        ),
+        confirmLabel: 'ثبت جلسه',
+        cancelLabel: 'انصراف',
       );
       if (confirm != true) return;
     }
@@ -516,57 +503,49 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
           ),
           const SizedBox(height: 24),
           // Timer Widget
-          Card(
-            elevation: 0,
-            color: colors.card,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: colors.border),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-              child: Column(
-                children: [
-                  Text(
-                    toPersianDigits(_formatTimerText()),
-                    style: TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
-                      color: colors.textPrimary,
+          RitmoCard.neumorphicSunken(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            child: Column(
+              children: [
+                Text(
+                  toPersianDigits(_formatTimerText()),
+                  style: TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: _toggleTimer,
+                      icon: Icon(_isRunning ? Icons.pause : Icons.play_arrow, color: colors.onPrimary),
+                      label: Text(
+                        _isRunning ? 'توقف موقت' : 'شروع تایمر',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: colors.onPrimary),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _isRunning ? colors.warning : colors.primary,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: _toggleTimer,
-                        icon: Icon(_isRunning ? Icons.pause : Icons.play_arrow, color: colors.onPrimary),
-                        label: Text(
-                          _isRunning ? 'توقف موقت' : 'شروع تایمر',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: colors.onPrimary),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _isRunning ? colors.warning : colors.primary,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
+                    const SizedBox(width: 12),
+                    OutlinedButton.icon(
+                      onPressed: _resetTimer,
+                      icon: const Icon(Icons.refresh, color: Colors.grey),
+                      label: const Text('ریست', style: TextStyle(color: Colors.grey)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      const SizedBox(width: 12),
-                      OutlinedButton.icon(
-                        onPressed: _resetTimer,
-                        icon: const Icon(Icons.refresh, color: Colors.grey),
-                        label: const Text('ریست', style: TextStyle(color: Colors.grey)),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
           // Test Mode Inputs

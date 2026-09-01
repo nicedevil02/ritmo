@@ -314,46 +314,31 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
         const SizedBox(height: 16),
         ...KonkurField.values.map((field) {
           final isSelected = _selectedField == field;
-          return Card(
-            elevation: 0,
+          return RitmoCard.neumorphic(
+            isSelected: isSelected,
             margin: const EdgeInsets.only(bottom: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                color: isSelected ? colors.primary : colors.border,
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            color: isSelected
-                ? colors.primary.withValues(alpha: 0.12)
-                : colors.card,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () {
-                setState(() {
-                  _selectedField = field;
-                });
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      field.label,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    if (isSelected)
-                      Icon(Icons.check_circle, color: colors.primary)
-                    else
-                      const Icon(Icons.circle_outlined, color: Colors.grey),
-                  ],
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            onTap: () {
+              setState(() {
+                _selectedField = field;
+              });
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  field.label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: colors.textPrimary,
+                  ),
                 ),
-              ),
+                if (isSelected)
+                  Icon(Icons.check_circle, color: colors.primary)
+                else
+                  const Icon(Icons.circle_outlined, color: Colors.grey),
+              ],
             ),
           );
         }),
@@ -373,9 +358,9 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'تاریخ برگزاری کنکور سراسری:',
+          'تاریخ برگزاری کنکور سراسری',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             color: colors.textPrimary,
           ),
@@ -389,94 +374,78 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
           ),
         ),
         const SizedBox(height: 24),
-        Card(
-          elevation: 0,
-          color: colors.card,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: colors.border),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Icon(Icons.calendar_today, size: 48, color: colors.primary),
-                const SizedBox(height: 16),
-                Text(
-                  formattedDate,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: _selectedExamDate != null ? colors.textPrimary : colors.textSecondary,
+        RitmoCard.neumorphic(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Icon(Icons.calendar_today, size: 48, color: colors.primary),
+              const SizedBox(height: 16),
+              Text(
+                formattedDate,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _selectedExamDate != null ? colors.textPrimary : colors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _selectDate,
+                icon: Icon(Icons.date_range, color: colors.onPrimary),
+                label: const Text(
+                  'انتخاب تاریخ شمسی کنکور',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: _selectDate,
-                  icon: Icon(Icons.date_range, color: colors.onPrimary),
-                  label: const Text(
-                    'انتخاب تاریخ شمسی کنکور',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: colors.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 32),
         // Switch to toggle general subjects
-        Card(
-          elevation: 0,
-          color: colors.card,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: colors.border),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'افزودن دروس عمومی کنکور؟',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
+        RitmoCard.neumorphic(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'افزودن دروس عمومی کنکور؟',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'در نظام جدید دروس عمومی حذف شده‌اند، اما در صورت تمایل می‌توانید آن‌ها را مطالعه کنید.',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.textSecondary,
-                        ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'در نظام جدید دروس عمومی حذف شده‌اند، اما در صورت تمایل می‌توانید آن‌ها را مطالعه کنید.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colors.textSecondary,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Switch(
-                  value: _includeGeneral,
-                  onChanged: (val) {
-                    setState(() {
-                      _includeGeneral = val;
-                    });
-                  },
-                ),
-              ],
-            ),
+              ),
+              Switch(
+                value: _includeGeneral,
+                onChanged: (val) {
+                  setState(() {
+                    _includeGeneral = val;
+                  });
+                },
+              ),
+            ],
           ),
         ),
       ],
@@ -505,13 +474,8 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
           ),
         ),
         const SizedBox(height: 32),
-        Container(
+        RitmoCard.neumorphic(
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: colors.border),
-          ),
           child: Column(
             children: [
               Text(

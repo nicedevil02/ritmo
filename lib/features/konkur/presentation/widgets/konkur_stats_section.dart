@@ -87,53 +87,45 @@ class KonkurStatsSection extends StatelessWidget {
             ...resolvedWeakest.take(2).map((sub) {
               final readiness = data.perSubjectReadiness[sub.id] ?? 0.0;
               final percent = (readiness * 100).toInt();
-              return Card(
-                elevation: 0,
-                color: colors.card,
+              return RitmoCard.neumorphic(
                 margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: colors.border),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.rocket_launch, color: colors.primary, size: 24),
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              sub.name,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: colors.textPrimary,
-                              ),
+                      child: Icon(Icons.rocket_launch, color: colors.primary, size: 24),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            sub.name,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'میزان آمادگی فعلی: ${toPersianDigits(percent)}٪. به نظر می‌رسد این درس نیاز به تمرکز بیشتری دارد. بیایید با مطالعه مباحث پایه یا حل چند تست سبک، تسلط خود را ارتقا دهیم! 💪',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: colors.textSecondary,
-                                height: 1.4,
-                              ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'میزان آمادگی فعلی: ${toPersianDigits(percent)}٪. به نظر می‌رسد این درس نیاز به تمرکز بیشتری دارد. بیایید با مطالعه مباحث پایه یا حل چند تست سبک، تسلط خود را ارتقا دهیم! 💪',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colors.textSecondary,
+                              height: 1.4,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               );
             }),
@@ -150,43 +142,35 @@ class KonkurStatsSection extends StatelessWidget {
     required Color iconColor,
     required RitmoColors colors,
   }) {
-    return Card(
-      elevation: 0,
-      color: colors.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: colors.textSecondary,
-                  ),
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: colors.textSecondary,
                 ),
-                Icon(icon, size: 20, color: iconColor),
-              ],
-            ),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                color: colors.textPrimary,
               ),
+              Icon(icon, size: 20, color: iconColor),
+            ],
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: colors.textPrimary,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

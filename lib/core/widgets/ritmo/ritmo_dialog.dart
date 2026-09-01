@@ -217,6 +217,149 @@ class RitmoDialog extends StatelessWidget {
 /// Alias برای هماهنگی با نام‌گذاری شیشه‌ای
 typedef RitmoGlassDialog = RitmoDialog;
 
+/// دیالوگ شیشه‌ای استاندارد با محتوای سفارشی (فرم، اسلایدر، ورودی‌های اختصاصی و...)
+class RitmoCustomDialog extends StatelessWidget {
+  const RitmoCustomDialog({
+    super.key,
+    required this.title,
+    required this.content,
+    this.actions = const [],
+    this.icon,
+  });
+
+  final String title;
+  final Widget content;
+  final List<Widget> actions;
+  final IconData? icon;
+
+  static Future<T?> show<T>(
+    BuildContext context, {
+    required String title,
+    required Widget content,
+    List<Widget> actions = const [],
+    IconData? icon,
+    bool barrierDismissible = true,
+  }) {
+    RitmoHaptics.tap();
+    return showDialog<T>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      barrierDismissible: barrierDismissible,
+      builder: (context) => RitmoCustomDialog(
+        title: title,
+        content: content,
+        actions: actions,
+        icon: icon,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
+    final materialSpec = context.materials.regular;
+    final isOpaque = !isGlass || highContrast;
+
+    final dialogContent = Container(
+      constraints: const BoxConstraints(maxWidth: 400),
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: isOpaque
+            ? colors.surfaceElevated
+            : (isDark
+                ? const Color(0xFF131722).withValues(alpha: 0.88)
+                : Colors.white.withValues(alpha: 0.90)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isOpaque
+              ? (isDark ? colors.border : colors.divider)
+              : (isDark
+                  ? Colors.white.withValues(alpha: 0.12)
+                  : Colors.white.withValues(alpha: 0.95)),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.60 : 0.18),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              if (icon != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, size: 20, color: colors.primary),
+                ),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: colors.textPrimary,
+                    fontFamily: 'Vazirmatn',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          content,
+          if (actions.isNotEmpty) ...[
+            const SizedBox(height: 22),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: actions,
+            ),
+          ],
+        ],
+      ),
+    );
+
+    final Widget renderedDialog = isOpaque
+        ? dialogContent
+        : ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: materialSpec.sigma,
+                sigmaY: materialSpec.sigma,
+              ),
+              child: dialogContent,
+            ),
+          );
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Material(
+            color: Colors.transparent,
+            child: renderedDialog,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// دیالوگ شیشه‌ای استاندارد دریافت متن و ورودی از کاربر با مدیریت ایمن حافظه کنترلر
 class RitmoInputDialog extends StatefulWidget {
   const RitmoInputDialog({

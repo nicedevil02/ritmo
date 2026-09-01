@@ -7,6 +7,11 @@
 //  و وقتی کیبرد بالا می‌آید، تیله با همان انیمیشنِ خروج، در می‌رود داخلِ
 //  کادرِ تایپ و جایش را به [RitmoOrbDockLayer] می‌دهد. یک موجود، دو جایِ بودن —
 //  و هرگز همزمان.
+//
+//  نکتهٔ تلخِ کیبرد: ارتفاعِ کیبرد را نمی‌توان فقط از MediaQuery پرسید، چون
+//  Scaffold بدنه‌اش را در MediaQuery.removeViewInsets می‌پیچد و عدد را صفر
+//  می‌کند. پس از [ritmoKeyboardOpen] می‌پرسیم و خودِ تغییرِ متریک‌ها را هم
+//  مستقیم از پلتفرم می‌شنویم.
 // =============================================================================
 
 import 'dart:async';
@@ -76,7 +81,7 @@ class RitmoLivingOrb extends StatefulWidget {
   final bool reactToSuccessFlare;
 
   /// وقتی true باشد، خروجِ تیله به کادرِ ورودی گزارش می‌شود (جذب شدن).
-  /// در هر لحظه فقط یک تیله مالکِ این کانال است.
+  /// در هر لحطه فقط یک تیله مالکِ این کانال است.
   final bool absorbIntoInput;
   final String semanticLabel;
   final RitmoOrbTruth? truth;
@@ -87,7 +92,7 @@ class RitmoLivingOrb extends StatefulWidget {
   /// اجازهٔ لنگر گرفتن دورِ کادرِ تایپ وقتی کیبرد باز است.
   final bool allowDock;
 
-  /// اگر null باشد، از تنظیماتِ کاربر پیروی می‌کند.
+  /// اگر null باشد، از تنطیماتِ کاربر پیروی می‌کند.
   final RitmoEyeMode? eyeMode;
 
   @override
@@ -95,7 +100,7 @@ class RitmoLivingOrb extends StatefulWidget {
 }
 
 class _RitmoLivingOrbState extends State<RitmoLivingOrb>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   static Object? _absorbOwner;
 
   final Object _claim = Object();
@@ -121,6 +126,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
   void initState() {
     super.initState();
     unawaited(_settings.load());
+    WidgetsBinding.instance.addObserver(this);
     _settings.enabled.addListener(_onSettings);
     _settings.dockWhenTyping.addListener(_onSettings);
     _visible = widget.life != RitmoOrbLife.hidden;
@@ -143,11 +149,25 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // خواندنِ viewInsets یک وابستگی می‌سازد: کیبرد که تکان بخورد، همین‌جا خبردار می‌شویم.
-    _typing = MediaQuery.viewInsetsOf(context).bottom > 40.0;
+    // خواندنِ viewInsets یک وابستگی می‌سازد: کیبرد که تکان بخورد، همین‌جا
+    // خبردار می‌شویم — مگر این‌که یک Scaffold وسط باشد، که عدد را قیچی
+    // می‌کند؛ پس didChangeMetrics هم داریم.
+    _typing = ritmoKeyboardOpen(context);
     // بدون Overlay جایی برای لنگر نیست؛ به جای خطا، ساده صرف‌نظر می‌کنیم.
     _hasOverlay = Overlay.maybeOf(context) != null;
     _syncDock();
+  }
+
+  /// درونِ بدنهٔ Scaffold، MediaQuery خبرِ کیبرد را نمی‌دهد. این همان دریچهٔ
+  /// دوم است تا تیله به هر حال بفهمد کاربر شروع به تایپ کرده.
+  @override
+  void didChangeMetrics() {
+    if (!mounted) return;
+    final bool typing = ritmoKeyboardOpen(context, dependent: false);
+    if (typing == _typing) return;
+    _typing = typing;
+    _syncDock();
+    setState(() {});
   }
 
   @override
@@ -172,6 +192,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _settings.enabled.removeListener(_onSettings);
     _settings.dockWhenTyping.removeListener(_onSettings);
     _pose.removeListener(_reportAbsorb);

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_marble_core.dart';
 import 'package:ritmo/features/onboarding/presentation/ritmo_orb.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('RitmoOrb Visual & Animation Tests', () {
-    testWidgets('Renders app logo without any outer circular shape and animates without error', (tester) async {
+    testWidgets('Renders RitmoMarbleCore and animates without error', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: RitmoTheme.build(
@@ -25,24 +26,13 @@ void main() {
       // Verify RitmoOrb is present
       expect(find.byType(RitmoOrb), findsOneWidget);
 
-      // Verify Image.asset is present for the logo
-      expect(find.byType(Image), findsOneWidget);
+      // Verify RitmoMarbleCore is present
+      expect(find.byType(RitmoMarbleCore), findsOneWidget);
 
-      // Verify no circular decoration is present in the orb
-      final containers = tester.widgetList<Container>(find.descendant(
-        of: find.byType(RitmoOrb),
-        matching: find.byType(Container),
-      ));
+      // Verify CustomPaint is present for marble rendering
+      expect(find.byType(CustomPaint), findsWidgets);
 
-      for (final c in containers) {
-        final dec = c.decoration;
-        if (dec is BoxDecoration) {
-          expect(dec.shape, isNot(BoxShape.circle), reason: 'Should not have any BoxShape.circle containers');
-          expect(dec.borderRadius, isNotNull, reason: 'Should use squircle rounded corners');
-        }
-      }
-
-      // Advance animation frames (breathing + heartbeat)
+      // Advance animation frames (breathing)
       await tester.pump(const Duration(milliseconds: 500));
       expect(tester.takeException(), isNull);
 
@@ -70,7 +60,9 @@ void main() {
         );
         await tester.pump(const Duration(milliseconds: 100));
         expect(tester.takeException(), isNull);
+        expect(find.byType(RitmoMarbleCore), findsOneWidget);
       }
     });
   });
 }
+

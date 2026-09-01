@@ -1,8 +1,8 @@
 // =============================================================================
 //  Ritmo Living Orb — حضورِ تیله در صفحه
 //  ورود/خروج فقط با یک کنترلرِ کوتاه‌عمر انجام می‌شود؛ تپشِ دائمی به
-//  ساعتِ مشترک واگذار شده. وقتی تیله پنهان، خاموش، یا حرکتِ کاربر خاموش
-//  است، مشترکِ ساعت لغو می‌شود: صفر فریم، صفر باتری.
+//  ساعتِ مشترک واگذار شده. وقتی تیله پنهان، خاموش، پشتِ کادر، یا حرکتِ
+//  کاربر خاموش است، مشترکِ ساعت لغو می‌شود: صفر فریم، صفر باتری.
 //
 //  و وقتی کیبرد بالا می‌آید، تیله با همان انیمیشنِ خروج، در می‌رود داخلِ
 //  کادرِ تایپ و جایش را به [RitmoOrbDockLayer] می‌دهد. یک موجود، دو جایِ بودن.
@@ -76,7 +76,7 @@ class RitmoLivingOrb extends StatefulWidget {
   final bool reactToSuccessFlare;
 
   /// وقتی true باشد، خروجِ تیله به کادرِ ورودی گزارش می‌شود (جذب شدن).
-  /// در هر لحطه فقط یک تیله مالکِ این کانال است.
+  /// در هر لحظه فقط یک تیله مالکِ این کانال است.
   final bool absorbIntoInput;
   final String semanticLabel;
   final RitmoOrbTruth? truth;
@@ -107,6 +107,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
   bool _typing = false;
   bool _docked = false;
   bool _portalShown = false;
+  bool _hasOverlay = false;
   double _lastSink = -1.0;
 
   bool get _ownsAbsorb =>
@@ -144,6 +145,8 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
     super.didChangeDependencies();
     // خواندنِ viewInsets یک وابستگی می‌سازد: کیبرد که تکان بخورد، همین‌جا خبردار می‌شویم.
     _typing = MediaQuery.viewInsetsOf(context).bottom > 40.0;
+    // بدون Overlay جایی برای لنگر نیست؛ به جای خطا، ساده صرف‌نظر می‌کنیم.
+    _hasOverlay = Overlay.maybeOf(context) != null;
     _syncDock();
   }
 
@@ -189,17 +192,15 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
 
   /// تنها جایی که تصمیم می‌گیرد تیله سرِ جایش باشد یا دورِ کادرِ تایپ.
   void _syncDock() {
-    final bool want = widget.allowDock &&
+    _docked = widget.allowDock &&
+        _hasOverlay &&
         _typing &&
         _visible &&
         widget.size >= 48.0 &&
         _settings.enabled.value &&
         _settings.dockWhenTyping.value;
-    if (want != _docked) {
-      _docked = want;
-    }
     _syncPose();
-    _syncPortal(_docked && _settings.enabled.value);
+    _syncPortal(_docked);
   }
 
   void _syncPose() {
@@ -215,8 +216,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
         }
         _pose.forward();
       }
-    } else if (_pose.value > 0.0 &&
-        _pose.status != AnimationStatus.reverse) {
+    } else if (_pose.value > 0.0 && _pose.status != AnimationStatus.reverse) {
       _exiting = true;
       _pose.reverse();
     }
@@ -259,7 +259,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
   String _voice(RitmoOrbLife life, RitmoOrbTruth truth) {
     if (truth == RitmoOrbTruth.offline) return 'آفلاین';
     if (truth == RitmoOrbTruth.unsure) return 'مطمئن نیست';
-    if (_docked) return 'گوشهٔ کادرِ پیام، منتظرِ نوشتنِ شما';
+    if (_docked) return 'کنارِ کادرِ پیام، منتظرِ نوشتنِ شما';
     switch (life) {
       case RitmoOrbLife.hidden:
       case RitmoOrbLife.dormant:
@@ -317,7 +317,9 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
         final RitmoOrbSignature signature = base.copyWith(
           wobble: base.wobble * widget.anticsStrength.clamp(0.0, 2.0),
         );
-        final bool animate = !reduceMotion && (_visible || _exiting);
+        // تیلهٔ نادیده نباید فریم بگیرد — نه پنهان، نه پشتِ کادر.
+        final bool animate =
+            !reduceMotion && ((_visible && !_docked) || _exiting);
 
         // این زیردرخت در طولِ انیمیشنِ ورود/خروج بازساخته نمی‌شود.
         final Widget creature = Stack(

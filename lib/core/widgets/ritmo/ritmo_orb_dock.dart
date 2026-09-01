@@ -5,18 +5,25 @@
 //  کاربر روی متنی است که دارد می‌نویسد. پس حباب جایِ بزرگ بودن را پس
 //  می‌دهد، دورِ کادر می‌ریزد و فقط پیشانی و دو چشمش را بیرون نگه می‌دارد.
 //
-//  دو تصمیمِ مهم:
+//  سه تصمیمِ مهم:
 //
 //  ۱) توهمِ «پشتِ کادر بودن» با برش ساخته می‌شود، نه با ترتیبِ لایه‌ها. هر
-//     چیزی که زیرِ لبهٔ بالاییِ کادر باشد اصلاً کشیده نمی‌شود. نتیجه: لایه
-//     هرگز روی متنِ کاربر نمی‌افتد، و لمس را هم نمی‌دزدد (IgnorePointer).
+//     چیزی که زیرِ لبهٔ بالاییِ کادر باشد اصلاً کشیده نمی‌شود، و رینگِ ژله هم با
+//     یک برشِ معکوس بیرونِ درونِ کادر نگه داشته می‌شود. نتیجه: لایه هرگز روی
+//     متنِ کاربر نمی‌افتد، و لمس را هم نمی‌دزدد (IgnorePointer).
 //
 //  ۲) هندسهٔ کادر را حدس نمی‌زنیم اگر کسی گفته باشد: کافی است کادرِ تایپ را
 //     در RitmoOrbDockAnchor بپیچید. اگر نپیچید، باندِ بالای کیبرد حدس زده
 //     می‌شود — درست به نظر می‌رسد، ولی دقیق نیست.
+//
+//  ۳) ارتفاعِ کیبرد را از MediaQuery تنها نمی‌پرسیم. Scaffold با
+//     resizeToAvoidBottomInset: true بدنه‌اش را در MediaQuery.removeViewInsets
+//     می‌پیچد؛ یعنی هر ویجتی داخلِ بدنه، کیبردِ باز را صفر می‌بیند. این دقیقاً
+//     همان باگی بود که لنگر را در اپ مرده نگه داشته بود و در تست سبز می‌ماند.
 // =============================================================================
 
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +31,44 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_orb_clock.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_eyes.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_motion.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_types.dart';
+
+/// از این مقدار به بالا، کیبرد را باز حساب می‌کنیم. (پیشنهادِ کلمه و مانندِ
+/// آن ده-بیست پیکسل inset می‌سازند و کیبرد نیستند.)
+const double kRitmoKeyboardOpen = 40.0;
+
+/// ارتفاعِ واقعیِ کیبرد به پیکسلِ منطقی.
+///
+/// چرا این‌قدر دست‌وپا؟ چون Scaffold با resizeToAvoidBottomInset: true بدنه‌اش را
+/// در MediaQuery.removeViewInsets می‌پیچد. پس هر ویجتی که داخلِ بدنه است،
+/// viewInsets.bottom را صفر می‌بیند حتی وقتی کیبرد کاملاً بالاست. مقدارِ خام را
+/// از خودِ View می‌گیریم و بزرگ‌ترِ دو منبع را برمی‌داریم — این‌طور تست‌هایی که
+/// MediaQuery را دستی می‌سازند هم درست می‌مانند.
+///
+/// [dependent] را false بگذارید اگر در فازِ build نیستید (مانندِ didChangeMetrics)
+/// و نمی‌خواهید وابستگیِ تازه‌ای به MediaQuery ساخته شود.
+double ritmoKeyboardInset(BuildContext context, {bool dependent = true}) {
+  final double fromMedia = dependent
+      ? (MediaQuery.maybeViewInsetsOf(context)?.bottom ?? 0.0)
+      : (context
+              .getInheritedWidgetOfExactType<MediaQuery>()
+              ?.data
+              .viewInsets
+              .bottom ??
+          0.0);
+
+  double fromView = 0.0;
+  final ui.FlutterView? view = View.maybeOf(context);
+  if (view != null) {
+    final double ratio = view.devicePixelRatio;
+    if (ratio > 0.0) fromView = view.viewInsets.bottom / ratio;
+  }
+
+  return math.max(fromMedia, fromView);
+}
+
+/// کیبرد باز است؟
+bool ritmoKeyboardOpen(BuildContext context, {bool dependent = true}) =>
+    ritmoKeyboardInset(context, dependent: dependent) > kRitmoKeyboardOpen;
 
 /// جایِ کادرِ تایپ در مختصاتِ صفحه.
 @immutable
@@ -139,18 +184,18 @@ class RitmoOrbDockLayer extends StatefulWidget {
   final RitmoOrbDockAnchorInfo? debugAnchor;
 
   /// ارتفاعِ عادیِ سر وقتی فقط پیشانی بیرون است.
-  static const double restPeek = 0.14;
+  static const double restPeek = 0.18;
 
   /// اگر کسی جایِ کادر را گزارش نکرده باشد، باندِ بالای کیبرد.
   static RitmoOrbDockAnchorInfo fallbackAnchor({
     required Size screen,
-    required EdgeInsets viewInsets,
+    required double keyboard,
     required EdgeInsets padding,
   }) {
     const double margin = 14.0;
-    const double height = 56.0;
-    final double gap = viewInsets.bottom > 0 ? 10.0 : padding.bottom + 10.0;
-    final double bottom = screen.height - viewInsets.bottom - gap;
+    const double height = 58.0;
+    final double gap = keyboard > 0.0 ? 8.0 : padding.bottom + 10.0;
+    final double bottom = screen.height - keyboard - gap;
     return RitmoOrbDockAnchorInfo(
       rect: Rect.fromLTRB(
         margin,
@@ -165,7 +210,8 @@ class RitmoOrbDockLayer extends StatefulWidget {
   State<RitmoOrbDockLayer> createState() => _RitmoOrbDockLayerState();
 }
 
-class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer> {
+class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer>
+    with WidgetsBindingObserver {
   final ValueNotifier<double> _frame = ValueNotifier<double>(0.0);
   late final RitmoEyeLife _eyeLife = RitmoEyeLife(
     seed: widget.seed,
@@ -183,7 +229,7 @@ class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer> {
   double _peek = RitmoOrbDockLayer.restPeek;
   double _peekTarget = RitmoOrbDockLayer.restPeek;
   double _peekHold = 0.0;
-  double _peekWait = 5.0;
+  double _peekWait = 2.0;
   double _token = 0.0;
   bool _subscribed = false;
   bool _reduceMotion = false;
@@ -201,7 +247,9 @@ class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer> {
   @override
   void initState() {
     super.initState();
-    _peekWait = 3.0 + _rnd.nextDouble() * 4.0;
+    // اولین سرک باید زود بیاید؛ وگرنه کاربر فکر می‌کند چیزی خراب است.
+    _peekWait = 1.2 + _rnd.nextDouble() * 1.4;
+    WidgetsBinding.instance.addObserver(this);
     RitmoAiStateService.instance.truth.addListener(_onExternal);
     RitmoOrbAttentionSignal.instance.acknowledge.addListener(_onNod);
     widget.tokenPulse?.addListener(_onToken);
@@ -220,15 +268,27 @@ class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final MediaQueryData media = MediaQuery.of(context);
-    _reduceMotion = media.disableAnimations;
-    _typing = media.viewInsets.bottom > 40.0;
+    _reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    _typing = ritmoKeyboardOpen(context);
     _tickerOn = TickerMode.valuesOf(context).enabled;
     _syncClock();
   }
 
+  /// درونِ بدنهٔ Scaffold، MediaQuery خبرِ کیبرد را نمی‌دهد. پس مستقیم از
+  /// خودِ پلتفرم می‌شنویم.
+  @override
+  void didChangeMetrics() {
+    if (!mounted) return;
+    final bool typing = ritmoKeyboardOpen(context, dependent: false);
+    if (typing == _typing) return;
+    _typing = typing;
+    _syncClock();
+    setState(() {});
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     RitmoOrbClock.instance.unsubscribe(_onTick);
     RitmoAiStateService.instance.truth.removeListener(_onExternal);
     RitmoOrbAttentionSignal.instance.acknowledge.removeListener(_onNod);
@@ -259,17 +319,18 @@ class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer> {
   }
 
   void _onNod() {
-    // کاربر صدایش زد: سر را بیاور بالا و نگاه کن.
-    _peekTarget = 0.86;
+    // کاربر صدایش زد: سر را بیاور بالا، نگاه کن و لبخند بزن.
+    _peekTarget = 0.92;
     _peekHold = math.max(_peekHold, 2.4);
     _eyeLife.wake(hold: 3.4);
     _eyeLife.blinkNow(twice: true);
+    _eyeLife.smile();
     _onExternal();
   }
 
   void _onToken() {
     _token = 1.0;
-    if (_peekTarget < 0.42) _peekTarget = 0.42;
+    if (_peekTarget < 0.46) _peekTarget = 0.46;
     if (_peekHold < 1.1) _peekHold = 1.1;
     _onExternal();
   }
@@ -287,7 +348,7 @@ class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer> {
     if (_phase > 6283.0) _phase -= 6283.0;
     if (_token > 0.0) _token = (_token - dt / 0.4).clamp(0.0, 1.0);
 
-    // ── قدم زدن دورِ کادر ────────────────────────────────────────────
+    // ── قدم زدن دورِ کادر ──────────────────────────────────
     _travel += _travelDir * dt / 14.0;
     if (_travel <= 0.0) {
       _travel = 0.0;
@@ -297,33 +358,35 @@ class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer> {
       _travelDir = -1.0;
     }
 
-    // ── سرک کشیدن ──────────────────────────────────────────────────
+    // ── سرک کشیدن ────────────────────────────────────────
     if (_peekHold > 0.0) {
       _peekHold -= dt;
       if (_peekHold <= 0.0) {
         _peekTarget = RitmoOrbDockLayer.restPeek;
-        _peekWait = _range(9.0, 18.0);
+        _peekWait = _range(4.5, 9.0);
       }
     } else {
       _peekWait -= dt;
       if (_peekWait <= 0.0) {
-        _peekTarget = _range(0.58, 0.92);
-        _peekHold = _range(1.6, 2.8);
+        _peekTarget = _range(0.62, 0.95);
+        _peekHold = _range(1.8, 3.2);
         _eyeLife.wake(hold: _peekHold + 0.8);
-        if (_rnd.nextDouble() < 0.6) _eyeLife.blinkNow();
+        if (_rnd.nextDouble() < 0.7) _eyeLife.blinkNow();
+        if (_rnd.nextDouble() < 0.35) _eyeLife.smile(amount: 0.55);
       }
     }
     final double climb = _peekTarget > _peek ? dt * 2.6 : dt * 1.8;
     _peek += (_peekTarget - _peek) * math.min(1.0, climb);
     _peek = _peek.clamp(0.0, 1.0);
 
-    // ── چشم‌ها ──────────────────────────────────────────────────────
+    // ── چشم‌ها ────────────────────────────────────────────
     if (widget.eyes) {
       _eyeLife.step(
         dt,
         tempo: RitmoEyeTempo.fromSignature(sig, _truth),
         wantVisible: true,
-        // تا وقتی سر بیرون است، چشم‌ها هم هستند. پیشانیِ بی‌چشم معنا ندارد.
+        // تا وقتی سر بیرون است، چشم‌ها هم هستند و رو به کاربرند؛ پیشانیِ
+        // بی‌چشم معنا ندارد، و سری که پشتِ کادر بچرخد هم.
         always: true,
         focus: RitmoOrbAttentionSignal.instance.value.focus,
         attention: RitmoOrbAttentionSignal.instance.value.strength,
@@ -342,7 +405,8 @@ class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer> {
   @override
   Widget build(BuildContext context) {
     final MediaQueryData media = MediaQuery.of(context);
-    if (media.viewInsets.bottom <= 40.0 && widget.debugAnchor == null) {
+    final double keyboard = ritmoKeyboardInset(context);
+    if (keyboard <= kRitmoKeyboardOpen && widget.debugAnchor == null) {
       // کیبرد بسته است؛ لنگری لازم نیست.
       return const SizedBox.shrink();
     }
@@ -350,12 +414,12 @@ class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer> {
 
     return ValueListenableBuilder<RitmoOrbDockAnchorInfo?>(
       valueListenable: RitmoOrbDockSignal.instance,
-      builder: (context, reported, _) {
+      builder: (context, reported, child) {
         final RitmoOrbDockAnchorInfo anchor = widget.debugAnchor ??
             reported ??
             RitmoOrbDockLayer.fallbackAnchor(
               screen: media.size,
-              viewInsets: media.viewInsets,
+              keyboard: keyboard,
               padding: media.padding,
             );
 
@@ -365,7 +429,7 @@ class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer> {
               child: RepaintBoundary(
                 child: ValueListenableBuilder<double>(
                   valueListenable: _frame,
-                  builder: (context, _, _) {
+                  builder: (context, _, inner) {
                     final RitmoOrbSignature sig =
                         _signature.withTruth(_truth);
                     RitmoOrbPalette palette = _palette;
@@ -450,11 +514,14 @@ class _DockPainter extends CustomPainter {
     final double breath = 0.5 + 0.5 * math.sin(phase * 1.6);
     final double swell = 0.86 + 0.28 * breath + 0.2 * token;
 
-    // ── ۱) ژله‌ای که دورِ کادر پهن شده ────────────────────────────────
+    // ── ۱) ژله‌ای که دورِ کادر پهن شده ───────────────────────────────
+    // بیرونِ درونِ کادر می‌ماند: متنِ کاربر مقدس است.
     final RRect shell = RRect.fromRectAndRadius(
       box.inflate(2.0),
       Radius.circular(anchor.radius + 2.0),
     );
+    canvas.save();
+    canvas.clipRect(box.deflate(2.0), clipOp: ClipOp.difference);
     canvas.drawRRect(
       shell,
       Paint()
@@ -481,36 +548,20 @@ class _DockPainter extends CustomPainter {
         ).createShader(box),
     );
     ritmoCountPaint(ops: 1);
+    canvas.restore();
 
-    // ── ۲) تودهٔ ژله زیرِ سر ───────────────────────────────────────
+    // ── ۲) سر: فقط هرچه بالای لبهٔ کادر است ──────────────────────────
     final double inset = box.width * 0.18;
     final double headX = box.left +
         inset +
         (box.width - inset * 2.0) * travel.clamp(0.0, 1.0);
-    final double blobR = math.max(28.0, box.height * 1.5);
-    final Rect blob = Rect.fromCircle(
-      center: Offset(headX, box.top + box.height * 0.35),
-      radius: blobR,
-    );
-    canvas.drawCircle(
-      blob.center,
-      blobR,
-      Paint()
-        ..shader = RadialGradient(
-          colors: <Color>[
-            palette.hot.withValues(alpha: 0.22 * (0.45 + 0.55 * peek)),
-            palette.hot.withValues(alpha: 0.0),
-          ],
-          stops: const <double>[0.0, 1.0],
-        ).createShader(blob)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10.0),
-    );
-    ritmoCountPaint(ops: 1, blurs: 1);
-
-    // ── ۳) سر: فقط هرچه بالای لبهٔ کادر است ───────────────────────────
+    // یک بالا-پایینِ کوچک وقتی سر بیرون است؛ همان که «زنده» می‌کندش.
+    final double bob = 1.0 + 0.06 * math.sin(phase * 3.1) * peek;
     final double capW =
         (box.width * 0.22).clamp(60.0, 132.0) * (1.0 + 0.03 * breath);
-    final double capH = 5.0 + 26.0 * peek;
+    final double capH = (6.0 + 30.0 * peek) * bob;
+    // به سمتی که می‌رود کمی کج می‌شود، مثلِ کسی که راه می‌رود.
+    final double lean = 0.055 * (travel.clamp(0.0, 1.0) * 2.0 - 1.0);
     final Rect head = Rect.fromCenter(
       center: Offset(headX, box.top + capH * 0.58),
       width: capW,
@@ -519,6 +570,31 @@ class _DockPainter extends CustomPainter {
 
     canvas.save();
     canvas.clipRect(Rect.fromLTRB(0.0, 0.0, size.width, box.top + 0.6));
+    canvas.save();
+    canvas.translate(headX, box.top);
+    canvas.rotate(lean);
+    canvas.translate(-headX, -box.top);
+
+    // تودهٔ نرمِ زیرِ سر — بالای لبه فقط هاله‌اش دیده می‌شود.
+    final double blobR = math.max(30.0, box.height * 1.4);
+    final Rect blob = Rect.fromCircle(
+      center: Offset(headX, box.top + box.height * 0.30),
+      radius: blobR,
+    );
+    canvas.drawCircle(
+      blob.center,
+      blobR,
+      Paint()
+        ..shader = RadialGradient(
+          colors: <Color>[
+            palette.hot.withValues(alpha: 0.24 * (0.45 + 0.55 * peek)),
+            palette.hot.withValues(alpha: 0.0),
+          ],
+          stops: const <double>[0.0, 1.0],
+        ).createShader(blob)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10.0),
+    );
+    ritmoCountPaint(ops: 1, blurs: 1);
 
     canvas.drawOval(
       head,
@@ -551,24 +627,25 @@ class _DockPainter extends CustomPainter {
       ritmoCountPaint(ops: 1, white: sheen);
     }
 
-    // ── ۴) چشم‌ها روی پیشانی ──────────────────────────────────────
+    // ── ۳) چشم‌ها روی پیشانی ──────────────────────────────────────
     ritmoPaintEyes(
       canvas,
       center: Offset(headX, box.top - capH * 0.26),
-      span: capW * 0.34,
-      radius: (capW * 0.058).clamp(1.8, 5.2),
+      span: capW * 0.32,
+      radius: (capW * 0.062).clamp(2.0, 5.6),
       frame: eyeFrame,
       palette: palette,
       isDark: isDark,
       purse: purse,
       // پیشانی که پایین است، چشم‌ها پخ‌اند؛ که بالا می‌آید، گرد می‌شوند.
-      flatten: (0.24 + 1.1 * peek).clamp(0.24, 1.0),
+      flatten: (0.30 + 1.05 * peek).clamp(0.30, 1.0),
       catchlight: peek > 0.34,
     );
 
     canvas.restore();
+    canvas.restore();
 
-    // ── ۵) لبهٔ کادر: مرزی که سر پشتِ آن پنهان می‌شود ─────────────────
+    // ── ۴) لبهٔ کادر: مرزی که سر پشتِ آن پنهان می‌شود ─────────────────
     if (edgeAlpha > 0.02) {
       final double half = capW * 0.72;
       canvas.drawLine(

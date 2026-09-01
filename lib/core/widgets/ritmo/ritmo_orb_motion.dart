@@ -1,279 +1,375 @@
 // =============================================================================
-//  Ritmo Orb Motion — ریاضیاتِ حرکتِ تیله
-//
-//  همهٔ حرکت‌ها فنری است، نه خطی؛ پس تغییر حالت وسطِ راه هیچ‌وقت پرش ندارد.
+//  Ritmo Orb Motion — امضای حرکتیِ هر حالت
+//  قبلاً هر حالت چند جدولِ جدا داشت (عمق، رنگ، فرم، بازی) و هیچ‌کدام با دیگری
+//  هماهنگ نبود. حالا یک امضا: هر حالت یک ردیف از [RitmoOrbSignature] است.
 // =============================================================================
 
-import 'dart:math' as math;
+import 'package:flutter/widgets.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_orb_types.dart';
 
-import 'package:flutter/material.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_siri_orb.dart'
-    show RitmoOrbMode, RitmoOrbPalette;
+export 'package:ritmo/core/widgets/ritmo/ritmo_orb_types.dart'
+    show
+        RitmoAiStateService,
+        RitmoOrbAttention,
+        RitmoOrbAttentionSignal,
+        RitmoOrbEnergy,
+        RitmoOrbEnergySignal,
+        RitmoOrbMode,
+        RitmoOrbPalette,
+        RitmoOrbTier,
+        RitmoOrbTruth,
+        ritmoTierFor;
 
-/// حالت زندگیِ تیله. جدا از [RitmoOrbMode] تا enum اصلی دست‌نخورده بماند.
+/// حالتِ زندگیِ تیله (مقدارها عیناً مثل قبل).
 enum RitmoOrbLife {
-  /// پنهان؛ پایین می‌رود، در کادرِ تایپ جذب می‌شود و ارتفاعش را آزاد می‌کند.
   hidden,
-
-  /// خوابِ سبک: خیلی کوچک و کم‌رنگ، فقط نفس می‌کشد.
   dormant,
-
-  /// استراحت: نفس می‌کشد و آرام شنا می‌کند.
   breathing,
-
-  /// «گوش می‌دهم»: نفس عمیق‌تر، رنگ خنک‌تر.
   listening,
-
-  /// در حال فکر کردن.
   thinking,
-
-  /// در حال نوشتن: نفس + ادا و اطفار + پرش روی هر توکن.
   writing,
-
-  /// پاسخ تمام شد: شکفتنِ گرم و کوتاه.
   celebrating,
 }
 
-/// فنر تک‌بعدی با میرایی. رازِ حرکتِ پرمیوم همین است: وقتی وسطِ راه
-/// هدف را عوض کنی، سرعتِ فعلی حفط می‌شود.
-class RitmoSpring {
-  RitmoSpring({
-    required double initial,
-    this.stiffness = 120.0,
-    this.damping = 20.0,
-  })  : value = initial,
-        target = initial;
-
-  double value;
-  double target;
-  double velocity = 0.0;
-  double stiffness;
-  double damping;
-
-  void snap(double v) {
-    value = v;
-    target = v;
-    velocity = 0.0;
-  }
-
-  /// ضربهٔ لحطه‌ای به سرعت (برای پرش روی هر توکن).
-  void kick(double impulse) {
-    velocity += impulse;
-  }
-
-  /// گام‌های ریز تا افتادنِ فریم، حرکت را ناپایدار نکند.
-  void step(double dt) {
-    const double maxStep = 1.0 / 120.0;
-    var remaining = dt;
-    while (remaining > 0.0) {
-      final double h = remaining > maxStep ? maxStep : remaining;
-      remaining -= h;
-      final double a = stiffness * (target - value) - damping * velocity;
-      velocity += a * h;
-      value += velocity * h;
-    }
+/// حالتِ زندگی را به حالتِ کاریِ موتور ترجمه می‌کند.
+RitmoOrbMode ritmoModeFor(RitmoOrbLife life) {
+  switch (life) {
+    case RitmoOrbLife.hidden:
+    case RitmoOrbLife.dormant:
+    case RitmoOrbLife.breathing:
+    case RitmoOrbLife.listening:
+      return RitmoOrbMode.idle;
+    case RitmoOrbLife.thinking:
+      return RitmoOrbMode.thinking;
+    case RitmoOrbLife.writing:
+    case RitmoOrbLife.celebrating:
+      return RitmoOrbMode.streaming;
   }
 }
 
-/// دم ۳۳٪ ← نگه ۹٪ ← بازدمِ کشیدهٔ ۴۴٪ ← سکوت ۱۴٪
-double ritmoBreathCurve(double x) {
-  const double inhale = 0.33;
-  const double hold = 0.09;
-  const double exhale = 0.44;
-
-  if (x < inhale) {
-    return Curves.easeInOutSine.transform(x / inhale);
+/// منحنیِ نفس: دم ۳۳٪ – نگه‌داشت ۹٪ – بازدم ۴۴٪ – سکوت ۱۴٪.
+/// تقارن نیست، پس ماشینی هم به نظر نمی‌رسد.
+double ritmoBreathCurve(double phase) {
+  final double p = phase - phase.floorToDouble();
+  if (p < 0.33) {
+    return Curves.easeInOutSine.transform(p / 0.33);
   }
-  final double afterIn = x - inhale;
-  if (afterIn < hold) {
+  if (p < 0.42) {
     return 1.0;
   }
-  final double afterHold = afterIn - hold;
-  if (afterHold < exhale) {
-    return 1.0 - Curves.easeInOutCubic.transform(afterHold / exhale);
+  if (p < 0.86) {
+    return 1.0 - Curves.easeInOutSine.transform((p - 0.42) / 0.44);
   }
   return 0.0;
 }
 
-RitmoOrbPalette ritmoLerpPalette(
-  RitmoOrbPalette a,
-  RitmoOrbPalette b,
-  double t,
-) {
-  return RitmoOrbPalette(
-    hot: Color.lerp(a.hot, b.hot, t)!,
-    core: Color.lerp(a.core, b.core, t)!,
-    mid: Color.lerp(a.mid, b.mid, t)!,
-    violet: Color.lerp(a.violet, b.violet, t)!,
-    aura: Color.lerp(a.aura, b.aura, t)!,
-    milk: Color.lerp(a.milk, b.milk, t)!,
-  );
-}
-
-/// دمای رنگ: ‎-۱ خنک (فکر) .. ۰ پایه .. ‎+۱ گرم (جشن)
-RitmoOrbPalette ritmoTintPalette(RitmoOrbPalette base, double hue) {
-  final double h = hue.clamp(-1.0, 1.0);
-  if (h < 0.0) {
-    return ritmoLerpPalette(base, RitmoOrbPalette.aurora, -h * 0.26);
-  }
-  if (h > 0.0) {
-    return ritmoLerpPalette(base, RitmoOrbPalette.ember, h * 0.24);
-  }
-  return base;
-}
-
-/// درگیری در ادا و اطفار.
-double ritmoPlayFor(RitmoOrbLife life) {
-  switch (life) {
-    case RitmoOrbLife.hidden:
-    case RitmoOrbLife.dormant:
-    case RitmoOrbLife.breathing:
-      return 0.0;
-    case RitmoOrbLife.listening:
-      return 0.20;
-    case RitmoOrbLife.thinking:
-      return 0.34;
-    case RitmoOrbLife.writing:
-      return 1.0;
-    case RitmoOrbLife.celebrating:
-      return 0.42;
-  }
-}
-
-/// عمق نفس.
-double ritmoDepthFor(RitmoOrbLife life) {
-  switch (life) {
-    case RitmoOrbLife.hidden:
-      return 0.45;
-    case RitmoOrbLife.dormant:
-      return 0.78;
-    case RitmoOrbLife.breathing:
-      return 1.0;
-    case RitmoOrbLife.listening:
-      return 1.15;
-    case RitmoOrbLife.thinking:
-      return 0.82;
-    case RitmoOrbLife.writing:
-      return 0.52;
-    case RitmoOrbLife.celebrating:
-      return 0.95;
-  }
-}
-
-double ritmoHueFor(RitmoOrbLife life) {
-  switch (life) {
-    case RitmoOrbLife.listening:
-      return -0.55;
-    case RitmoOrbLife.thinking:
-      return -1.0;
-    case RitmoOrbLife.celebrating:
-      return 1.0;
-    case RitmoOrbLife.hidden:
-    case RitmoOrbLife.dormant:
-    case RitmoOrbLife.breathing:
-    case RitmoOrbLife.writing:
-      return 0.0;
-  }
-}
-
-/// اندازهٔ نسبیِ تیله در هر حالت.
-double ritmoFormFor(RitmoOrbLife life) {
-  switch (life) {
-    case RitmoOrbLife.dormant:
-      return 0.46;
-    case RitmoOrbLife.hidden:
-    case RitmoOrbLife.breathing:
-    case RitmoOrbLife.listening:
-    case RitmoOrbLife.thinking:
-    case RitmoOrbLife.writing:
-    case RitmoOrbLife.celebrating:
-      return 1.0;
-  }
-}
-
-RitmoOrbMode ritmoModeFor(RitmoOrbLife life) {
-  switch (life) {
-    case RitmoOrbLife.writing:
-    case RitmoOrbLife.celebrating:
-      return RitmoOrbMode.streaming;
-    case RitmoOrbLife.listening:
-    case RitmoOrbLife.thinking:
-      return RitmoOrbMode.thinking;
-    case RitmoOrbLife.breathing:
-    case RitmoOrbLife.dormant:
-    case RitmoOrbLife.hidden:
-      return RitmoOrbMode.idle;
-  }
-}
-
-/// شکلِ ورود/خروجِ تیله در یک لحطه.
+/// همهٔ چیزی که یک حالت را از حالتِ دیگر جدا می‌کند — در یک جا.
 @immutable
-class RitmoOrbPose {
-  const RitmoOrbPose({
-    required this.sx,
-    required this.sy,
-    required this.dy,
-    required this.rot,
-    required this.opacity,
-    required this.ripple,
-    required this.rippleAlpha,
-    required this.collapse,
+class RitmoOrbSignature {
+  const RitmoOrbSignature({
+    required this.breathMs,
+    required this.flow,
+    required this.density,
+    required this.rim,
+    required this.wobble,
+    required this.tremor,
+    required this.plumes,
+    required this.aura,
+    required this.scale,
   });
 
-  final double sx;
-  final double sy;
-  final double dy;
-  final double rot;
-  final double opacity;
-  final double ripple;
-  final double rippleAlpha;
+  /// دورهٔ یک نفس کامل
+  final double breathMs;
 
-  /// ۰ = هنوز سرجا؛ ۱ = کاملاً جذب شده در کادر.
-  final double collapse;
+  /// سرعتِ جریانِ درون
+  final double flow;
 
-  /// پیشرفتِ جذب برای گزارش به کادرِ تایپ (مستقل از ساختنِ کل پوز).
-  static double collapseOf(double p) {
-    final double e = Curves.easeInOutCubic.transform(1.0 - p.clamp(0.0, 1.0));
-    if (e <= 0.28) return 0.0;
-    return Curves.easeInCubic.transform((e - 0.28) / 0.72);
+  /// تراکمِ رنگ
+  final double density;
+
+  /// روشناییِ لبه
+  final double rim;
+
+  /// نوسانِ پوسته
+  final double wobble;
+
+  /// لرزشِ ریزِ تمرکز (فقط در فکر کردن)
+  final double tremor;
+
+  /// تعداد تودهٔ جریان (سپس با بودجهٔ رده محدود می‌شود)
+  final int plumes;
+
+  /// قدرتِ هاله
+  final double aura;
+
+  /// مقیاسِ پایه (حضورِ فیزیکی)
+  final double scale;
+
+  static const RitmoOrbSignature _dormant = RitmoOrbSignature(
+    breathMs: 7800,
+    flow: 0.18,
+    density: 0.18,
+    rim: 0.30,
+    wobble: 0.10,
+    tremor: 0.0,
+    plumes: 2,
+    aura: 0.12,
+    scale: 0.94,
+  );
+
+  static const RitmoOrbSignature _breathing = RitmoOrbSignature(
+    breathMs: 5200,
+    flow: 0.34,
+    density: 0.42,
+    rim: 0.48,
+    wobble: 0.16,
+    tremor: 0.0,
+    plumes: 3,
+    aura: 0.34,
+    scale: 1.0,
+  );
+
+  static const RitmoOrbSignature _listening = RitmoOrbSignature(
+    breathMs: 4200,
+    flow: 0.46,
+    density: 0.52,
+    rim: 0.70,
+    wobble: 0.20,
+    tremor: 0.0,
+    plumes: 3,
+    aura: 0.46,
+    scale: 1.03,
+  );
+
+  static const RitmoOrbSignature _thinking = RitmoOrbSignature(
+    breathMs: 3000,
+    flow: 0.78,
+    density: 0.74,
+    rim: 0.40,
+    wobble: 0.24,
+    tremor: 0.25,
+    plumes: 4,
+    aura: 0.38,
+    scale: 0.99,
+  );
+
+  static const RitmoOrbSignature _writing = RitmoOrbSignature(
+    breathMs: 2400,
+    flow: 1.0,
+    density: 0.88,
+    rim: 0.62,
+    wobble: 0.18,
+    tremor: 0.06,
+    plumes: 4,
+    aura: 0.56,
+    scale: 1.01,
+  );
+
+  static const RitmoOrbSignature _celebrating = RitmoOrbSignature(
+    breathMs: 1800,
+    flow: 1.15,
+    density: 1.0,
+    rim: 0.95,
+    wobble: 0.26,
+    tremor: 0.0,
+    plumes: 4,
+    aura: 0.86,
+    scale: 1.06,
+  );
+
+  static RitmoOrbSignature of(RitmoOrbLife life) {
+    switch (life) {
+      case RitmoOrbLife.hidden:
+      case RitmoOrbLife.dormant:
+        return _dormant;
+      case RitmoOrbLife.breathing:
+        return _breathing;
+      case RitmoOrbLife.listening:
+        return _listening;
+      case RitmoOrbLife.thinking:
+        return _thinking;
+      case RitmoOrbLife.writing:
+        return _writing;
+      case RitmoOrbLife.celebrating:
+        return _celebrating;
+    }
   }
 
-  /// خروج: یک نفسِ عمیق ← کشیده شدنِ قطره‌مانند ← فرو رفتن در کادر.
-  factory RitmoOrbPose.sinking({required double p, required double size}) {
-    final double e = Curves.easeInOutCubic.transform(1.0 - p);
-    final double swell = math.sin(math.min(1.0, e / 0.28) * math.pi) * 0.10;
-    final double collapse =
-        e <= 0.28 ? 0.0 : Curves.easeInCubic.transform((e - 0.28) / 0.72);
-    final double drop = collapse * collapse;
-    final double base = (1.0 + swell) * (1.0 - 0.84 * collapse);
+  static RitmoOrbSignature ofMode(RitmoOrbMode mode) {
+    switch (mode) {
+      case RitmoOrbMode.idle:
+        return _breathing;
+      case RitmoOrbMode.thinking:
+        return _thinking;
+      case RitmoOrbMode.streaming:
+        return _writing;
+      case RitmoOrbMode.compact:
+        return _dormant;
+    }
+  }
 
-    return RitmoOrbPose(
-      sx: base * (1.0 + swell * 0.50 - collapse * 0.30),
-      sy: base * (1.0 - swell * 0.34 + collapse * 0.40),
-      dy: size * 0.74 * drop,
-      rot: 0.06 * drop,
-      opacity: math.pow(1.0 - collapse, 1.55).toDouble(),
-      ripple: Curves.easeOutQuart.transform(e),
-      rippleAlpha: math.sin(e * math.pi) * 0.40,
-      collapse: collapse,
+  RitmoOrbSignature copyWith({
+    double? breathMs,
+    double? flow,
+    double? density,
+    double? rim,
+    double? wobble,
+    double? tremor,
+    int? plumes,
+    double? aura,
+    double? scale,
+  }) {
+    return RitmoOrbSignature(
+      breathMs: breathMs ?? this.breathMs,
+      flow: flow ?? this.flow,
+      density: density ?? this.density,
+      rim: rim ?? this.rim,
+      wobble: wobble ?? this.wobble,
+      tremor: tremor ?? this.tremor,
+      plumes: plumes ?? this.plumes,
+      aura: aura ?? this.aura,
+      scale: scale ?? this.scale,
     );
   }
 
-  /// ورود: از دلِ کادرِ تایپ بالا می‌آید و شکفته می‌شود.
-  factory RitmoOrbPose.rising({required double p, required double size}) {
-    final double e = Curves.easeOutCubic.transform(p);
-    final double swell = math.sin(p * math.pi) * 0.10;
-    final double base = 0.46 + 0.54 * e;
+  /// صداقت: وقتی مطمئن نیست کم‌رنگ‌تر و بی‌قرارتر است؛ وقتی آفلاین است، جریان
+  /// درونش می‌ایستد. این فقط زیبایی نیست، اطلاعات است.
+  RitmoOrbSignature withTruth(RitmoOrbTruth truth) {
+    switch (truth) {
+      case RitmoOrbTruth.confident:
+        return this;
+      case RitmoOrbTruth.unsure:
+        return copyWith(
+          flow: flow * 0.72,
+          density: density * 0.80,
+          rim: rim * 0.58,
+          wobble: wobble * 1.20,
+          tremor: tremor + 0.10,
+          aura: aura * 0.60,
+        );
+      case RitmoOrbTruth.offline:
+        return copyWith(
+          breathMs: breathMs * 1.6,
+          flow: 0.05,
+          density: density * 0.35,
+          rim: 0.26,
+          wobble: wobble * 0.35,
+          tremor: 0.0,
+          plumes: 1,
+          aura: 0.0,
+          scale: 0.97,
+        );
+    }
+  }
 
+  /// P4 — هم‌رنگی با انرژیِ روز. سقفِ اثر عمداً کوچک است: تیله قرار نیست روزِ بد
+  /// را دراماتیک کند؛ فقط قدری آرام‌تر نفس می‌کشد.
+  RitmoOrbSignature withEnergy(RitmoOrbEnergy energy) {
+    if (energy.isNeutral) return this;
+    final double heavy = ((energy.load - 0.5) * 2.0).clamp(0.0, 1.0);
+    final double tired = ((0.5 - energy.vitality) * 2.0).clamp(0.0, 1.0);
+    return copyWith(
+      breathMs: breathMs *
+          (1.0 + heavy * RitmoOrbEnergySignal.maxBreathShift),
+      flow: flow * (1.0 - tired * 0.18),
+      aura: aura * (1.0 - heavy * 0.20),
+    );
+  }
+
+  static RitmoOrbSignature lerp(
+    RitmoOrbSignature a,
+    RitmoOrbSignature b,
+    double t,
+  ) {
+    if (t <= 0.0) return a;
+    if (t >= 1.0) return b;
+    double mix(double x, double y) => x + (y - x) * t;
+    return RitmoOrbSignature(
+      breathMs: mix(a.breathMs, b.breathMs),
+      flow: mix(a.flow, b.flow),
+      density: mix(a.density, b.density),
+      rim: mix(a.rim, b.rim),
+      wobble: mix(a.wobble, b.wobble),
+      tremor: mix(a.tremor, b.tremor),
+      plumes: t < 0.5 ? a.plumes : b.plumes,
+      aura: mix(a.aura, b.aura),
+      scale: mix(a.scale, b.scale),
+    );
+  }
+}
+
+/// فنرِ بحرانی‌زدهٔ ساده. گسسته از زمانِ فریم، پس در ۳۰ و ۱۲۰ فریم یکسان است.
+class RitmoSpring {
+  RitmoSpring({
+    this.stiffness = 180.0,
+    this.damping = 22.0,
+    double value = 0.0,
+  })  : _value = value,
+        target = value;
+
+  final double stiffness;
+  final double damping;
+
+  double _value;
+  double target;
+  double velocity = 0.0;
+
+  double get value => _value;
+
+  void snap(double next) {
+    _value = next;
+    target = next;
+    velocity = 0.0;
+  }
+
+  void kick(double impulse) => velocity += impulse;
+
+  /// یک گام جلو. خروجی: هنوز در حرکت است یا نه.
+  bool step(double dt) {
+    double left = dt;
+    const double maxStep = 1.0 / 120.0;
+    while (left > 0.0) {
+      final double h = left > maxStep ? maxStep : left;
+      final double accel = (target - _value) * stiffness - velocity * damping;
+      velocity += accel * h;
+      _value += velocity * h;
+      left -= h;
+    }
+    if ((target - _value).abs() < 0.0005 && velocity.abs() < 0.005) {
+      _value = target;
+      velocity = 0.0;
+      return false;
+    }
+    return true;
+  }
+}
+
+/// ژستِ ورود/خروجِ تیله.
+@immutable
+class RitmoOrbPose {
+  const RitmoOrbPose({
+    required this.scale,
+    required this.opacity,
+    required this.lift,
+  });
+
+  final double scale;
+  final double opacity;
+
+  /// جابجاییِ عمودی بر حسب ضریبی از اندازهٔ تیله (+ یعنی پایین‌تر).
+  final double lift;
+
+  static const RitmoOrbPose gone =
+      RitmoOrbPose(scale: 0.72, opacity: 0.0, lift: 0.26);
+  static const RitmoOrbPose present =
+      RitmoOrbPose(scale: 1.0, opacity: 1.0, lift: 0.0);
+
+  static RitmoOrbPose lerp(RitmoOrbPose a, RitmoOrbPose b, double t) {
+    final double k = t.clamp(0.0, 1.0);
     return RitmoOrbPose(
-      sx: base * (1.0 + swell * 0.45 - 0.10 * (1.0 - e)),
-      sy: base * (1.0 - swell * 0.28 + 0.16 * (1.0 - e)),
-      dy: size * 0.60 * (1.0 - Curves.easeOutQuart.transform(p)),
-      rot: 0.0,
-      opacity: Curves.easeOutCubic.transform(math.min(1.0, p * 1.30)),
-      ripple: 1.0 - Curves.easeOutCubic.transform(p),
-      rippleAlpha: math.sin(p * math.pi) * 0.34,
-      collapse: 0.0,
+      scale: a.scale + (b.scale - a.scale) * k,
+      opacity: a.opacity + (b.opacity - a.opacity) * k,
+      lift: a.lift + (b.lift - a.lift) * k,
     );
   }
 }

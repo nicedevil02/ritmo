@@ -17,8 +17,8 @@ class PlannerSubmitButton extends StatelessWidget {
     final isDisabled = controller.title.trim().isEmpty;
     final isLoading = controller.isSaving;
 
-    var label = controller.isEditing ? 'ذخیره تغییرات' : 'ثبت کار ⚡';
-    var icon = controller.isEditing ? Icons.check_rounded : Icons.flash_on_rounded;
+    final label = controller.isEditing ? 'ذخیره تغییرات' : 'ثبت کار ⚡';
+    final icon = controller.isEditing ? Icons.check_rounded : Icons.flash_on_rounded;
 
     return Directionality(
       textDirection: TextDirection.rtl,

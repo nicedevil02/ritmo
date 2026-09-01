@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
 /// Descriptor for routine execution model in UI
 class RoutineTypeOption {

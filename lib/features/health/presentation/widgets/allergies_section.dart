@@ -261,37 +261,19 @@ class _AllergiesSectionState extends State<AllergiesSection> {
     );
   }
 
-  void _confirmDelete(String id) {
-    final colors = context.colors;
+  Future<void> _confirmDelete(String id) async {
     final l10n = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.card,
-          title: const Text('حذف آلرژی', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Text(
-            l10n.allergyDeleteConfirm,
-            style: const TextStyle(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('انصراف', style: TextStyle()),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _deleteAllergy(id);
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
-              child: const Text('حذف', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'حذف آلرژی',
+      content: l10n.allergyDeleteConfirm,
+      confirmLabel: 'حذف',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
+    if (confirmed == true) {
+      await _deleteAllergy(id);
+    }
   }
 }
 

@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/cycle/logic/cycle_onboarding_controller.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/steps/step_1_privacy_lock.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/steps/step_2_cycle_status.dart';

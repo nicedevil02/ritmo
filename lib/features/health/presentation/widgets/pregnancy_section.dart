@@ -281,30 +281,13 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
     if (_activeTracker == null) return;
     final trackerId = _activeTracker!['id'] as String;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: context.colors.card,
-          title: const Text('پایان دوره بارداری', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: const Text(
-            'آیا مطمئن هستید که می‌خواهید پایش دوره بارداری فعلی را پایان دهید؟ اطلاعات این دوره حفظ می‌شود اما دیگر در این صفحه نمایش داده نمی‌شود.',
-            style: TextStyle(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('انصراف', style: TextStyle()),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(backgroundColor: context.colors.medicalRed),
-              child: const Text('تایید و پایان', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'پایان دوره بارداری',
+      content: 'آیا مطمئن هستید که می‌خواهید پایش دوره بارداری فعلی را پایان دهید؟ اطلاعات این دوره حفظ می‌شود اما دیگر در این صفحه نمایش داده نمی‌شود.',
+      confirmLabel: 'تایید و پایان',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
 
     if (confirmed != true) return;

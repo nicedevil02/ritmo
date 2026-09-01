@@ -232,27 +232,13 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
       if (!mounted) return;
       if (!safety.isSafe) {
         if (safety.isDuplicate) {
-          final proceed = await showDialog<bool>(
-            context: context,
-            builder: (dialogCtx) => Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                backgroundColor: colors.card,
-                title: const Text('هشدار دوز تکراری', style: TextStyle(fontWeight: FontWeight.bold)),
-                content: Text(safety.warningMessage ?? '', style: const TextStyle()),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(dialogCtx, false),
-                    child: const Text('انصراف'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(dialogCtx, true),
-                    style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
-                    child: const Text('ثبت مجدد', style: TextStyle(color: Colors.white)),
-                  ),
-                ],
-              ),
-            ),
+          final proceed = await RitmoDialog.show(
+            context,
+            title: 'هشدار دوز تکراری',
+            content: safety.warningMessage ?? '',
+            confirmLabel: 'ثبت مجدد',
+            cancelLabel: 'انصراف',
+            isDestructive: true,
           );
           if (proceed != true) return;
         } else {
@@ -270,27 +256,12 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
     if (!mounted) return;
     // Confirm dialog
     final actionText = status == 'TAKEN' ? 'مصرف' : 'رد کردن';
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogCtx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.card,
-          title: Text('$actionText دارو', style: const TextStyle(fontWeight: FontWeight.bold)),
-          content: Text('آیا $actionText دارو «$title» را تایید می‌کنید؟', style: const TextStyle()),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx, false),
-              child: const Text('لغو', style: TextStyle()),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(dialogCtx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: status == 'TAKEN' ? colors.primary : colors.textSecondary),
-              child: const Text('تایید', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: '$actionText دارو',
+      content: 'آیا $actionText دارو «$title» را تایید می‌کنید؟',
+      confirmLabel: 'تایید',
+      cancelLabel: 'لغو',
     );
 
     if (confirmed != true) return;
@@ -325,27 +296,13 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
     if (!mounted) return;
     if (!safety.isSafe) {
       if (safety.isDuplicate) {
-        final proceed = await showDialog<bool>(
-          context: context,
-          builder: (dialogCtx) => Directionality(
-            textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              backgroundColor: colors.card,
-              title: const Text('هشدار مصرف مجدد', style: TextStyle(fontWeight: FontWeight.bold)),
-              content: Text(safety.warningMessage ?? '', style: const TextStyle()),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogCtx, false),
-                  child: const Text('انصراف'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(dialogCtx, true),
-                  style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
-                  child: const Text('ثبت مصرف', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            ),
-          ),
+        final proceed = await RitmoDialog.show(
+          context,
+          title: 'هشدار مصرف مجدد',
+          content: safety.warningMessage ?? '',
+          confirmLabel: 'ثبت مصرف',
+          cancelLabel: 'انصراف',
+          isDestructive: true,
         );
         if (proceed != true) return;
       } else {
@@ -361,27 +318,12 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
 
     if (!mounted) return;
     // Confirm dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogCtx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.card,
-          title: const Text('ثبت مصرف دارو', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Text('آیا مصرف دارو «$title» را تایید می‌کنید؟', style: const TextStyle()),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx, false),
-              child: const Text('لغو', style: TextStyle()),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(dialogCtx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-              child: const Text('تایید', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'ثبت مصرف دارو',
+      content: 'آیا مصرف دارو «$title» را تایید می‌کنید؟',
+      confirmLabel: 'تایید',
+      cancelLabel: 'لغو',
     );
 
     if (confirmed != true) return;
@@ -480,104 +422,48 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
     }
   }
 
-  void _showDeleteMedicationConfirmation(Map<String, dynamic> routine) {
-    final colors = context.colors;
-    showDialog<void>(
-      context: context,
-      builder: (dialogCtx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.card,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
-            children: [
-              Icon(Icons.delete_forever_rounded, color: Colors.red, size: 24),
-              SizedBox(width: 8),
-              Text('حذف دارو', style: TextStyle(fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: Text(
-            'آیا از حذف داروی "${routine['title']}" مطمئن هستید؟ این عمل برنامه آلارم و تاریخچه مصرف آن را برای همیشه پاک می‌کند.',
-            style: const TextStyle(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('لغو', style: TextStyle()),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(dialogCtx);
-                await _deleteMedication(routine['id'] as String);
-                if (mounted) {
-                  RitmoToast.show(
-                    context,
-                    'داروی "${routine['title']}" با موفقیت حذف شد.',
-                    icon: Icons.delete_forever_rounded,
-                    iconColor: Colors.red,
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.medicalRed,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('حذف برای همیشه', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+  Future<void> _showDeleteMedicationConfirmation(Map<String, dynamic> routine) async {
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'حذف دارو',
+      content: 'آیا از حذف داروی "${routine['title']}" مطمئن هستید؟ این عمل برنامه آلارم و تاریخچه مصرف آن را برای همیشه پاک می‌کند.',
+      confirmLabel: 'حذف برای همیشه',
+      cancelLabel: 'لغو',
+      isDestructive: true,
     );
+    if (confirmed == true && mounted) {
+      await _deleteMedication(routine['id'] as String);
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'داروی "${routine['title']}" با موفقیت حذف شد.',
+          icon: Icons.delete_forever_rounded,
+          iconColor: Colors.red,
+        );
+      }
+    }
   }
 
-  void _showDeleteLogConfirmation(Map<String, dynamic> logItem) {
-    final colors = context.colors;
-    showDialog<void>(
-      context: context,
-      builder: (dialogCtx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.card,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
-            children: [
-              Icon(Icons.delete_outline_rounded, color: Colors.red, size: 24),
-              SizedBox(width: 8),
-              Text('حذف ثبت مصرف', style: TextStyle(fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: Text(
-            'آیا مطمئن هستید که می‌خواهید این ثبت مصرف از داروی "${logItem['title']}" را حذف کنید؟',
-            style: const TextStyle(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('لغو', style: TextStyle()),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(dialogCtx);
-                await _deleteHistoryItem(logItem);
-                if (mounted) {
-                  RitmoToast.show(
-                    context,
-                    'ثبت مصرف دارو با موفقیت حذف شد.',
-                    icon: Icons.delete_outline_rounded,
-                    iconColor: Colors.red,
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.medicalRed,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('حذف', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+  Future<void> _showDeleteLogConfirmation(Map<String, dynamic> logItem) async {
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'حذف ثبت مصرف',
+      content: 'آیا مطمئن هستید که می‌خواهید این ثبت مصرف از داروی "${logItem['title']}" را حذف کنید؟',
+      confirmLabel: 'حذف',
+      cancelLabel: 'لغو',
+      isDestructive: true,
     );
+    if (confirmed == true && mounted) {
+      await _deleteHistoryItem(logItem);
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'ثبت مصرف دارو با موفقیت حذف شد.',
+          icon: Icons.delete_outline_rounded,
+          iconColor: Colors.red,
+        );
+      }
+    }
   }
 
   @override
@@ -1144,31 +1030,13 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
                           _showAddEditMedicationSheet(medication: med);
                           return false;
                         } else {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => Directionality(
-                              textDirection: TextDirection.rtl,
-                              child: AlertDialog(
-                                backgroundColor: colors.card,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                title: const Text('خاتمه مصرف دارو', style: TextStyle(fontWeight: FontWeight.bold)),
-                                content: const Text('آیا مایلید مصرف این دارو را خاتمه دهید و آن را غیرفعال کنید؟ (این دارو به تاریخچه منتقل می‌شود)', style: TextStyle()),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, false),
-                                    child: const Text('لغو', style: TextStyle()),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () => Navigator.pop(context, true),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: colors.medicalRed,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    ),
-                                    child: const Text('خاتمه مصرف', style: TextStyle(color: Colors.white)),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          final confirm = await RitmoDialog.show(
+                            context,
+                            title: 'خاتمه مصرف دارو',
+                            content: 'آیا مایلید مصرف این دارو را خاتمه دهید و آن را غیرفعال کنید؟ (این دارو به تاریخچه منتقل می‌شود)',
+                            confirmLabel: 'خاتمه مصرف',
+                            cancelLabel: 'لغو',
+                            isDestructive: true,
                           );
                           if (confirm ?? false) {
                             await _archiveMedication(medId);

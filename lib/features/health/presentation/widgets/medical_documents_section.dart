@@ -103,32 +103,29 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
     final controller = TextEditingController(text: doc.userNotes ?? '');
     final updated = await showDialog<String>(
       context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: context.colors.card,
-          title: const Text('ویرایش یادداشت شخصی', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: TextField(
-            controller: controller,
-            maxLines: 3,
-            textDirection: TextDirection.rtl,
-            style: TextStyle(color: context.colors.textPrimary),
-            decoration: const InputDecoration(
-              hintText: 'توضیحات یا یادداشت شخصی خود را وارد کنید...',
-            ),
+      builder: (ctx) => RitmoCustomDialog(
+        title: 'ویرایش یادداشت شخصی',
+        icon: CupertinoIcons.pencil,
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          textDirection: TextDirection.rtl,
+          style: TextStyle(color: context.colors.textPrimary),
+          decoration: const InputDecoration(
+            hintText: 'توضیحات یا یادداشت شخصی خود را وارد کنید...',
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف', style: TextStyle()),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              style: ElevatedButton.styleFrom(backgroundColor: context.colors.primary),
-              child: const Text('ذخیره', style: TextStyle(color: Colors.white)),
-            ),
-          ],
         ),
+        actions: [
+          RitmoSecondaryButton(
+            label: 'انصراف',
+            onPressed: () => Navigator.pop(ctx),
+          ),
+          const SizedBox(width: 10),
+          RitmoPrimaryButton(
+            label: 'ذخیره',
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+          ),
+        ],
       ),
     );
 
@@ -502,37 +499,19 @@ class _MedicalDocumentsSectionState extends State<MedicalDocumentsSection> {
     );
   }
 
-  void _confirmDelete(String id) {
-    final colors = context.colors;
+  Future<void> _confirmDelete(String id) async {
     final l10n = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.card,
-          title: const Text('حذف مدرک', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Text(
-            l10n.medicalDocumentsDeleteConfirm,
-            style: const TextStyle(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('انصراف', style: TextStyle()),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _deleteDocument(id);
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
-              child: const Text('حذف', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'حذف مدرک',
+      content: l10n.medicalDocumentsDeleteConfirm,
+      confirmLabel: 'حذف',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
+    if (confirmed == true) {
+      await _deleteDocument(id);
+    }
   }
 }
 

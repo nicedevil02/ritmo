@@ -296,51 +296,48 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
 
     showDialog(
       context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.surface,
-          title: const Text('تنظیم قد کاربر', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'جهت محاسبه دقیق شاخص‌های BMI، وزن ایده‌آل و نسبت دور کمر به قد، لطفاً قد خود را بر حسب سانتی‌متر وارد کنید:',
-                style: TextStyle(fontSize: 12.5),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: heightTextCtrl,
-                keyboardType: TextInputType.number,
-                autofocus: true,
-                style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold),
-                decoration: RitmoTheme.inputDecoration(
-                  context,
-                  label: 'قد (سانتی‌متر)',
-                  icon: Icons.height,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('انصراف'),
+      builder: (dialogCtx) => RitmoCustomDialog(
+        title: 'تنظیم قد کاربر',
+        icon: Icons.height,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'جهت محاسبه دقیق شاخص‌های BMI، وزن ایده‌آل و نسبت دور کمر به قد، لطفاً قد خود را بر حسب سانتی‌متر وارد کنید:',
+              style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
             ),
-            ElevatedButton(
-              onPressed: () {
-                final clean = _normalizeDigits(heightTextCtrl.text.trim());
-                final parsed = double.tryParse(clean);
-                if (parsed != null && parsed > 50 && parsed < 260) {
-                  _saveHeight(parsed);
-                  Navigator.pop(context);
-                }
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-              child: const Text('ذخیره قد', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: heightTextCtrl,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold),
+              decoration: RitmoTheme.inputDecoration(
+                dialogCtx,
+                label: 'قد (سانتی‌متر)',
+                icon: Icons.height,
+              ),
             ),
           ],
         ),
+        actions: [
+          RitmoSecondaryButton(
+            label: 'انصراف',
+            onPressed: () => Navigator.pop(dialogCtx),
+          ),
+          const SizedBox(width: 10),
+          RitmoPrimaryButton(
+            label: 'ذخیره قد',
+            onPressed: () {
+              final clean = _normalizeDigits(heightTextCtrl.text.trim());
+              final parsed = double.tryParse(clean);
+              if (parsed != null && parsed > 50 && parsed < 260) {
+                _saveHeight(parsed);
+                Navigator.pop(dialogCtx);
+              }
+            },
+          ),
+        ],
       ),
     );
   }

@@ -8,7 +8,6 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 
 /// UX-05 Fullscreen Labor Mode Screen with wakelock_plus, big central pulse button (>=200px),
@@ -404,27 +403,39 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
       },
       child: Scaffold(
         backgroundColor: colors.surface,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(CupertinoIcons.xmark, color: colors.textPrimary),
-            onPressed: () async {
-              final canPop = await _onWillPop();
-              if (canPop && context.mounted) {
-                Navigator.of(context).pop();
-              }
-            },
-          ),
-          title: Text(
-            'حالت زایمان (سنجش انقباضات)',
-            style: TextStyle(fontSize: 18, color: colors.textPrimary),
-          ),
-          centerTitle: true,
-        ),
         body: SafeArea(
           child: Column(
             children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: RitmoGlassHeader(
+                  borderRadius: BorderRadius.circular(22),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: Icon(CupertinoIcons.xmark, color: colors.textPrimary, size: 20),
+                        onPressed: () async {
+                          final canPop = await _onWillPop();
+                          if (canPop && context.mounted) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                      ),
+                      Text(
+                        'حالت زایمان (سنجش انقباضات)',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 44),
+                    ],
+                  ),
+                ),
+              ),
               // 5-1-1 Banner alert
               if (all511)
                 Container(

@@ -6,7 +6,6 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Specialized Action Sheet for Interval-based Routines (RoutineType.intervalBased)
@@ -88,7 +87,7 @@ class _RoutineIntervalSheetState extends State<RoutineIntervalSheet> {
 
   DateTime? get _lastDose => _dosesToday.isNotEmpty ? _dosesToday.last : null;
 
-  DateTime? get _nextDose => _lastDose != null ? _lastDose!.add(Duration(hours: _intervalHours)) : null;
+  DateTime? get _nextDose => _lastDose?.add(Duration(hours: _intervalHours));
 
   String _formatTime(DateTime dt) {
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
@@ -162,7 +161,6 @@ class _RoutineIntervalSheetState extends State<RoutineIntervalSheet> {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final lastDose = _lastDose;
     final nextDose = _nextDose;
     final isMaxReached = _dosesToday.length >= _maxDoses;
 

@@ -412,46 +412,39 @@ class PregnancyProgressTab extends StatelessWidget {
           // UX-10 Hospital Bag checklist if week >= 32
           if (currentWeek >= 32) ...[
             const SizedBox(height: 20),
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(color: colors.primary.withValues(alpha: 0.2)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '🎒 چک‌لیست ساک بیمارستان (هفته ۳۲ به بعد)',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: colors.textPrimary,
-                      ),
+            RitmoCard.neumorphic(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '🎒 چک‌لیست ساک بیمارستان (هفته ۳۲ به بعد)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: colors.textPrimary,
                     ),
-                    const SizedBox(height: 8),
-                    ...hospitalBagItems.asMap().entries.map((entry) {
-                      final idx = entry.key;
-                      final item = entry.value;
-                      return CheckboxListTile(
-                        dense: true,
-                        activeColor: colors.primary,
-                        title: Text(
-                          item['title'] as String,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colors.textPrimary,
-                          ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...hospitalBagItems.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final item = entry.value;
+                    return CheckboxListTile(
+                      dense: true,
+                      activeColor: colors.primary,
+                      title: Text(
+                        item['title'] as String,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.textPrimary,
                         ),
-                        value: item['done'] as bool,
-                        onChanged: (val) =>
-                            onToggleHospitalBagItem(idx, val ?? false),
-                      );
-                    }),
-                  ],
-                ),
+                      ),
+                      value: item['done'] as bool,
+                      onChanged: (val) =>
+                          onToggleHospitalBagItem(idx, val ?? false),
+                    );
+                  }),
+                ],
               ),
             ),
           ],

@@ -18,55 +18,50 @@ class GenericStep2Form extends StatelessWidget {
     final textController = TextEditingController(text: controller.targetDuration.toString());
     showDialog(
       context: context,
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.sheetBackground,
-            title: const Text(
-              'وارد کردن دستی مدت زمان',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'مدت زمان مورد نظر خود را به دقیقه وارد کنید:',
-                  style: TextStyle(fontSize: 13),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: textController,
-                  keyboardType: TextInputType.number,
-                  autofocus: true,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  decoration: InputDecoration(
-                    suffixText: 'دقیقه',
-                    suffixStyle: const TextStyle(fontSize: 13),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('لغو', style: TextStyle(color: colors.textSecondary)),
+      builder: (dialogCtx) {
+        return RitmoCustomDialog(
+          title: 'وارد کردن دستی مدت زمان',
+          icon: Icons.timer_outlined,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'مدت زمان مورد نظر خود را به دقیقه وارد کنید:',
+                style: TextStyle(fontSize: 13, color: colors.textSecondary),
               ),
-              TextButton(
-                onPressed: () {
-                  final val = int.tryParse(textController.text);
-                  if (val != null && val > 0) {
-                    controller.targetDuration = val;
-                    controller.notifyListeners();
-                  }
-                  Navigator.pop(context);
-                },
-                child: const Text('تایید', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: textController,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                decoration: InputDecoration(
+                  suffixText: 'دقیقه',
+                  suffixStyle: TextStyle(fontSize: 13, color: colors.textSecondary),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
             ],
           ),
+          actions: [
+            RitmoSecondaryButton(
+              label: 'لغو',
+              onPressed: () => Navigator.pop(dialogCtx),
+            ),
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'تایید',
+              onPressed: () {
+                final val = int.tryParse(textController.text);
+                if (val != null && val > 0) {
+                  controller.targetDuration = val;
+                  controller.notifyListeners();
+                }
+                Navigator.pop(dialogCtx);
+              },
+            ),
+          ],
         );
       },
     );

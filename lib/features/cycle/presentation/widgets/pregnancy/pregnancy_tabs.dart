@@ -73,12 +73,8 @@ class PregnancyCheckupsTab extends StatelessWidget {
           isCompleted: false,
         );
 
-        return Card(
+        return RitmoCard.neumorphic(
           margin: const EdgeInsets.only(bottom: 10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: colors.border),
-          ),
           child: ListTile(
             title: Text(
               item['title'] as String,

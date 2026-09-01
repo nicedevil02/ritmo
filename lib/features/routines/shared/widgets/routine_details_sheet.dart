@@ -47,32 +47,13 @@ class RoutineDetailsSheet extends StatelessWidget {
     final isToday = targetDate == todayStr;
     final dateLabel = isToday ? 'امروز' : 'تاریخ $targetDate';
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogCtx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.card,
-          title: Text(
-            'لغو ثبت انجام',
-            style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary),
-          ),
-          content: Text(
-            'آیا از لغو ثبت انجام این روتین برای $dateLabel اطمینان دارید؟',
-            style: TextStyle(color: colors.textSecondary),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx, false),
-              child: Text('خیر', style: TextStyle(color: colors.textSecondary)),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx, true),
-              child: Text('بله، لغو شود', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'لغو ثبت انجام',
+      content: 'آیا از لغو ثبت انجام این روتین برای $dateLabel اطمینان دارید؟',
+      confirmLabel: 'بله، لغو شود',
+      cancelLabel: 'خیر',
+      isDestructive: true,
     );
 
     if (confirmed ?? false) {
@@ -111,12 +92,12 @@ class RoutineDetailsSheet extends StatelessWidget {
       future: _loadCompletions(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Directionality(
+          return const Directionality(
             textDirection: TextDirection.rtl,
             child: RitmoGlassSheet(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              padding: const EdgeInsets.all(32),
-              child: const SizedBox(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              padding: EdgeInsets.all(32),
+              child: SizedBox(
                 height: 180,
                 child: Center(child: CupertinoActivityIndicator()),
               ),

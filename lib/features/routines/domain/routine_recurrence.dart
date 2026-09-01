@@ -59,7 +59,7 @@ String encodeRecurrenceRule({
   final Map<String, dynamic> ruleMap = {
     'reminderTimes': reminderTimes,
     'startDate': startDateStr,
-    if (endDateStr != null) 'endDate': endDateStr,
+    'endDate': ?endDateStr,
   };
 
   switch (recurrence) {

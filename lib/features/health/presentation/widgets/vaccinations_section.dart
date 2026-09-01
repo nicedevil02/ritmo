@@ -345,33 +345,18 @@ class _VaccinationsSectionState extends State<VaccinationsSection> {
     );
   }
 
-  void _confirmDelete(String id) {
-    final colors = context.colors;
-    showDialog(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.card,
-          title: const Text('حذف واکسن', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: const Text('آیا مطمئن هستید که می‌خواهید اطلاعات این واکسیناسیون را حذف کنید؟', style: TextStyle()),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('انصراف', style: TextStyle()),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _deleteVaccination(id);
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed),
-              child: const Text('حذف', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+  Future<void> _confirmDelete(String id) async {
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'حذف واکسن',
+      content: 'آیا مطمئن هستید که می‌خواهید اطلاعات این واکسیناسیون را حذف کنید؟',
+      confirmLabel: 'حذف',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
+    if (confirmed == true) {
+      await _deleteVaccination(id);
+    }
   }
 }
 

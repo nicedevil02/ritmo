@@ -6,7 +6,6 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Specialized Action & Tracking Sheet for Count-based Routines (RoutineType.countBased)
@@ -49,7 +48,6 @@ class _RoutineCountSheetState extends State<RoutineCountSheet> {
   int _targetCount = 8;
   String _unit = 'بار';
   bool _isLoading = true;
-  bool _isSaving = false;
 
   @override
   void initState() {
@@ -242,14 +240,14 @@ class _RoutineCountSheetState extends State<RoutineCountSheet> {
                         color: Colors.green.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.check_circle_rounded, color: Colors.green, size: 16),
-                          const SizedBox(width: 6),
+                          Icon(Icons.check_circle_rounded, color: Colors.green, size: 16),
+                          SizedBox(width: 6),
                           Text(
                             'هدف امروز محقق شد! 🎉',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: Colors.green,

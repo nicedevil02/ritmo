@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:ritmo/core/domain/agenda/agenda_item.dart';
-import 'package:ritmo/core/domain/completion/completion_outcome.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/widgets/action/action_capabilities.dart';
 import 'package:ritmo/core/widgets/action/action_sheet_registry.dart';
-import 'package:ritmo/core/widgets/action/action_sheet_result.dart';
 import 'package:ritmo/core/widgets/action/sheet_actions.dart';
 
 class RoutineActionBody extends ActionBody {
@@ -23,8 +19,8 @@ class RoutineActionBody extends ActionBody {
   });
 
   @override
-  ActionCapabilities get capabilities => ActionCapabilities(
-        variants: const ['FULL', 'LIGHT', 'MINIMAL'],
+  ActionCapabilities get capabilities => const ActionCapabilities(
+        variants: ['FULL', 'LIGHT', 'MINIMAL'],
         canTimer: true,
         canSnooze: true,
         canSkip: true,

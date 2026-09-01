@@ -1,7 +1,9 @@
 import 'dart:ui' as ui;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:ritmo/features/health/data/pregnancy_repository.dart';
 import 'package:ritmo/features/health/data/pregnancy_week_data.dart';
@@ -73,23 +75,50 @@ class _WeeklyShareCardScreenState extends State<WeeklyShareCardScreen> {
     final babySize = weekInfo?.babySizeFa ?? weekInfo?.size ?? 'میوه کوچک';
     final babyWeight = weekInfo?.babyWeightFa ?? '';
     final progressFraction = (weeks / 40.0).clamp(0.0, 1.0);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'کارت رشد هفتگی قابل اشتراک‌گذاری',
-          style: TextStyle(),
-        ),
-        actions: [
-          IconButton(icon: const Icon(Icons.share), onPressed: _exportAndShare),
-        ],
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: colors.bg,
+        body: SafeArea(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: RitmoGlassHeader(
+                  borderRadius: BorderRadius.circular(22),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(CupertinoIcons.back),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Text(
+                        'کارت رشد هفتگی',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(CupertinoIcons.share),
+                        onPressed: _exportAndShare,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
               // RepaintBoundary wrapping 4:5 Fixed Aspect Ratio Card
               RepaintBoundary(
                 key: _boundaryKey,
@@ -280,10 +309,15 @@ class _WeeklyShareCardScreenState extends State<WeeklyShareCardScreen> {
                 ),
                 onPressed: _exportAndShare,
               ),
-            ],
-          ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
+    ),
     );
   }
 }

@@ -214,6 +214,7 @@ class _PregnancyReportScreenState extends State<PregnancyReportScreen> {
         name: 'pregnancy_report_${DateTime.now().millisecondsSinceEpoch}.png',
       );
 
+      // ignore: deprecated_member_use
       await Share.shareXFiles([xFile], text: 'گزارش دوره بارداری جهت ارائه به پزشک متخصص زنان');
     } catch (e) {
       debugPrint('[PregnancyReport] Export error: $e');

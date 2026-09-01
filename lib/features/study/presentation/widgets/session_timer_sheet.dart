@@ -9,6 +9,7 @@ import 'package:ritmo/features/study/data/study_settings_repository.dart';
 import 'package:ritmo/features/study/domain/study_models.dart';
 import 'package:ritmo/features/study/domain/study_review_policy.dart';
 import 'package:ritmo/features/study/logic/study_timer_service.dart';
+import 'study_break_mobility_card.dart';
 
 enum TimerModeType { stopwatch, pomodoro25, pomodoro50 }
 
@@ -431,6 +432,10 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
                 ),
               ],
             ),
+            if (isBreak) ...[
+              const SizedBox(height: 16),
+              const StudyBreakMobilityCard(),
+            ],
             const SizedBox(height: 16),
             TextField(
               controller: _noteController,

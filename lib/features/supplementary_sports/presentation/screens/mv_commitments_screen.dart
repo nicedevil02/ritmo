@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -108,98 +109,124 @@ class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.mv_commitments_title),
-        centerTitle: false,
-        actions: [
-          IconButton(
-            key: const ValueKey('mv_commitments_add_btn'),
-            icon: const Icon(Icons.add_rounded),
-            onPressed: () => _openEditSheet(),
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _commitments.isEmpty
-              ? Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Center(
-                    child: RitmoNeuEmptyCard(
-                      icon: Icons.lock_clock_outlined,
-                      title: l10n.mv_commitments_title,
-                      subtitle: l10n.mv_commitments_empty,
-                      actionLabel: l10n.mv_commitment_add,
-                      onActionTap: () => _openEditSheet(),
-                    ),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: colors.bg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg, vertical: metrics.spaceSm),
+                child: RitmoGlassHeader(
+                  borderRadius: BorderRadius.circular(22),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(CupertinoIcons.back),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Text(
+                        l10n.mv_commitments_title,
+                        style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      IconButton(
+                        key: const ValueKey('mv_commitments_add_btn'),
+                        icon: const Icon(Icons.add_rounded),
+                        onPressed: () => _openEditSheet(),
+                      ),
+                    ],
                   ),
-                )
-              : ListView.separated(
-                  padding: EdgeInsets.all(metrics.spaceMd),
-                  itemCount: _commitments.length,
-                  separatorBuilder: (context, index) =>
-                      SizedBox(height: metrics.spaceSm),
-                  itemBuilder: (context, index) {
-                    final c = _commitments[index];
-                    final kind = _kindsMap[c.kindCode];
-                    final emoji = kind?.emoji ?? '🏃';
-
-                    return RitmoCard.neumorphic(
-                      key: ValueKey('mv_commitment_card_${c.id}'),
-                      onTap: () => _openEditSheet(c),
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        children: [
-                          RitmoNeuSurface(
-                            width: 44,
-                            height: 44,
-                            radius: 12,
-                            padding: EdgeInsets.zero,
+                ),
+              ),
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _commitments.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.all(24),
                             child: Center(
-                              child: Text(
-                                emoji,
-                                style: textTheme.titleMedium,
+                              child: RitmoNeuEmptyCard(
+                                icon: Icons.lock_clock_outlined,
+                                title: l10n.mv_commitments_title,
+                                subtitle: l10n.mv_commitments_empty,
+                                actionLabel: l10n.mv_commitment_add,
+                                onActionTap: () => _openEditSheet(),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  c.titleFa ?? l10n.mv_exercise_fallback,
-                                  style: textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: colors.textPrimary,
-                                  ),
+                          )
+                        : ListView.separated(
+                            padding: EdgeInsets.all(metrics.spaceMd),
+                            itemCount: _commitments.length,
+                            separatorBuilder: (context, index) =>
+                                SizedBox(height: metrics.spaceSm),
+                            itemBuilder: (context, index) {
+                              final c = _commitments[index];
+                              final kind = _kindsMap[c.kindCode];
+                              final emoji = kind?.emoji ?? '🏃';
+
+                              return RitmoCard.neumorphic(
+                                key: ValueKey('mv_commitment_card_${c.id}'),
+                                onTap: () => _openEditSheet(c),
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  children: [
+                                    RitmoNeuSurface(
+                                      width: 44,
+                                      height: 44,
+                                      radius: 12,
+                                      padding: EdgeInsets.zero,
+                                      child: Center(
+                                        child: Text(
+                                          emoji,
+                                          style: textTheme.titleMedium,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            c.titleFa ?? l10n.mv_exercise_fallback,
+                                            style: textTheme.titleSmall?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: colors.textPrimary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            l10n.mv_commitment_recurrence_summary(
+                                              _dayLabel(c.dayOfWeekSat0),
+                                              toPersianDigits(c.startTime),
+                                              toPersianDigits(c.durationMinutes.toString()),
+                                            ),
+                                            style: textTheme.bodySmall?.copyWith(
+                                              color: colors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Switch(
+                                      key: ValueKey('mv_commitment_switch_${c.id}'),
+                                      value: c.isActive,
+                                      activeTrackColor: colors.accent,
+                                      onChanged: (val) => _toggleActive(c, val),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  l10n.mv_commitment_recurrence_summary(
-                                    _dayLabel(c.dayOfWeekSat0),
-                                    toPersianDigits(c.startTime),
-                                    toPersianDigits(c.durationMinutes.toString()),
-                                  ),
-                                  style: textTheme.bodySmall?.copyWith(
-                                    color: colors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
-                          Switch(
-                            key: ValueKey('mv_commitment_switch_${c.id}'),
-                            value: c.isActive,
-                            activeTrackColor: colors.accent,
-                            onChanged: (val) => _toggleActive(c, val),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

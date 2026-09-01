@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -151,39 +152,65 @@ class _MvDayDetailScreenState extends State<MvDayDetailScreen> {
       MvCalendar.dateTimeToSat0(dt),
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('$dayName (${toPersianDigits(_currentSlot.dateIso)})'),
-        centerTitle: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_rounded),
-            tooltip: l10n?.mv_day_detail_edit_tooltip ?? 'Edit Day Plan',
-            onPressed: () {
-              MvDayPlanSheet.show(
-                context: context,
-                slot: _currentSlot,
-                onSave: (s) {
-                  setState(() => _currentSlot = s);
-                  widget.onSlotUpdated(s);
-                },
-                onDelete: (s, delRec) {
-                  widget.onDeleteSlot?.call(s, delRec);
-                  Navigator.pop(context);
-                },
-              );
-            },
-          ),
-          if (!_currentSlot.isRest)
-            IconButton(
-              icon: Icon(Icons.delete_outline_rounded, color: colors.error),
-              tooltip: l10n?.mv_day_detail_delete_tooltip ?? 'حذف برنامهٔ ورزشی این روز',
-              onPressed: _handleDelete,
-            ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: colors.bg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: RitmoGlassHeader(
+                  borderRadius: BorderRadius.circular(22),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(CupertinoIcons.back),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Text(
+                        '$dayName (${toPersianDigits(_currentSlot.dateIso)})',
+                        style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit_rounded),
+                            tooltip: l10n?.mv_day_detail_edit_tooltip ?? 'Edit Day Plan',
+                            onPressed: () {
+                              MvDayPlanSheet.show(
+                                context: context,
+                                slot: _currentSlot,
+                                onSave: (s) {
+                                  setState(() => _currentSlot = s);
+                                  widget.onSlotUpdated(s);
+                                },
+                                onDelete: (s, delRec) {
+                                  widget.onDeleteSlot?.call(s, delRec);
+                                  Navigator.pop(context);
+                                },
+                              );
+                            },
+                          ),
+                          if (!_currentSlot.isRest)
+                            IconButton(
+                              icon: Icon(Icons.delete_outline_rounded, color: colors.error),
+                              tooltip: l10n?.mv_day_detail_delete_tooltip ?? 'حذف برنامهٔ ورزشی این روز',
+                              onPressed: _handleDelete,
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
         children: [
           // Headline Hero Card
           RitmoCard.neumorphic(
@@ -316,8 +343,13 @@ class _MvDayDetailScreenState extends State<MvDayDetailScreen> {
                 widget.onStartSession();
               },
             ),
-        ],
-      ),
-    );
+            ],
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+);
   }
 }

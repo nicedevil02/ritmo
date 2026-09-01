@@ -50,21 +50,22 @@ class _DayPlanTemplateManagementScreenState
     showDialog(
       context: context,
       builder: (ctx) {
-        final colors = ctx.colors;
-        return AlertDialog(
-          backgroundColor: colors.bg,
-          title: const Text('تغییر نام قالب', textAlign: TextAlign.right),
+        return RitmoCustomDialog(
+          title: 'تغییر نام قالب',
+          icon: CupertinoIcons.pencil,
           content: TextField(
             controller: controller,
             textAlign: TextAlign.right,
             decoration: const InputDecoration(hintText: 'نام جدید قالب'),
           ),
           actions: [
-            TextButton(
+            RitmoSecondaryButton(
+              label: 'انصراف',
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف'),
             ),
-            ElevatedButton(
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'ثبت',
               onPressed: () async {
                 final newName = controller.text.trim();
                 if (newName.isEmpty) return;
@@ -79,16 +80,15 @@ class _DayPlanTemplateManagementScreenState
                   if (mounted) {
                     await _loadTemplates();
                     if (mounted) {
-                      RitmoSnackbar.success(context, 'نام قالب تغییر یافت ✏️');
+                      RitmoToast.show(context, 'نام قالب تغییر یافت ✏️');
                     }
                   }
                 } catch (e) {
                   if (mounted) {
-                    RitmoSnackbar.error(context, 'خطا در تغییر نام ❌');
+                    RitmoToast.show(context, 'خطا در تغییر نام ❌');
                   }
                 }
               },
-              child: const Text('ثبت'),
             ),
           ],
         );
@@ -96,56 +96,33 @@ class _DayPlanTemplateManagementScreenState
     );
   }
 
-  void _deleteTemplate(DayPlanTemplate template) {
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        final colors = ctx.colors;
-        return AlertDialog(
-          backgroundColor: colors.bg,
-          title: const Text('حذف قالب', textAlign: TextAlign.right),
-          content: Text(
-            'آیا از حذف قالب "${template.name}" مطمئن هستید؟ این عمل غیرقابل بازگشت است.',
-            textAlign: TextAlign.right,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-              ),
-              onPressed: () async {
-                try {
-                  await DayPlanTemplateService.instance.deleteTemplate(
-                    template.id,
-                  );
-                  if (ctx.mounted) {
-                    Navigator.pop(ctx);
-                  }
-                  if (mounted) {
-                    await _loadTemplates();
-                    if (mounted) {
-                      RitmoSnackbar.success(
-                        context,
-                        'قالب با موفقیت حذف شد 🗑️',
-                      );
-                    }
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    RitmoSnackbar.error(context, 'خطا در حذف قالب ❌');
-                  }
-                }
-              },
-              child: const Text('حذف'),
-            ),
-          ],
-        );
-      },
+  void _deleteTemplate(DayPlanTemplate template) async {
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'حذف قالب',
+      content: 'آیا از حذف قالب "${template.name}" مطمئن هستید؟ این عمل غیرقابل بازگشت است.',
+      confirmLabel: 'حذف',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
+
+    if (confirmed == true) {
+      try {
+        await DayPlanTemplateService.instance.deleteTemplate(
+          template.id,
+        );
+        if (mounted) {
+          await _loadTemplates();
+          if (mounted) {
+            RitmoToast.show(context, 'قالب با موفقیت حذف شد 🗑️');
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          RitmoToast.show(context, 'خطا در حذف قالب ❌');
+        }
+      }
+    }
   }
 
   void _viewTemplateItems(DayPlanTemplate template) {
@@ -185,34 +162,35 @@ class _DayPlanTemplateManagementScreenState
                       itemCount: template.items.length,
                       itemBuilder: (context, index) {
                         final item = template.items[index];
-                        return Card(
-                          color: colors.card,
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: ListTile(
-                            leading: Icon(
-                              item.targetModule == 'worship'
-                                  ? CupertinoIcons.moon_stars
-                                  : item.targetModule == 'sleep'
-                                  ? CupertinoIcons.bed_double
-                                  : CupertinoIcons.check_mark_circled,
-                              color: colors.goldAccent,
-                            ),
-                            title: Text(
-                              item.title,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: colors.textPrimary,
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: RitmoCard.neumorphic(
+                            child: ListTile(
+                              leading: Icon(
+                                item.targetModule == 'worship'
+                                    ? CupertinoIcons.moon_stars
+                                    : item.targetModule == 'sleep'
+                                    ? CupertinoIcons.bed_double
+                                    : CupertinoIcons.check_mark_circled,
+                                color: colors.goldAccent,
                               ),
-                            ),
-                            subtitle: Text(
-                              'زمان: ${item.startKind == 'clock'
-                                  ? (item.startTime ?? '')
-                                  : item.startKind == 'anchor'
-                                  ? 'لنگر ${item.anchorEvent}'
-                                  : 'بعد از فعالیت قبلی'} • مدت: ${item.durationMin ?? 30} دقیقه',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: colors.textSecondary,
+                              title: Text(
+                                item.title,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: colors.textPrimary,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'زمان: ${item.startKind == 'clock'
+                                    ? (item.startTime ?? '')
+                                    : item.startKind == 'anchor'
+                                    ? 'لنگر ${item.anchorEvent}'
+                                    : 'بعد از فعالیت قبلی'} • مدت: ${item.durationMin ?? 30} دقیقه',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colors.textSecondary,
+                                ),
                               ),
                             ),
                           ),
@@ -232,114 +210,121 @@ class _DayPlanTemplateManagementScreenState
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: colors.bg,
-      appBar: AppBar(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
         backgroundColor: colors.bg,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          'قالب‌های برنامه‌ریز روز',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: colors.textPrimary,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: RitmoGlassHeader(
+                  borderRadius: BorderRadius.circular(22),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(CupertinoIcons.back),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const Expanded(
+                        child: Center(
+                          child: Text(
+                            'قالب‌های برنامه‌ریز روز',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 44),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CupertinoActivityIndicator())
+                    : _templates.isEmpty
+                        ? const Center(
+                            child: RitmoNeuEmptyCard(
+                              icon: Icons.bookmarks_outlined,
+                              title: 'هیچ قالبی ذخیره نشده است 💾',
+                              subtitle: 'می‌توانید برنامه‌های روزانه خود را به عنوان قالب ذخیره کنید.',
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            itemCount: _templates.length,
+                            itemBuilder: (context, index) {
+                              final template = _templates[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: RitmoCard.neumorphic(
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    title: Text(
+                                      template.name,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: colors.textPrimary,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      'شامل ${template.items.length} فعالیت • تعداد استفاده: ${template.useCount}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: colors.textSecondary,
+                                      ),
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.visibility_outlined,
+                                            color: colors.textSecondary,
+                                            size: 20,
+                                          ),
+                                          onPressed: () => _viewTemplateItems(template),
+                                        ),
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.edit_outlined,
+                                            color: colors.textSecondary,
+                                            size: 20,
+                                          ),
+                                          onPressed: () => _renameTemplate(template),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            color: Colors.redAccent,
+                                            size: 20,
+                                          ),
+                                          onPressed: () => _deleteTemplate(template),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+              ),
+            ],
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: colors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Directionality(
-        textDirection: TextDirection.rtl,
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _templates.isEmpty
-            ? Center(
-                child: Text(
-                  'هیچ قالبی ذخیره نشده است. 💾',
-                  style: TextStyle(fontSize: 14, color: colors.textSecondary),
-                ),
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                itemCount: _templates.length,
-                itemBuilder: (context, index) {
-                  final template = _templates[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : colors.border.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Material(
-                      color: colors.card,
-                      borderRadius: BorderRadius.circular(16),
-                      clipBehavior: Clip.antiAlias,
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        title: Text(
-                          template.name,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        subtitle: Text(
-                          'شامل ${template.items.length} فعالیت • تعداد استفاده: ${template.useCount}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                Icons.visibility_outlined,
-                                color: colors.textSecondary,
-                                size: 20,
-                              ),
-                              onPressed: () => _viewTemplateItems(template),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.edit_outlined,
-                                color: colors.textSecondary,
-                                size: 20,
-                              ),
-                              onPressed: () => _renameTemplate(template),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.redAccent,
-                                size: 20,
-                              ),
-                              onPressed: () => _deleteTemplate(template),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
       ),
     );
   }

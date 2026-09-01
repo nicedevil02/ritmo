@@ -120,107 +120,67 @@ class AiDayPlannerLauncher {
       builder: (ctx) {
         final colors = ctx.colors;
 
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.card,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(RitmoRadius.hero),
-            ),
-            title: Row(
-              children: [
-                Icon(
-                  CupertinoIcons.sparkles,
-                  size: 20,
-                  color: colors.reflectionAccent,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'برنامه‌ریز هوشمند',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'روزت را در چند جمله تعریف کن؛ ریتمو با توجه به برنامه‌های موجود، چیدمان پیشنهادی را می‌سازد.',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    height: 1.6,
-                    color: colors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: RitmoSpacing.md),
-                TextField(
-                  controller: controller,
-                  autofocus: true,
-                  maxLines: 3,
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colors.textPrimary,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'مثلاً: تا ۲ سرکارم، بعدش باشگاه، شب دو ساعت مطالعه',
-                    hintStyle: TextStyle(
-                      fontSize: 12,
-                      color: colors.textTertiary,
-                    ),
-                    filled: true,
-                    fillColor: colors.surfaceSunken,
-                    contentPadding: const EdgeInsets.all(RitmoSpacing.md),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(RitmoRadius.field),
-                      borderSide: BorderSide(color: colors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(RitmoRadius.field),
-                      borderSide: BorderSide(color: colors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(RitmoRadius.field),
-                      borderSide: BorderSide(color: colors.primary),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(
-                  'انصراف',
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                  ),
+        return RitmoCustomDialog(
+          title: 'برنامه‌ریز هوشمند',
+          icon: CupertinoIcons.sparkles,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'روزت را در چند جمله تعریف کن؛ ریتمو با توجه به برنامه‌های موجود، چیدمان پیشنهادی را می‌سازد.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  height: 1.6,
+                  color: colors.textSecondary,
                 ),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(RitmoRadius.field),
-                  ),
+              const SizedBox(height: RitmoSpacing.md),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                maxLines: 3,
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colors.textPrimary,
                 ),
-                onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-                child: const Text(
-                  'بچین',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                decoration: InputDecoration(
+                  hintText: 'مثلاً: تا ۲ سرکارم، بعدش باشگاه، شب دو ساعت مطالعه',
+                  hintStyle: TextStyle(
+                    fontSize: 12,
+                    color: colors.textTertiary,
+                  ),
+                  filled: true,
+                  fillColor: colors.surfaceSunken,
+                  contentPadding: const EdgeInsets.all(RitmoSpacing.md),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(RitmoRadius.field),
+                    borderSide: BorderSide(color: colors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(RitmoRadius.field),
+                    borderSide: BorderSide(color: colors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(RitmoRadius.field),
+                    borderSide: BorderSide(color: colors.primary),
                   ),
                 ),
               ),
             ],
           ),
+          actions: [
+            RitmoSecondaryButton(
+              label: 'انصراف',
+              onPressed: () => Navigator.pop(ctx),
+            ),
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'بچین',
+              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            ),
+          ],
         );
       },
     );
@@ -239,33 +199,28 @@ class _ProgressDialog extends StatelessWidget {
 
     return PopScope(
       canPop: false,
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: colors.card,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(RitmoRadius.hero),
-          ),
-          content: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CupertinoActivityIndicator(color: colors.textSecondary),
-              const SizedBox(width: RitmoSpacing.md),
-              Expanded(
-                child: ValueListenableBuilder<String>(
-                  valueListenable: progress,
-                  builder: (_, value, _) => Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      height: 1.6,
-                      color: colors.textPrimary,
-                    ),
+      child: RitmoCustomDialog(
+        title: 'در حال پردازش هوشمند...',
+        icon: CupertinoIcons.sparkles,
+        content: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoActivityIndicator(color: colors.textSecondary),
+            const SizedBox(width: RitmoSpacing.md),
+            Expanded(
+              child: ValueListenableBuilder<String>(
+                valueListenable: progress,
+                builder: (_, value, _) => Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.6,
+                    color: colors.textPrimary,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

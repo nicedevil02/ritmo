@@ -123,41 +123,12 @@ void main() async {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         final navContext = RitmoRouter.navigatorKey.currentContext;
         if (navContext != null && navContext.mounted) {
-          showDialog<void>(
-            context: navContext,
-            builder: (ctx) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: const Text(
-                'مشکلی پیش آمده',
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              content: const Text(
+          RitmoDialog.show(
+            navContext,
+            title: 'مشکلی پیش آمده',
+            content:
                 'برنامه با خطاهای متوالی مواجه شده است. داده‌های شما محفوظ هستند اما در صورت تداوم مشکل، راه‌اندازی مجدد برنامه توصیه می‌شود.',
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 13,
-                  height: 1.6,
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text(
-                    'متوجه شدم',
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            confirmLabel: 'متوجه شدم',
           );
         }
       });

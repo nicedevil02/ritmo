@@ -191,142 +191,94 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
     await showDialog(
       context: context,
       builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.card,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            title: const Text(
-              'تعویق نماز',
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 16.5,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            content: StatefulBuilder(
-              builder: (context, setState) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'نماز را برای چند دقیقه به تعویق می‌اندازید؟',
-                      style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButton<int>(
-                      value: selectedMinutes,
-                      items: const [
-                        DropdownMenuItem(
-                          value: 5,
-                          child: Text(
-                            '۵ دقیقه',
-                            style: TextStyle(fontFamily: 'Vazirmatn'),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 10,
-                          child: Text(
-                            '۱۰ دقیقه',
-                            style: TextStyle(fontFamily: 'Vazirmatn'),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 15,
-                          child: Text(
-                            '۱۵ دقیقه',
-                            style: TextStyle(fontFamily: 'Vazirmatn'),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 30,
-                          child: Text(
-                            '۳۰ دقیقه',
-                            style: TextStyle(fontFamily: 'Vazirmatn'),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 45,
-                          child: Text(
-                            '۴۵ دقیقه',
-                            style: TextStyle(fontFamily: 'Vazirmatn'),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 60,
-                          child: Text(
-                            '۱ ساعت',
-                            style: TextStyle(fontFamily: 'Vazirmatn'),
-                          ),
-                        ),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            selectedMinutes = val;
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                );
-              },
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'انصراف',
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                    fontFamily: 'Vazirmatn',
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return RitmoCustomDialog(
+              title: 'تعویق نماز',
+              icon: CupertinoIcons.time,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'نماز را برای چند دقیقه به تعویق می‌اندازید؟',
+                    style: TextStyle(fontSize: 14),
                   ),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xffD4A843),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: () async {
-                  Navigator.pop(context);
-                  try {
-                    final outcome = await AgendaActionHandler.instance
-                        .snoozePrayer(
-                          practiceIds: [practice['id'] as String],
-                          minutes: selectedMinutes,
-                          dateStr: item.dateStr,
-                        );
-                    if (context.mounted) {
-                      if (outcome is SnoozeRefused) {
-                        RitmoToast.show(context, outcome.userMessage);
-                      } else {
-                        onChanged();
+                  const SizedBox(height: 16),
+                  DropdownButton<int>(
+                    value: selectedMinutes,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 5,
+                        child: Text('۵ دقیقه'),
+                      ),
+                      DropdownMenuItem(
+                        value: 10,
+                        child: Text('۱۰ دقیقه'),
+                      ),
+                      DropdownMenuItem(
+                        value: 15,
+                        child: Text('۱۵ دقیقه'),
+                      ),
+                      DropdownMenuItem(
+                        value: 30,
+                        child: Text('۳۰ دقیقه'),
+                      ),
+                      DropdownMenuItem(
+                        value: 45,
+                        child: Text('۴۵ دقیقه'),
+                      ),
+                      DropdownMenuItem(
+                        value: 60,
+                        child: Text('۱ ساعت'),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          selectedMinutes = val;
+                        });
                       }
-                    }
-                  } catch (e, st) {
-                    RitmoLog.error(
-                      'AgendaRendererRegistry',
-                      'snoozePrayer failed',
-                      e,
-                      st,
-                    );
-                  }
-                },
-                child: Text(
-                  'ثبت تعویق',
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
+                    },
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+              actions: [
+                RitmoSecondaryButton(
+                  label: 'انصراف',
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const SizedBox(width: 10),
+                RitmoPrimaryButton(
+                  label: 'ثبت تعویق',
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    try {
+                      final outcome = await AgendaActionHandler.instance
+                          .snoozePrayer(
+                            practiceIds: [practice['id'] as String],
+                            minutes: selectedMinutes,
+                            dateStr: item.dateStr,
+                          );
+                      if (context.mounted) {
+                        if (outcome is SnoozeRefused) {
+                          RitmoToast.show(context, outcome.userMessage);
+                        } else {
+                          onChanged();
+                        }
+                      }
+                    } catch (e, st) {
+                      RitmoLog.error(
+                        'AgendaRendererRegistry',
+                        'snoozePrayer failed',
+                        e,
+                        st,
+                      );
+                    }
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -338,66 +290,13 @@ class PrayerAgendaRenderer extends AgendaTileRenderer {
     Map<String, dynamic> practice,
     VoidCallback onChanged,
   ) async {
-    final colors = context.colors;
-
-    final addToQada = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.card,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: Text(
-              'ثبت نماز قضای ${item.title}',
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontFamily: 'Vazirmatn',
-                fontSize: 16.5,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            content: Text(
-              'آیا مایلید نماز امروز (${item.title}) را به بدهی‌های عبادی (نماز قضا) اضافه کنید؟',
-              style: TextStyle(
-                color: colors.textSecondary,
-                fontFamily: 'Vazirmatn',
-                fontSize: 14.5,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(
-                  'خیر',
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                    fontFamily: 'Vazirmatn',
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xffD4A843),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(
-                  'بله، اضافه کن',
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    final addToQada = await RitmoDialog.show(
+      context,
+      title: 'ثبت نماز قضای ${item.title}',
+      content:
+          'آیا مایلید نماز امروز (${item.title}) را به بدهی‌های عبادی (نماز قضا) اضافه کنید؟',
+      confirmLabel: 'بله، اضافه کن',
+      cancelLabel: 'خیر',
     );
 
     if (addToQada != null) {

@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/ai/chat/chat_repository.dart';
+import 'package:ritmo/core/ai/chat/chat_session_manager.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
 
@@ -57,6 +58,9 @@ class _ChatSessionListScreenState extends State<ChatSessionListScreen> {
     setState(() {
       _sessions.removeWhere((s) => s.id == id);
     });
+
+    // If the dismissed session is currently active, reset to fresh empty chat
+    ChatSessionManager.instance.handleSessionDeleted(id);
 
     final timer = Timer(const Duration(seconds: 5), () async {
       _pendingDeletions.remove(id);
@@ -221,7 +225,8 @@ class _ChatSessionListScreenState extends State<ChatSessionListScreen> {
                             ),
                             onTap: () {
                               RitmoHaptics.tap();
-                              Navigator.pop(context, session.id);
+                              ChatSessionManager.instance.setActiveSession(session.id);
+                              Navigator.of(context).pop(session.id);
                             },
                           ),
                         ),
@@ -235,9 +240,9 @@ class _ChatSessionListScreenState extends State<ChatSessionListScreen> {
             shape: const CircleBorder(),
             onPressed: () async {
               RitmoHaptics.confirm();
-              final s = await ChatRepository.instance.createSession();
+              await ChatSessionManager.instance.clearActiveSession();
               if (context.mounted) {
-                Navigator.pop(context, s.id);
+                Navigator.of(context).pop();
               }
             },
             child: const Icon(Icons.add, size: 24),

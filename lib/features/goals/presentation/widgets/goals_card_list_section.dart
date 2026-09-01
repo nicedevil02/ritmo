@@ -779,23 +779,13 @@ class _GoalDetailsSheetState extends State<GoalDetailsSheet> {
                         ),
                         onPressed: () async {
                           final navigator = Navigator.of(context);
-                          final confirm = await showCupertinoDialog<bool>(
-                            context: context,
-                            builder: (context) => CupertinoAlertDialog(
-                              title: const Text('حذف هدف', style: TextStyle()),
-                              content: const Text('آیا از حذف کامل این هدف و تمامی گام‌های آن مطمئن هستید؟', style: TextStyle()),
-                              actions: [
-                                CupertinoDialogAction(
-                                  child: const Text('لغو', style: TextStyle()),
-                                  onPressed: () => Navigator.pop(context, false),
-                                ),
-                                CupertinoDialogAction(
-                                  isDestructiveAction: true,
-                                  child: const Text('حذف', style: TextStyle()),
-                                  onPressed: () => Navigator.pop(context, true),
-                                ),
-                              ],
-                            ),
+                          final confirm = await RitmoDialog.show(
+                            context,
+                            title: 'حذف هدف',
+                            content: 'آیا از حذف کامل این هدف و تمامی گام‌های آن مطمئن هستید؟',
+                            confirmLabel: 'حذف',
+                            cancelLabel: 'لغو',
+                            isDestructive: true,
                           );
                           if (confirm ?? false) {
                             widget.onDeleteGoal(_currentGoal.id);

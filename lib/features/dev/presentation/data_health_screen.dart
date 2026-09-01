@@ -118,91 +118,122 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'پایش سلامت داده‌ها (توسعه‌دهنده)',
-          style: TextStyle(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: _runHealthAuditQueries,
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _queryResults.length,
-              itemBuilder: (context, index) {
-                final item = _queryResults[index];
-                final title = item['title'] as String;
-                final count = item['count'] as int;
-                final rows = item['rows'] as List<Map<String, dynamic>>;
-
-                final hasIssue =
-                    count > 0 && index != 4; // Query 5 is breakdown
-
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: hasIssue
-                                    ? colors.error.withValues(alpha: 0.15)
-                                    : colors.success.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                '$count مورد',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: hasIssue
-                                      ? colors.error
-                                      : colors.success,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (rows.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            rows.take(3).toString(),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: colors.bg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: RitmoGlassHeader(
+                  borderRadius: BorderRadius.circular(22),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const Expanded(
+                        child: Center(
+                          child: Text(
+                            'پایش سلامت داده‌ها (توسعه‌دهنده)',
                             style: TextStyle(
-                              fontSize: 11,
-                              fontFamily: 'monospace',
-                              color: colors.textSecondary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ],
-                      ],
-                    ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh_rounded),
+                        onPressed: _runHealthAuditQueries,
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CupertinoActivityIndicator())
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
+                        itemCount: _queryResults.length,
+                        itemBuilder: (context, index) {
+                          final item = _queryResults[index];
+                          final title = item['title'] as String;
+                          final count = item['count'] as int;
+                          final rows = item['rows'] as List<Map<String, dynamic>>;
+
+                          final hasIssue =
+                              count > 0 && index != 4; // Query 5 is breakdown
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: RitmoCard.neumorphic(
+                              padding: const EdgeInsets.all(14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        title,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: hasIssue
+                                              ? colors.error.withValues(alpha: 0.15)
+                                              : colors.success.withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          '$count مورد',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: hasIssue
+                                                ? colors.error
+                                                : colors.success,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (rows.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      rows.take(3).toString(),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontFamily: 'monospace',
+                                        color: colors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

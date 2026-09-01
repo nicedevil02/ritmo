@@ -33,111 +33,80 @@ class _AIDeepAnalysisDialogState extends State<AIDeepAnalysisDialog> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xff1C1F2E)
-            : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Row(
-          children: [
-            const Icon(CupertinoIcons.sparkles, color: Color(0xff06B6D4), size: 22),
-            const SizedBox(width: 8),
-            Text(
-              'حریم خصوصی و پردازش هوشمند 🧠',
+    return RitmoCustomDialog(
+      title: 'حریم خصوصی و پردازش هوشمند 🧠',
+      icon: CupertinoIcons.sparkles,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'تحلیل عمیق الگوهای رفتاری نیازمند بررسی خلاصهٔ غیرشناسایی‌شده از آمارهای تکمیل روتین‌ها، نمرهٔ انرژی و خواب شما توسط دستیار هوش مصنوعی ریتمو است.',
+            style: TextStyle(
+              fontSize: 12,
+              color: colors.textSecondary,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
+            ),
+            child: Text(
+              '🔒 هیچ اطلاعات شخصی مانند نام، شماره همراه یا محتوای یادداشت‌های محرمانه ارسال نمی‌شود و فقط خلاصه آمارهای عددی تحلیل می‌گردد.',
               style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
+                fontSize: 11,
+                color: colors.primary,
+                height: 1.5,
               ),
             ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'تحلیل عمیق الگوهای رفتاری نیازمند بررسی خلاصهٔ غیرشناسایی‌شده از آمارهای تکمیل روتین‌ها، نمرهٔ انرژی و خواب شما توسط دستیار هوش مصنوعی ریتمو است.',
-              style: TextStyle(
-                fontSize: 12,
-                color: colors.textSecondary,
-                height: 1.6,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Checkbox(
+                value: _rememberChoice,
+                activeColor: const Color(0xff06B6D4),
+                onChanged: (val) {
+                  setState(() {
+                    _rememberChoice = val ?? true;
+                  });
+                },
               ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
-              ),
-              child: Text(
-                '🔒 هیچ اطلاعات شخصی مانند نام، شماره همراه یا محتوای یادداشت‌های محرمانه ارسال نمی‌شود و فقط خلاصه آمارهای عددی تحلیل می‌گردد.',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: colors.primary,
-                  height: 1.5,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Checkbox(
-                  value: _rememberChoice,
-                  activeColor: const Color(0xff06B6D4),
-                  onChanged: (val) {
-                    setState(() {
-                      _rememberChoice = val ?? true;
-                    });
-                  },
-                ),
-                Text(
+              Expanded(
+                child: Text(
                   'این انتخاب برای تحلیل‌های بعدی ذخیره شود',
                   style: TextStyle(
                     fontSize: 11,
                     color: colors.textPrimary,
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'انصراف',
-              style: TextStyle(
-                color: colors.textSecondary,
               ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (_rememberChoice) {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool(AIDeepAnalysisDialog.consentKey, true);
-              }
-              if (context.mounted) Navigator.pop(context, true);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff06B6D4),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text(
-              'تایید و شروع تحلیل',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+            ],
           ),
         ],
       ),
+      actions: [
+        RitmoSecondaryButton(
+          label: 'انصراف',
+          onPressed: () => Navigator.pop(context, false),
+        ),
+        const SizedBox(width: 10),
+        RitmoPrimaryButton(
+          label: 'تایید و شروع تحلیل',
+          onPressed: () async {
+            if (_rememberChoice) {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool(AIDeepAnalysisDialog.consentKey, true);
+            }
+            if (context.mounted) Navigator.pop(context, true);
+          },
+        ),
+      ],
     );
   }
 }

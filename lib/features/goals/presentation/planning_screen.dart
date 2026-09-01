@@ -173,15 +173,37 @@ class _PlanningScreenState extends State<PlanningScreen> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: colors.bg,
-      appBar: AppBar(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
         backgroundColor: colors.bg,
-        elevation: 0,
-        centerTitle: true,
-        title: _buildSegmentedControl(colors),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: RitmoGlassHeader(
+                  borderRadius: BorderRadius.circular(22),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(CupertinoIcons.back),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Center(child: _buildSegmentedControl(colors)),
+                      ),
+                      const SizedBox(width: 44),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(child: _buildBody(context)),
+            ],
+          ),
+        ),
       ),
-      body: _buildBody(context),
     );
   }
 

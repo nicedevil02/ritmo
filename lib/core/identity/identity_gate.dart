@@ -1,5 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 class IdentityGate {
   IdentityGate._();
@@ -24,34 +26,34 @@ class IdentityGate {
 
       final result = await showDialog<String>(
         context: context,
-        builder: (ctx) => Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: const Text('تعیین جنسیت', style: TextStyle(fontFamily: 'Vazirmatn')),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(reasonFa, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13)),
-                const SizedBox(height: 16),
-                const Text('جنسیت شما:', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, 'SKIPPED'),
-                child: const Text('رد کردن', style: TextStyle(fontFamily: 'Vazirmatn')),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, 'MALE'),
-                child: const Text('آقا', style: TextStyle(fontFamily: 'Vazirmatn')),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx, 'FEMALE'),
-                child: const Text('خانم', style: TextStyle(fontFamily: 'Vazirmatn')),
-              ),
+        builder: (ctx) => RitmoCustomDialog(
+          title: 'تعیین جنسیت',
+          icon: CupertinoIcons.person_crop_circle,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(reasonFa, style: const TextStyle(fontSize: 13)),
+              const SizedBox(height: 16),
+              const Text('جنسیت شما:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
+          actions: [
+            RitmoSecondaryButton(
+              label: 'رد کردن',
+              onPressed: () => Navigator.pop(ctx, 'SKIPPED'),
+            ),
+            const SizedBox(width: 8),
+            RitmoSecondaryButton(
+              label: 'آقا',
+              onPressed: () => Navigator.pop(ctx, 'MALE'),
+            ),
+            const SizedBox(width: 8),
+            RitmoPrimaryButton(
+              label: 'خانم',
+              onPressed: () => Navigator.pop(ctx, 'FEMALE'),
+            ),
+          ],
         ),
       );
 
@@ -98,38 +100,37 @@ class IdentityGate {
       final result = await showDialog<int>(
         context: context,
         builder: (ctx) => StatefulBuilder(
-          builder: (context, setDlgState) => Directionality(
-            textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              title: const Text('تعیین سن', style: TextStyle(fontFamily: 'Vazirmatn')),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(reasonFa, style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 13)),
-                  const SizedBox(height: 16),
-                  Text('سن شما: $selectedAge سال', style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-                  Slider(
-                    value: selectedAge.toDouble(),
-                    min: 10,
-                    max: 90,
-                    divisions: 80,
-                    label: '$selectedAge',
-                    onChanged: (v) => setDlgState(() => selectedAge = v.toInt()),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, null),
-                  child: const Text('رد کردن', style: TextStyle(fontFamily: 'Vazirmatn')),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx, selectedAge),
-                  child: const Text('تأیید', style: TextStyle(fontFamily: 'Vazirmatn')),
+          builder: (context, setDlgState) => RitmoCustomDialog(
+            title: 'تعیین سن',
+            icon: CupertinoIcons.calendar,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(reasonFa, style: const TextStyle(fontSize: 13)),
+                const SizedBox(height: 16),
+                Text('سن شما: $selectedAge سال', style: const TextStyle(fontWeight: FontWeight.bold)),
+                Slider(
+                  value: selectedAge.toDouble(),
+                  min: 10,
+                  max: 90,
+                  divisions: 80,
+                  label: '$selectedAge',
+                  onChanged: (v) => setDlgState(() => selectedAge = v.toInt()),
                 ),
               ],
             ),
+            actions: [
+              RitmoSecondaryButton(
+                label: 'رد کردن',
+                onPressed: () => Navigator.pop(ctx, null),
+              ),
+              const SizedBox(width: 10),
+              RitmoPrimaryButton(
+                label: 'تأیید',
+                onPressed: () => Navigator.pop(ctx, selectedAge),
+              ),
+            ],
           ),
         ),
       );

@@ -745,59 +745,15 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
   }
 
   Future<bool> _showDisableGroupingConfirmationDialog() async {
-    final colors = context.ritmoColors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xff1E1E2E) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xff3B82F6).withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(CupertinoIcons.square_grid_2x2, color: Color(0xff3B82F6), size: 22),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'تغییر چیدمان کارت‌ها',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        content: Text(
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'تغییر چیدمان کارت‌ها',
+      content:
           'با جابجایی دستی کارت‌ها، گروه‌بندی خودکار سیستم‌ها (رشد، سلامت، معنویت) غیرفعال می‌شود و کارت‌ها بر اساس ترتیب دلخواه شما قرار می‌گیرند.\n\nآیا مایل به ادامه هستید؟',
-          style: TextStyle(
-            fontSize: 13.5,
-            height: 1.6,
-            color: colors.textSecondary,
-          ),
-        ),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('انصراف', style: TextStyle(color: colors.textTertiary, fontWeight: FontWeight.w600)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff3B82F6),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 0,
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('تایید و جابجایی', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+      confirmLabel: 'تایید و جابجایی',
+      cancelLabel: 'انصراف',
     );
-    return result ?? false;
+    return confirmed ?? false;
   }
 
   Future<void> _setGroupingEnabled(bool enabled) async {

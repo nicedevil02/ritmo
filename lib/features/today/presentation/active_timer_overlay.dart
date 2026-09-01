@@ -227,60 +227,13 @@ class _ActiveTimerOverlayState extends State<ActiveTimerOverlay>
   Future<void> _showCompletionDialog() async {
     RitmoHaptics.confirm();
     if (!mounted) return;
-    final colors = context.colors;
 
-    final done = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogCtx) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.card,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Text(
-              'تایمر به پایان رسید 🎉',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
-              ),
-            ),
-            content: Text(
-              'زمان تعیین شده برای روتین "${widget.routine.title}" تمام شد. آیا آن را انجام دادید؟',
-              style: TextStyle(color: colors.textSecondary),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogCtx, false),
-                child: Text(
-                  'نه، بعداً انجام میدم',
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.success,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                ),
-                onPressed: () => Navigator.pop(dialogCtx, true),
-                child: const Text(
-                  'آره، انجام دادم',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    final done = await RitmoDialog.show(
+      context,
+      title: 'تایمر به پایان رسید 🎉',
+      content: 'زمان تعیین شده برای روتین "${widget.routine.title}" تمام شد. آیا آن را انجام دادید؟',
+      confirmLabel: 'آره، انجام دادم',
+      cancelLabel: 'نه، بعداً انجام میدم',
     );
 
     if (done ?? false) {

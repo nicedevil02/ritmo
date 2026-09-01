@@ -1841,39 +1841,29 @@ ${jsonEncode(digest.json)}
     
     showDialog(
       context: context,
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: const Color(0xff1C1F2E),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Row(
-              children: [
-                Icon(CupertinoIcons.doc_text_search, color: colors.primary, size: 20),
-                const SizedBox(width: 8),
-                Text('شناسنامه و ردیابی شاخص', style: RitmoTextStyles.body(Colors.white)),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildTraceItem('شاخص اندازه‌گیری', insight.sourceMetric, colors),
-                const SizedBox(height: 12),
-                _buildTraceItem('بازه محاسباتی داده', insight.calculationWindow, colors),
-                const SizedBox(height: 12),
-                _buildTraceItem('زمان آخرین محاسبه', dateStr, colors),
-                const SizedBox(height: 12),
-                _buildTraceItem('جدول دیتابیس مبدا', _getDBTableName(insight.sourceMetric), colors),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('بستن', style: TextStyle(color: Color(0xff5B8AF5), fontWeight: FontWeight.bold)),
-              ),
+      builder: (dialogCtx) {
+        return RitmoCustomDialog(
+          title: 'شناسنامه و ردیابی شاخص',
+          icon: CupertinoIcons.doc_text_search,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildTraceItem('شاخص اندازه‌گیری', insight.sourceMetric, colors),
+              const SizedBox(height: 12),
+              _buildTraceItem('بازه محاسباتی داده', insight.calculationWindow, colors),
+              const SizedBox(height: 12),
+              _buildTraceItem('زمان آخرین محاسبه', dateStr, colors),
+              const SizedBox(height: 12),
+              _buildTraceItem('جدول دیتابیس مبدا', _getDBTableName(insight.sourceMetric), colors),
             ],
           ),
+          actions: [
+            RitmoPrimaryButton(
+              label: 'بستن',
+              onPressed: () => Navigator.pop(dialogCtx),
+            ),
+          ],
         );
       },
     );

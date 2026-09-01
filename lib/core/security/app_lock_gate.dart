@@ -343,25 +343,12 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
 
     if (!isSupported && !canCheck && !useDeviceLock) {
       if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
-            'بازیابی رمز عبور',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          content: const Text(
+      await RitmoDialog.show(
+        context,
+        title: 'بازیابی رمز عبور',
+        content:
             'این دستگاه از قفل بیومتریک یا قفل سیستم‌عامل پشتیبانی نمی‌کند. در صورت فراموشی رمز عبور، برای حفظ امنیت داده‌ها، بازیابی فقط از طریق پاک‌سازی داده‌های برنامه یا نصب مجدد امکان‌پذیر است.',
-            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, height: 1.6),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('متوجه شدم', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
+        confirmLabel: 'متوجه شدم',
       );
       return;
     }

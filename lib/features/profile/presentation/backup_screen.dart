@@ -343,13 +343,9 @@ class _BackupScreenState extends State<BackupScreen> {
           textDirection: TextDirection.rtl,
           child: StatefulBuilder(
             builder: (context, setDialogState) {
-              return AlertDialog(
-                backgroundColor: colors.card,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                title: Text(
-                  'بازیابی اطلاعات ☁️',
-                  style: TextStyle(color: colors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+              return RitmoCustomDialog(
+                title: 'بازیابی اطلاعات ☁️',
+                icon: CupertinoIcons.cloud_download,
                 content: Form(
                   key: formKey,
                   child: Column(
@@ -405,16 +401,15 @@ class _BackupScreenState extends State<BackupScreen> {
                   ),
                 ),
                 actions: [
-                  TextButton(
-                    onPressed: localLoading ? null : () => Navigator.pop(dialogContext),
-                    child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+                  RitmoSecondaryButton(
+                    label: 'انصراف',
+                    onPressed: localLoading ? () {} : () => Navigator.pop(dialogContext),
                   ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.medicalRed,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
+                  const SizedBox(width: 10),
+                  RitmoPrimaryButton(
+                    label: 'شروع بازیابی',
+                    isLoading: localLoading,
+                    fullWidth: false,
                     onPressed: localLoading ? null : () async {
                       if (formKey.currentState!.validate()) {
                         setDialogState(() => localLoading = true);
@@ -438,7 +433,6 @@ class _BackupScreenState extends State<BackupScreen> {
                         }
                       }
                     },
-                    child: const Text('شروع بازیابی', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               );
@@ -461,40 +455,28 @@ class _BackupScreenState extends State<BackupScreen> {
           onPopInvokedWithResult: (didPop, _) {},
           child: Directionality(
             textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              backgroundColor: colors.card,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: RitmoCustomDialog(
+              title: 'بازیابی با موفقیت انجام شد 🎉',
+              icon: CupertinoIcons.check_mark_circled_solid,
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(CupertinoIcons.check_mark_circled_solid, color: colors.success, size: 54),
-                  const SizedBox(height: 16),
-                  Text(
-                    'بازیابی با موفقیت انجام شد 🎉',
-                    style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 12),
                   Text(
                     'برای بارگذاری اطلاعات جدید، اپلیکیشن به صورت خودکار راه‌اندازی مجدد می‌شود.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: colors.textSecondary, fontSize: 13, height: 1.45),
                   ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primary,
-                      foregroundColor: colors.onPrimary,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-                      RestartWidget.restart(context);
-                    },
-                    child: const Text('راه‌اندازی مجدد', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
                 ],
               ),
+              actions: [
+                RitmoPrimaryButton(
+                  label: 'راه‌اندازی مجدد',
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    RestartWidget.restart(context);
+                  },
+                ),
+              ],
             ),
           ),
         );
@@ -873,38 +855,13 @@ class _BackupScreenState extends State<BackupScreen> {
                                         IconButton(
                                           icon: Icon(CupertinoIcons.trash, color: colors.medicalRed, size: 20),
                                           onPressed: () async {
-                                            final confirm = await showDialog<bool>(
-                                              context: context,
-                                              builder: (dialogCtx) => AlertDialog(
-                                                backgroundColor: colors.card,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                                title: Text(
-                                                  'حذف فایل پشتیبان؟',
-                                                  style: TextStyle(
-                                                    color: colors.medicalRed,
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                content: Text(
-                                                  'آیا مطمئن هستید که می‌خواهید این فایل پشتیبان را از گوگل درایو حذف کنید؟ این عمل غیرقابل بازگشت است.',
-                                                  style: TextStyle(
-                                                    color: colors.textSecondary,
-                                                    fontSize: 13,
-                                                    height: 1.5,
-                                                  ),
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () => Navigator.pop(dialogCtx, false),
-                                                    child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () => Navigator.pop(dialogCtx, true),
-                                                    child: Text('بله، حذف کن', style: TextStyle(color: colors.medicalRed, fontWeight: FontWeight.bold)),
-                                                  ),
-                                                ],
-                                              ),
+                                            final confirm = await RitmoDialog.show(
+                                              context,
+                                              title: 'حذف فایل پشتیبان؟',
+                                              content: 'آیا مطمئن هستید که می‌خواهید این فایل پشتیبان را از گوگل درایو حذف کنید؟ این عمل غیرقابل بازگشت است.',
+                                              confirmLabel: 'بله، حذف کن',
+                                              cancelLabel: 'انصراف',
+                                              isDestructive: true,
                                             );
                                             if (confirm ?? false) {
                                               await _deleteBackup(meta);

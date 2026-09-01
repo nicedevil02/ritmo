@@ -74,25 +74,13 @@ class _RitmoActionSheetState extends State<RitmoActionSheet> {
     if (_busy) return;
 
     if (action.confirmationPrompt != null) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('تأیید کنش'),
-          content: Text(action.confirmationPrompt!),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('انصراف'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-              ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('تأیید'),
-            ),
-          ],
-        ),
+      final confirmed = await RitmoDialog.show(
+        context,
+        title: 'تأیید کنش',
+        content: action.confirmationPrompt!,
+        confirmLabel: 'تأیید',
+        cancelLabel: 'انصراف',
+        isDestructive: action.isDestructive,
       );
       if (confirmed != true) return;
     }

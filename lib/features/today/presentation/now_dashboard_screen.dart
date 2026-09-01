@@ -1726,52 +1726,11 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
       }
     }
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        final colors = context.colors;
-        return AlertDialog(
-          backgroundColor: colors.card,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Icon(CupertinoIcons.sparkles, color: colors.primary, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                'تحلیل هوشمند ریتمو',
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-          content: Directionality(
-            textDirection: TextDirection.rtl,
-            child: Text(
-              explanationText,
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.6,
-                color: colors.textPrimary.withValues(alpha: 0.9),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'فهمیدم',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: colors.primary,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+    RitmoDialog.show(
+      context,
+      title: 'تحلیل هوشمند ریتمو',
+      content: explanationText,
+      confirmLabel: 'فهمیدم',
     );
   }
 

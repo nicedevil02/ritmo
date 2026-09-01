@@ -142,44 +142,47 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
 
     final scaffoldContent = Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        title: Column(
+      body: SafeArea(
+        child: Column(
           children: [
-            Container(
-              width: 50,
-              height: 5,
-              margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                color: colors.border.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(10),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      CupertinoIcons.xmark_circle_fill,
+                      color: colors.textSecondary.withValues(alpha: 0.6),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: colors.border.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        Text(
+                          'پیش‌نمایش برنامه روز ${_getFarsiDate()}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 44),
+                ],
               ),
             ),
-            Text(
-              'پیش‌نمایش برنامه روز ${_getFarsiDate()}',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              CupertinoIcons.xmark_circle_fill,
-              color: colors.textSecondary.withValues(alpha: 0.6),
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
           Expanded(
             child: _currentDraft.items.isEmpty
                 ? Center(
@@ -492,10 +495,9 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
     showDialog(
       context: context,
       builder: (ctx) {
-        final colors = ctx.colors;
-        return AlertDialog(
-          backgroundColor: colors.bg,
-          title: const Text('ذخیره به عنوان قالب', textAlign: TextAlign.right),
+        return RitmoCustomDialog(
+          title: 'ذخیره به عنوان قالب',
+          icon: Icons.bookmarks_outlined,
           content: TextField(
             controller: nameController,
             textAlign: TextAlign.right,
@@ -504,11 +506,13 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
             ),
           ),
           actions: [
-            TextButton(
+            RitmoSecondaryButton(
+              label: 'انصراف',
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف'),
             ),
-            ElevatedButton(
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'ذخیره',
               onPressed: () async {
                 final name = nameController.text.trim();
                 if (name.isEmpty) return;
@@ -527,7 +531,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                   }
                 }
               },
-              child: const Text('ذخیره'),
             ),
           ],
         );
@@ -617,10 +620,9 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
     showDialog(
       context: context,
       builder: (ctx) {
-        final colors = ctx.colors;
-        return AlertDialog(
-          backgroundColor: colors.bg,
-          title: const Text('ویرایش آیتم', textAlign: TextAlign.right),
+        return RitmoCustomDialog(
+          title: 'ویرایش آیتم',
+          icon: CupertinoIcons.pencil,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -639,11 +641,13 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
             ],
           ),
           actions: [
-            TextButton(
+            RitmoSecondaryButton(
+              label: 'انصراف',
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف'),
             ),
-            ElevatedButton(
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'ثبت',
               onPressed: () {
                 final newTitle = titleController.text.trim();
                 final newDuration =
@@ -659,7 +663,6 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                 }
                 Navigator.pop(ctx);
               },
-              child: const Text('ثبت'),
             ),
           ],
         );

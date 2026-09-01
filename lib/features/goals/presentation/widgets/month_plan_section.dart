@@ -28,29 +28,28 @@ class MonthPlanSection extends StatelessWidget {
     final textController = TextEditingController();
     final res = await showDialog<String>(
       context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: const Text('افزودن به لیست «عمداً انجام نمی‌دهم»', style: TextStyle(fontSize: 16)),
-          content: TextField(
-            controller: textController,
-            autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'مثلاً: پروژه فرعی، آزمون‌های آزمایشی اضافی...',
-              hintStyle: TextStyle(fontSize: 12),
-            ),
+      builder: (ctx) => RitmoCustomDialog(
+        title: 'افزودن به لیست «عمداً انجام نمی‌دهم»',
+        icon: Icons.block_rounded,
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'مثلاً: پروژه فرعی، آزمون‌های آزمایشی اضافی...',
+            hintStyle: TextStyle(fontSize: 12),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, textController.text.trim()),
-              child: const Text('افزودن'),
-            ),
-          ],
         ),
+        actions: [
+          RitmoSecondaryButton(
+            label: 'انصراف',
+            onPressed: () => Navigator.pop(ctx),
+          ),
+          const SizedBox(width: 10),
+          RitmoPrimaryButton(
+            label: 'افزودن',
+            onPressed: () => Navigator.pop(ctx, textController.text.trim()),
+          ),
+        ],
       ),
     );
 

@@ -313,32 +313,15 @@ class _RealmManagementSheetState extends State<RealmManagementSheet>
   void _confirmDeleteRealm(RealmData realm) async {
     final connectedCount = _routineCounts[realm.id] ?? 0;
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: Text('حذف قلمرو «${realm.name}»', style: const TextStyle()),
-            content: Text(
-              connectedCount > 0
-                  ? 'با حذف این قلمرو، تعداد $connectedCount روتین متصل به آن آزاد خواهند شد. آیا مطمئن هستید؟'
-                  : 'آیا از حذف این قلمرو اطمینان دارید؟',
-              style: const TextStyle(),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('انصراف', style: TextStyle()),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('حذف قلمرو', style: TextStyle(color: Colors.redAccent)),
-              ),
-            ],
-          ),
-        );
-      },
+    final confirm = await RitmoDialog.show(
+      context,
+      title: 'حذف قلمرو «${realm.name}»',
+      content: connectedCount > 0
+          ? 'با حذف این قلمرو، تعداد $connectedCount روتین متصل به آن آزاد خواهند شد. آیا مطمئن هستید؟'
+          : 'آیا از حذف این قلمرو اطمینان دارید؟',
+      confirmLabel: 'حذف قلمرو',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
 
     if (confirm == true) {
@@ -348,10 +331,9 @@ class _RealmManagementSheetState extends State<RealmManagementSheet>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('قلمرو «${realm.name}» حذف شد.', style: const TextStyle()),
+            content: Text('قلمرو «${realm.name}» حذف شد.'),
             action: SnackBarAction(
               label: 'بازگردانی',
-              textColor: const Color(0xFFFFD700),
               onPressed: () async {
                 await _repository.restoreRealmFromSnapshot(snapshot);
                 await _loadData();
@@ -364,9 +346,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet>
   }
 
   void _showWhyThisRealmExplanation() {
-    final colors = context.colors;
-    String text = 'اطلاعاتی موجود نیست.';
-
+    String text = '';
     if (_activeState is ScheduledRealmState) {
       text = (_activeState as ScheduledRealmState).explanation;
     } else if (_activeState is ManualRealmState) {
@@ -375,29 +355,11 @@ class _RealmManagementSheetState extends State<RealmManagementSheet>
       text = (_activeState as FreeRealmState).explanation;
     }
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: const Row(
-              children: [
-                Icon(CupertinoIcons.info_circle_fill, color: Color(0xFF6366F1), size: 20),
-                SizedBox(width: 8),
-                Text('چرا این قلمرو؟', style: TextStyle(fontSize: 16)),
-              ],
-            ),
-            content: Text(text, style: TextStyle(fontSize: 13, color: colors.textPrimary, height: 1.5)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('متوجه شدم', style: TextStyle()),
-              ),
-            ],
-          ),
-        );
-      },
+    RitmoDialog.show(
+      context,
+      title: 'چرا این قلمرو؟',
+      content: text,
+      confirmLabel: 'متوجه شدم',
     );
   }
 

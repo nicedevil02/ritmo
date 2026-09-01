@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
+import 'package:ritmo/core/ai/chat/chat_session_manager.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -108,6 +109,7 @@ class ChatRepository {
       );
       await txn.delete('chat_sessions', where: 'id = ?', whereArgs: [id]);
     });
+    await ChatSessionManager.instance.handleSessionDeleted(id);
   }
 
   /// Persists a new [ChatMessage] and updates the parent session metadata.

@@ -128,51 +128,14 @@ class _AccountScreenState extends State<AccountScreen>
   }
 
   Future<void> _confirmLogout() async {
-    final colors =
-        Theme.of(context).extension<RitmoColors>() ?? RitmoColors.light;
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.logout_rounded, color: Colors.redAccent),
-              SizedBox(width: 8),
-              Text('خروج از حساب کاربری'),
-            ],
-          ),
-          content: const Text(
-            'آیا از خروج از حساب کاربری اطمینان دارید؟\n\n'
-            '🔒 داده‌ها و روتین‌های ذخیره‌شده روی این دستگاه به‌هیچ‌عنوان پاک نخواهند شد.',
-            style: TextStyle(height: 1.6),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(
-                'انصراف',
-                style: TextStyle(color: colors.textSecondary),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('خروج از حساب'),
-            ),
-          ],
-        ),
-      ),
+    final confirm = await RitmoDialog.show(
+      context,
+      title: 'خروج از حساب کاربری',
+      content: 'آیا از خروج از حساب کاربری اطمینان دارید؟\n\n'
+          '🔒 داده‌ها و روتین‌های ذخیره‌شده روی این دستگاه به‌هیچ‌عنوان پاک نخواهند شد.',
+      confirmLabel: 'خروج از حساب',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
 
     if (confirm == true) {
@@ -200,18 +163,37 @@ class _AccountScreenState extends State<AccountScreen>
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: colors.background,
-        appBar: AppBar(
-          title: const Text(
-            'حساب کاربری',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          centerTitle: true,
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        backgroundColor: colors.bg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: RitmoGlassHeader(
+                  borderRadius: BorderRadius.circular(22),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(CupertinoIcons.back),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const Expanded(
+                        child: Center(
+                          child: Text(
+                            'حساب کاربری',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 44),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -531,6 +513,9 @@ class _AccountScreenState extends State<AccountScreen>
           ),
         ),
       ),
-    );
-  }
+    ],
+  ),
+),
+);
+}
 }

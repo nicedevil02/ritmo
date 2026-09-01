@@ -956,10 +956,9 @@ class _AssistantSheetState extends State<AssistantSheet> {
           itemCount: preview.diffs.length,
           itemBuilder: (context, index) {
             final diff = preview.diffs[index];
-            return Card(
-              color: colors.surfaceElevated,
-              margin: const EdgeInsets.symmetric(vertical: 6),
-              child: Padding(
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: RitmoCard.neumorphic(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,

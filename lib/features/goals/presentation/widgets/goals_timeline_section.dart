@@ -106,16 +106,9 @@ class GoalsTimelineSection extends StatelessWidget {
           if (overdueSteps.isNotEmpty) ...[
             _buildSectionHeader('عقب‌افتاده‌ها ⚠️', colors, isOverdue: true),
             const SizedBox(height: 8),
-            Card(
-              color: colors.warning.withValues(alpha: 0.05),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: colors.warning.withValues(alpha: 0.2)),
-              ),
-              elevation: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
+            RitmoCard.neumorphic(
+              padding: const EdgeInsets.all(8),
+              child: Column(
                   children:
                       overdueSteps.map((step) {
                         final goal = goals.firstWhere(

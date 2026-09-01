@@ -135,57 +135,53 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
 
   Future<void> _editMemory(MemoryEntry memory) async {
     final editController = TextEditingController(text: memory.content);
+    final colors = context.colors;
     unawaited(showDialog(
       context: context,
-      builder: (context) {
-        final colors = context.colors;
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.card,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('ویرایش حافظه', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-            content: TextField(
-              controller: editController,
-              maxLines: 3,
-              style: TextStyle(color: colors.textPrimary, fontSize: 13),
-              decoration: RitmoTheme.inputDecoration(
-                context,
-                label: 'محتوای حافظه شناختی',
-                icon: CupertinoIcons.pencil,
-              ),
+      builder: (dialogCtx) {
+        return RitmoCustomDialog(
+          title: 'ویرایش حافظه',
+          icon: CupertinoIcons.pencil,
+          content: TextField(
+            controller: editController,
+            maxLines: 3,
+            style: TextStyle(color: colors.textPrimary, fontSize: 13),
+            decoration: RitmoTheme.inputDecoration(
+              context,
+              label: 'محتوای حافظه شناختی',
+              icon: CupertinoIcons.pencil,
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-                onPressed: () async {
-                  final text = editController.text.trim();
-                  if (text.isNotEmpty) {
-                    Navigator.pop(context);
-                    setState(() => _isLoading = true);
-                    final op = MemoryOp(
-                      op: 'UPDATE',
-                      id: memory.id,
-                      content: text,
-                      type: memory.type,
-                      domain: memory.domain,
-                      importance: memory.importance,
-                      sensitive: memory.sensitive,
-                      expiresAt: memory.expiresAt,
-                    );
-                    await AiMemoryService.instance.applyOperations([op]);
-                    _showToast('تغییرات با موفقیت اعمال شد.');
-                    await _loadSettingsAndData();
-                  }
-                },
-                child: const Text('ذخیره', style: TextStyle(color: Colors.white)),
-              ),
-            ],
           ),
+          actions: [
+            RitmoSecondaryButton(
+              label: 'انصراف',
+              onPressed: () => Navigator.pop(dialogCtx),
+            ),
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'ذخیره',
+              onPressed: () async {
+                final text = editController.text.trim();
+                if (text.isNotEmpty) {
+                  Navigator.pop(dialogCtx);
+                  setState(() => _isLoading = true);
+                  final op = MemoryOp(
+                    op: 'UPDATE',
+                    id: memory.id,
+                    content: text,
+                    type: memory.type,
+                    domain: memory.domain,
+                    importance: memory.importance,
+                    sensitive: memory.sensitive,
+                    expiresAt: memory.expiresAt,
+                  );
+                  await AiMemoryService.instance.applyOperations([op]);
+                  _showToast('تغییرات با موفقیت اعمال شد.');
+                  await _loadSettingsAndData();
+                }
+              },
+            ),
+          ],
         );
       },
     ));
@@ -211,117 +207,56 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
   }
 
   Future<void> _deleteMemoryPermanently(MemoryEntry memory) async {
-    unawaited(showDialog(
-      context: context,
-      builder: (context) {
-        final colors = context.colors;
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.card,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('حذف دائمی حافظه', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-            content: const Text(
-              'آیا مطمئن هستید که می‌خواهید این حافظه را برای همیشه و بدون امکان بازیابی حذف کنید؟',
-              style: TextStyle(fontSize: 12, height: 1.5),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-                onPressed: () async {
-                  Navigator.pop(context);
-                  setState(() => _isLoading = true);
-                  final db = await DatabaseHelper.instance.database;
-                  await db.delete('ai_memory', where: 'id = ?', whereArgs: [memory.id]);
-                  _showToast('حافظه برای همیشه حذف شد.');
-                  await _loadSettingsAndData();
-                },
-                child: const Text('حذف دائمی', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-        );
-      },
-    ));
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'حذف دائمی حافظه',
+      content: 'آیا مطمئن هستید که می‌خواهید این حافظه را برای همیشه و بدون امکان بازیابی حذف کنید؟',
+      confirmLabel: 'حذف دائمی',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
+    );
+
+    if (confirmed == true) {
+      setState(() => _isLoading = true);
+      final db = await DatabaseHelper.instance.database;
+      await db.delete('ai_memory', where: 'id = ?', whereArgs: [memory.id]);
+      _showToast('حافظه برای همیشه حذف شد.');
+      await _loadSettingsAndData();
+    }
   }
 
   Future<void> _clearAllMemories() async {
-    unawaited(showDialog(
-      context: context,
-      builder: (context) {
-        final colors = context.colors;
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.card,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('پاک‌سازی کل حافظه دستیار', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.redAccent)),
-            content: const Text(
-              '⚠️ هشدار بسیار مهم:\nبا تأیید این عملیات، تمامی اطلاعات و فکت‌های شناختی که دستیار از گفتگو با شما به خاطر سپرده است، کاملاً پاک شده و هوش مصنوعی تمام پیش‌فرض‌های مربوط به شما را فراموش خواهد کرد.\n\nآیا مایل به ادامه هستید؟',
-              style: TextStyle(fontSize: 12, height: 1.6),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-                onPressed: () async {
-                  Navigator.pop(context);
-                  // Double confirmation step
-                  _showSecondClearConfirmation();
-                },
-                child: const Text('ادامه پاک‌سازی', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-        );
-      },
-    ));
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'پاک‌سازی کل حافظه دستیار',
+      content: '⚠️ هشدار بسیار مهم:\nبا تأیید این عملیات، تمامی اطلاعات و فکت‌های شناختی که دستیار از گفتگو با شما به خاطر سپرده است، کاملاً پاک شده و هوش مصنوعی تمام پیش‌فرض‌های مربوط به شما را فراموش خواهد کرد.\n\nآیا مایل به ادامه هستید؟',
+      confirmLabel: 'ادامه پاک‌سازی',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
+    );
+
+    if (confirmed == true) {
+      _showSecondClearConfirmation();
+    }
   }
 
-  void _showSecondClearConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final colors = context.colors;
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.card,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('تأیید نهایی پاک‌سازی', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-            content: const Text(
-              'برای پاک کردن نهایی و قطعی کل داده‌های حافظه، روی دکمه زیر کلیک کنید.',
-              style: TextStyle(fontSize: 12, height: 1.5),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-                onPressed: () async {
-                  Navigator.pop(context);
-                  setState(() => _isLoading = true);
-                  final db = await DatabaseHelper.instance.database;
-                  await db.delete('ai_memory');
-                  _showToast('کل حافظه شناختی با موفقیت پاک‌سازی شد.');
-                  await _loadSettingsAndData();
-                },
-                child: const Text('بله، کاملاً فراموش کن!', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-        );
-      },
+  Future<void> _showSecondClearConfirmation() async {
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'تأیید نهایی پاک‌سازی',
+      content: 'برای پاک کردن نهایی و قطعی کل داده‌های حافظه، تأیید کنید.',
+      confirmLabel: 'بله، کاملاً فراموش کن!',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
+
+    if (confirmed == true) {
+      setState(() => _isLoading = true);
+      final db = await DatabaseHelper.instance.database;
+      await db.delete('ai_memory');
+      _showToast('کل حافظه شناختی با موفقیت پاک‌سازی شد.');
+      await _loadSettingsAndData();
+    }
   }
 
   void _showToast(String message, {bool isError = false}) {

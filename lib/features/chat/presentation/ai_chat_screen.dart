@@ -9,6 +9,7 @@ import 'package:ritmo/core/ai/ai_context_builder.dart';
 import 'package:ritmo/core/ai/ai_error_messages.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/ai/chat/chat_repository.dart';
+import 'package:ritmo/core/ai/chat/chat_session_manager.dart';
 import 'package:ritmo/core/ai/chat/streaming_chat_service.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
 import 'package:ritmo/core/ai/memory/memory_models.dart';
@@ -51,8 +52,14 @@ class AiChatScreen extends StatefulWidget {
 class _AiChatScreenState extends State<AiChatScreen> with WidgetsBindingObserver {
   final AgentStreamPresenter _presenter = AgentStreamPresenter();
   String? _sessionId;
+  String? _currentSessionSummary;
   List<ChatMessage> _messages = [];
   bool _isLoading = false;
+
+  /// Monotonically-increasing counter; guards against stale async load results.
+  /// When session switches, increment this so in-flight loads for the previous
+  /// session detect the mismatch and discard their results.
+  int _loadToken = 0;
 
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
@@ -91,18 +98,63 @@ class _AiChatScreenState extends State<AiChatScreen> with WidgetsBindingObserver
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _sessionId = widget.sessionId;
-    if (_sessionId != null) {
-      _loadMessages();
-    } else {
-      _loadLatestSession();
-    }
+    ChatSessionManager.instance.activeSessionId.addListener(_onActiveSessionChanged);
+    _initSession();
     _checkLastCommit();
     unawaited(_runLearningLoop());
     _initSpeech();
     ChatGptWebBridgeManager.instance.cloudflareNotifier.addListener(
       _handleCloudflarePrompt,
     );
+  }
+
+  Future<void> _initSession() async {
+    if (widget.sessionId != null) {
+      await _switchSession(widget.sessionId!);
+      return;
+    }
+    // Only read from DB once; subsequent switches go through setActiveSession / listener.
+    await ChatSessionManager.instance.initialize();
+    final activeId = ChatSessionManager.instance.activeSessionId.value;
+    if (activeId != null && mounted) {
+      // Increment token BEFORE the async load so any stale previous load is cancelled.
+      final token = ++_loadToken;
+      setState(() {
+        _sessionId = activeId;
+        _messages = [];
+        _currentSessionSummary = null;
+      });
+      await _loadMessagesForToken(token, activeId);
+    } else if (mounted) {
+      _resetToFreshChat();
+    }
+  }
+
+  void _onActiveSessionChanged() {
+    final newId = ChatSessionManager.instance.activeSessionId.value;
+    if (newId != _sessionId && mounted) {
+      if (newId != null) {
+        _switchSession(newId);
+      } else {
+        _resetToFreshChat();
+      }
+    }
+  }
+
+  void _resetToFreshChat() {
+    // Increment token to cancel any in-flight loads.
+    _loadToken++;
+    setState(() {
+      _sessionId = null;
+      _currentSessionSummary = null;
+      _messages = [];
+      _currentQuickReplies = [];
+      _pendingDayPlanDraft = null;
+      _isAgentWorking = false;
+      _agentSteps.clear();
+      _agentStatusText = '';
+      _isLoading = false;
+    });
   }
 
   @override
@@ -121,26 +173,11 @@ class _AiChatScreenState extends State<AiChatScreen> with WidgetsBindingObserver
   void didUpdateWidget(covariant AiChatScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.sessionId != oldWidget.sessionId) {
-      _sessionId = widget.sessionId;
-      if (_sessionId != null) {
-        _loadMessages();
+      if (widget.sessionId != null) {
+        _switchSession(widget.sessionId!);
       } else {
-        _loadLatestSession();
+        _initSession();
       }
-    }
-  }
-
-  Future<void> _loadLatestSession() async {
-    try {
-      final sessions = await ChatRepository.instance.listSessions();
-      if (sessions.isNotEmpty && mounted) {
-        setState(() {
-          _sessionId = sessions.first.id;
-        });
-        await _loadMessages();
-      }
-    } catch (e) {
-      debugPrint('[AiChatScreen] Error loading latest session: $e');
     }
   }
 
@@ -201,21 +238,11 @@ class _AiChatScreenState extends State<AiChatScreen> with WidgetsBindingObserver
     } else {
       if (mounted) {
         unawaited(
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('دسترسی میکروفون', textAlign: TextAlign.right),
-              content: const Text(
-                'تشخیص گفتار فعال نیست یا دسترسی میکروفون داده نشده است. لطفاً در تنظیمات دستگاه دسترسی را بررسی کنید.',
-                textAlign: TextAlign.right,
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('فهمیدم'),
-                ),
-              ],
-            ),
+          RitmoDialog.show(
+            context,
+            title: 'دسترسی میکروفون',
+            content: 'تشخیص گفتار فعال نیست یا دسترسی میکروفون داده نشده است. لطفاً در تنظیمات دستگاه دسترسی را بررسی کنید.',
+            confirmLabel: 'فهمیدم',
           ),
         );
       }
@@ -685,6 +712,7 @@ class _AiChatScreenState extends State<AiChatScreen> with WidgetsBindingObserver
     ChatGptWebBridgeManager.instance.cloudflareNotifier.removeListener(
       _handleCloudflarePrompt,
     );
+    ChatSessionManager.instance.activeSessionId.removeListener(_onActiveSessionChanged);
     _auditHoldTimer?.cancel();
     _textController.dispose();
     _focusNode.dispose();
@@ -694,21 +722,57 @@ class _AiChatScreenState extends State<AiChatScreen> with WidgetsBindingObserver
     super.dispose();
   }
 
-  Future<void> _loadMessages() async {
-    if (_sessionId == null) return;
+  Future<void> _switchSession(String newSessionId) async {
+    if (ChatSessionManager.instance.activeSessionId.value != newSessionId) {
+      await ChatSessionManager.instance.setActiveSession(newSessionId);
+    }
+    // Increment token BEFORE clearing state so any in-flight load for the
+    // previous session sees its token is stale and discards its result.
+    final token = ++_loadToken;
+    setState(() {
+      _sessionId = newSessionId;
+      _messages = [];
+      _currentQuickReplies = [];
+      _pendingDayPlanDraft = null;
+      _isAgentWorking = false;
+      _agentSteps.clear();
+      _agentStatusText = '';
+      _currentSessionSummary = null;
+    });
+    await _loadMessagesForToken(token, newSessionId);
+  }
+
+  /// Loads messages for [targetSessionId] only if [token] matches the current
+  /// [_loadToken]. This prevents stale async callbacks from overwriting the UI
+  /// after the user has already switched to a different session.
+  Future<void> _loadMessagesForToken(int token, String targetSessionId) async {
+    if (!mounted || token != _loadToken) return;
     setState(() => _isLoading = true);
     try {
-      final list = await ChatRepository.instance.getMessages(_sessionId!);
-      if (mounted) {
-        setState(() {
-          _messages = list;
-          _isLoading = false;
-        });
-        _scrollToBottom();
-      }
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+      final list = await ChatRepository.instance.getMessages(targetSessionId);
+      final session = await ChatRepository.instance.getSession(targetSessionId);
+      // Discard if the user switched away while we were awaiting the DB.
+      if (!mounted || token != _loadToken) return;
+      setState(() {
+        _messages = list;
+        _currentSessionSummary = session?.summary;
+        _isLoading = false;
+      });
+      _scrollToBottom();
+    } catch (e) {
+      debugPrint('[AiChatScreen] Error loading messages for session $targetSessionId: $e');
+      if (mounted && token == _loadToken) setState(() => _isLoading = false);
     }
+  }
+
+  /// Convenience wrapper used internally when the session is already set.
+  Future<void> _loadMessages() async {
+    if (_sessionId == null) {
+      if (mounted) setState(() { _messages = []; _currentSessionSummary = null; _isLoading = false; });
+      return;
+    }
+    final token = ++_loadToken;
+    await _loadMessagesForToken(token, _sessionId!);
   }
 
   Future<bool> _ensureCloudConsent() async {
@@ -890,6 +954,7 @@ class _AiChatScreenState extends State<AiChatScreen> with WidgetsBindingObserver
     if (_sessionId == null) {
       final s = await ChatRepository.instance.createSession();
       _sessionId = s.id;
+      await ChatSessionManager.instance.setActiveSession(s.id);
     }
 
     // Intercept Day Planning query
@@ -1583,6 +1648,7 @@ $suggestedSteps''';
                           return false;
                         },
                         child: ListView.builder(
+                          key: ValueKey<String>(_sessionId ?? 'empty_chat_session'),
                           controller: _scrollController,
                           physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                           padding: EdgeInsets.fromLTRB(
@@ -2025,7 +2091,9 @@ $suggestedSteps''';
             builder: (context, _) {
               return RitmoAppleMorphingGlassHeader(
                 title: 'دستیار هوشمند',
-                subtitle: 'دستیار هوش مصنوعی، برنامه‌ریزی روزانه و ممیزی رویدادها',
+                subtitle: _currentSessionSummary != null
+                    ? 'گفتگو: $_currentSessionSummary'
+                    : 'دستیار هوش مصنوعی، برنامه‌ریزی روزانه و ممیزی رویدادها',
                 scrollOffset: _scrollOffset.value,
                 collapseDistance: 55.0,
                 onBack: (!widget.isTab && Navigator.canPop(context)) ? () => Navigator.maybePop(context) : null,
@@ -2040,13 +2108,9 @@ $suggestedSteps''';
                     tooltip: 'گفتگوی جدید',
                     onTap: () async {
                       RitmoHaptics.tap();
-                      final s = await ChatRepository.instance.createSession();
+                      await ChatSessionManager.instance.clearActiveSession();
                       if (mounted) {
-                        setState(() {
-                          _sessionId = s.id;
-                          _messages = [];
-                          _currentQuickReplies = [];
-                        });
+                        _resetToFreshChat();
                       }
                     },
                   ),
@@ -2064,10 +2128,7 @@ $suggestedSteps''';
                         ),
                       );
                       if (selectedId != null && mounted) {
-                        setState(() {
-                          _sessionId = selectedId;
-                        });
-                        await _loadMessages();
+                        await _switchSession(selectedId);
                       }
                     },
                   ),

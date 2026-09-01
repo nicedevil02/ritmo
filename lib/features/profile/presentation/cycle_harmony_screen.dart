@@ -110,34 +110,12 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
     });
 
     if (!hasRealActiveLog) {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (context) {
-          return Directionality(
-            textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              backgroundColor: const Color(0xff1C1F2E),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('شروع دوره قاعدگی', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-              content: const Text('آیا می‌خواهید شروع دوره قاعدگی جدید را از امروز ثبت کنید؟', style: TextStyle(color: Colors.white70, fontSize: 13)),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('خیر', style: TextStyle(color: Colors.white54)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xffF43F5E),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('بله، ثبت شود', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          );
-        },
+      final confirm = await RitmoDialog.show(
+        context,
+        title: 'شروع دوره قاعدگی',
+        content: 'آیا می‌خواهید شروع دوره قاعدگی جدید را از امروز ثبت کنید؟',
+        confirmLabel: 'بله، ثبت شود',
+        cancelLabel: 'خیر',
       );
       if (confirm ?? false) {
         await CyclePeriodRepository.instance.startPeriod(
@@ -146,34 +124,6 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
         );
       }
     } else {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (context) {
-          return Directionality(
-            textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              backgroundColor: const Color(0xff1C1F2E),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('پایان دوره قاعدگی', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-              content: const Text('آیا می‌خواهید پایان دوره قاعدگی فعلی را در امروز ثبت کنید؟', style: TextStyle(color: Colors.white70, fontSize: 13)),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('خیر', style: TextStyle(color: Colors.white54)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xffF43F5E),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('بله، ثبت شود', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          );
-        },
       );
       if (confirm ?? false) {
         final activePeriod = await CyclePeriodRepository.instance.getOpenPeriod(db);
@@ -208,135 +158,124 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                backgroundColor: const Color(0xff1C1F2E),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                title: Text(
-                  isEdit ? 'ویرایش دوره قاعدگی' : 'ثبت دوره قاعدگی جدید',
-                  style: const TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('تاریخ شروع دوره:', style: TextStyle(fontSize: 13, color: Colors.white70)),
-                      subtitle: Text(
-                        _formatJalaliDate(startDate),
-                        style: const TextStyle(fontSize: 15, color: Color(0xffF43F5E), fontWeight: FontWeight.bold),
-                      ),
-                      trailing: const Icon(CupertinoIcons.calendar, color: Color(0xffF43F5E)),
-                      onTap: () async {
-                        final picked = await RitmoDatePicker.showJalali(
-                          context: context,
-                          initialDate: Jalali.fromDateTime(startDate),
-                          firstDate: Jalali(1399),
-                          lastDate: Jalali.fromDateTime(DateTime.now()),
-                        );
-                        if (picked != null) {
-                          setDialogState(() {
-                            startDate = picked.toDateTime();
-                          });
-                        }
-                      },
+            return RitmoCustomDialog(
+              title: isEdit ? 'ویرایش دوره قاعدگی' : 'ثبت دوره قاعدگی جدید',
+              icon: CupertinoIcons.calendar,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('تاریخ شروع دوره:', style: TextStyle(fontSize: 13, color: Colors.white70)),
+                    subtitle: Text(
+                      _formatJalaliDate(startDate),
+                      style: const TextStyle(fontSize: 15, color: Color(0xffF43F5E), fontWeight: FontWeight.bold),
                     ),
-                    const Divider(color: Colors.white10),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('تاریخ پایان دوره (اختیاری):', style: TextStyle(fontSize: 13, color: Colors.white70)),
-                      subtitle: Text(
-                        endDate != null ? _formatJalaliDate(endDate!) : 'در حال حاضر فعال',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: endDate != null ? const Color(0xffF43F5E) : Colors.grey,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (endDate != null)
-                            IconButton(
-                              icon: const Icon(CupertinoIcons.clear_circled, color: Colors.redAccent, size: 20),
-                              onPressed: () {
-                                setDialogState(() {
-                                  endDate = null;
-                                });
-                              },
-                            ),
-                          const Icon(CupertinoIcons.calendar, color: Color(0xffF43F5E)),
-                        ],
-                      ),
-                      onTap: () async {
-                        final picked = await RitmoDatePicker.showJalali(
-                          context: context,
-                          initialDate: Jalali.fromDateTime(endDate ?? startDate),
-                          firstDate: Jalali.fromDateTime(startDate),
-                          lastDate: Jalali.fromDateTime(DateTime.now().add(const Duration(days: 10))),
-                        );
-                        if (picked != null) {
-                          setDialogState(() {
-                            endDate = picked.toDateTime();
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('انصراف', style: TextStyle(color: Colors.white54)),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xffF43F5E),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () async {
-                      final db = await DatabaseHelper.instance.database;
-                      final startStr = startDate.toIso8601String().substring(0, 10);
-                      final endStr = endDate?.toIso8601String().substring(0, 10);
-                      final nowMs = DateTime.now().millisecondsSinceEpoch;
-
-                      if (isEdit && log['id'] != null && (log['id'] as String).isNotEmpty) {
-                        await CyclePeriodRepository.instance.updatePeriod(
-                          db: db,
-                          id: log['id'] as String,
-                          startDate: startDate,
-                          endDate: endDate,
-                        );
-                      } else {
-                        final newId = await CyclePeriodRepository.instance.startPeriod(
-                          db: db,
-                          startDate: startDate,
-                        );
-                        if (endDate != null) {
-                          await CyclePeriodRepository.instance.endPeriod(
-                            db: db,
-                            id: newId,
-                            endDate: endDate!,
-                          );
-                        }
+                    trailing: const Icon(CupertinoIcons.calendar, color: Color(0xffF43F5E)),
+                    onTap: () async {
+                      final picked = await RitmoDatePicker.showJalali(
+                        context: context,
+                        initialDate: Jalali.fromDateTime(startDate),
+                        firstDate: Jalali(1399),
+                        lastDate: Jalali.fromDateTime(DateTime.now()),
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          startDate = picked.toDateTime();
+                        });
                       }
-
-                      if (endStr != null) {
-                        await DatabaseHelper.instance.addFastingDebtIfNeeded(db, endStr);
-                      }
-
-                      RitmoEvents.notifyRoutineChanged();
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                      }
-                      await _loadData();
                     },
-                    child: const Text('ذخیره', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const Divider(color: Colors.white10),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('تاریخ پایان دوره (اختیاری):', style: TextStyle(fontSize: 13, color: Colors.white70)),
+                    subtitle: Text(
+                      endDate != null ? _formatJalaliDate(endDate!) : 'در حال حاضر فعال',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: endDate != null ? const Color(0xffF43F5E) : Colors.grey,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (endDate != null)
+                          IconButton(
+                            icon: const Icon(CupertinoIcons.clear_circled, color: Colors.redAccent, size: 20),
+                            onPressed: () {
+                              setDialogState(() {
+                                endDate = null;
+                              });
+                            },
+                          ),
+                        const Icon(CupertinoIcons.calendar, color: Color(0xffF43F5E)),
+                      ],
+                    ),
+                    onTap: () async {
+                      final picked = await RitmoDatePicker.showJalali(
+                        context: context,
+                        initialDate: Jalali.fromDateTime(endDate ?? startDate),
+                        firstDate: Jalali.fromDateTime(startDate),
+                        lastDate: Jalali.fromDateTime(DateTime.now().add(const Duration(days: 10))),
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          endDate = picked.toDateTime();
+                        });
+                      }
+                    },
                   ),
                 ],
               ),
+              actions: [
+                RitmoSecondaryButton(
+                  label: 'انصراف',
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const SizedBox(width: 10),
+                RitmoPrimaryButton(
+                  label: 'ذخیره',
+                  fullWidth: false,
+                  onPressed: () async {
+                    final db = await DatabaseHelper.instance.database;
+                    final startStr = startDate.toIso8601String().substring(0, 10);
+                    final endStr = endDate?.toIso8601String().substring(0, 10);
+
+                    if (isEdit && log['id'] != null && (log['id'] as String).isNotEmpty) {
+                      await CyclePeriodRepository.instance.updatePeriod(
+                        db: db,
+                        id: log['id'] as String,
+                        startDate: startDate,
+                        endDate: endDate,
+                      );
+                    } else {
+                      final newId = await CyclePeriodRepository.instance.startPeriod(
+                        db: db,
+                        startDate: startDate,
+                      );
+                      if (endDate != null) {
+                        await CyclePeriodRepository.instance.endPeriod(
+                          db: db,
+                          id: newId,
+                          endDate: endDate!,
+                        );
+                      }
+                    }
+
+                    if (endStr != null) {
+                      await DatabaseHelper.instance.addFastingDebtIfNeeded(db, endStr);
+                    }
+
+                    RitmoEvents.notifyRoutineChanged();
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                    await _loadData();
+                  },
+                ),
+              ],
             );
           },
         );
@@ -356,94 +295,84 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                backgroundColor: const Color(0xff1C1F2E),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                title: const Text(
-                  'تنظیمات طول دوره و چرخه',
-                  style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('میانگین طول چرخه (روز):', style: TextStyle(fontSize: 13, color: Colors.white70)),
-                        Text('$cycleLength روز', style: const TextStyle(fontSize: 14, color: Color(0xffF43F5E), fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    Slider(
-                      value: cycleLength.toDouble(),
-                      min: 21,
-                      max: 40,
-                      divisions: 19,
-                      activeColor: const Color(0xffF43F5E),
-                      inactiveColor: Colors.white10,
-                      onChanged: (val) {
-                        setDialogState(() {
-                          cycleLength = val.toInt();
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('میانگین طول قاعدگی (روز):', style: TextStyle(fontSize: 13, color: Colors.white70)),
-                        Text('$periodDuration روز', style: const TextStyle(fontSize: 14, color: Color(0xffF43F5E), fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    Slider(
-                      value: periodDuration.toDouble(),
-                      min: 3,
-                      max: 10,
-                      divisions: 7,
-                      activeColor: const Color(0xffF43F5E),
-                      inactiveColor: Colors.white10,
-                      onChanged: (val) {
-                        setDialogState(() {
-                          periodDuration = val.toInt();
-                        });
-                      },
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('انصراف', style: TextStyle(color: Colors.white54)),
+            return RitmoCustomDialog(
+              title: 'تنظیمات طول دوره و چرخه',
+              icon: Icons.tune_rounded,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('میانگین طول چرخه (روز):', style: TextStyle(fontSize: 13, color: Colors.white70)),
+                      Text('$cycleLength روز', style: const TextStyle(fontSize: 14, color: Color(0xffF43F5E), fontWeight: FontWeight.bold)),
+                    ],
                   ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xffF43F5E),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () async {
-                      final nowMs = DateTime.now().millisecondsSinceEpoch;
-                      
-                      await db.rawInsert(
-                        'INSERT OR REPLACE INTO app_settings (key, value, updatedAt) VALUES (?, ?, ?)',
-                        ['cycle_length_days', cycleLength.toString(), nowMs],
-                      );
-                      await db.rawInsert(
-                        'INSERT OR REPLACE INTO app_settings (key, value, updatedAt) VALUES (?, ?, ?)',
-                        ['period_duration_days', periodDuration.toString(), nowMs],
-                      );
-
-                      RitmoEvents.notifyRoutineChanged();
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                      }
-                      await _loadData();
+                  Slider(
+                    value: cycleLength.toDouble(),
+                    min: 21,
+                    max: 40,
+                    divisions: 19,
+                    activeColor: const Color(0xffF43F5E),
+                    inactiveColor: Colors.white10,
+                    onChanged: (val) {
+                      setDialogState(() {
+                        cycleLength = val.toInt();
+                      });
                     },
-                    child: const Text('ذخیره', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('میانگین طول قاعدگی (روز):', style: TextStyle(fontSize: 13, color: Colors.white70)),
+                      Text('$periodDuration روز', style: const TextStyle(fontSize: 14, color: Color(0xffF43F5E), fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  Slider(
+                    value: periodDuration.toDouble(),
+                    min: 3,
+                    max: 10,
+                    divisions: 7,
+                    activeColor: const Color(0xffF43F5E),
+                    inactiveColor: Colors.white10,
+                    onChanged: (val) {
+                      setDialogState(() {
+                        periodDuration = val.toInt();
+                      });
+                    },
                   ),
                 ],
               ),
+              actions: [
+                RitmoSecondaryButton(
+                  label: 'انصراف',
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const SizedBox(width: 10),
+                RitmoPrimaryButton(
+                  label: 'ذخیره',
+                  fullWidth: false,
+                  onPressed: () async {
+                    final nowMs = DateTime.now().millisecondsSinceEpoch;
+                    
+                    await db.rawInsert(
+                      'INSERT OR REPLACE INTO app_settings (key, value, updatedAt) VALUES (?, ?, ?)',
+                      ['cycle_length_days', cycleLength.toString(), nowMs],
+                    );
+                    await db.rawInsert(
+                      'INSERT OR REPLACE INTO app_settings (key, value, updatedAt) VALUES (?, ?, ?)',
+                      ['period_duration_days', periodDuration.toString(), nowMs],
+                    );
+
+                    RitmoEvents.notifyRoutineChanged();
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                    await _loadData();
+                  },
+                ),
+              ],
             );
           },
         );
@@ -1226,30 +1155,13 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                             IconButton(
                               icon: const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 18),
                               onPressed: () async {
-                                final confirm = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) {
-                                    return Directionality(
-                                      textDirection: TextDirection.rtl,
-                                      child: AlertDialog(
-                                        backgroundColor: const Color(0xff1C1F2E),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                        title: const Text('حذف دوره', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                                        content: const Text('آیا مطمئن هستید که می‌خواهید این دوره را حذف کنید؟', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(context, false),
-                                            child: const Text('خیر', style: TextStyle(color: Colors.white54)),
-                                          ),
-                                          ElevatedButton(
-                                            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                                            onPressed: () => Navigator.pop(context, true),
-                                            child: const Text('بله، حذف شود', style: TextStyle(fontWeight: FontWeight.bold)),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }
+                                final confirm = await RitmoDialog.show(
+                                  context,
+                                  title: 'حذف دوره',
+                                  content: 'آیا مطمئن هستید که می‌خواهید این دوره را حذف کنید؟',
+                                  confirmLabel: 'بله، حذف شود',
+                                  cancelLabel: 'خیر',
+                                  isDestructive: true,
                                 );
                                 if (confirm ?? false) {
                                   if (log['id'] != null) {

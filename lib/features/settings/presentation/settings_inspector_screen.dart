@@ -138,30 +138,14 @@ class _SettingsInspectorScreenState extends State<SettingsInspectorScreen> {
   Future<void> _confirmCleanOrphans() async {
     if (_orphanKeys.isEmpty) return;
 
-    final confirmed = await showCupertinoDialog<bool>(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('پاک‌سازی ردیف‌های یتیم'),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(
-            'آیا از حذف دائمی ${toPersianDigits(_orphanKeys.length)} ردیف یتیم زیر مطمئنید؟\n\n${_orphanKeys.join('\n')}',
-            textAlign: TextAlign.right,
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('حذف دائمی'),
-          ),
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('انصراف'),
-          ),
-        ],
-      ),
+    final confirmed = await RitmoDialog.show(
+      context,
+      title: 'پاک‌سازی ردیف‌های یتیم',
+      content:
+          'آیا از حذف دائمی ${toPersianDigits(_orphanKeys.length)} ردیف یتیم زیر مطمئنید؟\n\n${_orphanKeys.join('\n')}',
+      confirmLabel: 'حذف دائمی',
+      cancelLabel: 'انصراف',
+      isDestructive: true,
     );
 
     if (confirmed == true) {

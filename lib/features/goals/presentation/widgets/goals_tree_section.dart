@@ -445,30 +445,19 @@ class _GoalsTreeSectionState extends State<GoalsTreeSection> {
     final reminderInfo = impact.scheduledReminderCount > 0 ? '\n• ${toPersianDigits(impact.scheduledReminderCount)} یادآور فعال (حذف هشدارها)' : '';
 
     unawaited(
-      showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-        title: const Text('حذف کامل هدف', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text(
-          'آیا از حذف هدف «${goal.title}» مطمئن هستید؟ موارد زیر برای همیشه حذف خواهند شد:$subInfo$stepInfo$routineInfo$reminderInfo',
-          style: const TextStyle(fontSize: 13.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('انصراف', style: TextStyle()),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            onPressed: () {
-              Navigator.pop(ctx);
-              widget.onDeleteGoal(goal.id);
-            },
-            child: const Text('حذف کامل', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    ));
+      RitmoDialog.show(
+        context,
+        title: 'حذف کامل هدف',
+        content: 'آیا از حذف هدف «${goal.title}» مطمئن هستید؟ موارد زیر برای همیشه حذف خواهند شد:$subInfo$stepInfo$routineInfo$reminderInfo',
+        confirmLabel: 'حذف کامل',
+        cancelLabel: 'انصراف',
+        isDestructive: true,
+      ).then((confirmed) {
+        if (confirmed == true) {
+          widget.onDeleteGoal(goal.id);
+        }
+      }),
+    );
   }
 }
 

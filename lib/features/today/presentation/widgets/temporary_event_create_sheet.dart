@@ -177,63 +177,52 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
     showDialog(
       context: context,
       builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.sheetBackground,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Text(
-              'مدت زمان سفارشی',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'مدت زمان رویداد را به دقیقه وارد کنید:',
-                  style: TextStyle(fontSize: 12.5),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: textController,
-                  keyboardType: TextInputType.number,
-                  autofocus: true,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.primary),
-                  decoration: InputDecoration(
-                    suffixText: 'دقیقه',
-                    suffixStyle: TextStyle(fontSize: 12, color: colors.textSecondary),
-                    filled: true,
-                    fillColor: colors.inputBackground,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('لغو', style: TextStyle(color: colors.textSecondary)),
+        return RitmoCustomDialog(
+          title: 'مدت زمان سفارشی',
+          icon: CupertinoIcons.time,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'مدت زمان رویداد را به دقیقه وارد کنید:',
+                style: TextStyle(fontSize: 12.5),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              const SizedBox(height: 14),
+              TextField(
+                controller: textController,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.primary),
+                decoration: InputDecoration(
+                  suffixText: 'دقیقه',
+                  suffixStyle: TextStyle(fontSize: 12, color: colors.textSecondary),
+                  filled: true,
+                  fillColor: colors.inputBackground,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                onPressed: () {
-                  final val = int.tryParse(textController.text);
-                  if (val != null && val > 0) {
-                    setState(() {
-                      _durationMinutes = val;
-                    });
-                  }
-                  Navigator.pop(context);
-                },
-                child: const Text('تأیید'),
               ),
             ],
           ),
+          actions: [
+            RitmoSecondaryButton(
+              label: 'لغو',
+              onPressed: () => Navigator.pop(context),
+            ),
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'تأیید',
+              onPressed: () {
+                final val = int.tryParse(textController.text);
+                if (val != null && val > 0) {
+                  setState(() {
+                    _durationMinutes = val;
+                  });
+                }
+                Navigator.pop(context);
+              },
+            ),
+          ],
         );
       },
     );

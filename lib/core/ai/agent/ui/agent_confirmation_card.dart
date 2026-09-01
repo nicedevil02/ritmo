@@ -1,5 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 /// میزبان کارت تایید (فاز ۳ · P3-2)
 ///
@@ -167,38 +169,37 @@ class _AgentArgsEditDialogState extends State<_AgentArgsEditDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: AlertDialog(
-        title: const Text('ویرایش پیش از تایید'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: widget.parameters.keys
-                .map((key) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: TextField(
-                        controller: _controllers[key],
-                        decoration: InputDecoration(
-                          labelText: key,
-                          border: const OutlineInputBorder(),
-                        ),
+    return RitmoCustomDialog(
+      title: 'ویرایش پیش از تایید',
+      icon: CupertinoIcons.pencil,
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: widget.parameters.keys
+              .map((key) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: TextField(
+                      controller: _controllers[key],
+                      decoration: InputDecoration(
+                        labelText: key,
+                        border: const OutlineInputBorder(),
                       ),
-                    ))
-                .toList(),
-          ),
+                    ),
+                  ))
+              .toList(),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('انصراف'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(_collect()),
-            child: const Text('تایید با این مقادیر'),
-          ),
-        ],
       ),
+      actions: [
+        RitmoSecondaryButton(
+          label: 'انصراف',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        const SizedBox(width: 10),
+        RitmoPrimaryButton(
+          label: 'تایید با این مقادیر',
+          onPressed: () => Navigator.of(context).pop(_collect()),
+        ),
+      ],
     );
   }
 }

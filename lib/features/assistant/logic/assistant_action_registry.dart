@@ -37,22 +37,12 @@ import 'package:sqflite/sqflite.dart';
 
 class AssistantActionRegistry {
   static void _showMedicalBlockDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('محدودیت دسترسی ایمنی', textAlign: TextAlign.right),
-        content: const Text(
+    RitmoDialog.show(
+      context,
+      title: 'محدودیت دسترسی ایمنی',
+      content:
           'برای حفظ ایمنی، اطلاعات پزشکی، یادآورهای دارویی و تغییرات سلامت از طریق دستیار هوشمند مدیریت نمی‌شوند؛ لطفاً این موارد را مستقیماً در بخش سلامت مدیریت کنید.',
-          textAlign: TextAlign.right,
-          style: TextStyle(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('تایید'),
-          ),
-        ],
-      ),
+      confirmLabel: 'تایید',
     );
   }
 
@@ -386,25 +376,12 @@ class AssistantActionRegistry {
         if (!isSettingChangeAllowed(key)) {
           if (context.mounted) {
             unawaited(
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text(
-                    'محدودیت دسترسی',
-                    textAlign: TextAlign.right,
-                  ),
-                  content: const Text(
+              RitmoDialog.show(
+                context,
+                title: 'محدودیت دسترسی',
+                content:
                     'تغییر این تنظیمات به دلایل امنیتی از طریق دستیار هوشمند امکان‌پذیر نیست.',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('تایید'),
-                    ),
-                  ],
-                ),
+                confirmLabel: 'تایید',
               ),
             );
           }
@@ -415,25 +392,11 @@ class AssistantActionRegistry {
         if (normalized == null) {
           if (context.mounted) {
             unawaited(
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text(
-                    'مقدار نامعتبر',
-                    textAlign: TextAlign.right,
-                  ),
-                  content: const Text(
-                    'مقدار پیشنهادی برای تنظیمات معتبر نیست.',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('تایید'),
-                    ),
-                  ],
-                ),
+              RitmoDialog.show(
+                context,
+                title: 'مقدار نامعتبر',
+                content: 'مقدار پیشنهادی برای تنظیمات معتبر نیست.',
+                confirmLabel: 'تایید',
               ),
             );
           }
@@ -451,47 +414,24 @@ class AssistantActionRegistry {
 
         if (context.mounted) {
           unawaited(
-            showDialog(
-              context: context,
-              builder: (context) => Directionality(
-                textDirection: TextDirection.rtl,
-                child: AlertDialog(
-                  title: const Text(
-                    'تایید تغییر تنظیمات',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  content: Text(
-                    'آیا مایلید تنظیم «$humanLabel» را از «$oldValue» به «$normalized» تغییر دهید؟',
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        'لغو',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        final success = await applySettingChange(
-                          key,
-                          normalized,
-                        );
-                        if (success) {
-                          onComplete();
-                        }
-                      },
-                      child: const Text(
-                        'تایید',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            RitmoDialog.show(
+              context,
+              title: 'تایید تغییر تنظیمات',
+              content:
+                  'آیا مایلید تنظیم «$humanLabel» را از «$oldValue» به «$normalized» تغییر دهید؟',
+              confirmLabel: 'تایید',
+              cancelLabel: 'لغو',
+            ).then((confirmed) async {
+              if (confirmed == true) {
+                final success = await applySettingChange(
+                  key,
+                  normalized,
+                );
+                if (success) {
+                  onComplete();
+                }
+              }
+            }),
           );
         }
 
@@ -510,53 +450,28 @@ class AssistantActionRegistry {
 
         if (context.mounted) {
           unawaited(
-            showDialog(
-              context: context,
-              builder: (context) => Directionality(
-                textDirection: TextDirection.rtl,
-                child: AlertDialog(
-                  title: const Text(
-                    'تایید انجام روتین',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  content: Text(
-                    'آیا روتین «$title» را امروز انجام داده‌اید؟',
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        'لغو',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        final todayStr = DateTime.now()
-                            .toIso8601String()
-                            .substring(0, 10);
+            RitmoDialog.show(
+              context,
+              title: 'تایید انجام روتین',
+              content: 'آیا روتین «$title» را امروز انجام داده‌اید؟',
+              confirmLabel: 'تایید',
+              cancelLabel: 'لغو',
+            ).then((confirmed) async {
+              if (confirmed == true) {
+                final todayStr =
+                    DateTime.now().toIso8601String().substring(0, 10);
 
-                        await CompletionGateway.instance.submit(
-                          RoutineCompletion(
-                            routineId: routineId,
-                            dateStr: todayStr,
-                          ),
-                        );
+                await CompletionGateway.instance.submit(
+                  RoutineCompletion(
+                    routineId: routineId,
+                    dateStr: todayStr,
+                  ),
+                );
 
-                        RitmoEvents.notifyRoutineChanged();
-                        onComplete();
-                      },
-                      child: const Text(
-                        'تایید',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                RitmoEvents.notifyRoutineChanged();
+                onComplete();
+              }
+            }),
           );
         }
 
@@ -575,50 +490,25 @@ class AssistantActionRegistry {
 
         if (context.mounted) {
           unawaited(
-            showDialog(
-              context: context,
-              builder: (context) => Directionality(
-                textDirection: TextDirection.rtl,
-                child: AlertDialog(
-                  title: const Text(
-                    'تایید رد کردن روتین',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  content: Text(
-                    'آیا روتین «$title» را برای امروز رد می‌کنید؟',
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        'لغو',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        final todayStr = DateTime.now()
-                            .toIso8601String()
-                            .substring(0, 10);
+            RitmoDialog.show(
+              context,
+              title: 'تایید رد کردن روتین',
+              content: 'آیا روتین «$title» را برای امروز رد می‌کنید؟',
+              confirmLabel: 'تایید',
+              cancelLabel: 'لغو',
+            ).then((confirmed) async {
+              if (confirmed == true) {
+                final todayStr =
+                    DateTime.now().toIso8601String().substring(0, 10);
 
-                        await CompletionGateway.instance.submit(
-                          RoutineSkip(routineId: routineId, dateStr: todayStr),
-                        );
+                await CompletionGateway.instance.submit(
+                  RoutineSkip(routineId: routineId, dateStr: todayStr),
+                );
 
-                        RitmoEvents.notifyRoutineChanged();
-                        onComplete();
-                      },
-                      child: const Text(
-                        'تایید',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                RitmoEvents.notifyRoutineChanged();
+                onComplete();
+              }
+            }),
           );
         }
 
@@ -692,63 +582,38 @@ class AssistantActionRegistry {
 
         if (context.mounted) {
           unawaited(
-            showDialog(
-              context: context,
-              builder: (context) => Directionality(
-                textDirection: TextDirection.rtl,
-                child: AlertDialog(
-                  title: const Text(
-                    'تایید حذف روتین',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  content: Text(
-                    'آیا از حذف روتین «$title» اطمینان دارید؟ این عمل قابل بازگشت نیست.',
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        'لغو',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        await db.update(
-                          'routines',
-                          {'isArchived': 1},
-                          where: 'id = ?',
-                          whereArgs: [routineId],
-                        );
+            RitmoDialog.show(
+              context,
+              title: 'تایید حذف روتین',
+              content:
+                  'آیا از حذف روتین «$title» اطمینان دارید؟ این عمل قابل بازگشت نیست.',
+              confirmLabel: 'تایید حذف',
+              cancelLabel: 'لغو',
+              isDestructive: true,
+            ).then((confirmed) async {
+              if (confirmed == true) {
+                await db.update(
+                  'routines',
+                  {'isArchived': 1},
+                  where: 'id = ?',
+                  whereArgs: [routineId],
+                );
 
-                        // Save to audit
-                        final auditId =
-                            '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
-                        await db.insert('assistant_audit_log', {
-                          'id': auditId,
-                          'actionType': 'deleteRoutine',
-                          'targetKey': routineId,
-                          'newValue': 'ARCHIVED',
-                          'appliedAt': DateTime.now().millisecondsSinceEpoch,
-                        });
+                // Save to audit
+                final auditId =
+                    '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
+                await db.insert('assistant_audit_log', {
+                  'id': auditId,
+                  'actionType': 'deleteRoutine',
+                  'targetKey': routineId,
+                  'newValue': 'ARCHIVED',
+                  'appliedAt': DateTime.now().millisecondsSinceEpoch,
+                });
 
-                        RitmoEvents.notifyRoutineChanged();
-                        onComplete();
-                      },
-                      child: const Text(
-                        'تایید حذف',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                RitmoEvents.notifyRoutineChanged();
+                onComplete();
+              }
+            }),
           );
         }
 
@@ -845,59 +710,35 @@ class AssistantActionRegistry {
 
         if (context.mounted) {
           unawaited(
-            showDialog(
-              context: context,
-              builder: (context) => Directionality(
-                textDirection: TextDirection.rtl,
-                child: AlertDialog(
-                  title: const Text(
-                    'تایید تکمیل گام هدف',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  content: Text(
-                    'آیا گام «$title» را تکمیل کرده‌اید؟',
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        'لغو',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        await db.update(
-                          'goal_steps',
-                          {'isCompleted': 1},
-                          where: 'id = ?',
-                          whereArgs: [stepId],
-                        );
+            RitmoDialog.show(
+              context,
+              title: 'تایید تکمیل گام هدف',
+              content: 'آیا گام «$title» را تکمیل کرده‌اید؟',
+              confirmLabel: 'تایید',
+              cancelLabel: 'لغو',
+            ).then((confirmed) async {
+              if (confirmed == true) {
+                await db.update(
+                  'goal_steps',
+                  {'isCompleted': 1},
+                  where: 'id = ?',
+                  whereArgs: [stepId],
+                );
 
-                        // Save to audit
-                        final auditId =
-                            '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
-                        await db.insert('assistant_audit_log', {
-                          'id': auditId,
-                          'actionType': 'completeGoalStep',
-                          'targetKey': stepId,
-                          'newValue': 'COMPLETED',
-                          'appliedAt': DateTime.now().millisecondsSinceEpoch,
-                        });
+                // Save to audit
+                final auditId =
+                    '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
+                await db.insert('assistant_audit_log', {
+                  'id': auditId,
+                  'actionType': 'completeGoalStep',
+                  'targetKey': stepId,
+                  'newValue': 'COMPLETED',
+                  'appliedAt': DateTime.now().millisecondsSinceEpoch,
+                });
 
-                        onComplete();
-                      },
-                      child: const Text(
-                        'تایید',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                onComplete();
+              }
+            }),
           );
         }
 
@@ -1511,10 +1352,9 @@ class AssistantActionRegistry {
     showDialog(
       context: context,
       builder: (ctx) {
-        final colors = ctx.colors;
-        return AlertDialog(
-          backgroundColor: colors.bg,
-          title: const Text('ذخیره به عنوان قالب', textAlign: TextAlign.right),
+        return RitmoCustomDialog(
+          title: 'ذخیره به عنوان قالب',
+          icon: Icons.bookmarks_outlined,
           content: TextField(
             controller: nameController,
             textAlign: TextAlign.right,
@@ -1523,11 +1363,13 @@ class AssistantActionRegistry {
             ),
           ),
           actions: [
-            TextButton(
+            RitmoSecondaryButton(
+              label: 'انصراف',
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف'),
             ),
-            ElevatedButton(
+            const SizedBox(width: 10),
+            RitmoPrimaryButton(
+              label: 'ذخیره',
               onPressed: () async {
                 final name = nameController.text.trim();
                 if (name.isEmpty) return;
@@ -1546,7 +1388,6 @@ class AssistantActionRegistry {
                   }
                 }
               },
-              child: const Text('ذخیره'),
             ),
           ],
         );

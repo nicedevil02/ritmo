@@ -46,83 +46,107 @@ class _CrashReportsScreenState extends State<CrashReportsScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: colors.background,
-        appBar: AppBar(
-          backgroundColor: colors.background,
-          title: const Text('گزارش خطاهای سیستم', style: TextStyle()),
-          actions: [
-            if (_reports.isNotEmpty)
-              IconButton(
-                icon: const Icon(CupertinoIcons.trash, color: Colors.redAccent),
-                onPressed: _clearAll,
-                tooltip: 'حذف همه لاگ‌ها',
-              ),
-          ],
-        ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _reports.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(CupertinoIcons.checkmark_shield_fill, size: 64, color: Colors.green),
-                        const SizedBox(height: 16),
-                        Text(
-                          'هیچ خطایی ثبت نشده است 🌿',
-                          style: TextStyle(color: colors.textPrimary, fontSize: 16),
+        backgroundColor: colors.bg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: RitmoGlassHeader(
+                  borderRadius: BorderRadius.circular(22),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(CupertinoIcons.back),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const Expanded(
+                        child: Center(
+                          child: Text(
+                            'گزارش خطاهای سیستم',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
                         ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
-                    itemCount: _reports.length,
-                    itemBuilder: (context, index) {
-                      final file = _reports[index];
-                      final filename = file.path.split(Platform.pathSeparator).last;
-                      return Card(
-                        color: colors.card,
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          title: Text(filename, style: const TextStyle(fontSize: 13, fontFamily: 'monospace')),
-                          trailing: const Icon(CupertinoIcons.doc_text, size: 20),
-                          onTap: () async {
-                            final text = await file.readAsString();
-                            if (context.mounted) {
-                              await showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  backgroundColor: colors.card,
-                                  title: Text(filename, style: const TextStyle(fontSize: 14)),
-                                  content: SingleChildScrollView(
-                                    child: SelectableText(
-                                      text,
-                                      style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
-                                    ),
+                      ),
+                      if (_reports.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(CupertinoIcons.trash, color: Colors.redAccent),
+                          onPressed: _clearAll,
+                          tooltip: 'حذف همه لاگ‌ها',
+                        )
+                      else
+                        const SizedBox(width: 44),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CupertinoActivityIndicator())
+                    : _reports.isEmpty
+                        ? const Center(
+                            child: RitmoNeuEmptyCard(
+                              icon: CupertinoIcons.checkmark_shield_fill,
+                              title: 'هیچ خطایی ثبت نشده است 🌿',
+                              subtitle: 'عملکرد سیستم در وضعیت پایدار و ایمن قرار دارد.',
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
+                            itemCount: _reports.length,
+                            itemBuilder: (context, index) {
+                              final file = _reports[index];
+                              final filename = file.path.split(Platform.pathSeparator).last;
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: RitmoCard.neumorphic(
+                                  onTap: () async {
+                                    final text = await file.readAsString();
+                                    if (context.mounted) {
+                                      await showDialog(
+                                        context: context,
+                                        builder: (ctx) => RitmoCustomDialog(
+                                          title: filename,
+                                          icon: CupertinoIcons.doc_text,
+                                          content: SingleChildScrollView(
+                                            child: SelectableText(
+                                              text,
+                                              style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+                                            ),
+                                          ),
+                                          actions: [
+                                            RitmoSecondaryButton(
+                                              label: 'بستن',
+                                              onPressed: () => Navigator.pop(ctx),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            RitmoPrimaryButton(
+                                              label: 'کپی متن',
+                                              onPressed: () {
+                                                Clipboard.setData(ClipboardData(text: text));
+                                                Navigator.pop(ctx);
+                                                RitmoToast.show(context, 'گزارش در حافظه کپی شد');
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                                    title: Text(filename, style: const TextStyle(fontSize: 13, fontFamily: 'monospace')),
+                                    trailing: const Icon(CupertinoIcons.doc_text, size: 20),
                                   ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                         Clipboard.setData(ClipboardData(text: text));
-                                         Navigator.pop(ctx);
-                                         RitmoToast.show(context, 'گزارش در حافظه کپی شد');
-                                      },
-                                      child: const Text('کپی متن'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(ctx),
-                                      child: const Text('بستن'),
-                                    ),
-                                  ],
                                 ),
                               );
-                            }
-                          },
-                        ),
-                      );
-                    },
-                  ),
+                            },
+                          ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

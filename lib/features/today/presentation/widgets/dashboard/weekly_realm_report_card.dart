@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/realm/reports/zone_report_models.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 /// Presentation card displaying the weekly realm distribution and budget adherence (F-15).
 class WeeklyRealmReportCard extends StatelessWidget {
@@ -17,58 +18,19 @@ class WeeklyRealmReportCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     if (report.items.isEmpty) {
-      return Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Icon(
-                Icons.pie_chart_outline,
-                size: 36,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'گزارش هفتگی قلمروها',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'هنوز داده‌ای از حضور در قلمروها برای این هفته ثبت نشده است.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
+      return const RitmoNeuEmptyCard(
+        icon: Icons.pie_chart_outline,
+        title: 'گزارش هفتگی قلمروها',
+        subtitle: 'هنوز داده‌ای از حضور در قلمروها برای این هفته ثبت نشده است.',
       );
     }
 
     final totalHours = report.totalTrackedMinutes ~/ 60;
     final totalMinRemainder = report.totalTrackedMinutes % 60;
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+    return RitmoCard.neumorphic(
+      padding: const EdgeInsets.all(16),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
@@ -139,8 +101,7 @@ class WeeklyRealmReportCard extends StatelessWidget {
             ...report.items.map((item) => _buildRealmItemRow(context, item)),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildRealmItemRow(BuildContext context, ZoneReportItem item) {

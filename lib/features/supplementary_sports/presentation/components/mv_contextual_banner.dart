@@ -3,12 +3,13 @@ import 'package:ritmo/core/domain/engines/ritmo_cross_module_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 /// Contextual Neumorphic Banner shown in MvTodayTab when cross-module factors
-/// (sleep debt, fasting window, menstrual cycle, or stress/fatigue) adapt the day's training.
+/// (pregnancy, sleep debt, fasting window, menstrual cycle, or stress/fatigue) adapt the day's training.
 class MvContextualBanner extends StatelessWidget {
   final RitmoCrossModuleSnapshot snapshot;
   final VoidCallback? onApplyFastingWindow;
   final VoidCallback? onShowRestorativeMovements;
   final VoidCallback? onApplySomaticMovement;
+  final VoidCallback? onApplyPregnancyProtocol;
 
   const MvContextualBanner({
     super.key,
@@ -16,13 +17,56 @@ class MvContextualBanner extends StatelessWidget {
     this.onApplyFastingWindow,
     this.onShowRestorativeMovements,
     this.onApplySomaticMovement,
+    this.onApplyPregnancyProtocol,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    // 1. Check Sleep Debt
+    // 1. Pregnancy Safety Protocol (Highest Priority - Ultra-conservative)
+    if (snapshot.isPregnancy) {
+      return _buildBanner(
+        context: context,
+        icon: CupertinoIcons.shield_fill,
+        iconColor: colors.primary,
+        title: 'پروتکل محافظه‌کارانه بارداری',
+        subtitle:
+            'تمرینات به حرکات ایمن، کشش‌های پریناتال و تنفس هدایت شدند. هرگونه تمرین باید با تأیید پزشک متخصص باشد.',
+        action: onApplyPregnancyProtocol != null
+            ? GestureDetector(
+                onTap: () {
+                  RitmoHapticsPolicy.tap();
+                  onApplyPregnancyProtocol!();
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    'انطباق به تمرینات سبک پریناتال 🤰',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+              )
+            : null,
+      );
+    }
+
+    // 2. Check Sleep Debt
     if (snapshot.isSleepDebtHigh) {
       return _buildBanner(
         context: context,
@@ -34,7 +78,7 @@ class MvContextualBanner extends StatelessWidget {
       );
     }
 
-    // 2. Check Fasting
+    // 3. Check Fasting
     if (snapshot.isFasting && snapshot.goldenPreIftarWindow != null) {
       return _buildBanner(
         context: context,
@@ -76,7 +120,7 @@ class MvContextualBanner extends StatelessWidget {
       );
     }
 
-    // 3. Check Menstrual Phase (with consent)
+    // 4. Check Menstrual Phase (with consent)
     if (snapshot.isMenstrualPhase && snapshot.cycleConsentGranted) {
       return _buildBanner(
         context: context,
@@ -118,7 +162,7 @@ class MvContextualBanner extends StatelessWidget {
       );
     }
 
-    // 4. Check High Stress / High Fatigue (Wellbeing & Somatic Movement)
+    // 5. Check High Stress / High Fatigue (Wellbeing & Somatic Movement)
     if (snapshot.isHighStressOrFatigue) {
       return _buildBanner(
         context: context,

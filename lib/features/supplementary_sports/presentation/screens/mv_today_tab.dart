@@ -172,6 +172,18 @@ class MvTodayTab extends StatelessWidget {
                 );
                 onSlotUpdated(adapted);
               },
+              onApplyPregnancyProtocol: () {
+                final adapted = todaySlot.copyWith(
+                  slotType: MvSlotType.strength,
+                  focusCodes: const ['PELVIC_FLOOR', 'MOBILITY'],
+                  targetMinutes: 15,
+                  intensityTier: MvIntensityTier.light,
+                  headlineFa: 'حرکات سبک پریناتال و تنفس',
+                  reasonKey: MvReasonKeys.constraintRelaxed,
+                  updatedAt: DateTime.now().millisecondsSinceEpoch,
+                );
+                onSlotUpdated(adapted);
+              },
             ),
 
           // 3. Readiness Bar (tap to open quick checkin)

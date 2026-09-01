@@ -7,11 +7,13 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 class MvContextualBanner extends StatelessWidget {
   final RitmoCrossModuleSnapshot snapshot;
   final VoidCallback? onApplyFastingWindow;
+  final VoidCallback? onShowRestorativeMovements;
 
   const MvContextualBanner({
     super.key,
     required this.snapshot,
     this.onApplyFastingWindow,
+    this.onShowRestorativeMovements,
   });
 
   @override
@@ -81,6 +83,36 @@ class MvContextualBanner extends StatelessWidget {
         title: 'فاز ریکاوری چرخهٔ زیستی',
         subtitle:
             'با توجه به فاز قاعدگی، حرکات کششی و آرام‌بخش تسکین‌دهنده فعال شدند.',
+        action: onShowRestorativeMovements != null
+            ? GestureDetector(
+                onTap: () {
+                  RitmoHapticsPolicy.tap();
+                  onShowRestorativeMovements!();
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    'تعدیل برنامه به تمرینات تسکین‌دهنده 🌸',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+              )
+            : null,
       );
     }
 

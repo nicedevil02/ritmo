@@ -814,125 +814,39 @@ class _AiChatScreenState extends State<AiChatScreen> with WidgetsBindingObserver
 
     if (!mounted) return false;
 
-    final accepted = await showDialog<bool>(
-      context: context,
+    final accepted = await RitmoCustomDialog.show<bool>(
+      context,
+      title: 'رضایت‌نامه ارسال اطلاعات به هوش ابری',
+      icon: Icons.security_rounded,
       barrierDismissible: false,
-      builder: (context) {
-        final colors = context.colors;
-
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: RitmoTheme.glassCardLight(
-              child: Padding(
-                padding: const EdgeInsets.all(22),
-                child: Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: colors.primary.withValues(alpha: 0.12),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.security_rounded,
-                              size: 22,
-                              color: colors.primary,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'رضایت‌نامه ارسال اطلاعات به هوش ابری',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 15.5,
-                                color: colors.textPrimary,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Flexible(
-                        child: SingleChildScrollView(
-                          child: Text(
-                            contentText,
-                            textAlign: TextAlign.right,
-                            style: TextStyle(
-                              fontSize: 13,
-                              height: 1.65,
-                              color: colors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: colors.textSecondary,
-                                side: BorderSide(
-                                  color: colors.border.withValues(alpha: 0.8),
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              child: const Text(
-                                'عدم موافقت',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13.5,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: colors.primary,
-                                foregroundColor: colors.onPrimary,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              child: const Text(
-                                'موافقت و پذیرش',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13.5,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+      content: Flexible(
+        child: SingleChildScrollView(
+          child: Text(
+            contentText,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.65,
+              color: context.colors.textSecondary,
             ),
           ),
-        );
-      },
+        ),
+      ),
+      actions: [
+        Expanded(
+          child: RitmoSecondaryButton(
+            label: 'عدم موافقت',
+            onPressed: () => Navigator.pop(context, false),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: RitmoPrimaryButton(
+            label: 'موافقت و پذیرش',
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ),
+      ],
     );
 
     if (accepted ?? false) {

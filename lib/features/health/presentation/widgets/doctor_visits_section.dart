@@ -9,6 +9,7 @@ import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_glass_surface.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
 import 'package:ritmo/features/health/presentation/widgets/doctor_visit_form_sheet.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
@@ -251,47 +252,64 @@ class DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTic
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(16),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            InteractiveViewer(
-              minScale: 0.5,
-              maxScale: 4,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.file(
-                  File(path),
-                  cacheWidth: 1080,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    padding: const EdgeInsets.all(32),
-                    color: context.colors.card,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.error_outline, color: context.colors.medicalRed, size: 48),
-                        const SizedBox(height: 16),
-                        Text(
-                          'خطا در بارگذاری تصویر نسخه',
-                          style: TextStyle(color: context.colors.textPrimary),
-                        ),
-                      ],
+        child: RitmoGlassSurface(
+          borderRadius: BorderRadius.circular(20),
+          padding: const EdgeInsets.all(12),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.file(
+                    File(path),
+                    cacheWidth: 1080,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      padding: const EdgeInsets.all(32),
+                      color: context.colors.card,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.error_outline, color: context.colors.medicalRed, size: 48),
+                          const SizedBox(height: 16),
+                          Text(
+                            'خطا در بارگذاری تصویر نسخه',
+                            style: TextStyle(color: context.colors.textPrimary),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              top: 16,
-              right: 16,
-              child: FloatingActionButton.small(
-                onPressed: () => Navigator.pop(context),
-                backgroundColor: Colors.black.withValues(alpha: 0.5),
-                foregroundColor: Colors.white,
-                child: const Icon(Icons.close),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: GestureDetector(
+                  onTap: () {
+                    RitmoHaptics.tap();
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.55),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Icon(CupertinoIcons.xmark, color: Colors.white, size: 16),
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

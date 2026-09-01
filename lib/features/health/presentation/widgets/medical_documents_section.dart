@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_glass_surface.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
@@ -562,62 +563,79 @@ class _MultiPageViewerState extends State<_MultiPageViewer> {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(8),
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: widget.imagePaths.length,
-            onPageChanged: (page) {
-              setState(() {
-                _currentPage = page;
-              });
-            },
-            itemBuilder: (context, index) {
-              return InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 4,
-                child: Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.file(
-                      File(widget.imagePaths[index]),
-                      cacheWidth: 1080,
-                      fit: BoxFit.contain,
+      child: RitmoGlassSurface(
+        borderRadius: BorderRadius.circular(20),
+        padding: const EdgeInsets.all(12),
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: widget.imagePaths.length,
+              onPageChanged: (page) {
+                setState(() {
+                  _currentPage = page;
+                });
+              },
+              itemBuilder: (context, index) {
+                return InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4,
+                  child: Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.file(
+                        File(widget.imagePaths[index]),
+                        cacheWidth: 1080,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
-          // Header info
-          Positioned(
-            top: 16,
-            left: 16,
-            right: 16,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _toPersianDigits('صفحه ${_currentPage + 1} از ${widget.imagePaths.length}'),
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                  ),
-                ),
-                FloatingActionButton.small(
-                  onPressed: () => Navigator.pop(context),
-                  backgroundColor: Colors.black.withValues(alpha: 0.6),
-                  foregroundColor: Colors.white,
-                  child: const Icon(Icons.close),
-                ),
-              ],
+                );
+              },
             ),
-          ),
-        ],
+            // Header info
+            Positioned(
+              top: 8,
+              left: 8,
+              right: 8,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _toPersianDigits('صفحه ${_currentPage + 1} از ${widget.imagePaths.length}'),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      RitmoHaptics.tap();
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(CupertinoIcons.xmark, color: Colors.white, size: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

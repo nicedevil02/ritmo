@@ -323,12 +323,12 @@ class _ProfileAvatarCropperSheetState extends State<ProfileAvatarCropperSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoTheme.glassCardLight(
-        borderRadius: 28,
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.92),
-          ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.92),
+        ),
+        child: RitmoGlassSheet(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           child: SingleChildScrollView(child: content),
         ),
       ),

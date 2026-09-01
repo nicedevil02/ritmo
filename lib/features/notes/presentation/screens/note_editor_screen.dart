@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +8,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_glass_surface.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/notes/presentation/widgets/ritmo_shimmer.dart';
 import 'package:ritmo/features/notes/data/experience_repository.dart';
@@ -408,21 +408,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         child: Dialog(
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          child: ClipRRect(
+          child: RitmoGlassSurface(
             borderRadius: BorderRadius.circular(RitmoRadius.card),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF131722).withValues(alpha: 0.90)
-                      : Colors.white.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(RitmoRadius.card),
-                  border: Border.all(
-                    color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08),
-                  ),
-                ),
-                child: Column(
+            child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Header Bar
@@ -494,9 +482,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
+        );
   }
 
   Future<void> _addSrs() async {

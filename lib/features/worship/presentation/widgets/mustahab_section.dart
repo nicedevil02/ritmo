@@ -792,170 +792,137 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet>
 
   void _showPresetReminderDialog(Map<String, dynamic> preset) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final reminder = _getDefaultReminder(preset['id'] as String);
 
     showDialog(
       context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
       builder: (dialogContext) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: Dialog(
-            backgroundColor: Colors.transparent,
-            insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-            child: RitmoTheme.glassCardLight(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isDark ? colors.accent.withValues(alpha: 0.15) : colors.border,
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(CupertinoIcons.alarm_fill, color: colors.accent, size: 24),
-                        const SizedBox(width: 10),
-                        Text(
-                          'تنظیم یادآور مستحب',
-                          style: TextStyle(
-                            fontSize: 16.5,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                            ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'یادآور پیش‌فرض برای «${preset['title']}» به صورت زیر تنظیم شده است:',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: colors.textPrimary.withValues(alpha: 0.9),
-                        ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: colors.accent.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        _describeReminder(reminder),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: colors.primary,
-                          ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primary,
-                        foregroundColor: colors.onPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
-                      ),
-                      onPressed: () {
-                        Navigator.pop(dialogContext);
-                        _togglePresetWithReminder(preset, true, true);
-                      },
-                      child: Text(
-                        'تایید و ثبت با یادآور پیش‌فرض',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.onPrimary),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: colors.textPrimary,
-                        side: BorderSide(color: colors.textSecondary.withValues(alpha: 0.2)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(dialogContext);
-                        final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-                        final tempPractice = WorshipPractice(
-                          id: preset['id'] as String,
-                          practiceType: 'MUSTAHAB',
-                          subType: preset['subType'] as String,
-                          title: preset['title'] as String,
-                          reminderEnabled: true,
-                          reminderTime: reminder['time'] as String,
-                          reminderFrequency: reminder['freq'] as String,
-                          reminderDaysOfWeek: reminder['day'] as String,
-                          notes: preset['notes'] as String?,
-                          dailyDoneDate: todayStr,
-                          createdAt: DateTime.now().millisecondsSinceEpoch,
-                          updatedAt: DateTime.now().millisecondsSinceEpoch,
-                        );
-                        showModalBottomSheet(
-                          context: context,
-                          backgroundColor: Colors.transparent,
-                          isScrollControlled: true,
-                          transitionAnimationController: _childSheetAnimController,
-                          builder: (sheetCtx) {
-                            return WorshipReminderSettingsSheet(
-                              practice: tempPractice,
-                              onSaved: (updated) async {
-                                await _togglePresetWithReminder(
-                                  preset,
-                                  true,
-                                  updated.reminderEnabled == true,
-                                  customTime: updated.reminderTime,
-                                  customFreq: updated.reminderFrequency,
-                                  customDay: updated.reminderDaysOfWeek,
-                                );
-                              },
-                            );
-                          },
-                        );
-                      },
-                      child: const Text(
-                        'ویرایش یادآور',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: colors.textSecondary,
-                      ),
-                      onPressed: () {
-                        Navigator.pop(dialogContext);
-                        _togglePresetWithReminder(preset, true, false);
-                      },
-                      child: const Text(
-                        'ثبت بدون یادآور',
-                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: colors.textSecondary.withValues(alpha: 0.7),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(dialogContext);
-                      },
-                      child: const Text(
-                        'انصراف',
-                        style: TextStyle(fontSize: 13),
-                      ),
-                    ),
-                  ],
+        return RitmoCustomDialog(
+          title: 'تنظیم یادآور مستحب',
+          icon: CupertinoIcons.alarm_fill,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'یادآور پیش‌فرض برای «${preset['title']}» به صورت زیر تنظیم شده است:',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colors.textPrimary.withValues(alpha: 0.9),
                 ),
               ),
-            ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colors.accent.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _describeReminder(reminder),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: colors.primary,
+                  ),
+                ),
+              ),
+            ],
           ),
+          actions: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  RitmoPrimaryButton(
+                    label: 'تایید با یادآور پیش‌فرض',
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                      _togglePresetWithReminder(preset, true, true);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  RitmoSecondaryButton(
+                    label: 'ویرایش یادآور',
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+                      final tempPractice = WorshipPractice(
+                        id: preset['id'] as String,
+                        practiceType: 'MUSTAHAB',
+                        subType: preset['subType'] as String,
+                        title: preset['title'] as String,
+                        reminderEnabled: true,
+                        reminderTime: reminder['time'] as String,
+                        reminderFrequency: reminder['freq'] as String,
+                        reminderDaysOfWeek: reminder['day'] as String,
+                        notes: preset['notes'] as String?,
+                        dailyDoneDate: todayStr,
+                        createdAt: DateTime.now().millisecondsSinceEpoch,
+                        updatedAt: DateTime.now().millisecondsSinceEpoch,
+                      );
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: Colors.transparent,
+                        isScrollControlled: true,
+                        transitionAnimationController: _childSheetAnimController,
+                        builder: (sheetCtx) {
+                          return WorshipReminderSettingsSheet(
+                            practice: tempPractice,
+                            onSaved: (updated) async {
+                              await _togglePresetWithReminder(
+                                preset,
+                                true,
+                                updated.reminderEnabled == true,
+                                customTime: updated.reminderTime,
+                                customFreq: updated.reminderFrequency,
+                                customDay: updated.reminderDaysOfWeek,
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.pop(dialogContext);
+                            _togglePresetWithReminder(preset, true, false);
+                          },
+                          child: Text(
+                            'ثبت بدون یادآور',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          child: Text(
+                            'انصراف',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: colors.textTertiary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         );
       },
     );

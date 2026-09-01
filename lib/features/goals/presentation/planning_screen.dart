@@ -21,6 +21,7 @@ import 'package:ritmo/features/goals/presentation/widgets/month_plan_section.dar
 import 'package:ritmo/features/goals/presentation/widgets/visual_week_board.dart';
 import 'package:ritmo/features/goals/presentation/widgets/week_planner_sheet.dart';
 import 'package:ritmo/features/goals/presentation/widgets/week_review_sheet.dart';
+import 'package:ritmo/core/widgets/sheet/ritmo_picker_sheet.dart';
 
 class PlanningScreen extends StatefulWidget {
   const PlanningScreen({
@@ -1416,23 +1417,15 @@ class _PlanningScreenState extends State<PlanningScreen> {
       switch (action) {
         case 'move':
           final weekDays = PlanningWeek.dayKeysOfWeekContaining(DateTime.now());
-          final picked = await showDialog<String>(
+          final picked = await RitmoPickerSheet.show<String>(
             context: context,
-            builder: (ctx) => SimpleDialog(
-              title: const Text(
-                'انتقال به کدام روز؟',
-                textAlign: TextAlign.right,
-              ),
-              children: weekDays.map((dk) {
-                return SimpleDialogOption(
-                  onPressed: () => Navigator.pop(ctx, dk),
-                  child: Text(
-                    '${_getDayNameFa(dk)} ($dk)',
-                    textAlign: TextAlign.right,
-                  ),
-                );
-              }).toList(),
-            ),
+            title: 'انتقال به کدام روز؟',
+            options: weekDays.map((dk) {
+              return PickerOption<String>(
+                label: '${_getDayNameFa(dk)} ($dk)',
+                value: dk,
+              );
+            }).toList(),
           );
           if (picked != null && picked != dayKey) {
             await repo.moveAllocation(firstAlloc.id, picked, nowMs: nowMs);

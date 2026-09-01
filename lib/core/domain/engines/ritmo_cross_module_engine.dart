@@ -32,6 +32,7 @@ class RitmoCrossModuleSnapshot {
   final bool wellbeingConsentGranted;
   final int? energyLevel; // 1..5
   final String? recentMood; // e.g. 'ANXIOUS', 'TIRED', 'CALM', etc.
+  final bool isHighStressOrFatigue;
 
   // 5. Reason keys for plan transparency (Constitution Law 2 & 19)
   final List<String> applicableReasonKeys;
@@ -51,6 +52,7 @@ class RitmoCrossModuleSnapshot {
     this.wellbeingConsentGranted = false,
     this.energyLevel,
     this.recentMood,
+    this.isHighStressOrFatigue = false,
     this.applicableReasonKeys = const [],
   });
 
@@ -70,6 +72,7 @@ class RitmoCrossModuleSnapshot {
       'wellbeingConsentGranted': wellbeingConsentGranted,
       'energyLevel': energyLevel,
       'recentMood': recentMood,
+      'isHighStressOrFatigue': isHighStressOrFatigue,
       'applicableReasonKeys': applicableReasonKeys,
     };
   }
@@ -153,6 +156,9 @@ class RitmoCrossModuleEngine {
       if (cycleContext.isMenstrualPhase && cycleContext.consentGranted) {
         reasons.add(MvReasonKeys.readinessLow);
       }
+      if (wellbeingContext.isHighStressOrFatigue) {
+        reasons.add(MvReasonKeys.readinessLow);
+      }
 
       final snapshot = RitmoCrossModuleSnapshot(
         dateIso: dateIso,
@@ -169,6 +175,7 @@ class RitmoCrossModuleEngine {
         wellbeingConsentGranted: wellbeingContext.consentGranted,
         energyLevel: wellbeingContext.energyLevel,
         recentMood: wellbeingContext.recentMood,
+        isHighStressOrFatigue: wellbeingContext.isHighStressOrFatigue,
         applicableReasonKeys: reasons,
       );
 
@@ -378,28 +385,56 @@ class RitmoCrossModuleEngine {
     bool consentGranted,
     int? energyLevel,
     String? recentMood,
+    bool isHighStressOrFatigue,
   })> _resolveWellbeingContext(dynamic db, String dateIso) async {
     const consent = true; // Default internal read unless disabled
     int? energy;
     String? mood;
+    bool isHighStressOrFatigue = false;
 
     try {
-      final energyRows = await db.query(
-        'energy_logs',
-        orderBy: 'loggedAt DESC',
+      // 1. Check daily check-in (fatigue, energy, soreness)
+      final checkinRows = await db.query(
+        'ss_daily_checkin',
+        where: 'dateIso = ?',
+        whereArgs: [dateIso],
         limit: 1,
       );
-      if (energyRows.isNotEmpty) {
-        final levelStr = energyRows.first['energyLevel'] as String? ?? '';
-        switch (levelStr.toLowerCase()) {
-          case 'verylow':
-          case 'low':
-            energy = 1;
-          case 'moderate':
-            energy = 3;
-          case 'high':
-          case 'peak':
-            energy = 5;
+      if (checkinRows.isNotEmpty) {
+        final row = checkinRows.first;
+        final e = row['energy'] as int?;
+        final f = row['fatigue'] as int?;
+        final s = row['soreness'] as int?;
+        final p = row['painLevel'] as int?;
+        if (e != null) energy = e;
+        if ((e != null && e <= 2) ||
+            (f != null && f >= 4) ||
+            (s != null && s >= 4) ||
+            (p != null && p >= 5)) {
+          isHighStressOrFatigue = true;
+        }
+      }
+
+      // 2. Check energy_logs fallback
+      if (energy == null) {
+        final energyRows = await db.query(
+          'energy_logs',
+          orderBy: 'loggedAt DESC',
+          limit: 1,
+        );
+        if (energyRows.isNotEmpty) {
+          final levelStr = energyRows.first['energyLevel'] as String? ?? '';
+          switch (levelStr.toLowerCase()) {
+            case 'verylow':
+            case 'low':
+              energy = 1;
+              isHighStressOrFatigue = true;
+            case 'moderate':
+              energy = 3;
+            case 'high':
+            case 'peak':
+              energy = 5;
+          }
         }
       }
     } catch (_) {}
@@ -408,6 +443,7 @@ class RitmoCrossModuleEngine {
       consentGranted: consent,
       energyLevel: energy,
       recentMood: mood,
+      isHighStressOrFatigue: isHighStressOrFatigue,
     );
   }
 }

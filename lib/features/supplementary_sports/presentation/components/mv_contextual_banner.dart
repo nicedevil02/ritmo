@@ -3,17 +3,19 @@ import 'package:ritmo/core/domain/engines/ritmo_cross_module_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 /// Contextual Neumorphic Banner shown in MvTodayTab when cross-module factors
-/// (sleep debt, fasting window, or menstrual cycle) adapt the day's training.
+/// (sleep debt, fasting window, menstrual cycle, or stress/fatigue) adapt the day's training.
 class MvContextualBanner extends StatelessWidget {
   final RitmoCrossModuleSnapshot snapshot;
   final VoidCallback? onApplyFastingWindow;
   final VoidCallback? onShowRestorativeMovements;
+  final VoidCallback? onApplySomaticMovement;
 
   const MvContextualBanner({
     super.key,
     required this.snapshot,
     this.onApplyFastingWindow,
     this.onShowRestorativeMovements,
+    this.onApplySomaticMovement,
   });
 
   @override
@@ -104,6 +106,48 @@ class MvContextualBanner extends StatelessWidget {
                   ),
                   child: Text(
                     'تعدیل برنامه به تمرینات تسکین‌دهنده 🌸',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+              )
+            : null,
+      );
+    }
+
+    // 4. Check High Stress / High Fatigue (Wellbeing & Somatic Movement)
+    if (snapshot.isHighStressOrFatigue) {
+      return _buildBanner(
+        context: context,
+        icon: CupertinoIcons.sparkles,
+        iconColor: colors.primary,
+        title: 'پیشنهاد تن‌آرامی و حرکات سوماتیک',
+        subtitle:
+            'با توجه به سطح خستگی ثبت‌شده، ۸ دقیقه تمرین سوماتیک و تنفس آرام‌بخش برای آزادسازی تنش پیشنهاد شد.',
+        action: onApplySomaticMovement != null
+            ? GestureDetector(
+                onTap: () {
+                  RitmoHapticsPolicy.tap();
+                  onApplySomaticMovement!();
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    'انطباق به تمرین سوماتیک و تنفس 🌿',
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.bold,

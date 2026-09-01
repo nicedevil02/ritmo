@@ -160,6 +160,18 @@ class MvTodayTab extends StatelessWidget {
                 );
                 onSlotUpdated(adapted);
               },
+              onApplySomaticMovement: () {
+                final adapted = todaySlot.copyWith(
+                  slotType: MvSlotType.strength,
+                  focusCodes: const ['NECK_TRAPS', 'LOWER_BACK'],
+                  targetMinutes: 8,
+                  intensityTier: MvIntensityTier.light,
+                  headlineFa: 'تمرین سوماتیک و تن‌آرامی',
+                  reasonKey: MvReasonKeys.readinessLow,
+                  updatedAt: DateTime.now().millisecondsSinceEpoch,
+                );
+                onSlotUpdated(adapted);
+              },
             ),
 
           // 3. Readiness Bar (tap to open quick checkin)

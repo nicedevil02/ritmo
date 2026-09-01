@@ -10,8 +10,10 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_clock.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_orb_eyes.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_feather.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_motion.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_orb_settings.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_shell.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_skin.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_types.dart';
@@ -40,6 +42,8 @@ class RitmoMarbleCore extends StatefulWidget {
     this.tokenPulse,
     this.energyAware = true,
     this.reactToFlare = true,
+    this.eyeMode = RitmoEyeMode.occasional,
+    this.respectSettings = true,
     this.stats,
   });
 
@@ -56,10 +60,10 @@ class RitmoMarbleCore extends StatefulWidget {
   final double shellWobble;
   final double bulgeStrength;
 
-  /// فشارِ لحظه‌ای (۰..۱) — مثلاً وقتی کاربر انگشتش را روی تیله نگه داشته.
+  /// فشارِ لحظه‌ای (۰..۱) — مطلاً وقتی کاربر انگشتش را روی تیله نگه داشته.
   final double pulse;
 
-  /// پلکِ آگاهانه (۰..۱). دیگر تصادفی نیست: فقط در پاسخ به کاربر.
+  /// پلکِ آگاهانه (۰..۱) در پاسخ به کاربر؛ مستقل از پلکِ طبیعیِ چشم‌ها.
   final double wink;
 
   /// امضای حرکت؛ اگر null باشد از [mode] ساخته می‌شود.
@@ -72,6 +76,13 @@ class RitmoMarbleCore extends StatefulWidget {
   final ValueListenable<int>? tokenPulse;
   final bool energyAware;
   final bool reactToFlare;
+
+  /// چشم‌ها کجا و کی. در تیرِ S هرگز؛ در ۱۹ پیکسل چشم فقط لکه می‌شود.
+  final RitmoEyeMode eyeMode;
+
+  /// اگر false باشد، سوئیچِ خاموشیِ کاربر را نادیده می‌گیرد (مانند پیش‌نمایشِ
+  /// خودِ صفحهٔ تنطیمات، که باید حتی در حالتِ خاموش هم دیده شود).
+  final bool respectSettings;
 
   /// فقط در تست: شمارشِ فرمان‌های نقاشی.
   final RitmoOrbPaintStats? stats;
@@ -87,6 +98,7 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
 
   late RitmoOrbSignature _from;
   late RitmoOrbSignature _to;
+  late final RitmoEyeLife _eyeLife = RitmoEyeLife(seed: widget.seed);
 
   double _phase = 0.0;
   double _breath = 0.0;
@@ -109,6 +121,18 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
   RitmoOrbSignature _baseSignature() =>
       widget.signature ?? RitmoOrbSignature.ofMode(widget.mode);
 
+  bool get _switchedOn =>
+      !widget.respectSettings || RitmoOrbSettings.instance.enabled.value;
+
+  bool get _eyesWanted {
+    if (widget.eyeMode == RitmoEyeMode.off) return false;
+    if (_tier == RitmoOrbTier.s) return false;
+    if (widget.respectSettings && !RitmoOrbSettings.instance.eyes.value) {
+      return false;
+    }
+    return true;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -121,6 +145,8 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
     RitmoOrbAttentionSignal.instance.addListener(_onExternal);
     RitmoOrbAttentionSignal.instance.acknowledge.addListener(_onNod);
     RitmoOrbEnergySignal.instance.addListener(_onExternal);
+    RitmoOrbSettings.instance.enabled.addListener(_onSettings);
+    RitmoOrbSettings.instance.eyes.addListener(_onSettings);
     if (widget.reactToFlare) {
       RitmoAiStateService.instance.flareTrigger.addListener(_onFlare);
     }
@@ -165,7 +191,8 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
     }
     if (oldWidget.isAnimated != widget.isAnimated ||
         oldWidget.size != widget.size ||
-        oldWidget.tier != widget.tier) {
+        oldWidget.tier != widget.tier ||
+        oldWidget.respectSettings != widget.respectSettings) {
       _syncClock();
     }
     if (!_subscribed) _frame.value = _frame.value + 1.0;
@@ -179,13 +206,16 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
     RitmoOrbAttentionSignal.instance.removeListener(_onExternal);
     RitmoOrbAttentionSignal.instance.acknowledge.removeListener(_onNod);
     RitmoOrbEnergySignal.instance.removeListener(_onExternal);
+    RitmoOrbSettings.instance.enabled.removeListener(_onSettings);
+    RitmoOrbSettings.instance.eyes.removeListener(_onSettings);
     widget.tokenPulse?.removeListener(_onToken);
     _frame.dispose();
     super.dispose();
   }
 
   void _syncClock() {
-    final bool want = widget.isAnimated && !_reduceMotion && _tickerOn;
+    final bool want =
+        widget.isAnimated && !_reduceMotion && _tickerOn && _switchedOn;
     if (want == _subscribed) return;
     if (want) {
       _clockLast = RitmoOrbClock.instance.time;
@@ -204,6 +234,13 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
     _subscribed = want;
   }
 
+  void _onSettings() {
+    if (!mounted) return;
+    // خاموش که شد، همان لحظه مشترکِ ساعت لغو می‌شود.
+    _syncClock();
+    setState(() {});
+  }
+
   void _onExternal() {
     if (!mounted) return;
     // تغییرِ صداقت/توجه/انرژی فقط برگ را دوباره می‌کشد.
@@ -212,11 +249,17 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
 
   void _onNod() {
     _nod = 1.0;
+    // صدایش زدند: چشم باز کن و نگاه کن.
+    if (_eyesWanted) {
+      _eyeLife.wake(hold: 3.6);
+      _eyeLife.blinkNow(twice: true);
+    }
     _onExternal();
   }
 
   void _onFlare() {
     _flare = 1.0;
+    if (_eyesWanted) _eyeLife.wake(hold: 2.6);
     _onExternal();
   }
 
@@ -239,6 +282,17 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
     if (_flare > 0.0) _flare = (_flare - dt / 0.62).clamp(0.0, 1.0);
     if (_token > 0.0) _token = (_token - dt / 0.34).clamp(0.0, 1.0);
     if (_nod > 0.0) _nod = (_nod - dt / 0.45).clamp(0.0, 1.0);
+
+    final RitmoOrbAttention attention = _attention;
+    _eyeLife.step(
+      dt,
+      tempo: RitmoEyeTempo.fromSignature(sig, _truth),
+      wantVisible: _eyesWanted,
+      always: widget.eyeMode == RitmoEyeMode.always,
+      focus: attention.focus,
+      attention: attention.strength,
+    );
+
     _frame.value = now;
   }
 
@@ -251,13 +305,29 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
     return sig;
   }
 
+  RitmoEyeFrame _eyeFrame() {
+    if (!_eyesWanted) return RitmoEyeFrame.absent;
+    if (!_subscribed) {
+      // بی‌ساعت، چشم فقط وقتی معنا دارد که عمداً خواسته شده باشد.
+      return widget.eyeMode == RitmoEyeMode.always
+          ? RitmoEyeFrame.calm
+          : RitmoEyeFrame.absent;
+    }
+    return _eyeLife.frame;
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!_switchedOn) {
+      // کاربر حباب را خاموش کرده: جایش می‌ماند تا چیدمان نپرد، ولی
+      // هیچ نقاشی و هیچ فریمی نیست.
+      return SizedBox.square(dimension: widget.size);
+    }
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return RepaintBoundary(
       child: ValueListenableBuilder<double>(
         valueListenable: _frame,
-        builder: (BuildContext context, double _, Widget? child) {
+        builder: (context, _, child) {
           final RitmoOrbSignature sig = _effective();
           final RitmoOrbTruth truth = _truth;
           RitmoOrbPalette palette = widget.palette;
@@ -302,6 +372,7 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
               shellWobble: widget.shellWobble,
               bulgeStrength: widget.bulgeStrength,
               isDark: isDark,
+              eyeFrame: _eyeFrame(),
               stats: widget.stats,
             ),
           );
@@ -332,6 +403,7 @@ class _MarblePainter extends CustomPainter {
     required this.shellWobble,
     required this.bulgeStrength,
     required this.isDark,
+    required this.eyeFrame,
     required this.stats,
   });
 
@@ -354,6 +426,7 @@ class _MarblePainter extends CustomPainter {
   final double shellWobble;
   final double bulgeStrength;
   final bool isDark;
+  final RitmoEyeFrame eyeFrame;
   final RitmoOrbPaintStats? stats;
 
   @override
@@ -511,6 +584,22 @@ class _MarblePainter extends CustomPainter {
       rig: rig,
       purse: purse,
     );
+
+    // چشم‌ها درونِ برشِ پوسته و قبل از برقِ شیشه کشیده می‌شوند: چشمِ زیرِ
+    // شیشه، نه برچسبِ روی آن.
+    if (eyeFrame.presence > 0.02) {
+      ritmoPaintEyes(
+        canvas,
+        center: Offset(center.dx, center.dy - radius * 0.08),
+        span: radius * 0.66,
+        radius: radius * 0.145,
+        frame: eyeFrame,
+        palette: palette,
+        isDark: isDark,
+        purse: purse,
+        catchlight: tier == RitmoOrbTier.l,
+      );
+    }
     canvas.restore();
 
     ritmoPaintSheen(
@@ -562,6 +651,7 @@ class _MarblePainter extends CustomPainter {
       old.squeeze != squeeze ||
       old.intensity != intensity ||
       old.isDark != isDark ||
+      old.eyeFrame != eyeFrame ||
       old.signature.flow != signature.flow ||
       old.signature.density != signature.density ||
       old.signature.rim != signature.rim ||

@@ -1,8 +1,11 @@
 // =============================================================================
 //  Ritmo Living Orb — حضورِ تیله در صفحه
 //  ورود/خروج فقط با یک کنترلرِ کوتاه‌عمر انجام می‌شود؛ تپشِ دائمی به
-//  ساعتِ مشترک واگذار شده. وقتی تیله پنهان یا حرکتِ کاربر خاموش است،
-//  مشترکِ ساعت لغو می‌شود: صفر فریم، صفر باتری.
+//  ساعتِ مشترک واگذار شده. وقتی تیله پنهان، خاموش، یا حرکتِ کاربر خاموش
+//  است، مشترکِ ساعت لغو می‌شود: صفر فریم، صفر باتری.
+//
+//  و وقتی کیبرد بالا می‌آید، تیله با همان انیمیشنِ خروج، در می‌رود داخلِ
+//  کادرِ تایپ و جایش را به [RitmoOrbDockLayer] می‌دهد. یک موجود، دو جایِ بودن.
 // =============================================================================
 
 import 'dart:async';
@@ -11,8 +14,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_marble_core.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_absorb.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_orb_dock.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_orb_eyes.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_halo.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_motion.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_orb_settings.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_orb_types.dart';
 
 export 'package:ritmo/core/widgets/ritmo/ritmo_orb_motion.dart'
@@ -43,6 +49,8 @@ class RitmoLivingOrb extends StatefulWidget {
     this.attention,
     this.tier,
     this.energyAware = true,
+    this.allowDock = true,
+    this.eyeMode,
   });
 
   final RitmoOrbLife life;
@@ -76,6 +84,12 @@ class RitmoLivingOrb extends StatefulWidget {
   final RitmoOrbTier? tier;
   final bool energyAware;
 
+  /// اجازهٔ لنگر گرفتن دورِ کادرِ تایپ وقتی کیبرد باز است.
+  final bool allowDock;
+
+  /// اگر null باشد، از تنطیماتِ کاربر پیروی می‌کند.
+  final RitmoEyeMode? eyeMode;
+
   @override
   State<RitmoLivingOrb> createState() => _RitmoLivingOrbState();
 }
@@ -85,10 +99,14 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
   static Object? _absorbOwner;
 
   final Object _claim = Object();
+  final OverlayPortalController _portal = OverlayPortalController();
   late final AnimationController _pose;
   bool _visible = false;
   bool _exiting = false;
   bool _splashed = false;
+  bool _typing = false;
+  bool _docked = false;
+  bool _portalShown = false;
   double _lastSink = -1.0;
 
   bool get _ownsAbsorb =>
@@ -96,9 +114,14 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
 
   RitmoOrbPalette get _palette => widget.palette ?? RitmoOrbPalette.coral;
 
+  RitmoOrbSettings get _settings => RitmoOrbSettings.instance;
+
   @override
   void initState() {
     super.initState();
+    unawaited(_settings.load());
+    _settings.enabled.addListener(_onSettings);
+    _settings.dockWhenTyping.addListener(_onSettings);
     _visible = widget.life != RitmoOrbLife.hidden;
     _pose = AnimationController(
       vsync: this,
@@ -117,6 +140,14 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // خواندنِ viewInsets یک وابستگی می‌سازد: کیبرد که تکان بخورد، همین‌جا خبردار می‌شویم.
+    _typing = MediaQuery.viewInsetsOf(context).bottom > 40.0;
+    _syncDock();
+  }
+
+  @override
   void didUpdateWidget(RitmoLivingOrb oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.enterDuration != widget.enterDuration) {
@@ -129,24 +160,17 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
       _absorbOwner ??= _claim;
     }
     final bool next = widget.life != RitmoOrbLife.hidden;
-    if (next == _visible) return;
-    _visible = next;
-    if (next) {
-      _exiting = false;
-      _splashed = false;
-      if (_ownsAbsorb) {
-        RitmoOrbAbsorb.instance.report(sink: 0.0, tint: _palette);
-        RitmoOrbAbsorb.instance.lift();
-      }
-      _pose.forward();
-    } else {
-      _exiting = true;
-      _pose.reverse();
+    if (next != _visible) {
+      _visible = next;
+      if (next) _splashed = false;
     }
+    _syncDock();
   }
 
   @override
   void dispose() {
+    _settings.enabled.removeListener(_onSettings);
+    _settings.dockWhenTyping.removeListener(_onSettings);
     _pose.removeListener(_reportAbsorb);
     _pose.removeStatusListener(_onPoseStatus);
     _pose.dispose();
@@ -155,6 +179,57 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
       RitmoOrbAbsorb.instance.reset();
     }
     super.dispose();
+  }
+
+  void _onSettings() {
+    if (!mounted) return;
+    _syncDock();
+    setState(() {});
+  }
+
+  /// تنها جایی که تصمیم می‌گیرد تیله سرِ جایش باشد یا دورِ کادرِ تایپ.
+  void _syncDock() {
+    final bool want = widget.allowDock &&
+        _typing &&
+        _visible &&
+        widget.size >= 48.0 &&
+        _settings.enabled.value &&
+        _settings.dockWhenTyping.value;
+    if (want != _docked) {
+      _docked = want;
+    }
+    _syncPose();
+    _syncPortal(_docked && _settings.enabled.value);
+  }
+
+  void _syncPose() {
+    final bool present = _visible && !_docked;
+    if (present) {
+      if (_pose.status != AnimationStatus.completed &&
+          _pose.status != AnimationStatus.forward) {
+        _exiting = false;
+        _splashed = false;
+        if (_ownsAbsorb) {
+          RitmoOrbAbsorb.instance.report(sink: 0.0, tint: _palette);
+          RitmoOrbAbsorb.instance.lift();
+        }
+        _pose.forward();
+      }
+    } else if (_pose.value > 0.0 &&
+        _pose.status != AnimationStatus.reverse) {
+      _exiting = true;
+      _pose.reverse();
+    }
+  }
+
+  void _syncPortal(bool show) {
+    if (show == _portalShown) return;
+    _portalShown = show;
+    if (show) {
+      _portal.show();
+    } else {
+      _portal.hide();
+    }
   }
 
   void _onPoseStatus(AnimationStatus status) {
@@ -184,6 +259,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
   String _voice(RitmoOrbLife life, RitmoOrbTruth truth) {
     if (truth == RitmoOrbTruth.offline) return 'آفلاین';
     if (truth == RitmoOrbTruth.unsure) return 'مطمئن نیست';
+    if (_docked) return 'گوشهٔ کادرِ پیام، منتظرِ نوشتنِ شما';
     switch (life) {
       case RitmoOrbLife.hidden:
       case RitmoOrbLife.dormant:
@@ -210,20 +286,36 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
 
   @override
   Widget build(BuildContext context) {
+    return RitmoOrbSettingsBuilder(
+      builder: (context, settings) {
+        if (!settings.enabled) {
+          // خاموش است: نه نقاشی، نه فریم، نه فضای رزروشده.
+          return const SizedBox.shrink();
+        }
+        return _buildCreature(context, settings);
+      },
+    );
+  }
+
+  Widget _buildCreature(
+    BuildContext context,
+    RitmoOrbSettingsSnapshot settings,
+  ) {
     final bool reduceMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final RitmoOrbTier tier = widget.tier ?? ritmoTierFor(widget.size);
     final double reserve = widget.size * widget.reserveHeightFactor;
+    final RitmoEyeMode eyeMode = widget.eyeMode ??
+        (settings.eyes ? RitmoEyeMode.occasional : RitmoEyeMode.off);
 
     return ValueListenableBuilder<RitmoOrbTruth>(
       valueListenable: RitmoAiStateService.instance.truth,
-      builder: (BuildContext context, RitmoOrbTruth liveTruth, Widget? _) {
+      builder: (context, liveTruth, _) {
         final RitmoOrbTruth truth = widget.truth ?? liveTruth;
-        final RitmoOrbSignature signature = RitmoOrbSignature.of(widget.life)
-            .copyWith(
-          wobble: RitmoOrbSignature.of(widget.life).wobble *
-              widget.anticsStrength.clamp(0.0, 2.0),
+        final RitmoOrbSignature base = RitmoOrbSignature.of(widget.life);
+        final RitmoOrbSignature signature = base.copyWith(
+          wobble: base.wobble * widget.anticsStrength.clamp(0.0, 2.0),
         );
         final bool animate = !reduceMotion && (_visible || _exiting);
 
@@ -264,6 +356,7 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
               tokenPulse: widget.writingPulse,
               energyAware: widget.energyAware,
               reactToFlare: widget.reactToSuccessFlare,
+              eyeMode: eyeMode,
             ),
           ],
         );
@@ -271,9 +364,9 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
         final Widget animated = AnimatedBuilder(
           animation: _pose,
           child: creature,
-          builder: (BuildContext context, Widget? child) {
+          builder: (context, child) {
             final double raw = reduceMotion
-                ? (_visible ? 1.0 : 0.0)
+                ? (_visible && !_docked ? 1.0 : 0.0)
                 : (_pose.status == AnimationStatus.reverse
                     ? Curves.easeInCubic.transform(_pose.value)
                     : Curves.easeOutBack.transform(_pose.value).clamp(0.0, 1.2));
@@ -316,13 +409,27 @@ class _RitmoLivingOrbState extends State<RitmoLivingOrb>
           );
         }
 
-        return Semantics(
+        final Widget spoken = Semantics(
           container: true,
           liveRegion: true,
           button: widget.onTap != null,
           label: widget.semanticLabel,
           value: _voice(widget.life, truth),
           child: ExcludeSemantics(child: content),
+        );
+
+        if (!widget.allowDock) return spoken;
+
+        return OverlayPortal(
+          controller: _portal,
+          overlayChildBuilder: (context) => RitmoOrbDockLayer(
+            palette: _palette,
+            signature: signature,
+            truth: widget.truth,
+            tokenPulse: widget.writingPulse,
+            eyes: settings.eyes,
+          ),
+          child: spoken,
         );
       },
     );

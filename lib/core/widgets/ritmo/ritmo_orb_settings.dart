@@ -1,17 +1,16 @@
 // =============================================================================
 //  Ritmo Orb Settings — سه سوئیچِ حباب
 //
-//  عمداً از SettingsService مستقل است. دلیلش معماری است، نه تنبلی:
-//  آن سرویس هیچ ValueListenable نمی‌دهد (هر صفحه دستی _loadSettings + setState
-//  می‌کند) و حباب باید در همان لحظه‌ای که کاربر سوئیچ را می‌زند محو شود —
-//  نه بعد از رفت‌وبرگشتِ صفحه.
-//
-//  کلیدها در SharedPreferences می‌نشینند و هنوز در SettingsRegistry ثبت نشده‌اند.
-//  ثبتشان کارِ بعدی است تا در جست‌وجوی تنظیمات، صادرات/واردات و تاریخچهٔ
-//  تغییراتِ دستیار هم دیده شوند. تا آن روز، همین رشته‌ها باید بمانند.
+//  کلیدها در SettingsRegistry ثبت شده و از طریق SettingsService ذخیره و همگام
+//  می‌شوند (همراه با مهاجرت خودکار از SharedPreferences).
+//  در عین حال ValueNotifierها جهت دسترسی فوری و سنکرون بدون await در فریم‌های
+//  نقاشی حفظ شده‌اند و با تغییراتِ سرویس همگام می‌مانند.
 // =============================================================================
 
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 @immutable
@@ -43,7 +42,9 @@ class RitmoOrbSettingsSnapshot {
 }
 
 class RitmoOrbSettings {
-  RitmoOrbSettings._();
+  RitmoOrbSettings._() {
+    _ensureSubscribed();
+  }
 
   static final RitmoOrbSettings instance = RitmoOrbSettings._();
 
@@ -54,6 +55,23 @@ class RitmoOrbSettings {
   final ValueNotifier<bool> enabled = ValueNotifier<bool>(true);
   final ValueNotifier<bool> dockWhenTyping = ValueNotifier<bool>(true);
   final ValueNotifier<bool> eyes = ValueNotifier<bool>(true);
+
+  StreamSubscription<String>? _settingsSubscription;
+
+  void _ensureSubscribed() {
+    _settingsSubscription ??= SettingsService.instance.changes.listen((key) {
+      if (key == keyEnabled) {
+        final val = SettingsService.instance.get<bool>(keyEnabled);
+        if (enabled.value != val) enabled.value = val;
+      } else if (key == keyDockWhenTyping) {
+        final val = SettingsService.instance.get<bool>(keyDockWhenTyping);
+        if (dockWhenTyping.value != val) dockWhenTyping.value = val;
+      } else if (key == keyEyes) {
+        final val = SettingsService.instance.get<bool>(keyEyes);
+        if (eyes.value != val) eyes.value = val;
+      }
+    });
+  }
 
   /// یک شنوندهٔ ترکیبی برای ویجت‌هایی که به هر سه سوئیچ وابسته‌اند.
   late final Listenable listenable = Listenable.merge(
@@ -78,11 +96,25 @@ class RitmoOrbSettings {
   }
 
   Future<void> _read() async {
+    _ensureSubscribed();
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      enabled.value = prefs.getBool(keyEnabled) ?? true;
-      dockWhenTyping.value = prefs.getBool(keyDockWhenTyping) ?? true;
-      eyes.value = prefs.getBool(keyEyes) ?? true;
+      if (SettingsService.instance.isInitialized) {
+        enabled.value = SettingsService.instance.get<bool>(keyEnabled);
+        dockWhenTyping.value =
+            SettingsService.instance.get<bool>(keyDockWhenTyping);
+        eyes.value = SettingsService.instance.get<bool>(keyEyes);
+      } else {
+        final SharedPreferences prefs = await SharedPreferences.getInstance();
+        if (prefs.containsKey(keyEnabled)) {
+          enabled.value = prefs.getBool(keyEnabled) ?? true;
+        }
+        if (prefs.containsKey(keyDockWhenTyping)) {
+          dockWhenTyping.value = prefs.getBool(keyDockWhenTyping) ?? true;
+        }
+        if (prefs.containsKey(keyEyes)) {
+          eyes.value = prefs.getBool(keyEyes) ?? true;
+        }
+      }
     } catch (e) {
       // اگر حافظهٔ محلی در دسترس نبود (مثلاً در تست)، پیش‌فرض‌ها سرِ جایشان‌اند.
       debugPrint('RitmoOrbSettings: خواندنِ تنظیماتِ حباب ناموفق بود ($e)');
@@ -106,8 +138,12 @@ class RitmoOrbSettings {
     // اول UI، بعد دیسک: کاربر نباید منتظرِ نوشتنِ حافظه بماند.
     target.value = value;
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(key, value);
+      if (SettingsService.instance.isInitialized) {
+        await SettingsService.instance.set(key, value);
+      } else {
+        final SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(key, value);
+      }
     } catch (e) {
       debugPrint('RitmoOrbSettings: ذخیرهٔ $key ناموفق بود ($e)');
     }

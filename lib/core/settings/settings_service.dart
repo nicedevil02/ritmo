@@ -216,6 +216,9 @@ class SettingsService {
         'planner_draft_text',
         'ai_deep_analysis_result_v1',
         'systems_custom_order_banner_dismissed',
+        'orb_enabled',
+        'orb_dock_when_typing',
+        'orb_eyes_enabled',
       ];
 
       final now = DateTime.now().millisecondsSinceEpoch;

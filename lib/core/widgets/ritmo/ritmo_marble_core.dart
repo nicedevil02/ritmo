@@ -296,6 +296,12 @@ class _RitmoMarbleCoreState extends State<RitmoMarbleCore> {
     _frame.value = now;
   }
 
+  @visibleForTesting
+  void debugSnap({double? open, double? presence}) {
+    _eyeLife.debugSnap(open: open, presence: presence);
+    _frame.value++;
+  }
+
   RitmoOrbSignature _effective() {
     RitmoOrbSignature sig =
         RitmoOrbSignature.lerp(_from, _to, _blend.value).withTruth(_truth);

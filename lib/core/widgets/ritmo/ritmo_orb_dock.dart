@@ -333,6 +333,12 @@ class _RitmoOrbDockLayerState extends State<RitmoOrbDockLayer> {
     _frame.value = now;
   }
 
+  @visibleForTesting
+  void debugSnap({double? open, double? presence}) {
+    _eyeLife.debugSnap(open: open, presence: presence);
+    _frame.value++;
+  }
+
   @override
   Widget build(BuildContext context) {
     final MediaQueryData media = MediaQuery.of(context);

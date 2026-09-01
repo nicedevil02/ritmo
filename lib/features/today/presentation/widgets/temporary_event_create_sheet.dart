@@ -12,6 +12,7 @@ import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
+import 'package:ritmo/core/widgets/sheet/ritmo_picker_sheet.dart';
 import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import 'package:sqflite/sqflite.dart';
@@ -228,65 +229,30 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
     );
   }
 
-  void _showReminderPicker(BuildContext context, RitmoColors colors) {
+  Future<void> _showReminderPicker(BuildContext context, RitmoColors colors) async {
     RitmoHaptics.selection();
-    showModalBottomSheet(
+
+    final options = _reminderOptions.map((opt) {
+      return PickerOption<int>(
+        label: opt['label']! as String,
+        value: opt['value']! as int,
+      );
+    }).toList();
+
+    final selected = await RitmoPickerSheet.show<int>(
       context: context,
-      backgroundColor: colors.sheetBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.notifications_active_rounded, size: 20, color: colors.primary),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'تنظیم زمان یادآوری رویداد',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                ..._reminderOptions.map((opt) {
-                  final isSelected = _reminderOffsetMinutes == opt['value'];
-                  return ListTile(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    tileColor: isSelected ? colors.primary.withValues(alpha: 0.08) : null,
-                    title: Text(
-                      opt['label']! as String,
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected ? colors.primary : colors.textPrimary,
-                      ),
-                    ),
-                    trailing: isSelected ? Icon(Icons.check_circle_rounded, color: colors.primary) : null,
-                    onTap: () {
-                      RitmoHaptics.selection();
-                      setState(() {
-                        _reminderOffsetMinutes = opt['value']! as int;
-                      });
-                      Navigator.pop(context);
-                    },
-                  );
-                }),
-                const SizedBox(height: 12),
-              ],
-            ),
-          ),
-        );
-      },
+      title: 'تنظیم زمان یادآوری رویداد',
+      options: options,
+      initialValue: _reminderOffsetMinutes,
+      enableSearch: false,
     );
+
+    if (selected != null) {
+      RitmoHaptics.selection();
+      setState(() {
+        _reminderOffsetMinutes = selected;
+      });
+    }
   }
 
   String _getReminderLabel() {

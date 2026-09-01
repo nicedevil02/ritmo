@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/widgets/sheet/ritmo_picker_sheet.dart';
 import 'package:ritmo/features/routines/presentation/planner_controller.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_advanced_section.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_timeline_picker.dart';
@@ -67,119 +68,49 @@ class GenericStep2Form extends StatelessWidget {
     );
   }
 
-  void _showReminderPicker(BuildContext context, RitmoColors colors) {
+  Future<void> _showReminderPicker(BuildContext context, RitmoColors colors) async {
     final options = [
-      {'label': 'همزمان با شروع', 'value': 0},
-      {'label': '۵ دقیقه قبل', 'value': 5},
-      {'label': '۱۰ دقیقه قبل', 'value': 10},
-      {'label': '۱۵ دقیقه قبل', 'value': 15},
-      {'label': '۳۰ دقیقه قبل', 'value': 30},
-      {'label': '۱ ساعت قبل', 'value': 60},
+      const PickerOption<int>(label: 'همزمان با شروع', value: 0),
+      const PickerOption<int>(label: '۵ دقیقه قبل', value: 5),
+      const PickerOption<int>(label: '۱۰ دقیقه قبل', value: 10),
+      const PickerOption<int>(label: '۱۵ دقیقه قبل', value: 15),
+      const PickerOption<int>(label: '۳۰ دقیقه قبل', value: 30),
+      const PickerOption<int>(label: '۱ ساعت قبل', value: 60),
     ];
 
-    showModalBottomSheet(
+    final selected = await RitmoPickerSheet.show<int>(
       context: context,
-      backgroundColor: colors.sheetBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'تنظیم زمان یادآوری',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                ...options.map((opt) {
-                  final isSelected = controller.reminderOffsetMinutes == opt['value'];
-                  return ListTile(
-                    title: Text(
-                      opt['label']! as String,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected ? colors.primary : colors.textPrimary,
-                      ),
-                    ),
-                    trailing: isSelected ? Icon(Icons.check_rounded, color: colors.primary) : null,
-                    onTap: () {
-                      controller.reminderOffsetMinutes = opt['value']! as int;
-                      controller.notifyListeners();
-                      Navigator.pop(context);
-                    },
-                  );
-                }),
-                const SizedBox(height: 12),
-              ],
-            ),
-          ),
-        );
-      },
+      title: 'تنظیم زمان یادآوری',
+      options: options,
+      initialValue: controller.reminderOffsetMinutes,
+      enableSearch: false,
     );
+
+    if (selected != null) {
+      controller.reminderOffsetMinutes = selected;
+      controller.notifyListeners();
+    }
   }
 
-  void _showRecurrencePicker(BuildContext context, RitmoColors colors) {
+  Future<void> _showRecurrencePicker(BuildContext context, RitmoColors colors) async {
     final options = [
-      {'label': 'روزانه (هر روز)', 'value': 'EVERY_DAY'},
-      {'label': 'روزهای انتخابی (هفتگی)', 'value': 'CUSTOM_DAYS'},
-      {'label': 'فقط یک‌بار (بدون تکرار)', 'value': 'ONCE'},
+      const PickerOption<String>(label: 'روزانه (هر روز)', value: 'EVERY_DAY'),
+      const PickerOption<String>(label: 'روزهای انتخابی (هفتگی)', value: 'CUSTOM_DAYS'),
+      const PickerOption<String>(label: 'فقط یک‌بار (بدون تکرار)', value: 'ONCE'),
     ];
 
-    showModalBottomSheet(
+    final selected = await RitmoPickerSheet.show<String>(
       context: context,
-      backgroundColor: colors.sheetBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'تنظیم نوع تکرار',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                ...options.map((opt) {
-                  final isSelected = controller.recurrenceType == opt['value'];
-                  return ListTile(
-                    title: Text(
-                      opt['label']!,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected ? colors.primary : colors.textPrimary,
-                      ),
-                    ),
-                    trailing: isSelected ? Icon(Icons.check_rounded, color: colors.primary) : null,
-                    onTap: () {
-                      controller.recurrenceType = opt['value']!;
-                      controller.notifyListeners();
-                      Navigator.pop(context);
-                    },
-                  );
-                }),
-                const SizedBox(height: 12),
-              ],
-            ),
-          ),
-        );
-      },
+      title: 'تنظیم نوع تکرار',
+      options: options,
+      initialValue: controller.recurrenceType,
+      enableSearch: false,
     );
+
+    if (selected != null) {
+      controller.recurrenceType = selected;
+      controller.notifyListeners();
+    }
   }
 
   @override

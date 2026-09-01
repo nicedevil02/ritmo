@@ -68,59 +68,66 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
     final initialM = int.tryParse(parts[1]) ?? 0;
     TimeOfDay selectedTime = TimeOfDay(hour: initialH, minute: initialM);
 
-    await showCupertinoModalPopup<void>(
+    await showModalBottomSheet<void>(
       context: context,
+      backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Container(
-          height: 260,
-          color: context.colors.card,
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      child: Text('انصراف', style: TextStyle(color: context.colors.textSecondary)),
-                      onPressed: () => Navigator.pop(ctx),
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: SizedBox(
+              height: 280,
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          child: Text('انصراف', style: TextStyle(color: context.colors.textSecondary)),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                        Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: context.colors.textPrimary)),
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          child: Text('تأیید', style: TextStyle(color: context.colors.primary, fontWeight: FontWeight.bold)),
+                          onPressed: () async {
+                            final formatted = '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}';
+                            await _update(key, formatted);
+                            if (key == 'sleep_target_wake' || key == 'sleep_target_bedtime') {
+                              final curWake = key == 'sleep_target_wake' ? formatted : _wakeTime;
+                              final curBed = key == 'sleep_target_bedtime' ? formatted : _sleepTime;
+                              final btParts = curBed.split(':');
+                              final wtParts = curWake.split(':');
+                              final btMin = (int.tryParse(btParts[0]) ?? 23) * 60 + (int.tryParse(btParts.length > 1 ? btParts[1] : '0') ?? 0);
+                              final wtMin = (int.tryParse(wtParts[0]) ?? 7) * 60 + (int.tryParse(wtParts.length > 1 ? wtParts[1] : '0') ?? 0);
+                              var diff = wtMin - btMin;
+                              if (diff <= 0) diff += 1440;
+                              await SettingsService.instance.set('sleep_target_duration_minutes', diff);
+                            }
+                            if (ctx.mounted) Navigator.pop(ctx);
+                          },
+                        ),
+                      ],
                     ),
-                    Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.colors.textPrimary)),
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      child: Text('تأیید', style: TextStyle(color: context.colors.primary, fontWeight: FontWeight.bold)),
-                      onPressed: () async {
-                        final formatted = '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}';
-                        await _update(key, formatted);
-                        if (key == 'sleep_target_wake' || key == 'sleep_target_bedtime') {
-                          final curWake = key == 'sleep_target_wake' ? formatted : _wakeTime;
-                          final curBed = key == 'sleep_target_bedtime' ? formatted : _sleepTime;
-                          final btParts = curBed.split(':');
-                          final wtParts = curWake.split(':');
-                          final btMin = (int.tryParse(btParts[0]) ?? 23) * 60 + (int.tryParse(btParts.length > 1 ? btParts[1] : '0') ?? 0);
-                          final wtMin = (int.tryParse(wtParts[0]) ?? 7) * 60 + (int.tryParse(wtParts.length > 1 ? wtParts[1] : '0') ?? 0);
-                          var diff = wtMin - btMin;
-                          if (diff <= 0) diff += 1440;
-                          await SettingsService.instance.set('sleep_target_duration_minutes', diff);
-                        }
-                        if (ctx.mounted) Navigator.pop(ctx);
+                  ),
+                  Expanded(
+                    child: CupertinoDatePicker(
+                      mode: CupertinoDatePickerMode.time,
+                      use24hFormat: true,
+                      initialDateTime: DateTime(2026, 1, 1, selectedTime.hour, selectedTime.minute),
+                      onDateTimeChanged: (dt) {
+                        selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute);
                       },
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: CupertinoDatePicker(
-                  mode: CupertinoDatePickerMode.time,
-                  use24hFormat: true,
-                  initialDateTime: DateTime(2026, 1, 1, selectedTime.hour, selectedTime.minute),
-                  onDateTimeChanged: (dt) {
-                    selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute);
-                  },
-                ),
-              ),
-            ],
+            ),
           ),
         );
       },

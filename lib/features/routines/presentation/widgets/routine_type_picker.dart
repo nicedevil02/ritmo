@@ -114,16 +114,17 @@ class RoutineTypePicker extends StatelessWidget {
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: colors.sheetBackground,
+      backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
-      ),
       builder: (sheetCtx) {
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: SafeArea(
-            child: Padding(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(sheetCtx, factor: 0.94),
+            ),
+            child: RitmoGlassSheet(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               padding: const EdgeInsets.fromLTRB(
                 RitmoSpacing.lg,
                 RitmoSpacing.md,
@@ -178,113 +179,98 @@ class RoutineTypePicker extends StatelessWidget {
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: RitmoSpacing.sm),
-                            child: InkWell(
+                            child: RitmoCard.neumorphic(
+                              isSelected: isSelected,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                               onTap: () {
                                 RitmoHaptics.selection();
                                 onTypeSelected(opt.type);
                                 onItemTypeSelected?.call(opt.itemType);
                                 Navigator.of(sheetCtx).pop();
                               },
-                              borderRadius: BorderRadius.circular(RitmoRadius.card),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? colors.primary.withValues(alpha: 0.12)
-                                      : colors.card.withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(RitmoRadius.card),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? colors.primary
-                                        : colors.border.withValues(alpha: 0.3),
-                                    width: isSelected ? 1.5 : 1.0,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: isSelected
-                                            ? colors.primary.withValues(alpha: 0.2)
-                                            : colors.surface,
-                                      ),
-                                      child: Icon(
-                                        opt.icon,
-                                        size: 20,
-                                        color: isSelected ? colors.primary : colors.textSecondary,
-                                      ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: isSelected
+                                          ? colors.primary.withValues(alpha: 0.2)
+                                          : colors.surface,
                                     ),
-                                    const SizedBox(width: RitmoSpacing.md),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Text(
-                                                opt.titleFa,
+                                    child: Icon(
+                                      opt.icon,
+                                      size: 20,
+                                      color: isSelected ? colors.primary : colors.textSecondary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: RitmoSpacing.md),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              opt.titleFa,
+                                              style: TextStyle(
+                                                fontSize: 13.5,
+                                                fontWeight: isSelected
+                                                    ? FontWeight.bold
+                                                    : FontWeight.w600,
+                                                color: isSelected
+                                                    ? colors.primary
+                                                    : colors.textPrimary,
+                                              ),
+                                            ),
+                                            const SizedBox(width: RitmoSpacing.sm),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: isSelected
+                                                    ? colors.primary.withValues(alpha: 0.15)
+                                                    : colors.border.withValues(alpha: 0.3),
+                                                borderRadius:
+                                                    BorderRadius.circular(RitmoRadius.pill),
+                                              ),
+                                              child: Text(
+                                                opt.badgeFa,
                                                 style: TextStyle(
-                                                  fontSize: 13.5,
-                                                  fontWeight: isSelected
-                                                      ? FontWeight.bold
-                                                      : FontWeight.w600,
+                                                  fontSize: 10,
                                                   color: isSelected
                                                       ? colors.primary
-                                                      : colors.textPrimary,
+                                                      : colors.textTertiary,
                                                 ),
                                               ),
-                                              const SizedBox(width: RitmoSpacing.sm),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                    horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: isSelected
-                                                      ? colors.primary.withValues(alpha: 0.15)
-                                                      : colors.border.withValues(alpha: 0.3),
-                                                  borderRadius:
-                                                      BorderRadius.circular(RitmoRadius.pill),
-                                                ),
-                                                child: Text(
-                                                  opt.badgeFa,
-                                                  style: TextStyle(
-                                                    fontSize: 10,
-                                                    color: isSelected
-                                                        ? colors.primary
-                                                        : colors.textTertiary,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 3),
-                                          Text(
-                                            opt.subtitleFa,
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: colors.textSecondary,
-                                              height: 1.3,
                                             ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          opt.subtitleFa,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: colors.textSecondary,
+                                            height: 1.3,
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
-                                    if (isSelected)
-                                      Icon(
-                                        Icons.check_circle_rounded,
-                                        color: colors.primary,
-                                        size: 22,
-                                      )
-                                    else
-                                      Icon(
-                                        Icons.radio_button_unchecked_rounded,
-                                        color: colors.border.withValues(alpha: 0.6),
-                                        size: 22,
-                                      ),
-                                  ],
-                                ),
+                                  ),
+                                  if (isSelected)
+                                    Icon(
+                                      Icons.check_circle_rounded,
+                                      color: colors.primary,
+                                      size: 22,
+                                    )
+                                  else
+                                    Icon(
+                                      Icons.radio_button_unchecked_rounded,
+                                      color: colors.border.withValues(alpha: 0.6),
+                                      size: 22,
+                                    ),
+                                ],
                               ),
                             ),
                           );

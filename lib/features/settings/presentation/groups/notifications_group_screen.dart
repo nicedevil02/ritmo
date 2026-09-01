@@ -136,48 +136,55 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
     final initialM = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
     TimeOfDay selectedTime = TimeOfDay(hour: initialH, minute: initialM);
 
-    await showCupertinoModalPopup<void>(
+    await showModalBottomSheet<void>(
       context: context,
+      backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Container(
-          height: 260,
-          color: context.colors.card,
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      child: Text('انصراف', style: TextStyle(color: context.colors.textSecondary)),
-                      onPressed: () => Navigator.pop(ctx),
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: RitmoGlassSheet(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: SizedBox(
+              height: 280,
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          child: Text('انصراف', style: TextStyle(color: context.colors.textSecondary)),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                        Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: context.colors.textPrimary)),
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          child: Text('تأیید', style: TextStyle(color: context.colors.primary, fontWeight: FontWeight.bold)),
+                          onPressed: () async {
+                            final formatted = '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}';
+                            await _updateSetting(key, formatted);
+                            if (ctx.mounted) Navigator.pop(ctx);
+                          },
+                        ),
+                      ],
                     ),
-                    Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.colors.textPrimary)),
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      child: Text('تأیید', style: TextStyle(color: context.colors.primary, fontWeight: FontWeight.bold)),
-                      onPressed: () async {
-                        final formatted = '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}';
-                        await _updateSetting(key, formatted);
-                        if (ctx.mounted) Navigator.pop(ctx);
+                  ),
+                  Expanded(
+                    child: CupertinoDatePicker(
+                      mode: CupertinoDatePickerMode.time,
+                      use24hFormat: true,
+                      initialDateTime: DateTime(2026, 1, 1, selectedTime.hour, selectedTime.minute),
+                      onDateTimeChanged: (dt) {
+                        selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute);
                       },
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: CupertinoDatePicker(
-                  mode: CupertinoDatePickerMode.time,
-                  use24hFormat: true,
-                  initialDateTime: DateTime(2026, 1, 1, selectedTime.hour, selectedTime.minute),
-                  onDateTimeChanged: (dt) {
-                    selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute);
-                  },
-                ),
-              ),
-            ],
+            ),
           ),
         );
       },

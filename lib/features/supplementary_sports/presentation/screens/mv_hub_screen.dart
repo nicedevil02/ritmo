@@ -448,6 +448,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
           onQuickLogSaved: _controller.saveQuickLog,
           onDateSelected: _controller.selectDate,
           onDeleteSlot: _handleDeleteSlot,
+          crossModuleSnapshot: _controller.crossModuleSnapshot,
         ),
 
         // Tab 1: هفته

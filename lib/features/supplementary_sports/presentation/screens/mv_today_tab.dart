@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/domain/engines/ritmo_cross_module_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
@@ -33,6 +34,7 @@ class MvTodayTab extends StatelessWidget {
   onQuickLogSaved;
   final ValueChanged<String> onDateSelected;
   final Future<void> Function(MvSlot slot, {bool deleteRecurring})? onDeleteSlot;
+  final RitmoCrossModuleSnapshot? crossModuleSnapshot;
   final double topPadding;
 
   const MvTodayTab({
@@ -52,6 +54,7 @@ class MvTodayTab extends StatelessWidget {
     required this.onQuickLogSaved,
     required this.onDateSelected,
     this.onDeleteSlot,
+    this.crossModuleSnapshot,
     this.topPadding = 16.0,
   });
 
@@ -123,7 +126,11 @@ class MvTodayTab extends StatelessWidget {
             const SizedBox(height: 16),
           ],
 
-          // 2. Readiness Bar (tap to open quick checkin)
+          // 2. Contextual Adaptation Banner (Sleep debt, Fasting, Cycle)
+          if (crossModuleSnapshot != null)
+            MvContextualBanner(snapshot: crossModuleSnapshot!),
+
+          // 3. Readiness Bar (tap to open quick checkin)
           MvReadinessBar(
             decision: readinessDecision,
             onTap: () {

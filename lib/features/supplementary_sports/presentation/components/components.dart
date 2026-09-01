@@ -2,6 +2,7 @@ export 'mv_animation_stage.dart';
 export 'mv_audio_toggle.dart';
 export 'mv_body_map.dart';
 export 'mv_chip.dart';
+export 'mv_contextual_banner.dart';
 export 'mv_day_slot_card.dart';
 export 'mv_empty_state.dart';
 export 'mv_hero_card.dart';

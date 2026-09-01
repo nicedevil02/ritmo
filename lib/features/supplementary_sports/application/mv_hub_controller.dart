@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/domain/engines/ritmo_cross_module_engine.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/repositories.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
@@ -69,6 +70,9 @@ class MvHubController extends ChangeNotifier {
 
   MvDecision<MvReadinessTier>? _readinessDecision;
   MvDecision<MvReadinessTier>? get readinessDecision => _readinessDecision;
+
+  RitmoCrossModuleSnapshot? _crossModuleSnapshot;
+  RitmoCrossModuleSnapshot? get crossModuleSnapshot => _crossModuleSnapshot;
 
   MvWeeklyBudgetProgress? _budgetProgress;
   MvWeeklyBudgetProgress? get budgetProgress => _budgetProgress;
@@ -204,6 +208,8 @@ class MvHubController extends ChangeNotifier {
         dateIso: todayIso,
         profile: _profile,
       );
+      _crossModuleSnapshot =
+          await RitmoCrossModuleEngine.instance.getSnapshot(date: today);
 
       // Calculate MET-min progress (week-bounded from Saturday 00:00 to Friday 23:59:59)
       final weekStart = DateTime(
